@@ -1,0 +1,7 @@
+# SC2046 aparece no passo "Instalar driver ODBC 18" do job snapshot, copiado sem
+# alterações do repositório do snapshot: o $(lsb_release -rs) sem aspas é seguro
+# ali (devolve só a versão, ex.: 24.04). Ignorado só neste arquivo.
+paths:
+  .github/workflows/diario.yml:
+    ignore:
+      - 'SC2046'

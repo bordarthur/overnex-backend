@@ -1,0 +1,450 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Overnex API",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "infra"
+        ],
+        "summary": "Health",
+        "description": "200 só se o banco responder.",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Health Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/telas/fin-01": {
+      "get": {
+        "tags": [
+          "telas"
+        ],
+        "summary": "Fin 01",
+        "operationId": "fin_01_api_telas_fin_01_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "mes",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "AAAA-MM. Sem valor: último mês com dados.",
+              "title": "Mes"
+            },
+            "description": "AAAA-MM. Sem valor: último mês com dados."
+          },
+          {
+            "name": "empresa",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Empresa (precisa estar no vínculo do usuário).",
+              "title": "Empresa"
+            },
+            "description": "Empresa (precisa estar no vínculo do usuário)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScreenPayload"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autenticado."
+          },
+          "403": {
+            "description": "Acesso negado."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Alerta": {
+        "properties": {
+          "trechos": {
+            "items": {
+              "$ref": "#/components/schemas/Trecho"
+            },
+            "type": "array",
+            "title": "Trechos"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "trechos"
+        ],
+        "title": "Alerta"
+      },
+      "Apoio": {
+        "properties": {
+          "rotulo": {
+            "type": "string",
+            "title": "Rotulo"
+          },
+          "valor": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valor"
+          },
+          "formato": {
+            "type": "string",
+            "enum": [
+              "moeda",
+              "percentual",
+              "numero"
+            ],
+            "title": "Formato"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "saudavel",
+                  "atencao",
+                  "critico"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rotulo",
+          "valor",
+          "formato"
+        ],
+        "title": "Apoio"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "Hero": {
+        "properties": {
+          "rotulo": {
+            "type": "string",
+            "title": "Rotulo"
+          },
+          "valor": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valor"
+          },
+          "formato": {
+            "type": "string",
+            "enum": [
+              "moeda",
+              "percentual",
+              "numero"
+            ],
+            "title": "Formato"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "saudavel",
+                  "atencao",
+                  "critico"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rotulo",
+          "valor",
+          "formato"
+        ],
+        "title": "Hero"
+      },
+      "Ponto": {
+        "properties": {
+          "rotulo": {
+            "type": "string",
+            "title": "Rotulo"
+          },
+          "valor": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valor"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rotulo",
+          "valor"
+        ],
+        "title": "Ponto"
+      },
+      "ScreenPayload": {
+        "properties": {
+          "codigo_tela": {
+            "type": "string",
+            "title": "Codigo Tela"
+          },
+          "titulo": {
+            "type": "string",
+            "title": "Titulo"
+          },
+          "empresa_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Empresa Id"
+          },
+          "mes": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mes"
+          },
+          "atualizado_em": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Atualizado Em"
+          },
+          "hero": {
+            "$ref": "#/components/schemas/Hero"
+          },
+          "apoios": {
+            "items": {
+              "$ref": "#/components/schemas/Apoio"
+            },
+            "type": "array",
+            "title": "Apoios"
+          },
+          "visuais": {
+            "items": {
+              "$ref": "#/components/schemas/Visual"
+            },
+            "type": "array",
+            "title": "Visuais"
+          },
+          "alertas": {
+            "items": {
+              "$ref": "#/components/schemas/Alerta"
+            },
+            "type": "array",
+            "title": "Alertas"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "codigo_tela",
+          "titulo",
+          "empresa_id",
+          "mes",
+          "atualizado_em",
+          "hero",
+          "apoios",
+          "visuais",
+          "alertas"
+        ],
+        "title": "ScreenPayload"
+      },
+      "Trecho": {
+        "properties": {
+          "texto": {
+            "type": "string",
+            "title": "Texto"
+          },
+          "destaque": {
+            "type": "boolean",
+            "title": "Destaque",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "texto"
+        ],
+        "title": "Trecho"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "Visual": {
+        "properties": {
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "linha",
+              "barras",
+              "tabela"
+            ],
+            "title": "Tipo"
+          },
+          "titulo": {
+            "type": "string",
+            "title": "Titulo"
+          },
+          "pontos": {
+            "items": {
+              "$ref": "#/components/schemas/Ponto"
+            },
+            "type": "array",
+            "title": "Pontos"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "tipo",
+          "titulo",
+          "pontos"
+        ],
+        "title": "Visual"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}

@@ -1,0 +1,67 @@
+# Overnex — banco (Supabase)
+
+## Subir local
+
+```bash
+# na raiz do repositório (precisa de Docker)
+supabase start
+supabase db reset     # aplica migrations/ e seed.sql
+supabase test db      # roda os testes pgTAP de tests/database/
+```
+
+Postgres local: `127.0.0.1:54322`. O seed define as senhas locais dos roles:
+
+| Role | Senha local | Uso |
+|---|---|---|
+| `api_site` | `api_site_local` | API |
+| `carga` | `carga_local` | carga diária (rodada 2) |
+
+## Schemas
+
+| Schema | Conteúdo |
+|---|---|
+| `cfg` | cadastros: cliente, empresa, painel, perfis, parâmetros, regras, fontes da carga, mapa de empresas |
+| `seg` | usuários, vínculos (cliente, perfil, empresa), log de acesso e de alteração |
+| `mart` | `lancamento` (dado das telas), `carga` e `carga_fonte` (controle da carga) |
+| `stg` | reservado, sem tabelas: a carga usa tabela temporária |
+
+Nada fica em `public`, e esses schemas não são expostos pelo PostgREST (`config.toml` mantém só `public` e `graphql_public`).
+
+## Migrations
+
+1. `..._schemas_e_tabelas.sql` — schemas e tabelas. Integridade entre clientes por FKs compostas: `mapa_empresa`, `usuario_empresa`, `usuario_perfil` e `carga_fonte` só aceitam registros do mesmo cliente.
+2. `..._roles_e_grants.sql` — roles `api_site` e `carga` (sem BYPASSRLS) e grants.
+3. `..._rls.sql` — ENABLE + FORCE RLS em todas as tabelas de `mart`, `cfg` e `seg`, as funções `seg.clientes_do_usuario()` / `seg.empresas_do_usuario()` (SECURITY DEFINER, STABLE, `search_path` fixo) e as políticas.
+4. `..._carga_fonte_data_opcional.sql` — `mart.carga_fonte.data_snapshot` passa a aceitar null. A carga grava a fonte como `rodando` antes de baixar o arquivo e precisa registrar falhas sem data (arquivo inexistente, chave errada, `_data_snapshot` misturado). Linha `ok` continua exigindo a data (check), e a API só lê linhas `ok`.
+
+### Storage
+
+O `config.toml` declara o bucket privado `overnex-bucket`, criado no `supabase start`. Em produção, o bucket já existe (o snapshot grava nele). Só a carga lê o bucket, com a chave secret; a API nunca acessa o Storage.
+
+### Quem vê o quê
+
+- `api_site` só enxerga linhas a partir de `current_setting('app.usuario_id', true)`, que a API define a cada transação. Sem ele, nenhuma linha.
+  - lê `cfg` e `mart.lancamento` / `mart.carga_fonte` do próprio cliente/empresas; `mart.carga` não;
+  - em `seg`, lê só os próprios registros e só insere nos logs;
+  - tem grant de escrita nos cadastros, mas ainda não há política de escrita, então o RLS nega (vem com o admin).
+- `carga` escreve em `mart.lancamento`, `mart.carga` e `mart.carga_fonte`; lê só `cfg.fonte_carga`, `cfg.mapa_empresa` e `cfg.empresa`; cria tabela temporária; nenhum acesso a `seg`.
+
+## Produção
+
+Os roles nascem sem LOGIN e sem senha. Defina-os uma vez por ambiente, fora das migrations:
+
+```sql
+alter role api_site with login password '<segredo>';
+alter role carga    with login password '<segredo>';
+```
+
+A migration 3 confere que o dono das funções (`postgres`) tem BYPASSRLS, como no Supabase; se não tiver, ela falha em vez de deixar as funções de segurança devolvendo vazio.
+
+## Testes (pgTAP)
+
+| Arquivo | O que garante |
+|---|---|
+| `01_isolamento_api_site` | o usuário do cliente A não lê nada do cliente B em `mart` (inclusive `carga_fonte`), `cfg` e `seg`; `api_site` não lê `mart.carga` nem os logs |
+| `02_sem_usuario` | sem `app.usuario_id` (ou vazio), nenhuma linha |
+| `03_role_carga` | `carga` não lê `seg`, não escreve em `cfg`, escreve no `mart` e cria tabela temporária |
+| `04_integridade` | `cfg.mapa_empresa` (e os outros vínculos) recusam empresa de outro cliente; `mart.carga_fonte` `ok` exige `data_snapshot` |

@@ -1,0 +1,81 @@
+# Cadastre os segredos e variáveis em Settings > Secrets and variables > Actions.
+name: snapshot-dataflow
+
+on:
+  schedule:
+    - cron: "0 12 * * *"   # 09:00 em Fortaleza (UTC-3) — o cron do GitHub é sempre em UTC
+  workflow_dispatch:        # permite rodar manualmente
+    inputs:
+      data_esperada:
+        description: "Opcional: data que todo arquivo precisa ter em _data_snapshot (AAAA-MM-DD)"
+        required: false
+        type: string
+        default: ""
+
+# Nunca duas execuções ao mesmo tempo: a próxima espera a atual terminar.
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-24.04   # fixo: o driver ODBC da Microsoft depende da versão do Ubuntu
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Instalar driver ODBC 18 (se não vier no runner)
+        run: |
+          if ! odbcinst -q -d -n "ODBC Driver 18 for SQL Server" > /dev/null 2>&1; then
+            curl -sSL -O https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb
+            sudo dpkg -i packages-microsoft-prod.deb
+            sudo apt-get update
+            sudo ACCEPT_EULA=Y apt-get install -y msodbcsql18
+          fi
+      - run: pip install -r jobs/snapshot/requirements.txt
+      - run: python jobs/snapshot/snapshot_dataflow.py
+        env:
+          SQL_SERVER: ${{ vars.SQL_SERVER }}
+          SQL_DATABASE: ${{ vars.SQL_DATABASE }}
+          TABELAS: ${{ vars.TABELAS }}
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_BUCKET: ${{ vars.SUPABASE_BUCKET }}
+          PREFIXO: ${{ vars.PREFIXO }}
+          FUSO: ${{ vars.FUSO }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          SQL_USER: ${{ secrets.SQL_USER }}
+          SQL_PASSWORD: ${{ secrets.SQL_PASSWORD }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+
+  # Lê os Parquet do snapshot e alimenta o mart. Só roda se o snapshot terminou com sucesso.
+  # Sem `environment`, igual ao job snapshot: os dois usam Secrets/Variables do repositório.
+  # Se um environment for criado, coloque o mesmo `environment:` nos dois jobs.
+  carga:
+    needs: snapshot
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: jobs/carga
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+          enable-cache: true
+          cache-dependency-glob: jobs/carga/uv.lock
+      - name: Instalar dependências
+        run: uv sync --locked --no-dev
+      - name: Carga
+        run: uv run --no-sync python -m carga
+        env:
+          # Role carga pelo pooler do Supabase em MODO SESSÃO (porta 5432 do pooler).
+          DATABASE_URL_CARGA: ${{ secrets.DATABASE_URL_CARGA }}
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_BUCKET: ${{ vars.SUPABASE_BUCKET }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          # cron: o arquivo precisa ser mais novo que a última carga ok; manual: não.
+          EXIGIR_SNAPSHOT_NOVO: ${{ github.event_name == 'schedule' }}
+          DATA_ESPERADA: ${{ inputs.data_esperada }}
