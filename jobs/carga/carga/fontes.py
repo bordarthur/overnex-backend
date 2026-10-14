@@ -9,7 +9,9 @@ from psycopg.rows import class_row
 
 from carga.db import Conexao
 
-TIPOS_SUPORTADOS = frozenset({"lancamento"})
+# lancamento: formato agregado (Empresa, Data, Id_Descritivo, Valor) → mart.lancamento
+# tabela:     cópia do Parquet com as mesmas colunas → mart.<tabela_destino>
+TIPOS_SUPORTADOS = frozenset({"lancamento", "tabela"})
 
 
 @dataclass(frozen=True)
@@ -18,13 +20,17 @@ class Fonte:
     cliente_id: UUID
     tipo: str
     caminho_bucket: str
+    # só no tipo tabela
+    tabela_destino: str | None = None
+    # coluna do arquivo com a empresa (vira _empresa_id); None = dados do cliente inteiro
+    coluna_empresa: str | None = None
 
 
 def listar_fontes_ativas(conn: Conexao) -> list[Fonte]:
     with conn.cursor(row_factory=class_row(Fonte)) as cur:
         return cur.execute(
             """
-            select id, cliente_id, tipo, caminho_bucket
+            select id, cliente_id, tipo, caminho_bucket, tabela_destino, coluna_empresa
               from cfg.fonte_carga
              where ativo
              order by id
@@ -33,10 +39,17 @@ def listar_fontes_ativas(conn: Conexao) -> list[Fonte]:
 
 
 def fontes_em_conflito(fontes: Sequence[Fonte]) -> set[int]:
-    """Ids das fontes que dividem (cliente, tipo) com outra fonte ativa.
+    """Ids das fontes que gravariam no mesmo lugar que outra fonte ativa do cliente.
 
-    A carga de 'lancamento' substitui TODAS as empresas mapeadas do cliente; com
-    duas fontes do mesmo tipo, a segunda apagaria a primeira. Nenhuma delas roda.
+    Cada carga substitui todos os dados do cliente no destino (mart.lancamento ou
+    mart.<tabela_destino>); com duas fontes no mesmo destino, a segunda apagaria a
+    primeira. Nenhuma delas roda.
     """
-    contagem = Counter((f.cliente_id, f.tipo) for f in fontes)
-    return {f.id for f in fontes if contagem[(f.cliente_id, f.tipo)] > 1}
+    contagem = Counter(destino(f) for f in fontes)
+    return {f.id for f in fontes if contagem[destino(f)] > 1}
+
+
+def destino(fonte: Fonte) -> tuple[UUID, str]:
+    if fonte.tipo == "tabela":
+        return fonte.cliente_id, f"mart.{fonte.tabela_destino}"
+    return fonte.cliente_id, fonte.tipo

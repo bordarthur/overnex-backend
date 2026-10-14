@@ -105,6 +105,109 @@
           }
         }
       }
+    },
+    "/api/dados/{tabela}": {
+      "get": {
+        "tags": [
+          "dados"
+        ],
+        "summary": "Ler Tabela",
+        "operationId": "ler_tabela_api_dados__tabela__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tabela",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]{0,62}$",
+              "description": "Tabela de dados do mart.",
+              "title": "Tabela"
+            },
+            "description": "Tabela de dados do mart."
+          },
+          {
+            "name": "apos",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Devolve as linhas com _linha maior que este valor.",
+              "default": 0,
+              "title": "Apos"
+            },
+            "description": "Devolve as linhas com _linha maior que este valor."
+          },
+          {
+            "name": "limite",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 5000,
+              "minimum": 1,
+              "default": 1000,
+              "title": "Limite"
+            }
+          },
+          {
+            "name": "empresa",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Opcional: só esta empresa (precisa estar no vínculo do usuário).",
+              "title": "Empresa"
+            },
+            "description": "Opcional: só esta empresa (precisa estar no vínculo do usuário)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DadosPayload"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autenticado."
+          },
+          "403": {
+            "description": "Acesso negado."
+          },
+          "404": {
+            "description": "Tabela registrada, mas ainda não criada no banco."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -177,6 +280,112 @@
           "formato"
         ],
         "title": "Apoio"
+      },
+      "Coluna": {
+        "properties": {
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "tipo": {
+            "type": "string",
+            "title": "Tipo"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "nome",
+          "tipo"
+        ],
+        "title": "Coluna"
+      },
+      "DadosPayload": {
+        "properties": {
+          "tabela": {
+            "type": "string",
+            "title": "Tabela"
+          },
+          "empresa_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Empresa Id"
+          },
+          "atualizado_em": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Atualizado Em"
+          },
+          "colunas": {
+            "items": {
+              "$ref": "#/components/schemas/Coluna"
+            },
+            "type": "array",
+            "title": "Colunas"
+          },
+          "linhas": {
+            "items": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Linhas"
+          },
+          "proximo": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Proximo"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "tabela",
+          "empresa_id",
+          "atualizado_em",
+          "colunas",
+          "linhas",
+          "proximo"
+        ],
+        "title": "DadosPayload"
       },
       "HTTPValidationError": {
         "properties": {

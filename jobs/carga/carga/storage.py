@@ -5,7 +5,7 @@ from urllib.parse import quote
 
 import httpx
 
-from carga.config import Settings
+from carga.config import ConfigStorage
 from carga.erros import ErroCarga
 
 TIMEOUT = httpx.Timeout(30.0, read=300.0)
@@ -22,7 +22,7 @@ def _status_real(resposta: httpx.Response) -> int:
         return 400
 
 
-def baixar(settings: Settings, caminho: str, cliente: httpx.Client | None = None) -> bytes:
+def baixar(settings: ConfigStorage, caminho: str, cliente: httpx.Client | None = None) -> bytes:
     """GET /storage/v1/object/<bucket>/<caminho>. Levanta ErroCarga com mensagem clara."""
     alvo = f"{settings.supabase_bucket}/{caminho}"
     url = f"{settings.supabase_url}/storage/v1/object/{quote(alvo)}"

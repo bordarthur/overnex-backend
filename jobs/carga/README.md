@@ -11,7 +11,12 @@ Azure SQL ──snapshot (9h)──► Storage: overnex-bucket/<PREFIXO>/<tabela
 
 ## O que a carga faz
 
-Para cada fonte ativa em `cfg.fonte_carga` (por enquanto só o tipo `lancamento`):
+Cada fonte ativa em `cfg.fonte_carga` tem um tipo:
+
+- **`tabela`**: o Parquet entra como está numa tabela do mart com as mesmas colunas (seção [Tabelas de dados](#tabelas-de-dados-tipo-tabela));
+- **`lancamento`**: o formato agregado `Empresa`, `Data`, `Id_Descritivo`, `Valor` vira `mart.lancamento` (abaixo).
+
+Para uma fonte `lancamento`:
 
 1. baixa o Parquet (`GET /storage/v1/object/<bucket>/<caminho_bucket>`);
 2. valida a data do snapshot. Se falhar, para sem tocar no mart:
@@ -31,6 +36,39 @@ Códigos de saída: `0` tudo ok · `1` alguma fonte falhou · `2` não rodou (co
 Não fazem parte desta entrega:
 - `cfg.regra_lancamento` ainda não é aplicada (TODO de regra de negócio, em `carga/lancamento.py`);
 - arquivo sem linhas é tratado como falha e o mart é mantido.
+
+## Tabelas de dados (tipo `tabela`)
+
+Cada Parquet do bucket pode virar uma tabela em `mart` com **as mesmas colunas** (mesmos nomes; texto → `text`, double → `numeric`, data → `date`) mais três colunas de sistema: `_linha` (posição no arquivo), `_cliente_id` e `_empresa_id`. A API as entrega ao front em `GET /api/dados/<tabela>`.
+
+Para cada fonte `tabela`:
+
+1. baixa o Parquet e valida a data do snapshot (mesmas regras de cima);
+2. confere as colunas contra a tabela do mart:
+   - coluna da tabela que falta no arquivo → **falha**, mart intacto;
+   - coluna nova no arquivo, ainda sem coluna na tabela → **ignorada**, e a fonte termina `ok` com aviso em `mart.carga_fonte.mensagem`;
+3. em **uma** transação: temp table + `COPY`; se a fonte tem `coluna_empresa`, traduz o valor por `cfg.mapa_empresa` (valor sem mapeamento → falha listando); apaga **todas** as linhas do cliente na tabela e insere as do arquivo;
+4. commit só se tudo deu certo.
+
+Configuração em `cfg.fonte_carga`:
+
+| Coluna | Para quê |
+|---|---|
+| `tipo` | `tabela` |
+| `caminho_bucket` | caminho do Parquet no bucket |
+| `tabela_destino` | nome da tabela em `mart` (ex.: `f_vendas_nilo_maia`) |
+| `coluna_empresa` | coluna do arquivo com a empresa, ex. `EMPRESA`. Vazia = a tabela é do cliente inteiro: todos os usuários do cliente veem todas as linhas |
+| `contem_dado_nominal` | `true` = só perfis com `ve_dado_nominal` em `cfg.perfil_tabela` leem pela API |
+
+### Tabela nova
+
+1. Rode o [inventário](#inventário-do-bucket): ele traz, para cada arquivo, o `create table` sugerido.
+2. Crie uma migration nova em `supabase/migrations/` com esse SQL. O `select mart.preparar_tabela_dados('<tabela>')` logo depois do `create table` aplica RLS, políticas, grants e índice.
+3. Cadastre a fonte em `cfg.fonte_carga` e libere a tabela aos perfis em `cfg.perfil_tabela`.
+
+### Coluna nova no DW
+
+A carga continua funcionando e avisa. Para a coluna entrar no mart, crie uma migration com `alter table mart.<tabela> add column "<Nome>" <tipo>;`. O tipo está no inventário. Nunca renomeie nem apague colunas: o front lê pelos nomes.
 
 ## Variáveis
 
@@ -87,6 +125,17 @@ uv run python -m carga
 
 O bucket local começa vazio, então a carga local falha com "arquivo não existe" até você subir arquivos nos caminhos de `cfg.fonte_carga` (os testes fazem isso).
 
+## Inventário do bucket
+
+Lista os Parquet do bucket e descreve colunas, tipos, nulos, os valores distintos das colunas de empresa e o `create table` sugerido para o mart. Serve para escrever as migrations das tabelas de dados e o `cfg.mapa_empresa`. Só lê o Storage: não conecta no banco e não grava nada.
+
+```bash
+uv run python -m carga.inspecionar                  # prefixo dataflow → inventario_bucket.md
+uv run python -m carga.inspecionar dataflow saida.md
+```
+
+Precisa de `SUPABASE_URL` e `SUPABASE_SECRET_KEY` (no `.env` ou no ambiente). O relatório fica fora do git (`.gitignore`), porque traz os nomes das empresas.
+
 ## Testes e qualidade
 
 ```bash
@@ -108,7 +157,11 @@ carga/
   config.py       Settings
   db.py           conexão do role carga (recusa o pooler em modo transação)
   storage.py      GET no Storage, com erro claro para 404 e 401/403
-  fontes.py       cfg.fonte_carga ativas; recusa duas fontes do mesmo tipo para o mesmo cliente
+  fontes.py       cfg.fonte_carga ativas; recusa duas fontes no mesmo destino para o mesmo cliente
+  arquivo.py      baixar, abrir o Parquet e validar a data (comum aos tipos)
   validacao.py    regras de data e de colunas (funções puras)
-  lancamento.py   carga da fonte 'lancamento'
+  tabela.py       carga do tipo 'tabela' (Parquet → mart.<tabela>, mesmas colunas)
+  lancamento.py   carga do tipo 'lancamento' (formato agregado → mart.lancamento)
+  esquema.py      tipos Parquet → Postgres e o create table das tabelas de dados
+  inspecionar.py  inventário do bucket (python -m carga.inspecionar)
 ```

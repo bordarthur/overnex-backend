@@ -14,7 +14,7 @@ select throws_ok('select count(*) from seg.usuario_empresa', '42501', null, 'car
 select throws_ok('select count(*) from seg.log_acesso', '42501', null, 'carga não lê seg.log_acesso');
 
 -- cfg: lê só fonte_carga, mapa_empresa e empresa
-select is((select count(*)::int from cfg.fonte_carga), 2, 'carga lê cfg.fonte_carga');
+select is((select count(*)::int from cfg.fonte_carga), 4, 'carga lê cfg.fonte_carga');
 select is((select count(*)::int from cfg.mapa_empresa), 3, 'carga lê cfg.mapa_empresa');
 select is((select count(*)::int from cfg.empresa), 3, 'carga lê cfg.empresa');
 select throws_ok('select count(*) from cfg.cliente', '42501', null, 'carga não lê cfg.cliente');

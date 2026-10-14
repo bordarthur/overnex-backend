@@ -33,6 +33,7 @@ Nada fica em `public`, e esses schemas não são expostos pelo PostgREST (`confi
 2. `..._roles_e_grants.sql` — roles `api_site` e `carga` (sem BYPASSRLS) e grants.
 3. `..._rls.sql` — ENABLE + FORCE RLS em todas as tabelas de `mart`, `cfg` e `seg`, as funções `seg.clientes_do_usuario()` / `seg.empresas_do_usuario()` (SECURITY DEFINER, STABLE, `search_path` fixo) e as políticas.
 4. `..._carga_fonte_data_opcional.sql` — `mart.carga_fonte.data_snapshot` passa a aceitar null. A carga grava a fonte como `rodando` antes de baixar o arquivo e precisa registrar falhas sem data (arquivo inexistente, chave errada, `_data_snapshot` misturado). Linha `ok` continua exigindo a data (check), e a API só lê linhas `ok`.
+5. `..._tabelas_de_dados.sql` — uma tabela no `mart` para cada Parquet do bucket, com as mesmas colunas (nomes preservados; texto → `text`, double → `numeric`, data → `date`) mais `_linha`, `_cliente_id` e `_empresa_id`. Inclui `cfg.perfil_tabela` (quais tabelas cada perfil lê), o tipo `tabela` em `cfg.fonte_carga` e a função `mart.preparar_tabela_dados()`, que aplica RLS, políticas, grants e índice a uma tabela nova. Para tabela ou coluna nova, veja [jobs/carga/README.md](../jobs/carga/README.md#tabelas-de-dados-tipo-tabela).
 
 ### Storage
 
@@ -57,6 +58,12 @@ alter role carga    with login password '<segredo>';
 
 A migration 3 confere que o dono das funções (`postgres`) tem BYPASSRLS, como no Supabase; se não tiver, ela falha em vez de deixar as funções de segurança devolvendo vazio.
 
+## Scripts de produção (`producao/`)
+
+Cadastros de produção por cliente, para rodar à mão no SQL Editor. Não são migrations e não rodam no `db reset`.
+
+- `nilo_maia_tabelas.sql` — fontes das 21 tabelas de dados da Nilo Maia. A de lançamentos passa a ser do tipo `tabela`; as outras entram inativas.
+
 ## Testes (pgTAP)
 
 | Arquivo | O que garante |
@@ -65,3 +72,4 @@ A migration 3 confere que o dono das funções (`postgres`) tem BYPASSRLS, como 
 | `02_sem_usuario` | sem `app.usuario_id` (ou vazio), nenhuma linha |
 | `03_role_carga` | `carga` não lê `seg`, não escreve em `cfg`, escreve no `mart` e cria tabela temporária |
 | `04_integridade` | `cfg.mapa_empresa` (e os outros vínculos) recusam empresa de outro cliente; `mart.carga_fonte` `ok` exige `data_snapshot` |
+| `05_tabelas_de_dados` | as 21 tabelas de dados têm RLS; nomes e tipos preservados; isolamento por cliente e por empresa; linhas sem empresa visíveis ao cliente inteiro; `carga` escreve, `api_site` só lê |

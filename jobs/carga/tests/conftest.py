@@ -21,6 +21,7 @@ import psycopg
 import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
+from psycopg import sql
 from psycopg.rows import TupleRow
 from pydantic import SecretStr
 
@@ -152,31 +153,58 @@ def admin() -> Iterator[AdminConn]:
         yield conn
 
 
-_TABELAS_MART = ("mart.carga", "mart.carga_fonte", "mart.lancamento")
+# Ordem de inserção (a de exclusão é a inversa por causa das FKs).
+_TABELAS_MART = ("mart.carga", "mart.carga_fonte", "mart.lancamento", "mart.f_estoque_nilo_maia")
+_COLUNAS_FONTE = (
+    "ativo",
+    "caminho_bucket",
+    "tabela_destino",
+    "coluna_empresa",
+    "contem_dado_nominal",
+)
+
+
+def _tabela(nome: str) -> sql.Composable:
+    return sql.Identifier(*nome.split("."))
 
 
 @pytest.fixture
 def mart_restaurado(admin: AdminConn) -> Iterator[None]:
-    """Guarda o mart antes do teste e devolve exatamente igual depois (a API usa o seed)."""
+    """Guarda o mart e as fontes antes do teste e devolve igual depois (a API usa o seed)."""
     copia: dict[str, tuple[list[str], list[TupleRow]]] = {}
     for tabela in _TABELAS_MART:
-        cur = admin.execute(f"select * from {tabela}")  # noqa: S608 — nome fixo acima
+        cur = admin.execute(sql.SQL("select * from {}").format(_tabela(tabela)))
         assert cur.description is not None
         copia[tabela] = ([c.name for c in cur.description], cur.fetchall())
+    fontes = admin.execute(
+        sql.SQL("select id, {} from cfg.fonte_carga").format(
+            sql.SQL(", ").join(map(sql.Identifier, _COLUNAS_FONTE))
+        )
+    ).fetchall()
     yield
     with admin.transaction():
-        admin.execute("delete from mart.carga_fonte")
-        admin.execute("delete from mart.carga")
-        admin.execute("delete from mart.lancamento")
+        for tabela in reversed(_TABELAS_MART):
+            admin.execute(sql.SQL("delete from {}").format(_tabela(tabela)))
+        admin.execute("delete from cfg.fonte_carga where id <> all(%s)", ([f[0] for f in fontes],))
+        with admin.cursor() as cur:
+            cur.executemany(
+                sql.SQL("update cfg.fonte_carga set {} where id = %s").format(
+                    sql.SQL(", ").join(
+                        sql.SQL("{} = %s").format(sql.Identifier(c)) for c in _COLUNAS_FONTE
+                    )
+                ),
+                [(*f[1:], f[0]) for f in fontes],
+            )
         for tabela in _TABELAS_MART:
             colunas, linhas = copia[tabela]
             if not linhas:
                 continue
-            lista = ", ".join(colunas)
-            marcadores = ", ".join(["%s"] * len(colunas))
             with admin.cursor() as cur:
                 cur.executemany(
-                    f"insert into {tabela} ({lista}) overriding system value "  # noqa: S608
-                    f"values ({marcadores})",
+                    sql.SQL("insert into {} ({}) overriding system value values ({})").format(
+                        _tabela(tabela),
+                        sql.SQL(", ").join(map(sql.Identifier, colunas)),
+                        sql.SQL(", ").join(sql.Placeholder() * len(colunas)),
+                    ),
                     linhas,
                 )

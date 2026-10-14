@@ -71,6 +71,7 @@ app/
   seguranca/acesso.py  checagem em 6 etapas + seg.log_acesso
   telas/contrato.py    ScreenPayload, Hero, Apoio, Visual, Alerta, Status
   telas/fin_01.py      GET /api/telas/fin-01 (exemplo, sem regra de negócio)
+  dados/router.py      GET /api/dados/{tabela}: linhas das tabelas de dados do mart
   farol/               status(valor, faixa), função pura
   admin/, pdf/         routers vazios (TODO)
 scripts/export_openapi.py
@@ -83,6 +84,30 @@ scripts/export_openapi.py
 3. `exigir_tela("FIN-01")` roda as 6 etapas (usuário ativo → vínculo → papel → perfil libera a tela → empresa no vínculo → dado nominal). Cliente e empresas vêm do vínculo no banco; o `empresa` da query só vale se estiver nele.
 4. Toda decisão grava em `seg.log_acesso`. Na negação, a transação faz commit só do log e a resposta é `403 {"detail": "Acesso negado."}`, sem dizer a etapa.
 5. Com sucesso, a tela monta o `ScreenPayload`; `atualizado_em` é a `data_snapshot` da última carga `ok` de lançamentos do cliente (ou `null`).
+
+### Tabelas de dados: `GET /api/dados/{tabela}`
+
+Entrega as linhas de uma tabela de dados do mart (as que a carga copia do Parquet, com as mesmas colunas).
+
+```
+GET /api/dados/f_estoque_nilo_maia?empresa=<uuid opcional>&apos=0&limite=1000
+```
+
+```json
+{
+  "tabela": "f_estoque_nilo_maia",
+  "empresa_id": null,
+  "atualizado_em": "2026-10-14",
+  "colunas": [{"nome": "_linha", "tipo": "bigint"}, {"nome": "_empresa_id", "tipo": "uuid"}, {"nome": "EMPRESA", "tipo": "text"}],
+  "linhas": [[1, "…", "1 Nilo Maia"]],
+  "proximo": 1000
+}
+```
+
+- **Paginação:** por `_linha`. Passe `proximo` em `apos` para a página seguinte; `null` = acabou. O limite máximo é 5000 linhas.
+- **Acesso:** as mesmas 6 etapas das telas. Na etapa 4, a tabela precisa estar registrada para o cliente em `cfg.fonte_carga` e liberada a um perfil do usuário em `cfg.perfil_tabela`. Na etapa 6, `contem_dado_nominal` exige `ve_dado_nominal`.
+- **Filtro:** o RLS só devolve linhas do cliente e das empresas do usuário. Linhas sem empresa (tabelas sem `coluna_empresa`) são vistas por todos os usuários do cliente.
+- **Limites:** colunas e nomes de tabela nunca vêm da requisição para o SQL. Pelo caminho, só são aceitos nomes `^[a-z][a-z0-9_]*$`, e a tabela ainda precisa estar registrada para o cliente.
 
 ### Conexão em produção
 

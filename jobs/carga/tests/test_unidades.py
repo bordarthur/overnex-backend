@@ -8,11 +8,12 @@ import httpx
 import pyarrow as pa
 import pytest
 
+from carga.arquivo import abrir_parquet, ler_data_snapshot
 from carga.config import Settings
 from carga.db import conectar
 from carga.erros import ErroCarga
 from carga.fontes import Fonte, fontes_em_conflito
-from carga.lancamento import abrir_parquet, ler_data_snapshot, preparar
+from carga.lancamento import preparar
 from carga.storage import baixar
 from tests.conftest import gerar_parquet
 

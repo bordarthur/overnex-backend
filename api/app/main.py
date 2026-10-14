@@ -13,6 +13,7 @@ from app.admin.router import router as admin_router
 from app.core.config import Ambiente, Settings, get_settings
 from app.core.db import Pool, criar_pool, get_pool
 from app.core.erros import AcessoNegado
+from app.dados.router import router as dados_router
 from app.pdf.router import router as pdf_router
 from app.telas.fin_01 import router as fin_01_router
 
@@ -77,6 +78,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return {"status": "ok"}
 
     app.include_router(fin_01_router)
+    app.include_router(dados_router)
     app.include_router(admin_router)
     app.include_router(pdf_router)
     return app

@@ -18,12 +18,12 @@ from typing import Literal
 
 from pydantic import ValidationError
 
-from carga import lancamento, storage
+from carga import lancamento, storage, tabela
+from carga.arquivo import Progresso
 from carga.config import Settings
 from carga.db import Conexao, conectar
 from carga.erros import ErroCarga
 from carga.fontes import TIPOS_SUPORTADOS, Fonte, fontes_em_conflito, listar_fontes_ativas
-from carga.lancamento import Progresso
 
 logger = logging.getLogger("carga")
 
@@ -70,14 +70,19 @@ def _rodar_fonte(
     mensagem: str | None = None
     try:
         if fonte.id in em_conflito:
+            alvo = f"mart.{fonte.tabela_destino}" if fonte.tipo == "tabela" else fonte.tipo
             raise ErroCarga(
-                f"mais de uma fonte '{fonte.tipo}' ativa para o cliente {fonte.cliente_id}; "
+                f"mais de uma fonte ativa do cliente {fonte.cliente_id} grava em {alvo}; "
                 "deixe só uma ativa em cfg.fonte_carga"
             )
         if fonte.tipo not in TIPOS_SUPORTADOS:
             raise ErroCarga(f"tipo de fonte não suportado: {fonte.tipo}")
-        lancamento.carregar(conn, settings, fonte, baixar, progresso)
+        if fonte.tipo == "tabela":
+            tabela.carregar(conn, settings, fonte, baixar, progresso)
+        else:
+            lancamento.carregar(conn, settings, fonte, baixar, progresso)
         status = "ok"
+        mensagem = "; ".join(progresso.avisos) or None
     except ErroCarga as exc:
         mensagem = str(exc)
     except Exception as exc:

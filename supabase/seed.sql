@@ -120,3 +120,33 @@ select c.id, f.id, f.cliente_id,
       join cfg.empresa e on e.id = ml.empresa_id
      where e.cliente_id = f.cliente_id
  ) l;
+
+-- Tabela de dados (tipo 'tabela'): mart.f_estoque_nilo_maia com linhas fictícias dos dois
+-- clientes. Fontes inativas: a carga diária local não as roda; os testes ativam quando precisam.
+insert into cfg.fonte_carga
+    (cliente_id, tipo, caminho_bucket, ativo, tabela_destino, coluna_empresa, contem_dado_nominal)
+values
+    ('c1000000-0000-4000-8000-00000000000a', 'tabela',
+     'dataflow/dbo_f_estoque_padrao_alfa/dbo_f_estoque_padrao_alfa.parquet',
+     false, 'f_estoque_nilo_maia', 'EMPRESA', false),
+    ('c1000000-0000-4000-8000-00000000000b', 'tabela',
+     'dataflow/dbo_f_estoque_padrao_beta/dbo_f_estoque_padrao_beta.parquet',
+     false, 'f_estoque_nilo_maia', 'EMPRESA', false);
+
+insert into cfg.perfil_tabela (perfil_id, tabela, ve_dado_nominal) values
+    ('f1000000-0000-4000-8000-00000000000a', 'f_estoque_nilo_maia', false),
+    ('f1000000-0000-4000-8000-00000000000b', 'f_estoque_nilo_maia', false);
+
+insert into mart.f_estoque_nilo_maia
+    (_linha, _cliente_id, _empresa_id, "en_filial", "en_codigoproduto", "en_saldoestoque",
+     "EMPRESA", "QTD_RESERVADA", "QTD_BLOQUEADA", "QTD_PENDENTE", "ESTOQUE_DISPONIVEL",
+     "CUSTOFIN", "_data_snapshot")
+values
+    (1, 'c1000000-0000-4000-8000-00000000000a', 'e1000000-0000-4000-8000-0000000000a1',
+     '1', 'P001', 120, 'ALFA IND', 10, 0, 5, 105, 12.50, '2026-10-12'),
+    (2, 'c1000000-0000-4000-8000-00000000000a', 'e1000000-0000-4000-8000-0000000000a1',
+     '1', 'P002', 40, 'ALFA IND', 0, 2, 0, 38, 7.25, '2026-10-12'),
+    (3, 'c1000000-0000-4000-8000-00000000000a', 'e1000000-0000-4000-8000-0000000000a2',
+     '2', 'P001', 15, 'ALFA COM', 0, 0, 0, 15, 12.50, '2026-10-12'),
+    (1, 'c1000000-0000-4000-8000-00000000000b', 'e1000000-0000-4000-8000-0000000000b1',
+     '1', 'B900', 300, 'BETA SERV', 50, 0, 0, 250, 3.10, '2026-10-11');
