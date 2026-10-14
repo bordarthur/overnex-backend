@@ -16,18 +16,21 @@ from dataclasses import dataclass, field
 from functools import partial
 from typing import Literal
 
+import psycopg
 from pydantic import ValidationError
 
 from carga import lancamento, storage, tabela
 from carga.arquivo import Progresso
 from carga.config import Settings
 from carga.db import Conexao, conectar
-from carga.erros import ErroCarga
+from carga.erros import BancoSemEspaco, ErroCarga
 from carga.fontes import TIPOS_SUPORTADOS, Fonte, fontes_em_conflito, listar_fontes_ativas
 
 logger = logging.getLogger("carga")
 
 Status = Literal["ok", "erro"]
+
+SEM_ESPACO = (psycopg.errors.DiskFull, psycopg.errors.ReadOnlySqlTransaction)
 
 
 @dataclass
@@ -83,6 +86,13 @@ def _rodar_fonte(
             lancamento.carregar(conn, settings, fonte, baixar, progresso)
         status = "ok"
         mensagem = "; ".join(progresso.avisos) or None
+    except SEM_ESPACO as exc:
+        # Nem o registro do erro seria gravado; a carga inteira para aqui.
+        alvo = fonte.tabela_destino or fonte.tipo
+        raise BancoSemEspaco(
+            f"o banco ficou sem espaço ou só leitura na fonte {fonte.id} ({alvo}); "
+            f"as fontes seguintes não rodaram. {BancoSemEspaco.DICA} ({type(exc).__name__})"
+        ) from exc
     except ErroCarga as exc:
         mensagem = str(exc)
     except Exception as exc:
@@ -108,11 +118,18 @@ def _rodar_fonte(
     return ResultadoFonte(fonte=fonte, status=status, progresso=progresso, mensagem=mensagem)
 
 
+def _so_leitura(conn: Conexao) -> bool:
+    linha = conn.execute("show transaction_read_only").fetchone()
+    return bool(linha and linha[0] == "on")
+
+
 def executar(settings: Settings, baixar: Callable[[str], bytes] | None = None) -> ResultadoCarga:
     """Roda a carga inteira. `baixar` existe para teste; o padrão é o Supabase Storage."""
     baixar = baixar or partial(storage.baixar, settings)
 
     with conectar(settings) as conn:
+        if _so_leitura(conn):
+            raise BancoSemEspaco(f"o banco está em modo só leitura. {BancoSemEspaco.DICA}")
         linha = conn.execute(
             "insert into mart.carga (status) values ('rodando') returning id"
         ).fetchone()
@@ -139,10 +156,15 @@ def executar(settings: Settings, baixar: Callable[[str], bytes] | None = None) -
             resultado.mensagem = f"erro inesperado: {type(exc).__name__}: {exc}"
             raise
         finally:
-            conn.execute(
-                "update mart.carga set status = %s, mensagem = %s, fim = now() where id = %s",
-                (resultado.status, resultado.mensagem, resultado.carga_id),
-            )
+            try:
+                conn.execute(
+                    "update mart.carga set status = %s, mensagem = %s, fim = now() where id = %s",
+                    (resultado.status, resultado.mensagem, resultado.carga_id),
+                )
+            except psycopg.Error as exc:
+                logger.warning(
+                    "Não deu para registrar o fim da carga %s: %s", resultado.carga_id, exc
+                )
     return resultado
 
 
@@ -176,6 +198,9 @@ def main() -> int:
 
     try:
         resultado = executar(settings)
+    except BancoSemEspaco as exc:
+        print(f"Carga interrompida: {exc}", file=sys.stderr)
+        return 2
     except ErroCarga as exc:
         print(f"Carga não executada: {exc}", file=sys.stderr)
         return 2

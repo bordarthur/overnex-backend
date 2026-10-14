@@ -3,10 +3,12 @@
 from datetime import date
 from decimal import Decimal
 
+import psycopg
 import pytest
 from pydantic import SecretStr
 
 from carga.config import Settings
+from carga.erros import BancoSemEspaco
 from carga.main import ResultadoCarga, executar
 from tests.conftest import (
     CAMINHO_A,
@@ -320,3 +322,42 @@ def test_chave_errada(settings: Settings, bucket: Bucket, admin: AdminConn) -> N
     for status, *_, mensagem in carga_fontes(admin, resultado).values():
         assert status == "erro"
         assert "acesso negado ao Storage" in str(mensagem)
+
+
+# --- banco sem espaço / só leitura -----------------------------------------------------
+
+
+def test_banco_so_leitura_para_antes_de_comecar(settings: Settings, admin: AdminConn) -> None:
+    so_leitura = settings.database_url_carga.get_secret_value() + (
+        "?options=-c%20default_transaction_read_only%3Don"
+    )
+    cargas_antes = admin.execute("select count(*) from mart.carga").fetchone()
+
+    with pytest.raises(BancoSemEspaco, match="modo só leitura"):
+        executar(settings.model_copy(update={"database_url_carga": SecretStr(so_leitura)}))
+
+    assert admin.execute("select count(*) from mart.carga").fetchone() == cargas_antes
+
+
+def test_disco_cheio_no_meio_interrompe_a_carga(
+    settings: Settings, bucket: Bucket, admin: AdminConn
+) -> None:
+    antes = (mart(admin, CLIENTE_A), mart(admin, CLIENTE_B))
+
+    def baixar(_caminho: str) -> bytes:
+        raise psycopg.errors.DiskFull("could not extend file: No space left on device")
+
+    with pytest.raises(BancoSemEspaco, match="as fontes seguintes não rodaram"):
+        executar(settings, baixar)
+
+    ultima = admin.execute(
+        "select status, mensagem from mart.carga order by id desc limit 1"
+    ).fetchone()
+    assert ultima is not None
+    assert ultima[0] == "erro"
+    assert "sem espaço" in str(ultima[1])
+    # só a primeira fonte começou; nada mudou no mart
+    assert admin.execute(
+        "select count(*) from mart.carga_fonte where carga_id = (select max(id) from mart.carga)"
+    ).fetchone() == (1,)
+    assert (mart(admin, CLIENTE_A), mart(admin, CLIENTE_B)) == antes
