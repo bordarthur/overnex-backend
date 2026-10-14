@@ -24,13 +24,17 @@ class Fonte:
     tabela_destino: str | None = None
     # coluna do arquivo com a empresa (vira _empresa_id); None = dados do cliente inteiro
     coluna_empresa: str | None = None
+    # janela de datas: só os últimos N meses desta coluna entram (ambos None = tudo)
+    coluna_data: str | None = None
+    meses_retidos: int | None = None
 
 
 def listar_fontes_ativas(conn: Conexao) -> list[Fonte]:
     with conn.cursor(row_factory=class_row(Fonte)) as cur:
         return cur.execute(
             """
-            select id, cliente_id, tipo, caminho_bucket, tabela_destino, coluna_empresa
+            select id, cliente_id, tipo, caminho_bucket, tabela_destino, coluna_empresa,
+                   coluna_data, meses_retidos
               from cfg.fonte_carga
              where ativo
              order by id

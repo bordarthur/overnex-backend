@@ -154,7 +154,13 @@ def admin() -> Iterator[AdminConn]:
 
 
 # Ordem de inserção (a de exclusão é a inversa por causa das FKs).
-_TABELAS_MART = ("mart.carga", "mart.carga_fonte", "mart.lancamento", "mart.f_estoque_nilo_maia")
+_TABELAS_MART = (
+    "mart.carga",
+    "mart.carga_fonte",
+    "mart.lancamento",
+    "mart.f_estoque_nilo_maia",
+    "mart.f_metas_nilo_maia",
+)
 _COLUNAS_FONTE = (
     "ativo",
     "caminho_bucket",

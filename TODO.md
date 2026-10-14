@@ -12,7 +12,7 @@ Pendências depois das rodadas 1 (API + banco), 2 (carga + agendamento) e 3 (tab
   ```
 - [ ] **Cadastrar o Secret `DATABASE_URL_CARGA`** no GitHub, com o pooler em modo sessão (porta 5432). Os demais segredos e variáveis o snapshot já usa; ver [jobs/carga/README.md](jobs/carga/README.md).
 - [ ] **Decidir se usamos um GitHub environment** para os segredos. Hoje os jobs `snapshot` e `carga` leem os segredos do repositório. Se criarmos um environment, colocar o mesmo `environment:` nos dois jobs.
-- [ ] **Confirmar o espaço do banco antes de ativar as tabelas de dados.** São ~7 milhões de linhas no bucket da Nilo Maia (vendas 2,0 mi, receitas 1,3 mi, lançamentos 0,8 mi…), na ordem de 1,5–2,5 GB no Postgres, com picos maiores durante a troca diária. O plano gratuito do Supabase tem 500 MB e, se passar, o banco fica só leitura. Rodar o [supabase/producao/nilo_maia_tabelas.sql](supabase/producao/nilo_maia_tabelas.sql) depois do `db push` (ele ativa só lançamentos) e ativar as demais aos poucos, olhando **Settings → Usage**.
+- [ ] **Reativar as tabelas de movimento com a janela de 3 meses, olhando o disco.** Em 14/10 a carga encheu o disco e o banco ficou só leitura. Aplicar a migration 6, rodar [supabase/producao/nilo_maia_janela.sql](supabase/producao/nilo_maia_janela.sql), reativar uma tabela grande por vez e acompanhar **Settings → Usage**. Depois da primeira carga com janela, rodar `vacuum full` nas tabelas que já estavam cheias, para devolver o espaço.
 - [ ] **Validar com Docker**, que não foi possível no ambiente de desenvolvimento:
   - `supabase start && supabase db reset && supabase test db`
   - `cd api && uv run pytest`
@@ -23,6 +23,7 @@ Pendências depois das rodadas 1 (API + banco), 2 (carga + agendamento) e 3 (tab
 
 - [ ] **Aplicar `cfg.regra_lancamento` na carga** (reclassificar/excluir) antes da agregação. O ponto está marcado em [jobs/carga/carga/lancamento.py](jobs/carga/carga/lancamento.py).
 - [ ] **FIN-01 com regra real, lendo `mart.f_lancamentos_agrupados_nilo_maia`.** O arquivo de lançamentos da Nilo Maia não está no formato `Empresa`/`Data`/`Id_Descritivo`/`Valor` e passou a ser carregado como tabela de dados, então `mart.lancamento` fica vazio para esse cliente. Falta decidir qual data (competência ou caixa), qual valor (realizado ou previsto) e como a conta vira linha do demonstrativo; ver [api/app/telas/fin_01.py](api/app/telas/fin_01.py).
+- [ ] **Confirmar as colunas da janela de datas** em [supabase/producao/nilo_maia_janela.sql](supabase/producao/nilo_maia_janela.sql), principalmente `en_datemi` × `en_datemicao` em vendas, e se 3 meses bastam para todas as telas (o FIN-01 compara 12 meses).
 - [ ] **Datas como texto nas tabelas de dados.** O DW manda as datas como texto (`Data`, `DATA_COMPETENCIA`, `en_datemi`…), e elas estão em `text` no mart. Para filtrar e ordenar por data no banco, é preciso saber o formato e criar colunas `date` (só adição).
 - [ ] **Tabelas sem coluna de empresa** (15 das 21, ex. vendas, receitas, compras): todo usuário do cliente vê todas as linhas. Se alguma tiver filial ou empresa em outra coluna (ex. `CODFILIAL`), dá para mapear e separar por empresa.
 - [ ] **Usar `cfg.parametro` e `cfg.painel`.** As tabelas existem e têm dados no seed, mas nada as lê ainda.

@@ -208,3 +208,87 @@ def test_tipo_incompativel(settings: Settings, bucket: Bucket, admin: AdminConn)
         mensagem
     )
     assert linhas(admin, CLIENTE_A) == antes
+
+
+# --- janela de datas -----------------------------------------------------------------
+
+CAMINHO_METAS = "dataflow/dbo_f_metas_padrao_alfa/dbo_f_metas_padrao_alfa.parquet"
+
+
+def metas(competencias: list[str | None]) -> bytes:
+    n = len(competencias)
+    tabela = pa.table(
+        {
+            "Competencia": pa.array(competencias, pa.string()),
+            "Valor": pa.array([float(i) for i in range(n)], pa.float64()),
+            "Empresa": pa.array(["Padrão LANN Alfa"] * n),
+            "_data_snapshot": pa.array([D] * n, pa.date32()),
+        }
+    )
+    buffer = io.BytesIO()
+    pq.write_table(tabela, buffer, compression="zstd")
+    return buffer.getvalue()
+
+
+def criar_fonte_metas(admin: AdminConn, coluna_data: str | None, meses: int | None) -> None:
+    admin.execute("update cfg.fonte_carga set ativo = false")
+    admin.execute(
+        """
+        insert into cfg.fonte_carga
+            (cliente_id, tipo, caminho_bucket, tabela_destino, contem_dado_nominal,
+             coluna_data, meses_retidos)
+        values (%s, 'tabela', %s, 'f_metas_nilo_maia', false, %s, %s)
+        """,
+        (CLIENTE_A, CAMINHO_METAS, coluna_data, meses),
+    )
+
+
+def competencias(admin: AdminConn) -> list[str | None]:
+    return [
+        r[0]
+        for r in admin.execute(
+            'select "Competencia" from mart.f_metas_nilo_maia where _cliente_id = %s '
+            "order by _linha",
+            (CLIENTE_A,),
+        ).fetchall()
+    ]
+
+
+def test_janela_de_datas(settings: Settings, bucket: Bucket, admin: AdminConn) -> None:
+    criar_fonte_metas(admin, "Competencia", 3)
+    bucket.subir(
+        CAMINHO_METAS,
+        metas(["2026-10-01", "2026-08-01 00:00:00", "2026-07-31", None, "2025-12-01"]),
+    )
+
+    resultado = executar(settings)
+
+    assert resultado.status == "ok", resultado
+    status, data, lidas, gravadas, mensagem = fonte(admin, resultado)
+    assert (status, data, lidas, gravadas) == ("ok", D, 5, 3)
+    assert mensagem == (
+        "janela de 3 meses em Competencia: 2 linhas antes de 01/08/2026 ficaram de fora"
+    )
+    assert competencias(admin) == ["2026-10-01", "2026-08-01 00:00:00", None]
+
+
+def test_sem_janela_entra_tudo(settings: Settings, bucket: Bucket, admin: AdminConn) -> None:
+    criar_fonte_metas(admin, None, None)
+    bucket.subir(CAMINHO_METAS, metas(["2026-10-01", "2020-01-01"]))
+
+    assert executar(settings).status == "ok"
+    assert competencias(admin) == ["2026-10-01", "2020-01-01"]
+
+
+def test_janela_com_formato_nao_reconhecido(
+    settings: Settings, bucket: Bucket, admin: AdminConn
+) -> None:
+    criar_fonte_metas(admin, "Competencia", 3)
+    bucket.subir(CAMINHO_METAS, metas(["2026-10-01", "outubro"]))
+
+    resultado = executar(settings)
+
+    status, *_, mensagem = fonte(admin, resultado)
+    assert status == "erro"
+    assert "formato não reconhecido" in str(mensagem)
+    assert competencias(admin) == []

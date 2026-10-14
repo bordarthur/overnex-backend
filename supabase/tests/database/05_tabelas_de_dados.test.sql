@@ -5,7 +5,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 grant usage on schema extensions to api_site, carga;
 
-select plan(16);
+select plan(18);
 
 -- preparo padrão aplicado às 21 tabelas da migration 5
 select is(
@@ -72,6 +72,14 @@ select throws_ok($$insert into mart.f_estoque_nilo_maia (_linha, _cliente_id, _e
 select throws_ok('select count(*) from cfg.perfil_tabela', '42501', null,
                  'carga não lê cfg.perfil_tabela');
 reset role;
+
+-- janela de datas (migration 6): coluna e meses andam juntos, e só no tipo tabela
+select throws_ok(
+    $$update cfg.fonte_carga set meses_retidos = 3 where tipo = 'tabela'$$,
+    '23514', null, 'meses_retidos sem coluna_data é recusado');
+select throws_ok(
+    $$update cfg.fonte_carga set coluna_data = 'Data', meses_retidos = 3 where tipo = 'lancamento'$$,
+    '23514', null, 'janela só vale para o tipo tabela');
 
 -- a função de preparo não é chamável pelos roles da aplicação
 set local role api_site;

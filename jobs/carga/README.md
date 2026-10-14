@@ -59,6 +59,18 @@ Configuração em `cfg.fonte_carga`:
 | `tabela_destino` | nome da tabela em `mart` (ex.: `f_vendas_nilo_maia`) |
 | `coluna_empresa` | coluna do arquivo com a empresa, ex. `EMPRESA`. Vazia = a tabela é do cliente inteiro: todos os usuários do cliente veem todas as linhas |
 | `contem_dado_nominal` | `true` = só perfis com `ve_dado_nominal` em `cfg.perfil_tabela` leem pela API |
+| `coluna_data` + `meses_retidos` | janela de datas: só entram as linhas dos últimos N meses dessa coluna (veja abaixo). Vazias = a tabela entra inteira |
+
+### Janela de datas
+
+Para tabelas de movimento grandes (vendas, receitas, lançamentos…), a carga pode gravar só os últimos N meses:
+
+- **Início da janela:** dia 1 do mês do `_data_snapshot` menos N-1. Snapshot de 14/10 com N = 3 → a partir de 01/08. A referência é o snapshot, nunca "hoje".
+- **Data vazia:** a linha entra.
+- **Formatos aceitos:** colunas `date` ou `timestamp`, e texto como `AAAA-MM-DD`, `DD/MM/AAAA` ou `AAAA/MM/DD`, com ou sem hora. Cada coluna precisa usar um formato só; senão, a fonte falha com exemplos dos valores e o mart fica intacto.
+- **Quando filtra:** antes de qualquer coisa ir ao banco. As linhas fora da janela não ocupam nem a tabela temporária.
+- **Registro:** quantas linhas ficaram de fora sai em `mart.carga_fonte.mensagem`, com status `ok`.
+- **Cuidado:** não use em tabelas de posição (inadimplência, contas a pagar/receber, estoque, saldos). Um título antigo ainda em aberto sumiria.
 
 ### Tabela nova
 
@@ -163,5 +175,6 @@ carga/
   tabela.py       carga do tipo 'tabela' (Parquet → mart.<tabela>, mesmas colunas)
   lancamento.py   carga do tipo 'lancamento' (formato agregado → mart.lancamento)
   esquema.py      tipos Parquet → Postgres e o create table das tabelas de dados
+  janela.py       janela de datas (últimos N meses de uma coluna)
   inspecionar.py  inventário do bucket (python -m carga.inspecionar)
 ```

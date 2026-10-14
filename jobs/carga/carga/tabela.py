@@ -4,6 +4,8 @@
 2. confere as colunas contra a tabela do mart (criada por migration):
    - coluna da tabela que falta no arquivo → falha;
    - coluna nova no arquivo, ainda sem coluna na tabela → ignorada, com aviso;
+   se a fonte tem janela de datas (coluna_data + meses_retidos), só seguem as linhas
+   dos últimos N meses (ou com a data vazia), antes de qualquer coisa ir ao banco;
 3. em UMA transação: temp table + COPY; se a fonte tem coluna de empresa, traduz por
    cfg.mapa_empresa (valor sem mapeamento → falha listando); apaga TODAS as linhas do
    cliente na tabela e insere as do arquivo, numeradas em _linha;
@@ -14,6 +16,7 @@ import psycopg
 import pyarrow as pa
 from psycopg import sql
 
+from carga import janela
 from carga.arquivo import Baixar, Progresso, baixar_e_validar_data, listar_valores
 from carga.config import Settings
 from carga.db import Conexao
@@ -66,6 +69,12 @@ def carregar(
             f"não existe em mart.{tabela}"
         )
 
+    if fonte.coluna_data and fonte.coluna_data not in colunas:
+        raise ErroCarga(
+            f"coluna de data {fonte.coluna_data!r} (cfg.fonte_carga.coluna_data) "
+            f"não existe em mart.{tabela}"
+        )
+
     arquivo = baixar_e_validar_data(conn, settings, fonte, baixar, progresso)
 
     nomes = arquivo.schema_arrow.names
@@ -78,6 +87,14 @@ def carregar(
         )
 
     dados = arquivo.read(columns=colunas)
+    if fonte.coluna_data and fonte.meses_retidos and progresso.data_snapshot:
+        dados, fora, inicio = janela.filtrar(
+            dados, fonte.coluna_data, progresso.data_snapshot, fonte.meses_retidos
+        )
+        progresso.avisos.append(
+            f"janela de {fonte.meses_retidos} meses em {fonte.coluna_data}: "
+            f"{fora} linhas antes de {inicio:%d/%m/%Y} ficaram de fora"
+        )
     try:
         progresso.linhas_gravadas = _gravar(conn, fonte, tabela, colunas, dados)
     except psycopg.errors.DataError as exc:

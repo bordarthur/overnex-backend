@@ -34,6 +34,7 @@ Nada fica em `public`, e esses schemas não são expostos pelo PostgREST (`confi
 3. `..._rls.sql` — ENABLE + FORCE RLS em todas as tabelas de `mart`, `cfg` e `seg`, as funções `seg.clientes_do_usuario()` / `seg.empresas_do_usuario()` (SECURITY DEFINER, STABLE, `search_path` fixo) e as políticas.
 4. `..._carga_fonte_data_opcional.sql` — `mart.carga_fonte.data_snapshot` passa a aceitar null. A carga grava a fonte como `rodando` antes de baixar o arquivo e precisa registrar falhas sem data (arquivo inexistente, chave errada, `_data_snapshot` misturado). Linha `ok` continua exigindo a data (check), e a API só lê linhas `ok`.
 5. `..._tabelas_de_dados.sql` — uma tabela no `mart` para cada Parquet do bucket, com as mesmas colunas (nomes preservados; texto → `text`, double → `numeric`, data → `date`) mais `_linha`, `_cliente_id` e `_empresa_id`. Inclui `cfg.perfil_tabela` (quais tabelas cada perfil lê), o tipo `tabela` em `cfg.fonte_carga` e a função `mart.preparar_tabela_dados()`, que aplica RLS, políticas, grants e índice a uma tabela nova. Para tabela ou coluna nova, veja [jobs/carga/README.md](../jobs/carga/README.md#tabelas-de-dados-tipo-tabela).
+6. `..._janela_de_datas.sql` — `coluna_data` e `meses_retidos` em `cfg.fonte_carga`: a carga só grava as linhas dos últimos N meses de uma coluna de data (tabelas de movimento grandes).
 
 ### Storage
 
@@ -63,6 +64,7 @@ A migration 3 confere que o dono das funções (`postgres`) tem BYPASSRLS, como 
 Cadastros de produção por cliente, para rodar à mão no SQL Editor. Não são migrations e não rodam no `db reset`.
 
 - `nilo_maia_tabelas.sql` — fontes das 21 tabelas de dados da Nilo Maia. A de lançamentos passa a ser do tipo `tabela`; as outras entram inativas.
+- `nilo_maia_janela.sql` — janela de 3 meses nas 12 tabelas de movimento (depois da migration 6). Não ativa fontes.
 
 ## Testes (pgTAP)
 
