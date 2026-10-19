@@ -22,6 +22,8 @@ class Settings(BaseSettings):
     # Padrão seguro: sem AMBIENTE explícito, comporta-se como produção.
     ambiente: Ambiente = Ambiente.PROD
     auth_fake: bool = False
+    # Visão geral com as seções fictícias de app/telas/visao_geral/demo.json (só dev).
+    visao_geral_demo: bool = False
 
     db_pool_min: int = 1
     db_pool_max: int = 10
@@ -30,6 +32,8 @@ class Settings(BaseSettings):
     def _validar(self) -> Self:
         if self.auth_fake and self.ambiente is not Ambiente.DEV:
             raise ValueError("AUTH_FAKE só é permitido com AMBIENTE=dev.")
+        if self.visao_geral_demo and self.ambiente is not Ambiente.DEV:
+            raise ValueError("VISAO_GERAL_DEMO só é permitido com AMBIENTE=dev.")
         if not self.auth_fake and not (self.entra_tenant_id and self.entra_audience):
             raise ValueError("ENTRA_TENANT_ID e ENTRA_AUDIENCE são obrigatórios sem AUTH_FAKE.")
         return self

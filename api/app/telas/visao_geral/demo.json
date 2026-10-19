@@ -1,0 +1,882 @@
+{
+  "tela": "visao-geral",
+  "versaoContrato": "1.0",
+  "cliente": { "nome": "Cliente Demo", "sigla": "CD", "logoUrl": null },
+  "dadosAte": "2026-10-12",
+  "atualizadoEm": "2026-10-13T09:02:00-03:00",
+  "periodos": [
+    { "id": "mes", "rotulo": "Outubro, projeção" },
+    { "id": "ano", "rotulo": "Acumulado 2026" }
+  ],
+  "secoes": [
+    {
+      "id": "vendas",
+      "titulo": "Vendas",
+      "modulo": null,
+      "resumo": "A meta escorrega por positivação; o ticket está acima da meta.",
+      "kpis": [
+        {
+          "rotulo": "Meta do mês",
+          "valor": { "valor": 6900000, "unidade": "brl" },
+          "contexto": "supermeta R$ 7,59 mi"
+        },
+        {
+          "rotulo": "Faturado até 12/10",
+          "valor": { "valor": 2180000, "unidade": "brl" },
+          "contexto": "meta até a data: R$ 2,30 mi",
+          "status": "atencao"
+        },
+        {
+          "rotulo": "Projeção de fechamento",
+          "valor": { "valor": 6540000, "unidade": "brl" },
+          "contexto": "R$ 360 mil abaixo da meta",
+          "status": "atencao"
+        },
+        {
+          "rotulo": "A realizar por dia útil",
+          "valor": { "valor": 337000, "unidade": "brl" },
+          "contexto": "hoje vende R$ 311 mil por dia",
+          "status": "atencao"
+        }
+      ],
+      "cartoes": [],
+      "indicadores": [
+        {
+          "id": "vendas-meta",
+          "nome": "Vendas contra a meta",
+          "telaDestino": "vendas",
+          "origem": "dw",
+          "gauge": {
+            "min": 80,
+            "max": 110,
+            "meta": 100,
+            "unidade": "pct",
+            "faixas": [
+              { "de": 80, "ate": 90, "status": "critico" },
+              { "de": 90, "ate": 100, "status": "atencao" },
+              { "de": 100, "ate": 110, "status": "saudavel" }
+            ]
+          },
+          "periodos": {
+            "mes": {
+              "status": "atencao",
+              "valor": { "valor": 94.8, "unidade": "pct", "casas": 1 },
+              "ponteiro": 94.8,
+              "delta": { "valor": -360000, "unidade": "brl" },
+              "deltaRuim": true,
+              "referencia": "projeção de R$ 6,54 mi contra meta de R$ 6,90 mi"
+            },
+            "ano": {
+              "status": "atencao",
+              "valor": { "valor": 98.3, "unidade": "pct", "casas": 1 },
+              "ponteiro": 98.3,
+              "delta": { "valor": -1100000, "unidade": "brl", "casas": 1 },
+              "deltaRuim": true,
+              "referencia": "R$ 64,2 mi no ano contra meta de R$ 65,3 mi"
+            }
+          },
+          "tendencia": {
+            "rotulos": ["mai", "jun", "jul", "ago", "set", "out"],
+            "real": [6750000, 6660000, 7110000, 6690000, 6950000, 6540000],
+            "referencia": [6680000, 6800000, 6900000, 6900000, 7020000, 6900000],
+            "unidade": "brl",
+            "casas": 2
+          }
+        },
+        {
+          "id": "clientes-compraram",
+          "nome": "Clientes que compraram",
+          "telaDestino": "clientes",
+          "origem": "dw",
+          "gauge": {
+            "min": 80,
+            "max": 110,
+            "meta": 100,
+            "unidade": "pct",
+            "faixas": [
+              { "de": 80, "ate": 90, "status": "critico" },
+              { "de": 90, "ate": 100, "status": "atencao" },
+              { "de": 100, "ate": 110, "status": "saudavel" }
+            ]
+          },
+          "periodos": {
+            "mes": {
+              "status": "atencao",
+              "valor": { "valor": 1040, "unidade": "qtd" },
+              "ponteiro": 92.9,
+              "delta": { "valor": -80, "unidade": "qtd", "sufixo": "clientes" },
+              "deltaRuim": true,
+              "referencia": "projeção contra meta de 1.120"
+            },
+            "ano": {
+              "status": "atencao",
+              "valor": { "valor": 1077, "unidade": "qtd" },
+              "ponteiro": 96.1,
+              "delta": { "valor": -43, "unidade": "qtd", "sufixo": "por mês" },
+              "deltaRuim": true,
+              "referencia": "média mensal contra meta de 1.120"
+            }
+          },
+          "tendencia": {
+            "rotulos": ["mai", "jun", "jul", "ago", "set", "out"],
+            "real": [1080, 1110, 1095, 1070, 1060, 1040],
+            "referencia": [1100, 1100, 1120, 1120, 1120, 1120],
+            "unidade": "qtd",
+            "casas": 0
+          }
+        },
+        {
+          "id": "ticket-pedido",
+          "nome": "Ticket por pedido",
+          "telaDestino": "vendas",
+          "origem": "dw",
+          "gauge": {
+            "min": 85,
+            "max": 115,
+            "meta": 100,
+            "unidade": "pct",
+            "faixas": [
+              { "de": 85, "ate": 95, "status": "critico" },
+              { "de": 95, "ate": 100, "status": "atencao" },
+              { "de": 100, "ate": 115, "status": "saudavel" }
+            ]
+          },
+          "periodos": {
+            "mes": {
+              "status": "saudavel",
+              "valor": { "valor": 2995, "unidade": "brl", "compacto": false },
+              "ponteiro": 102.1,
+              "delta": { "valor": 2.1, "unidade": "pct", "casas": 1 },
+              "deltaRuim": false,
+              "referencia": "contra meta de R$ 2.934"
+            },
+            "ano": {
+              "status": "saudavel",
+              "valor": { "valor": 2951, "unidade": "brl", "compacto": false },
+              "ponteiro": 100.6,
+              "delta": { "valor": 0.6, "unidade": "pct", "casas": 1 },
+              "deltaRuim": false,
+              "referencia": "média do ano contra a meta"
+            }
+          },
+          "tendencia": {
+            "rotulos": ["mai", "jun", "jul", "ago", "set", "out"],
+            "real": [2870, 2905, 2940, 2960, 2980, 2995],
+            "referencia": [2900, 2900, 2934, 2934, 2934, 2934],
+            "unidade": "brl",
+            "casas": 0
+          }
+        },
+        {
+          "id": "linhas-cliente",
+          "nome": "Linhas por cliente",
+          "telaDestino": "vendas",
+          "origem": "dw",
+          "gauge": {
+            "min": 70,
+            "max": 110,
+            "meta": 100,
+            "unidade": "pct",
+            "faixas": [
+              { "de": 70, "ate": 90, "status": "critico" },
+              { "de": 90, "ate": 100, "status": "atencao" },
+              { "de": 100, "ate": 110, "status": "saudavel" }
+            ]
+          },
+          "periodos": {
+            "mes": {
+              "status": "critico",
+              "valor": { "valor": 2.3, "unidade": "qtd", "casas": 1, "sufixo": "linhas" },
+              "ponteiro": 88.5,
+              "delta": { "valor": -0.3, "unidade": "qtd", "casas": 1, "sufixo": "linha" },
+              "deltaRuim": true,
+              "referencia": "por cliente, contra meta de 2,6"
+            },
+            "ano": {
+              "status": "atencao",
+              "valor": { "valor": 2.4, "unidade": "qtd", "casas": 1, "sufixo": "linhas" },
+              "ponteiro": 92.3,
+              "delta": { "valor": -0.2, "unidade": "qtd", "casas": 1, "sufixo": "linha" },
+              "deltaRuim": true,
+              "referencia": "média do ano contra meta de 2,6"
+            }
+          },
+          "tendencia": {
+            "rotulos": ["mai", "jun", "jul", "ago", "set", "out"],
+            "real": [2.5, 2.5, 2.4, 2.4, 2.3, 2.3],
+            "referencia": [2.6, 2.6, 2.6, 2.6, 2.6, 2.6],
+            "unidade": "qtd",
+            "casas": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "custos",
+      "titulo": "Custos",
+      "modulo": null,
+      "resumo": "Bovinos puxam o CMV para cima; as outras linhas estão no orçado.",
+      "kpis": [
+        {
+          "rotulo": "CMV do mês",
+          "valor": { "valor": 66.7, "unidade": "pct", "casas": 1 },
+          "contexto": "+0,8 p.p. acima do orçado (65,9%)",
+          "status": "critico"
+        },
+        {
+          "rotulo": "Margem bruta",
+          "valor": { "valor": 33.3, "unidade": "pct", "casas": 1 },
+          "contexto": "orçado 34,1%",
+          "status": "atencao"
+        },
+        {
+          "rotulo": "Lucro bruto até agora",
+          "valor": { "valor": 715000, "unidade": "brl" },
+          "contexto": "sobre R$ 2,15 mi de receita líquida"
+        },
+        {
+          "rotulo": "Efeito no lucro do mês",
+          "valor": { "valor": -51000, "unidade": "brl" },
+          "contexto": "CMV acima do orçado, na projeção",
+          "status": "critico"
+        }
+      ],
+      "cartoes": [],
+      "indicadores": [
+        {
+          "id": "cmv-bovinos",
+          "nome": "CMV de bovinos",
+          "telaDestino": "resultado",
+          "origem": "dw",
+          "gauge": {
+            "min": 66,
+            "max": 76,
+            "meta": 70,
+            "unidade": "pct",
+            "faixas": [
+              { "de": 66, "ate": 70.3, "status": "saudavel" },
+              { "de": 70.3, "ate": 71.5, "status": "atencao" },
+              { "de": 71.5, "ate": 76, "status": "critico" }
+            ]
+          },
+          "periodos": {
+            "mes": {
+              "status": "critico",
+              "valor": { "valor": 72.9, "unidade": "pct", "casas": 1 },
+              "ponteiro": 72.9,
+              "delta": { "valor": 2.9, "unidade": "pp", "casas": 1 },
+              "deltaRuim": true,
+              "referencia": "da receita da linha, contra 70,0% orçado"
+            },
+            "ano": {
+              "status": "atencao",
+              "valor": { "valor": 71.4, "unidade": "pct", "casas": 1 },
+              "ponteiro": 71.4,
+              "delta": { "valor": 1.4, "unidade": "pp", "casas": 1 },
+              "deltaRuim": true,
+              "referencia": "contra 70,0% orçado"
+            }
+          },
+          "tendencia": {
+            "rotulos": ["mai", "jun", "jul", "ago", "set", "out"],
+            "real": [70.2, 70.6, 71.1, 71.8, 72.4, 72.9],
+            "referencia": [70, 70, 70, 70, 70, 70],
+            "faixa": [66, 70.3],
+            "unidade": "pct",
+            "casas": 1
+          }
+        },
+        {
+          "id": "cmv-aves",
+          "nome": "CMV de aves",
+          "telaDestino": "resultado",
+          "origem": "dw",
+          "gauge": {
+            "min": 62,
+            "max": 70,
+            "meta": 65.6,
+            "unidade": "pct",
+            "faixas": [
+              { "de": 62, "ate": 65.9, "status": "saudavel" },
+              { "de": 65.9, "ate": 67.1, "status": "atencao" },
+              { "de": 67.1, "ate": 70, "status": "critico" }
+            ]
+          },
+          "periodos": {
+            "mes": {
+              "status": "atencao",
+              "valor": { "valor": 66.0, "unidade": "pct", "casas": 1 },
+              "ponteiro": 66.0,
+              "delta": { "valor": 0.4, "unidade": "pp", "casas": 1 },
+              "deltaRuim": true,
+              "referencia": "contra 65,6% orçado"
+            },
+            "ano": {
+              "status": "saudavel",
+              "valor": { "valor": 65.8, "unidade": "pct", "casas": 1 },
+              "ponteiro": 65.8,
+              "delta": { "valor": 0.2, "unidade": "pp", "casas": 1 },
+              "deltaRuim": true,
+              "referencia": "contra 65,6% orçado"
+            }
+          },
+          "tendencia": {
+            "rotulos": ["mai", "jun", "jul", "ago", "set", "out"],
+            "real": [65.4, 65.7, 65.5, 65.9, 65.8, 66.0],
+            "referencia": [65.6, 65.6, 65.6, 65.6, 65.6, 65.6],
+            "faixa": [62, 65.9],
+            "unidade": "pct",
+            "casas": 1
+          }
+        },
+        {
+          "id": "cmv-embutidos",
+          "nome": "CMV de embutidos",
+          "telaDestino": "resultado",
+          "origem": "dw",
+          "gauge": {
+            "min": 57,
+            "max": 65,
+            "meta": 60.5,
+            "unidade": "pct",
+            "faixas": [
+              { "de": 57, "ate": 60.8, "status": "saudavel" },
+              { "de": 60.8, "ate": 62, "status": "atencao" },
+              { "de": 62, "ate": 65, "status": "critico" }
+            ]
+          },
+          "periodos": {
+            "mes": {
+              "status": "saudavel",
+              "valor": { "valor": 60.2, "unidade": "pct", "casas": 1 },
+              "ponteiro": 60.2,
+              "delta": { "valor": -0.3, "unidade": "pp", "casas": 1 },
+              "deltaRuim": false,
+              "referencia": "contra 60,5% orçado"
+            },
+            "ano": {
+              "status": "saudavel",
+              "valor": { "valor": 60.4, "unidade": "pct", "casas": 1 },
+              "ponteiro": 60.4,
+              "delta": { "valor": -0.1, "unidade": "pp", "casas": 1 },
+              "deltaRuim": false,
+              "referencia": "contra 60,5% orçado"
+            }
+          },
+          "tendencia": {
+            "rotulos": ["mai", "jun", "jul", "ago", "set", "out"],
+            "real": [60.9, 60.6, 60.4, 60.3, 60.1, 60.2],
+            "referencia": [60.5, 60.5, 60.5, 60.5, 60.5, 60.5],
+            "faixa": [57, 60.8],
+            "unidade": "pct",
+            "casas": 1
+          }
+        },
+        {
+          "id": "cmv-demais",
+          "nome": "CMV das demais linhas",
+          "telaDestino": "resultado",
+          "origem": "dw",
+          "gauge": {
+            "min": 61,
+            "max": 69,
+            "meta": 64.3,
+            "unidade": "pct",
+            "faixas": [
+              { "de": 61, "ate": 64.6, "status": "saudavel" },
+              { "de": 64.6, "ate": 65.8, "status": "atencao" },
+              { "de": 65.8, "ate": 69, "status": "critico" }
+            ]
+          },
+          "periodos": {
+            "mes": {
+              "status": "saudavel",
+              "valor": { "valor": 64.1, "unidade": "pct", "casas": 1 },
+              "ponteiro": 64.1,
+              "delta": { "valor": -0.2, "unidade": "pp", "casas": 1 },
+              "deltaRuim": false,
+              "referencia": "contra 64,3% orçado"
+            },
+            "ano": {
+              "status": "saudavel",
+              "valor": { "valor": 64.5, "unidade": "pct", "casas": 1 },
+              "ponteiro": 64.5,
+              "delta": { "valor": 0.2, "unidade": "pp", "casas": 1 },
+              "deltaRuim": true,
+              "referencia": "contra 64,3% orçado"
+            }
+          },
+          "tendencia": {
+            "rotulos": ["mai", "jun", "jul", "ago", "set", "out"],
+            "real": [64.8, 64.6, 64.4, 64.5, 64.2, 64.1],
+            "referencia": [64.3, 64.3, 64.3, 64.3, 64.3, 64.3],
+            "faixa": [61, 64.6],
+            "unidade": "pct",
+            "casas": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "resultado",
+      "titulo": "Resultado",
+      "modulo": null,
+      "resumo": "Despesas no orçado; o EBITDA cai por causa da margem.",
+      "kpis": [
+        {
+          "rotulo": "EBITDA projetado",
+          "valor": { "valor": 500000, "unidade": "brl" },
+          "contexto": "orçado R$ 679 mil",
+          "status": "atencao"
+        },
+        {
+          "rotulo": "Lucro líquido de setembro",
+          "valor": { "valor": 421000, "unidade": "brl" },
+          "contexto": "orçado R$ 475 mil",
+          "status": "atencao"
+        },
+        {
+          "rotulo": "Ponto de equilíbrio",
+          "valor": { "valor": 4720000, "unidade": "brl" },
+          "contexto": "de receita líquida por mês"
+        },
+        {
+          "rotulo": "Margem de segurança",
+          "valor": { "valor": 31, "unidade": "pct", "casas": 0 },
+          "contexto": "era 34% em maio",
+          "status": "atencao"
+        }
+      ],
+      "cartoes": [],
+      "indicadores": [
+        {
+          "id": "margem-ebitda",
+          "nome": "Margem EBITDA",
+          "telaDestino": "resultado",
+          "origem": "dw",
+          "gauge": {
+            "min": 5,
+            "max": 12,
+            "meta": 10,
+            "unidade": "pct",
+            "faixas": [
+              { "de": 5, "ate": 7.5, "status": "critico" },
+              { "de": 7.5, "ate": 9.5, "status": "atencao" },
+              { "de": 9.5, "ate": 12, "status": "saudavel" }
+            ]
+          },
+          "periodos": {
+            "mes": {
+              "status": "atencao",
+              "valor": { "valor": 7.8, "unidade": "pct", "casas": 1 },
+              "ponteiro": 7.8,
+              "delta": { "valor": -2.2, "unidade": "pp", "casas": 1 },
+              "deltaRuim": true,
+              "referencia": "projeção contra 10,0% orçado"
+            },
+            "ano": {
+              "status": "saudavel",
+              "valor": { "valor": 9.8, "unidade": "pct", "casas": 1 },
+              "ponteiro": 9.8,
+              "delta": { "valor": -0.2, "unidade": "pp", "casas": 1 },
+              "deltaRuim": true,
+              "referencia": "contra 10,0% orçado"
+            }
+          },
+          "tendencia": {
+            "rotulos": ["mai", "jun", "jul", "ago", "set", "out"],
+            "real": [10.7, 10.1, 9.7, 9.3, 9.0, 7.8],
+            "referencia": [10, 10, 10, 10, 10, 10],
+            "faixa": [9.5, 12],
+            "unidade": "pct",
+            "casas": 1
+          }
+        },
+        {
+          "id": "despesas-fixas",
+          "nome": "Despesas fixas",
+          "telaDestino": "resultado",
+          "origem": "dw",
+          "gauge": {
+            "min": 18,
+            "max": 23,
+            "meta": 20.4,
+            "unidade": "pct",
+            "faixas": [
+              { "de": 18, "ate": 20.4, "status": "saudavel" },
+              { "de": 20.4, "ate": 21, "status": "atencao" },
+              { "de": 21, "ate": 23, "status": "critico" }
+            ]
+          },
+          "periodos": {
+            "mes": {
+              "status": "saudavel",
+              "valor": { "valor": 20.1, "unidade": "pct", "casas": 1 },
+              "ponteiro": 20.1,
+              "delta": { "valor": -0.3, "unidade": "pp", "casas": 1 },
+              "deltaRuim": false,
+              "referencia": "da receita, contra 20,4% orçado"
+            },
+            "ano": {
+              "status": "saudavel",
+              "valor": { "valor": 20.3, "unidade": "pct", "casas": 1 },
+              "ponteiro": 20.3,
+              "delta": { "valor": -0.1, "unidade": "pp", "casas": 1 },
+              "deltaRuim": false,
+              "referencia": "da receita, contra 20,4% orçado"
+            }
+          },
+          "tendencia": {
+            "rotulos": ["mai", "jun", "jul", "ago", "set", "out"],
+            "real": [20.6, 20.3, 20.5, 20.2, 20.0, 20.1],
+            "referencia": [20.5, 20.4, 20.4, 20.4, 20.4, 20.4],
+            "faixa": [18, 20.4],
+            "unidade": "pct",
+            "casas": 1
+          }
+        },
+        {
+          "id": "folha-receita",
+          "nome": "Folha sobre a receita",
+          "telaDestino": "pessoas",
+          "origem": "dw",
+          "gauge": {
+            "min": 10,
+            "max": 14,
+            "meta": 11.9,
+            "unidade": "pct",
+            "faixas": [
+              { "de": 10, "ate": 12.2, "status": "saudavel" },
+              { "de": 12.2, "ate": 13, "status": "atencao" },
+              { "de": 13, "ate": 14, "status": "critico" }
+            ]
+          },
+          "periodos": {
+            "mes": {
+              "status": "atencao",
+              "valor": { "valor": 12.4, "unidade": "pct", "casas": 1 },
+              "ponteiro": 12.4,
+              "delta": { "valor": 0.5, "unidade": "pp", "casas": 1 },
+              "deltaRuim": true,
+              "referencia": "contra 11,9% orçado"
+            },
+            "ano": {
+              "status": "saudavel",
+              "valor": { "valor": 12.0, "unidade": "pct", "casas": 1 },
+              "ponteiro": 12.0,
+              "delta": { "valor": 0.1, "unidade": "pp", "casas": 1 },
+              "deltaRuim": true,
+              "referencia": "contra 11,9% orçado"
+            }
+          },
+          "tendencia": {
+            "rotulos": ["mai", "jun", "jul", "ago", "set", "out"],
+            "real": [11.8, 11.9, 12.0, 12.1, 12.0, 12.4],
+            "referencia": [11.9, 11.9, 11.9, 11.9, 11.9, 11.9],
+            "faixa": [10, 12.2],
+            "unidade": "pct",
+            "casas": 1
+          }
+        },
+        {
+          "id": "divida-ebitda",
+          "nome": "Dívida líquida / EBITDA",
+          "telaDestino": "caixa",
+          "origem": "cadastro",
+          "gauge": {
+            "min": 0,
+            "max": 3.5,
+            "meta": 2,
+            "unidade": "vezes",
+            "faixas": [
+              { "de": 0, "ate": 2, "status": "saudavel" },
+              { "de": 2, "ate": 3, "status": "atencao" },
+              { "de": 3, "ate": 3.5, "status": "critico" }
+            ]
+          },
+          "periodos": {
+            "mes": {
+              "status": "saudavel",
+              "valor": { "valor": 0.61, "unidade": "vezes", "casas": 2 },
+              "ponteiro": 0.61,
+              "delta": { "valor": -1.39, "unidade": "vezes", "casas": 2 },
+              "deltaRuim": false,
+              "referencia": "contra referência de mercado de 2,0x"
+            },
+            "ano": {
+              "status": "saudavel",
+              "valor": { "valor": 0.61, "unidade": "vezes", "casas": 2 },
+              "ponteiro": 0.61,
+              "delta": { "valor": -1.39, "unidade": "vezes", "casas": 2 },
+              "deltaRuim": false,
+              "referencia": "posição atual; referência de mercado 2,0x"
+            }
+          },
+          "tendencia": {
+            "rotulos": ["mai", "jun", "jul", "ago", "set", "out"],
+            "real": [0.82, 0.77, 0.72, 0.69, 0.64, 0.61],
+            "referencia": [2, 2, 2, 2, 2, 2],
+            "faixa": [0, 2],
+            "unidade": "vezes",
+            "casas": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "financeiro",
+      "titulo": "Financeiro",
+      "modulo": null,
+      "resumo": "Caixa curto, vencidos envelhecendo e contas a pagar incompletas no sistema.",
+      "kpis": [
+        {
+          "rotulo": "Saldo em conta hoje",
+          "valor": { "valor": 1420000, "unidade": "brl" },
+          "contexto": "todas as contas"
+        },
+        {
+          "rotulo": "A receber a vencer",
+          "valor": { "valor": 6600000, "unidade": "brl" },
+          "contexto": "carteira de R$ 7,13 mi"
+        },
+        {
+          "rotulo": "A pagar, 30 dias",
+          "valor": { "valor": 3660000, "unidade": "brl" },
+          "contexto": "só o que está lançado: 58% da média paga",
+          "status": "atencao"
+        },
+        {
+          "rotulo": "A pagar vencido",
+          "valor": { "valor": 46000, "unidade": "brl" },
+          "contexto": "R$ 31 mil de fornecedores"
+        }
+      ],
+      "cartoes": [
+        {
+          "tipo": "inadimplencia",
+          "status": "atencao",
+          "percentual": { "valor": 7.4, "unidade": "pct", "casas": 1 },
+          "texto": [
+            { "texto": "De cada " },
+            { "texto": "R$ 100", "destaque": true },
+            { "texto": " que a empresa tem para receber, " },
+            { "texto": "R$ 7,40", "destaque": true },
+            { "texto": " já venceram. A média de 12 meses é R$ 5,80." }
+          ],
+          "nota": "No ano: 7,1% (R$ 412 mil). Provisão para perdas: 0,44%.",
+          "carteira": [
+            {
+              "rotulo": "A vencer",
+              "valor": { "valor": 6602000, "unidade": "brl" },
+              "percentual": 92.6,
+              "status": "saudavel"
+            },
+            {
+              "rotulo": "1 a 30 dias",
+              "valor": { "valor": 320000, "unidade": "brl" },
+              "percentual": 4.5,
+              "status": "atencao"
+            },
+            {
+              "rotulo": "31 a 60 dias",
+              "valor": { "valor": 98000, "unidade": "brl" },
+              "percentual": 1.4,
+              "status": "critico"
+            },
+            {
+              "rotulo": "61 a 90 dias",
+              "valor": { "valor": 52000, "unidade": "brl" },
+              "percentual": 0.7,
+              "status": "critico"
+            },
+            {
+              "rotulo": "Mais de 90",
+              "valor": { "valor": 58000, "unidade": "brl" },
+              "percentual": 0.8,
+              "status": "critico"
+            }
+          ],
+          "serie": {
+            "rotulos": ["out", "nov", "dez", "jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set"],
+            "valores": [5.0, 5.1, 5.3, 5.2, 5.1, 5.4, 5.6, 6.0, 6.4, 6.9, 7.1, 7.4],
+            "media": 5.875
+          }
+        }
+      ],
+      "indicadores": [
+        {
+          "id": "cobertura-caixa",
+          "nome": "Cobertura de caixa",
+          "telaDestino": "caixa",
+          "origem": "dw",
+          "gauge": {
+            "min": 0,
+            "max": 24,
+            "meta": 12,
+            "unidade": "dias",
+            "faixas": [
+              { "de": 0, "ate": 8, "status": "critico" },
+              { "de": 8, "ate": 12, "status": "atencao" },
+              { "de": 12, "ate": 24, "status": "saudavel" }
+            ]
+          },
+          "periodos": {
+            "mes": {
+              "status": "critico",
+              "valor": { "valor": 7, "unidade": "dias" },
+              "ponteiro": 7,
+              "delta": { "valor": -5, "unidade": "dias" },
+              "deltaRuim": true,
+              "referencia": "de saídas com o saldo de hoje; média de 12 meses: 12"
+            },
+            "ano": {
+              "status": "atencao",
+              "valor": { "valor": 10, "unidade": "dias" },
+              "ponteiro": 10,
+              "delta": { "valor": -2, "unidade": "dias" },
+              "deltaRuim": true,
+              "referencia": "média do ano contra média de 12 meses"
+            }
+          },
+          "tendencia": {
+            "rotulos": ["mai", "jun", "jul", "ago", "set", "out"],
+            "real": [12, 11, 10, 9, 8, 7],
+            "referencia": [12, 12, 12, 12, 12, 12],
+            "faixa": [12, 24],
+            "unidade": "dias",
+            "casas": 0
+          }
+        },
+        {
+          "id": "prazo-recebimento",
+          "nome": "Prazo médio de recebimento",
+          "telaDestino": "receber",
+          "origem": "dw",
+          "gauge": {
+            "min": 15,
+            "max": 45,
+            "meta": 28,
+            "unidade": "dias",
+            "faixas": [
+              { "de": 15, "ate": 28, "status": "saudavel" },
+              { "de": 28, "ate": 33, "status": "atencao" },
+              { "de": 33, "ate": 45, "status": "critico" }
+            ]
+          },
+          "periodos": {
+            "mes": {
+              "status": "atencao",
+              "valor": { "valor": 31, "unidade": "dias" },
+              "ponteiro": 31,
+              "delta": { "valor": 3, "unidade": "dias" },
+              "deltaRuim": true,
+              "referencia": "contra a média de 12 meses (28 dias)"
+            },
+            "ano": {
+              "status": "saudavel",
+              "valor": { "valor": 28, "unidade": "dias" },
+              "ponteiro": 28,
+              "delta": { "valor": 0, "unidade": "dias" },
+              "deltaRuim": false,
+              "referencia": "média do ano"
+            }
+          },
+          "tendencia": {
+            "rotulos": ["mai", "jun", "jul", "ago", "set", "out"],
+            "real": [28, 29, 30, 30, 31, 31],
+            "referencia": [28, 28, 28, 28, 28, 28],
+            "faixa": [15, 28],
+            "unidade": "dias",
+            "casas": 0
+          }
+        },
+        {
+          "id": "ciclo-caixa",
+          "nome": "Ciclo de caixa",
+          "telaDestino": "receber",
+          "origem": "dw",
+          "gauge": {
+            "min": 10,
+            "max": 30,
+            "meta": 19,
+            "unidade": "dias",
+            "faixas": [
+              { "de": 10, "ate": 19, "status": "saudavel" },
+              { "de": 19, "ate": 23, "status": "atencao" },
+              { "de": 23, "ate": 30, "status": "critico" }
+            ]
+          },
+          "periodos": {
+            "mes": {
+              "status": "atencao",
+              "valor": { "valor": 22, "unidade": "dias" },
+              "ponteiro": 22,
+              "delta": { "valor": 3, "unidade": "dias" },
+              "deltaRuim": true,
+              "referencia": "contra a média de 12 meses (19 dias)"
+            },
+            "ano": {
+              "status": "saudavel",
+              "valor": { "valor": 19, "unidade": "dias" },
+              "ponteiro": 19,
+              "delta": { "valor": 0, "unidade": "dias" },
+              "deltaRuim": false,
+              "referencia": "média do ano"
+            }
+          },
+          "tendencia": {
+            "rotulos": ["mai", "jun", "jul", "ago", "set", "out"],
+            "real": [18, 19, 20, 21, 21, 22],
+            "referencia": [19, 19, 19, 19, 19, 19],
+            "faixa": [10, 19],
+            "unidade": "dias",
+            "casas": 0
+          }
+        },
+        {
+          "id": "contas-pagar-lancadas",
+          "nome": "Contas a pagar lançadas",
+          "telaDestino": "caixa",
+          "origem": "dw",
+          "gauge": {
+            "min": 0,
+            "max": 120,
+            "meta": 100,
+            "unidade": "pct",
+            "faixas": [
+              { "de": 0, "ate": 50, "status": "critico" },
+              { "de": 50, "ate": 80, "status": "atencao" },
+              { "de": 80, "ate": 120, "status": "saudavel" }
+            ]
+          },
+          "periodos": {
+            "mes": {
+              "status": "atencao",
+              "valor": { "valor": 58, "unidade": "pct", "casas": 0 },
+              "ponteiro": 58,
+              "delta": { "valor": -2650000, "unidade": "brl" },
+              "deltaRuim": true,
+              "referencia": "lançado nos próximos 30 dias contra a média paga por mês"
+            },
+            "ano": {
+              "status": "atencao",
+              "valor": { "valor": 58, "unidade": "pct", "casas": 0 },
+              "ponteiro": 58,
+              "delta": { "valor": -2650000, "unidade": "brl" },
+              "deltaRuim": true,
+              "referencia": "indicador do momento: igual nos dois períodos"
+            }
+          },
+          "tendencia": {
+            "rotulos": ["mai", "jun", "jul", "ago", "set", "out"],
+            "real": [93, 90, 91, 88, 84, 58],
+            "referencia": [100, 100, 100, 100, 100, 100],
+            "faixa": [80, 120],
+            "unidade": "pct",
+            "casas": 0
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -26,8 +26,8 @@ insert into cfg.empresa (id, cliente_id, nome) values
     ('e1000000-0000-4000-8000-0000000000b1', 'c1000000-0000-4000-8000-00000000000b', 'Beta Serviços');
 
 insert into cfg.painel (cliente_id, versao, status, config_json) values
-    ('c1000000-0000-4000-8000-00000000000a', 1, 'publicado', '{"telas": ["FIN-01"]}'),
-    ('c1000000-0000-4000-8000-00000000000b', 1, 'publicado', '{"telas": ["FIN-01"]}');
+    ('c1000000-0000-4000-8000-00000000000a', 1, 'publicado', '{"telas": ["VG-01", "FIN-01"]}'),
+    ('c1000000-0000-4000-8000-00000000000b', 1, 'publicado', '{"telas": ["VG-01", "FIN-01"]}');
 
 insert into cfg.perfil_acesso (id, cliente_id, nome) values
     ('f1000000-0000-4000-8000-00000000000a', 'c1000000-0000-4000-8000-00000000000a', 'Financeiro'),
@@ -35,7 +35,9 @@ insert into cfg.perfil_acesso (id, cliente_id, nome) values
 
 insert into cfg.perfil_tela (perfil_id, codigo_tela, ve_dado_nominal) values
     ('f1000000-0000-4000-8000-00000000000a', 'FIN-01', false),
-    ('f1000000-0000-4000-8000-00000000000b', 'FIN-01', false);
+    ('f1000000-0000-4000-8000-00000000000b', 'FIN-01', false),
+    ('f1000000-0000-4000-8000-00000000000a', 'VG-01', false),
+    ('f1000000-0000-4000-8000-00000000000b', 'VG-01', false);
 
 insert into cfg.parametro (empresa_id, chave, valor, vigente_de) values
     ('e1000000-0000-4000-8000-0000000000a1', 'meta_margem', '0.18', '2025-01-01'),

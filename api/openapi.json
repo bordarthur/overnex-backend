@@ -31,6 +31,101 @@
         }
       }
     },
+    "/api/sessao": {
+      "get": {
+        "tags": [
+          "sessao"
+        ],
+        "summary": "Sessao",
+        "operationId": "sessao_api_sessao_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessaoPayload"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autenticado."
+          },
+          "403": {
+            "description": "Acesso negado."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/telas/visao-geral": {
+      "get": {
+        "tags": [
+          "telas"
+        ],
+        "summary": "Visao Geral",
+        "operationId": "visao_geral_api_telas_visao_geral_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "empresa",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Opcional: só esta empresa. Sem valor: todas as do vínculo.",
+              "title": "Empresa"
+            },
+            "description": "Opcional: só esta empresa. Sem valor: todas as do vínculo."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisaoGeralPayload"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autenticado."
+          },
+          "403": {
+            "description": "Acesso negado."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/telas/fin-01": {
       "get": {
         "tags": [
@@ -281,6 +376,127 @@
         ],
         "title": "Apoio"
       },
+      "CartaoInadimplencia": {
+        "properties": {
+          "tipo": {
+            "type": "string",
+            "const": "inadimplencia",
+            "title": "Tipo"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "saudavel",
+              "atencao",
+              "critico"
+            ],
+            "title": "Status"
+          },
+          "percentual": {
+            "$ref": "#/components/schemas/Valor"
+          },
+          "texto": {
+            "items": {
+              "$ref": "#/components/schemas/Trecho"
+            },
+            "type": "array",
+            "title": "Texto"
+          },
+          "nota": {
+            "type": "string",
+            "title": "Nota"
+          },
+          "carteira": {
+            "items": {
+              "$ref": "#/components/schemas/ItemCarteira"
+            },
+            "type": "array",
+            "title": "Carteira"
+          },
+          "serie": {
+            "$ref": "#/components/schemas/SerieInadimplencia"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "tipo",
+          "status",
+          "percentual",
+          "texto",
+          "nota",
+          "carteira",
+          "serie"
+        ],
+        "title": "CartaoInadimplencia"
+      },
+      "Cliente": {
+        "properties": {
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "sigla": {
+            "type": "string",
+            "title": "Sigla"
+          },
+          "logoUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Logourl"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "nome",
+          "sigla",
+          "logoUrl"
+        ],
+        "title": "Cliente"
+      },
+      "ClienteSessao": {
+        "properties": {
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "sigla": {
+            "type": "string",
+            "title": "Sigla"
+          },
+          "logoUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Logourl"
+          },
+          "slug": {
+            "type": "string",
+            "title": "Slug"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "nome",
+          "sigla",
+          "logoUrl",
+          "slug"
+        ],
+        "title": "ClienteSessao"
+      },
       "Coluna": {
         "properties": {
           "nome": {
@@ -387,6 +603,100 @@
         ],
         "title": "DadosPayload"
       },
+      "Empresa": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "nome"
+        ],
+        "title": "Empresa"
+      },
+      "Faixa": {
+        "properties": {
+          "de": {
+            "type": "number",
+            "title": "De"
+          },
+          "ate": {
+            "type": "number",
+            "title": "Ate"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "saudavel",
+              "atencao",
+              "critico"
+            ],
+            "title": "Status"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "de",
+          "ate",
+          "status"
+        ],
+        "title": "Faixa"
+      },
+      "Gauge": {
+        "properties": {
+          "min": {
+            "type": "number",
+            "title": "Min"
+          },
+          "max": {
+            "type": "number",
+            "title": "Max"
+          },
+          "meta": {
+            "type": "number",
+            "title": "Meta"
+          },
+          "unidade": {
+            "type": "string",
+            "enum": [
+              "brl",
+              "pct",
+              "pp",
+              "dias",
+              "vezes",
+              "qtd"
+            ],
+            "title": "Unidade"
+          },
+          "faixas": {
+            "items": {
+              "$ref": "#/components/schemas/Faixa"
+            },
+            "type": "array",
+            "title": "Faixas"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "min",
+          "max",
+          "meta",
+          "unidade",
+          "faixas"
+        ],
+        "title": "Gauge"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -451,6 +761,243 @@
           "formato"
         ],
         "title": "Hero"
+      },
+      "Indicador": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "telaDestino": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Teladestino"
+          },
+          "origem": {
+            "type": "string",
+            "enum": [
+              "dw",
+              "cadastro"
+            ],
+            "title": "Origem"
+          },
+          "gauge": {
+            "$ref": "#/components/schemas/Gauge"
+          },
+          "periodos": {
+            "$ref": "#/components/schemas/PeriodosIndicador"
+          },
+          "tendencia": {
+            "$ref": "#/components/schemas/Tendencia"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "nome",
+          "origem",
+          "gauge",
+          "periodos",
+          "tendencia"
+        ],
+        "title": "Indicador"
+      },
+      "IndicadorPeriodo": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "saudavel",
+              "atencao",
+              "critico"
+            ],
+            "title": "Status"
+          },
+          "valor": {
+            "$ref": "#/components/schemas/Valor"
+          },
+          "ponteiro": {
+            "type": "number",
+            "title": "Ponteiro"
+          },
+          "delta": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Valor"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "deltaRuim": {
+            "type": "boolean",
+            "title": "Deltaruim"
+          },
+          "referencia": {
+            "type": "string",
+            "title": "Referencia"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status",
+          "valor",
+          "ponteiro",
+          "delta",
+          "deltaRuim",
+          "referencia"
+        ],
+        "title": "IndicadorPeriodo"
+      },
+      "ItemCarteira": {
+        "properties": {
+          "rotulo": {
+            "type": "string",
+            "title": "Rotulo"
+          },
+          "valor": {
+            "$ref": "#/components/schemas/Valor"
+          },
+          "percentual": {
+            "type": "number",
+            "title": "Percentual"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "saudavel",
+              "atencao",
+              "critico"
+            ],
+            "title": "Status"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rotulo",
+          "valor",
+          "percentual",
+          "status"
+        ],
+        "title": "ItemCarteira"
+      },
+      "Kpi": {
+        "properties": {
+          "rotulo": {
+            "type": "string",
+            "title": "Rotulo"
+          },
+          "valor": {
+            "$ref": "#/components/schemas/Valor"
+          },
+          "contexto": {
+            "type": "string",
+            "title": "Contexto"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "saudavel",
+                  "atencao",
+                  "critico"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rotulo",
+          "valor",
+          "contexto"
+        ],
+        "title": "Kpi"
+      },
+      "Periodo": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "enum": [
+              "mes",
+              "ano"
+            ],
+            "title": "Id"
+          },
+          "rotulo": {
+            "type": "string",
+            "title": "Rotulo"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "rotulo"
+        ],
+        "title": "Periodo"
+      },
+      "PeriodoDisponivel": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "rotulo": {
+            "type": "string",
+            "title": "Rotulo"
+          },
+          "dadosAte": {
+            "type": "string",
+            "format": "date",
+            "title": "Dadosate"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "rotulo",
+          "dadosAte"
+        ],
+        "title": "PeriodoDisponivel"
+      },
+      "PeriodosIndicador": {
+        "properties": {
+          "mes": {
+            "$ref": "#/components/schemas/IndicadorPeriodo"
+          },
+          "ano": {
+            "$ref": "#/components/schemas/IndicadorPeriodo"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "mes",
+          "ano"
+        ],
+        "title": "PeriodosIndicador"
       },
       "Ponto": {
         "properties": {
@@ -557,6 +1104,220 @@
         ],
         "title": "ScreenPayload"
       },
+      "Secao": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "titulo": {
+            "type": "string",
+            "title": "Titulo"
+          },
+          "modulo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Modulo"
+          },
+          "resumo": {
+            "type": "string",
+            "title": "Resumo"
+          },
+          "kpis": {
+            "items": {
+              "$ref": "#/components/schemas/Kpi"
+            },
+            "type": "array",
+            "title": "Kpis"
+          },
+          "cartoes": {
+            "items": {
+              "$ref": "#/components/schemas/CartaoInadimplencia"
+            },
+            "type": "array",
+            "title": "Cartoes"
+          },
+          "indicadores": {
+            "items": {
+              "$ref": "#/components/schemas/Indicador"
+            },
+            "type": "array",
+            "title": "Indicadores"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "titulo",
+          "modulo",
+          "resumo",
+          "kpis",
+          "cartoes",
+          "indicadores"
+        ],
+        "title": "Secao"
+      },
+      "SerieInadimplencia": {
+        "properties": {
+          "rotulos": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Rotulos"
+          },
+          "valores": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Valores"
+          },
+          "media": {
+            "type": "number",
+            "title": "Media"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rotulos",
+          "valores",
+          "media"
+        ],
+        "title": "SerieInadimplencia"
+      },
+      "SessaoPayload": {
+        "properties": {
+          "usuario": {
+            "$ref": "#/components/schemas/Usuario"
+          },
+          "cliente": {
+            "$ref": "#/components/schemas/ClienteSessao"
+          },
+          "papel": {
+            "type": "string",
+            "title": "Papel"
+          },
+          "empresas": {
+            "items": {
+              "$ref": "#/components/schemas/Empresa"
+            },
+            "type": "array",
+            "title": "Empresas"
+          },
+          "telas": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Telas"
+          },
+          "periodos": {
+            "items": {
+              "$ref": "#/components/schemas/PeriodoDisponivel"
+            },
+            "type": "array",
+            "title": "Periodos"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "usuario",
+          "cliente",
+          "papel",
+          "empresas",
+          "telas",
+          "periodos"
+        ],
+        "title": "SessaoPayload"
+      },
+      "Tendencia": {
+        "properties": {
+          "rotulos": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Rotulos"
+          },
+          "real": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Real"
+          },
+          "referencia": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Referencia"
+          },
+          "faixa": {
+            "anyOf": [
+              {
+                "prefixItems": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ],
+                "type": "array",
+                "maxItems": 2,
+                "minItems": 2
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Faixa"
+          },
+          "unidade": {
+            "type": "string",
+            "enum": [
+              "brl",
+              "pct",
+              "pp",
+              "dias",
+              "vezes",
+              "qtd"
+            ],
+            "title": "Unidade"
+          },
+          "casas": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Casas"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rotulos",
+          "real",
+          "referencia",
+          "unidade"
+        ],
+        "title": "Tendencia"
+      },
       "Trecho": {
         "properties": {
           "texto": {
@@ -575,6 +1336,32 @@
           "texto"
         ],
         "title": "Trecho"
+      },
+      "Usuario": {
+        "properties": {
+          "nome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nome"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "nome",
+          "email"
+        ],
+        "title": "Usuario"
       },
       "ValidationError": {
         "properties": {
@@ -615,6 +1402,133 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "Valor": {
+        "properties": {
+          "valor": {
+            "type": "number",
+            "title": "Valor"
+          },
+          "unidade": {
+            "type": "string",
+            "enum": [
+              "brl",
+              "pct",
+              "pp",
+              "dias",
+              "vezes",
+              "qtd"
+            ],
+            "title": "Unidade"
+          },
+          "casas": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Casas"
+          },
+          "compacto": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Compacto"
+          },
+          "sufixo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sufixo"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "valor",
+          "unidade"
+        ],
+        "title": "Valor"
+      },
+      "VisaoGeralPayload": {
+        "properties": {
+          "tela": {
+            "type": "string",
+            "const": "visao-geral",
+            "title": "Tela"
+          },
+          "versaoContrato": {
+            "type": "string",
+            "const": "1.0",
+            "title": "Versaocontrato"
+          },
+          "cliente": {
+            "$ref": "#/components/schemas/Cliente"
+          },
+          "dadosAte": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dadosate"
+          },
+          "atualizadoEm": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Atualizadoem"
+          },
+          "periodos": {
+            "items": {
+              "$ref": "#/components/schemas/Periodo"
+            },
+            "type": "array",
+            "title": "Periodos"
+          },
+          "secoes": {
+            "items": {
+              "$ref": "#/components/schemas/Secao"
+            },
+            "type": "array",
+            "title": "Secoes"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "tela",
+          "versaoContrato",
+          "cliente",
+          "dadosAte",
+          "atualizadoEm",
+          "periodos",
+          "secoes"
+        ],
+        "title": "VisaoGeralPayload"
       },
       "Visual": {
         "properties": {

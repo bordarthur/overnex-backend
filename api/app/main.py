@@ -15,7 +15,9 @@ from app.core.db import Pool, criar_pool, get_pool
 from app.core.erros import AcessoNegado
 from app.dados.router import router as dados_router
 from app.pdf.router import router as pdf_router
+from app.sessao.router import router as sessao_router
 from app.telas.fin_01 import router as fin_01_router
+from app.telas.visao_geral.router import router as visao_geral_router
 
 logger = logging.getLogger("app")
 
@@ -77,6 +79,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             ) from exc
         return {"status": "ok"}
 
+    app.include_router(sessao_router)
+    app.include_router(visao_geral_router)
     app.include_router(fin_01_router)
     app.include_router(dados_router)
     app.include_router(admin_router)

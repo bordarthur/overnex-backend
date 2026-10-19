@@ -5,8 +5,11 @@
 3. papel
 4. perfil libera a tela (cfg.perfil_tela) ou a tabela (cfg.perfil_tabela, e a tabela
    precisa estar registrada para o cliente em cfg.fonte_carga)
-5. empresa pedida pertence ao vínculo
+5. empresa pedida pertence ao vínculo (nas telas consolidadas, sem empresa pedida: o
+   vínculo precisa ter ao menos uma)
 6. dado nominal permitido
+
+`/api/sessao` roda só as etapas 1 a 3.
 
 Cliente e empresas vêm do vínculo do usuário no banco, nunca da requisição: a
 empresa da query só vale se estiver nesse vínculo. Toda decisão vai para
@@ -36,6 +39,32 @@ class ContextoAcesso:
     papel: str
     codigo_tela: str
     ve_dado_nominal: bool
+
+
+@dataclass(frozen=True)
+class ContextoConsolidado:
+    """Contexto de uma tela que aceita a visão de todas as empresas ("Todas" no front)."""
+
+    sessao: Sessao
+    usuario_id: UUID
+    cliente_id: UUID
+    # None = todas as empresas do vínculo
+    empresa_id: UUID | None
+    # empresas que a tela soma: a pedida, ou todas as do vínculo
+    empresas: tuple[UUID, ...]
+    papel: str
+    codigo_tela: str
+    ve_dado_nominal: bool
+
+
+@dataclass(frozen=True)
+class ContextoSessao:
+    """Usuário com vínculo válido (etapas 1 a 3), sem tela nem empresa."""
+
+    sessao: Sessao
+    usuario_id: UUID
+    cliente_id: UUID
+    papel: str
 
 
 @dataclass(frozen=True)
@@ -145,20 +174,30 @@ class _Checagem:
         if not (pertence and pertence["ok"]):
             raise self.negar(5, "empresa fora do vínculo do usuário")
 
+    def empresas_do_vinculo(self, vinculo: _Vinculo) -> tuple[UUID, ...]:
+        """Etapa 5 sem empresa pedida: todas as do vínculo; nenhuma = negado."""
+        empresas = tuple(
+            r["empresa_id"]
+            for r in self.sessao.conn.execute(
+                """
+                select ue.empresa_id
+                  from seg.usuario_empresa ue
+                  join cfg.empresa e on e.id = ue.empresa_id and e.cliente_id = ue.cliente_id
+                 where ue.usuario_id = %s
+                   and ue.cliente_id = %s
+                 order by e.nome, e.id
+                """,
+                (vinculo.usuario_id, vinculo.cliente_id),
+            )
+        )
+        if not empresas:
+            raise self.negar(5, "nenhuma empresa no vínculo do usuário")
+        return empresas
 
-def verificar_acesso(
-    sessao: Sessao,
-    codigo_tela: str,
-    empresa_id: UUID,
-    *,
-    papeis: frozenset[str] = TODOS_OS_PAPEIS,
-    exige_dado_nominal: bool = False,
-) -> ContextoAcesso:
-    checagem = _Checagem(sessao, codigo_tela, empresa_id)
-    vinculo = checagem.vinculo(papeis)
 
-    # 4. perfil libera a tela
-    perfil = sessao.conn.execute(
+def _perfil_libera_tela(checagem: _Checagem, vinculo: _Vinculo, codigo_tela: str) -> bool:
+    """Etapa 4; devolve se algum perfil que libera a tela vê dado nominal."""
+    perfil = checagem.sessao.conn.execute(
         """
         select bool_or(pt.ve_dado_nominal) as ve_dado_nominal
           from seg.usuario_perfil up
@@ -172,6 +211,73 @@ def verificar_acesso(
     if perfil is None or perfil["ve_dado_nominal"] is None:
         raise checagem.negar(4, "nenhum perfil do usuário libera a tela")
     ve_dado_nominal: bool = perfil["ve_dado_nominal"]
+    return ve_dado_nominal
+
+
+def verificar_sessao(sessao: Sessao) -> ContextoSessao:
+    """Etapas 1 a 3, para o que não é tela nem tabela (ex.: GET /api/sessao)."""
+    checagem = _Checagem(sessao, "sessao", None)
+    vinculo = checagem.vinculo(TODOS_OS_PAPEIS)
+    checagem.permitir()
+    return ContextoSessao(
+        sessao=sessao,
+        usuario_id=vinculo.usuario_id,
+        cliente_id=vinculo.cliente_id,
+        papel=vinculo.papel,
+    )
+
+
+def verificar_acesso_consolidado(
+    sessao: Sessao,
+    codigo_tela: str,
+    empresa_id: UUID | None,
+    *,
+    papeis: frozenset[str] = TODOS_OS_PAPEIS,
+    exige_dado_nominal: bool = False,
+) -> ContextoConsolidado:
+    checagem = _Checagem(sessao, codigo_tela, empresa_id)
+    vinculo = checagem.vinculo(papeis)
+
+    # 4. perfil libera a tela
+    ve_dado_nominal = _perfil_libera_tela(checagem, vinculo, codigo_tela)
+
+    # 5. empresa pedida pertence ao vínculo; sem empresa, todas as do vínculo
+    if empresa_id is not None:
+        checagem.empresa_no_vinculo(vinculo, empresa_id)
+        empresas: tuple[UUID, ...] = (empresa_id,)
+    else:
+        empresas = checagem.empresas_do_vinculo(vinculo)
+
+    # 6. dado nominal permitido
+    if exige_dado_nominal and not ve_dado_nominal:
+        raise checagem.negar(6, "tela exige dado nominal e o perfil não permite")
+
+    checagem.permitir()
+    return ContextoConsolidado(
+        sessao=sessao,
+        usuario_id=vinculo.usuario_id,
+        cliente_id=vinculo.cliente_id,
+        empresa_id=empresa_id,
+        empresas=empresas,
+        papel=vinculo.papel,
+        codigo_tela=codigo_tela,
+        ve_dado_nominal=ve_dado_nominal,
+    )
+
+
+def verificar_acesso(
+    sessao: Sessao,
+    codigo_tela: str,
+    empresa_id: UUID,
+    *,
+    papeis: frozenset[str] = TODOS_OS_PAPEIS,
+    exige_dado_nominal: bool = False,
+) -> ContextoAcesso:
+    checagem = _Checagem(sessao, codigo_tela, empresa_id)
+    vinculo = checagem.vinculo(papeis)
+
+    # 4. perfil libera a tela
+    ve_dado_nominal = _perfil_libera_tela(checagem, vinculo, codigo_tela)
 
     # 5. empresa pedida pertence ao vínculo
     checagem.empresa_no_vinculo(vinculo, empresa_id)
@@ -271,6 +377,37 @@ def exigir_tela(
         )
 
     return dependencia
+
+
+def exigir_tela_consolidada(
+    codigo_tela: str,
+    *,
+    papeis: frozenset[str] = TODOS_OS_PAPEIS,
+    exige_dado_nominal: bool = False,
+) -> Callable[..., ContextoConsolidado]:
+    """Dependência de tela com `empresa` opcional: sem ela, todas as empresas do vínculo."""
+
+    def dependencia(
+        sessao: Annotated[Sessao, Depends(get_sessao)],
+        empresa: Annotated[
+            UUID | None,
+            Query(description="Opcional: só esta empresa. Sem valor: todas as do vínculo."),
+        ] = None,
+    ) -> ContextoConsolidado:
+        return verificar_acesso_consolidado(
+            sessao,
+            codigo_tela,
+            empresa,
+            papeis=papeis,
+            exige_dado_nominal=exige_dado_nominal,
+        )
+
+    return dependencia
+
+
+def exigir_sessao(sessao: Annotated[Sessao, Depends(get_sessao)]) -> ContextoSessao:
+    """Dependência sem tela: usuário ativo com vínculo (etapas 1 a 3), ou 403."""
+    return verificar_sessao(sessao)
 
 
 def exigir_tabela(

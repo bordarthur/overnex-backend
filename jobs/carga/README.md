@@ -62,6 +62,12 @@ Configuração em `cfg.fonte_carga`:
 | `coluna_data` + `meses_retidos` | janela de datas: só entram as linhas dos últimos N meses dessa coluna (veja abaixo). Vazias = a tabela entra inteira |
 | `meses_fechados` | `true` = a janela usa só meses fechados (termina no mês anterior ao do snapshot) |
 
+### Resumo mensal
+
+Tabelas com modelo em [carga/resumo.py](carga/resumo.py) (hoje, `f_vendas_*`: faturado, pedidos e clientes por mês de `en_datemicao`) têm os totais mensais gravados em `mart.resumo_mensal`, na mesma transação da tabela. Os totais saem do **arquivo inteiro**, antes da janela de datas: a tabela pode guardar 1 mês, e o resumo guarda todo o histórico do arquivo em poucas linhas. É daí que a Visão geral tira a tendência de 6 meses e o acumulado do ano.
+
+Falha no resumo (coluna faltando, data em formato desconhecido, migration 8 não aplicada) não derruba a carga da tabela: vira aviso em `mart.carga_fonte.mensagem` e o resumo anterior fica.
+
 ### Janela de datas
 
 Para tabelas de movimento grandes (vendas, receitas, lançamentos…), a carga pode gravar só os últimos N meses:

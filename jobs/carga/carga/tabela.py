@@ -8,7 +8,9 @@
    dos últimos N meses (ou com a data vazia), antes de qualquer coisa ir ao banco;
 3. em UMA transação: temp table + COPY; se a fonte tem coluna de empresa, traduz por
    cfg.mapa_empresa (valor sem mapeamento → falha listando); apaga TODAS as linhas do
-   cliente na tabela e insere as do arquivo, numeradas em _linha;
+   cliente na tabela e insere as do arquivo, numeradas em _linha; se a tabela tem modelo
+   de resumo (carga/resumo.py), troca também os totais mensais em mart.resumo_mensal,
+   calculados sobre o arquivo INTEIRO, antes da janela;
 4. commit só se tudo deu certo. Até o commit, o painel vê os dados anteriores.
 """
 
@@ -18,7 +20,7 @@ import psycopg
 import pyarrow as pa
 from psycopg import sql
 
-from carga import janela
+from carga import janela, resumo
 from carga.arquivo import Baixar, Progresso, baixar_e_validar_data, listar_valores
 from carga.config import Settings
 from carga.db import Conexao
@@ -89,6 +91,8 @@ def carregar(
         )
 
     dados = arquivo.read(columns=colunas)
+    # antes da janela: o resumo mensal usa o arquivo inteiro
+    totais = _resumo(tabela, colunas, fonte, dados, progresso)
     if fonte.coluna_data and fonte.meses_retidos and progresso.data_snapshot:
         dados, fora, inicio, fim = janela.filtrar(
             dados,
@@ -110,11 +114,38 @@ def carregar(
                 f"{fora} linhas fora do período ficaram de fora"
             )
     try:
-        progresso.linhas_gravadas = _gravar(conn, fonte, tabela, colunas, dados)
+        progresso.linhas_gravadas = _gravar(conn, fonte, tabela, colunas, dados, totais, progresso)
     except psycopg.errors.DataError as exc:
         raise ErroCarga(
             f"valor incompatível com o tipo de uma coluna de mart.{tabela}: {exc}"
         ) from exc
+
+
+def _resumo(
+    tabela: str,
+    colunas: list[str],
+    fonte: Fonte,
+    dados: pa.Table,
+    progresso: Progresso,
+) -> list[resumo.Total] | None:
+    """Totais mensais do arquivo inteiro; None se a tabela não tem modelo de resumo.
+
+    Falha no resumo não derruba a carga da tabela: vira aviso e o resumo anterior fica.
+    """
+    modelo = resumo.modelo_da_tabela(tabela)
+    if modelo is None:
+        return None
+    faltando = [c for c in modelo.colunas if c not in colunas]
+    if faltando:
+        progresso.avisos.append(
+            f"resumo mensal não calculado: faltam em mart.{tabela} as colunas {faltando}"
+        )
+        return None
+    try:
+        return resumo.calcular(dados, modelo, fonte.coluna_empresa)
+    except ErroCarga as exc:
+        progresso.avisos.append(f"resumo mensal não calculado: {exc}")
+        return None
 
 
 def _gravar(
@@ -123,6 +154,8 @@ def _gravar(
     tabela: str,
     colunas: list[str],
     dados: pa.Table,
+    totais: list[resumo.Total] | None,
+    progresso: Progresso,
 ) -> int:
     alvo = sql.Identifier("mart", tabela)
     lista = sql.SQL(", ").join(sql.Identifier(c) for c in colunas)
@@ -186,10 +219,28 @@ def _gravar(
             (fonte.cliente_id,),
         )
         colunas_t = sql.SQL(", ").join(sql.Identifier("t", c) for c in colunas)
-        return conn.execute(
+        gravadas = conn.execute(
             sql.SQL(
                 "insert into {alvo} (_linha, _cliente_id, _empresa_id, {lista}) "
                 "select t._linha, %(cliente)s, {empresa}, {colunas_t} from tmp_dados t {juncao}"
             ).format(alvo=alvo, lista=lista, empresa=empresa, colunas_t=colunas_t, juncao=juncao),
             {"cliente": fonte.cliente_id},
         ).rowcount
+
+        # o resumo troca na mesma transação: tabela e resumo sempre do mesmo arquivo
+        if totais is not None and progresso.data_snapshot is not None:
+            if resumo.tabela_existe(conn):
+                n = resumo.gravar(
+                    conn,
+                    fonte.cliente_id,
+                    tabela,
+                    totais,
+                    progresso.data_snapshot,
+                    progresso.avisos,
+                )
+                progresso.avisos.append(f"resumo mensal: {n} totais gravados")
+            else:
+                progresso.avisos.append(
+                    "resumo mensal não gravado: mart.resumo_mensal não existe (migration 8)"
+                )
+        return gravadas

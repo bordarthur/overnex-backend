@@ -1,6 +1,6 @@
 # TODO — Overnex backend
 
-Atualizado em 16/10/2026.
+Atualizado em 19/10/2026.
 
 ## Feito
 
@@ -16,6 +16,7 @@ Atualizado em 16/10/2026.
   - Secret `DATABASE_URL_CARGA` e senha do role `carga` funcionando;
   - banco recuperado do modo só leitura de 14/10 (tabelas grandes esvaziadas com `truncate` e recarregadas com janela).
 - **Git:** branch padrão `main` no GitHub e `master` apagada. Repositório `dataflow` arquivado (o snapshot roda só pelo `diario.yml`).
+- **Rodada 4 — API para o front (sem login):** `GET /api/sessao` (usuário, cliente com `slug`, empresas, telas liberadas e períodos) e `GET /api/telas/visao-geral` (VG-01) com o contrato do front em Pydantic, em camelCase ([api/app/telas/visao_geral/contrato.py](api/app/telas/visao_geral/contrato.py)). `empresa` opcional: sem ela, a tela vale para todas as empresas do vínculo. `dadosAte` e `atualizadoEm` vêm da última carga `ok`. Seed com VG-01 liberada para Ana e Bruno, e `VISAO_GERAL_DEMO=1` (só dev) devolve as seções do mockup. `openapi.json` regenerado.
 - **Plano do Supabase:** continua no gratuito (500 MB) por enquanto. Em 16/10 o uso chegou perto de 500 MB, e as tabelas com janela passaram para 1 mês (o mês do snapshot).
 
 ## Conferir em produção
@@ -26,7 +27,7 @@ Atualizado em 16/10/2026.
   ```
   No plano gratuito, manter abaixo de ~400 MB para ter folga no pico da troca diária.
 - [ ] **Vendas no mês anterior fechado** (migration 7): `f_vendas_nilo_maia` tinha 0 linhas porque o DW não tem vendas do mês vigente (`en_datemi`). Depois do `db push`, configurar `meses_fechados = true` nela e conferir se ela enche. Avaliar o mesmo para as outras tabelas com janela.
-- [ ] **Confirmar que vendas enche com `en_datemicao`.** Com `en_datemi`, nenhuma linha caía na janela; a coluna foi trocada em 16/10. Conferir `linhas_gravadas` de `f_vendas_nilo_maia` na próxima carga e o tamanho do banco.
+- [ ] **Vendas de setembro só até 19/09.** `f_vendas_nilo_maia` encheu em 19/10, mas a última venda em `en_datemicao` é de 19/09: o faturado de setembro (R$ 21,35 mi, 56% da meta de R$ 38 mi) parece incompleto. Conferir se o DW manda só os últimos 30 dias, se a janela corta algo e o tamanho do banco.
 
 ## Antes de publicar a API
 
@@ -34,7 +35,9 @@ Atualizado em 16/10/2026.
 - [ ] **App registration no Entra ID** para a API (`ENTRA_TENANT_ID`, `ENTRA_AUDIENCE`). Os usuários dos clientes entram como convidados no tenant, ou o app passa a aceitar vários tenants (isso pede ajuste na validação do token).
 - [ ] **Usuários e perfis de produção:** `seg.usuario`, `seg.usuario_cliente`, `seg.usuario_perfil` e `seg.usuario_empresa`, além de `cfg.perfil_tela` e `cfg.perfil_tabela`. Sem isso, toda tela responde 403.
 - [ ] **Onde hospedar** (recomendado: Azure Container Apps, com a imagem gerada no GitHub Actions) e como front e API dividem o mesmo domínio (`/api` → API), já que a API não tem CORS.
-- [ ] **Validar com Docker**, o que não foi possível na máquina de desenvolvimento. Se não houver Docker, criar um workflow de CI no GitHub Actions que rode tudo isso a cada push:
+- [ ] **Usuário de desenvolvimento da Nilo Maia** ([supabase/producao/nilo_maia_usuario_dev.sql](supabase/producao/nilo_maia_usuario_dev.sql)): o `object_id_entra` é provisório, para o token fake da API local. Trocar pelo object id real do Entra quando o login entrar.
+- [ ] **VG-01 em `cfg.perfil_tela` de produção** para os perfis que veem a Visão geral (sem isso, a tela responde 403 e some de `/api/sessao`).
+- [ ] **Validar com Docker**, o que não foi possível na máquina de desenvolvimento. Os testes `db` da rodada 4 ([api/tests/test_visao_geral.py](api/tests/test_visao_geral.py)) ainda não rodaram contra o banco. Se não houver Docker, criar um workflow de CI no GitHub Actions que rode tudo isso a cada push:
   - `supabase start && supabase db reset && supabase test db`;
   - `uv run pytest` em `api/` e em `jobs/carga/`;
   - `docker build` da API.
@@ -43,22 +46,20 @@ Atualizado em 16/10/2026.
 
 O front (`overnex-frontend`) já desenha a Visão geral a partir de um JSON fixo; o contrato está em `src/contracts/visaoGeral.ts` e o exemplo completo em `src/api/fixtures/visao-geral.json`, no repositório do front. O front não calcula nada: todo número, status, ponteiro, delta e texto precisa vir pronto da API.
 
-- [ ] **Contrato da Visão geral em Pydantic**, espelhando `src/contracts/visaoGeral.ts` do front: `VisaoGeralPayload` → `Secao` → `Kpi`, `CartaoInadimplencia` e `Indicador` (gauge com faixas, períodos `mes`/`ano`, tendência de 6 meses). Unidades `brl | pct | pp | dias | vezes | qtd` (o `Formato` atual do `ScreenPayload` não basta). Depois, exportar o OpenAPI para o front gerar os tipos e apagar o contrato escrito à mão.
-- [ ] **`GET /api/telas/visao-geral`** com `exigir_tela("VG-01")` (ou o código que for definido), com a tela liberada em `cfg.perfil_tela`. Os dois períodos (`mes` e `ano`) vêm na mesma resposta: o front troca entre eles sem nova requisição.
-- [ ] **Visão consolidada de empresas.** O filtro "Empresa" do front tem a opção "Todas"; hoje `exigir_tela` exige uma `empresa`. Aceitar `empresa` opcional, somando as empresas do vínculo do usuário (como o `/api/dados` já faz).
-- [ ] **`GET /api/sessao`** para a moldura do front: nome do usuário, cliente (`nome`, `sigla`, `logoUrl`), empresas do vínculo (`id`, `nome`) para o filtro "Empresa", telas liberadas para o menu e períodos disponíveis para o filtro "Período".
-- [ ] **Histórico mensal agregado.** A Visão geral mostra 6 meses de tendência por indicador e 12 meses de inadimplência, mas as tabelas de movimento guardam 1 mês. Proposta: a carga grava, a cada execução, os totais do mês em uma tabela pequena (ex.: `mart.indicador_mensal`: cliente, empresa, indicador, mês, valor), que não passa pela janela. Ocupa poucos KB e mantém o banco no plano gratuito.
+- [ ] **No front:** proxy `/api` → `http://127.0.0.1:8000` no `vite.config.ts`, cliente HTTP no lugar do `criarMockClient` (token `fake:<object_id>` em dev), filtros a partir de `/api/sessao` e tipos gerados do `api/openapi.json` (apagar o contrato escrito à mão). Atenção: `dadosAte` e `atualizadoEm` podem vir `null` (cliente sem carga), o que o contrato escrito à mão não previa.
+- [ ] **Seção Vendas com regras provisórias** em [api/app/telas/visao_geral/vendas.py](api/app/telas/visao_geral/vendas.py): 5 cartões (meta, faturado e atingimento com farol; clientes e ticket sem) e o velocímetro "Vendas contra a meta" (mês, acumulado do ano e tendência de 6 meses, vindos de `mart.resumo_mensal`). Confirmar com o negócio: faturado = soma de `en_VALTOT` por `en_datemicao`, meta = `f_metas.Valor` da competência, pedidos = `en_numdoc` distintos, acumulado do ano = meses com faturado e meta. Sem projeção de fechamento: o mês mostrado é fechado. Demais seções ainda vazias.
+- [ ] **Aplicar a migration 8 em produção e rodar a carga.** `mart.resumo_mensal` e `cfg.parametro_cliente` (migration 8) e o resumo mensal da carga ([jobs/carga/carga/resumo.py](jobs/carga/carga/resumo.py)) estão prontos; o velocímetro de vendas só aparece depois do `supabase db push` e da primeira carga com o código novo. Outras tabelas (receitas, inadimplência…) ganham resumo com um modelo novo em `MODELOS`.
 - [ ] **Regra de cada indicador** (depende de decisão de negócio): tabela de origem, conta, meta ou orçado de comparação e faixas do farol. Indicadores do mockup e tabelas candidatas:
   - Vendas: vendas contra a meta, clientes que compraram, ticket por pedido, linhas por cliente → `f_vendas`, `f_metas`, `f_pedidos`.
   - Custos: CMV por linha de produto → `f_vendas` (custo) ou `f_lancamentos_agrupados`, com `f_orcamento`.
   - Resultado: margem EBITDA, despesas fixas e folha sobre a receita → `f_lancamentos_agrupados`, `f_orcamento`; dívida líquida / EBITDA vem de cadastro (`origem: "cadastro"`).
   - Financeiro: cobertura de caixa, prazo médio de recebimento, ciclo de caixa, contas a pagar lançadas e cartão de inadimplência → `f_saldos_bancarios`, `f_contas_a_receber`, `f_contas_a_pagar`, `f_pagas`, `f_recebidas`, `f_inadimplencia`, `f_estoque`.
-- [ ] **Faixas e metas do farol em `cfg.parametro`**, lidas pela API e aplicadas com `app/farol/status.py`. O front recebe as faixas prontas (`gauge.faixas`) e o `status` já calculado.
+- [ ] **Faixas do farol de cada cliente** em `cfg.parametro_cliente` (chave `farol.vendas_meta`, valor `{"atencao": 100, "critico": 90, "min": 80, "max": 110, "meta": 100}`), lidas por [api/app/farol/parametro.py](api/app/farol/parametro.py). Sem parâmetro, vale o padrão provisório do código (os limites do mockup). Definir os da Nilo Maia.
 - [ ] **Textos da tela:** o resumo de cada seção (ex.: "A meta escorrega por positivação…"), a referência de cada indicador e o texto do cartão de inadimplência (`Trecho[]`). Decidir se saem de regras fixas na API ou se ficam fora da primeira versão.
 - [ ] **Seções por cliente.** Quais seções cada cliente vê e em que ordem, e o campo `modulo` (ex.: Compras e Estoque pertencem ao módulo Distribuidora). Candidato: `cfg.painel`.
-- [ ] **`dadosAte` e `atualizadoEm`:** `dadosAte` é a data dos dados (`data_snapshot`); `atualizadoEm` é a data e hora em que a carga terminou, com fuso (ISO 8601). Hoje o FIN-01 devolve só a data.
-- [ ] **Logo do cliente servido pela própria API** (ou `logoUrl: null`). A CSP do front só aceita imagens do mesmo domínio.
-- [ ] **Seed local da Visão geral:** tela liberada para Ana e Bruno e dados fictícios suficientes para a resposta vir completa com `AUTH_FAKE`, para o front testar contra a API local.
+- [ ] **Logo do cliente servido pela própria API.** Hoje `logoUrl` só sai quando `cfg.cliente.logo_url` é um caminho do próprio domínio (`/…`); fora disso vem `null`.
+- [ ] **Sigla do cliente:** hoje sai das iniciais do nome ("Padrão LANN Alfa" → "PA"). Se precisar de outra, criar a coluna `cfg.cliente.sigla`.
+- [ ] **Períodos anteriores:** `/api/sessao` só lista o mês do último snapshot, e a Visão geral não recebe período. Com o histórico mensal, listar os meses fechados e aceitar `mes` na tela.
 - [ ] **Mesmo domínio em produção.** O front sobe como Azure Static Web Apps (`staticwebapp.config.json`, CSP `connect-src 'self'`) e a API não tem CORS: `/api` precisa ser servido pelo mesmo domínio (backend vinculado do Static Web Apps ou um proxy na frente dos dois). Complementa o item "Onde hospedar".
 
 ## Regras de negócio

@@ -18,6 +18,22 @@ uv sync
 uv run fastapi dev         # http://127.0.0.1:8000/docs
 ```
 
+### Sem Docker: Postgres 17 instalado no Windows
+
+Para rodar a API e o front locais sem Docker. Instale o Postgres 17 uma vez, já na porta e com a senha do Supabase local:
+
+```powershell
+winget install PostgreSQL.PostgreSQL.17 --override "--mode unattended --superpassword postgres --serverport 54322"
+```
+
+Depois, na raiz do repositório, crie (ou recrie) o banco com as migrations e o seed:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File supabase\banco_local.ps1
+```
+
+E siga do passo 2 acima. Rodam a API e `uv run pytest` da API; ficam de fora o pgTAP, os testes de integração da carga (precisam do Storage) e o `docker build`, que o CI cobre. Nunca aponte a API com `AUTH_FAKE=1` para o banco de produção: o token fake se passaria por qualquer usuário.
+
 Com `AUTH_FAKE=1` (só em `AMBIENTE=dev`), o token pode ser `fake:<object_id_entra>`. Usuários do seed:
 
 | Usuário | Cliente | `Authorization` |
@@ -28,7 +44,23 @@ Com `AUTH_FAKE=1` (só em `AMBIENTE=dev`), o token pode ser `fake:<object_id_ent
 ```bash
 curl -H "Authorization: Bearer fake:0d000000-0000-4000-8000-00000000000a" \
   "http://127.0.0.1:8000/api/telas/fin-01?empresa=e1000000-0000-4000-8000-0000000000a1&mes=2026-09"
+
+curl -H "Authorization: Bearer fake:0d000000-0000-4000-8000-00000000000a" \
+  "http://127.0.0.1:8000/api/telas/visao-geral"     # sem empresa = todas do vínculo
 ```
+
+Com `VISAO_GERAL_DEMO=1` (também só em `dev`), a Visão geral devolve as seções fictícias do mockup ([app/telas/visao_geral/demo.json](app/telas/visao_geral/demo.json), cópia da fixture do front). Cliente, datas e períodos continuam vindo do banco.
+
+### Ligar o front local
+
+O front (`overnex-frontend`) chama `/api/...` no próprio domínio, e a API não tem CORS. Em dev, o Vite repassa `/api` para a API com um proxy:
+
+```ts
+// vite.config.ts do front
+server: { proxy: { '/api': 'http://127.0.0.1:8000' } }
+```
+
+O token do front em dev é `fake:<object_id_entra>` de um usuário do seed.
 
 ## Testes e qualidade
 
@@ -65,12 +97,15 @@ Sem `AMBIENTE` definido, a API sobe como `prod` e exige `ENTRA_TENANT_ID` e `ENT
 ```
 app/
   main.py              cria o app; sem CORS; erros sem detalhe interno; GET /health
-  core/config.py       Settings (DATABASE_URL, ENTRA_*, AMBIENTE, AUTH_FAKE)
+  core/config.py       Settings (DATABASE_URL, ENTRA_*, AMBIENTE, AUTH_FAKE, VISAO_GERAL_DEMO)
   core/db.py           pool psycopg (prepare_threshold=None) + uma transação por requisição
   seguranca/auth.py    get_usuario: valida o JWT do Entra (JWKS, iss, aud, exp, tid)
   seguranca/acesso.py  checagem em 6 etapas + seg.log_acesso
+  sessao/router.py     GET /api/sessao: usuário, cliente, empresas, telas e períodos
   telas/contrato.py    ScreenPayload, Hero, Apoio, Visual, Alerta, Status
+  telas/moldura.py     base camelCase, cliente e última carga (sessão e Visão geral)
   telas/fin_01.py      GET /api/telas/fin-01 (exemplo, sem regra de negócio)
+  telas/visao_geral/   GET /api/telas/visao-geral (VG-01): contrato do front e rota
   dados/router.py      GET /api/dados/{tabela}: linhas das tabelas de dados do mart
   farol/               status(valor, faixa), função pura
   admin/, pdf/         routers vazios (TODO)
@@ -84,6 +119,14 @@ scripts/export_openapi.py
 3. `exigir_tela("FIN-01")` roda as 6 etapas (usuário ativo → vínculo → papel → perfil libera a tela → empresa no vínculo → dado nominal). Cliente e empresas vêm do vínculo no banco; o `empresa` da query só vale se estiver nele.
 4. Toda decisão grava em `seg.log_acesso`. Na negação, a transação faz commit só do log e a resposta é `403 {"detail": "Acesso negado."}`, sem dizer a etapa.
 5. Com sucesso, a tela monta o `ScreenPayload`; `atualizado_em` é a `data_snapshot` da última carga `ok` de lançamentos do cliente (ou `null`).
+
+### Endpoints do front: `/api/sessao` e `/api/telas/visao-geral`
+
+Respondem em camelCase, no formato de `src/contracts/visaoGeral.ts` do front. Campo opcional sem valor sai do JSON (como `campo?:` no TypeScript); campo obrigatório que aceita nulo vai como `null` (`logoUrl`, `delta`, `modulo`).
+
+- **`GET /api/sessao`** — etapas 1 a 3 da checagem (sem tela). Devolve `usuario`, `cliente` (com `slug`, para o front montar a URL), `papel`, `empresas` do vínculo (filtro "Empresa"), `telas` liberadas (códigos, para o menu) e `periodos` com dados (hoje só o mês do último snapshot).
+- **`GET /api/telas/visao-geral?empresa=<uuid opcional>`** — tela `VG-01`. Sem `empresa`, vale para todas as empresas do vínculo (etapa 5 exige ao menos uma). `dadosAte` é a `data_snapshot` e `atualizadoEm` é o `fim` (com fuso) da última fonte `ok` do cliente; os dois vêm `null` se nunca houve carga. As `secoes` vêm vazias até as regras dos indicadores existirem (ou da demo, com `VISAO_GERAL_DEMO=1`).
+- `logoUrl` só sai quando `cfg.cliente.logo_url` é um caminho do próprio domínio (`/…`); fora disso vem `null`, porque a CSP do front recusa imagem de fora.
 
 ### Tabelas de dados: `GET /api/dados/{tabela}`
 
