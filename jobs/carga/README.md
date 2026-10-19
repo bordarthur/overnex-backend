@@ -64,7 +64,7 @@ Configuração em `cfg.fonte_carga`:
 
 ### Resumo mensal
 
-Tabelas com modelo em [carga/resumo.py](carga/resumo.py) (hoje, `f_vendas_*`: faturado, pedidos e clientes por mês de `en_datemicao`) têm os totais mensais gravados em `mart.resumo_mensal`, na mesma transação da tabela. Os totais saem do **arquivo inteiro**, antes da janela de datas: a tabela pode guardar 1 mês, e o resumo guarda todo o histórico do arquivo em poucas linhas. É daí que a Visão geral tira a tendência de 6 meses e o acumulado do ano.
+Tabelas com modelo em [carga/resumo.py](carga/resumo.py) (hoje, `f_vendas_*`: faturado, custo, pedidos, clientes e pares cliente × produto por mês de `en_datemicao`, e faturado e custo por `en_ramo` na coluna `dimensao`) têm os totais mensais gravados em `mart.resumo_mensal`, na mesma transação da tabela. Os totais saem do **arquivo inteiro**, antes da janela de datas: a tabela pode guardar 1 mês, e o resumo guarda todo o histórico do arquivo em poucas linhas. É daí que a Visão geral tira a tendência de 6 meses e o acumulado do ano.
 
 Falha no resumo (coluna faltando, data em formato desconhecido, migration 8 não aplicada) não derruba a carga da tabela: vira aviso em `mart.carga_fonte.mensagem` e o resumo anterior fica.
 

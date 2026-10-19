@@ -7,7 +7,7 @@ import pyarrow as pa
 import pytest
 
 from carga.erros import ErroCarga
-from carga.resumo import MODELOS, Total, calcular, modelo_da_tabela
+from carga.resumo import MODELOS, SEM_DIMENSAO, Total, calcular, modelo_da_tabela
 
 VENDAS = MODELOS["f_vendas_"]
 
@@ -24,6 +24,9 @@ def _vendas(**extra: list[object]) -> pa.Table:
         "en_VALTOT": [999.0, 600.1, 400.2, 1000.0, 5000.0],
         "en_numdoc": ["P0", "P1", "P1", "P2", "P3"],
         "en_codcli": ["C9", "C1", "C1", "C2", "C3"],
+        "en_codigo": ["X", "X", "Y", "X", "X"],
+        "en_precus": [800.0, 500.0, 300.0, 700.0, 4000.0],
+        "en_ramo": ["MERCEARIA", "MERCEARIA", "CONSTRUTORA", None, "MERCEARIA"],
     }
     return pa.table(colunas | extra)
 
@@ -34,25 +37,48 @@ def test_modelo_pelo_prefixo() -> None:
 
 
 def test_totais_por_mes_sem_empresa() -> None:
-    totais = calcular(_vendas(), VENDAS, None)
+    totais = [t for t in calcular(_vendas(), VENDAS, None) if not t.dimensao]
 
     agosto, setembro = date(2026, 8, 1), date(2026, 9, 1)
     assert totais == [
         Total(None, "clientes", agosto, Decimal("1.00")),
+        Total(None, "clientes_produtos", agosto, Decimal("1.00")),
+        Total(None, "custo", agosto, Decimal("800.00")),
         Total(None, "faturado", agosto, Decimal("999.00")),
         Total(None, "pedidos", agosto, Decimal("1.00")),
         # linha sem data fica de fora; float somado sem erro binário
         Total(None, "clientes", setembro, Decimal("2.00")),
+        # C1 comprou X e Y; C2, X
+        Total(None, "clientes_produtos", setembro, Decimal("3.00")),
+        Total(None, "custo", setembro, Decimal("1500.00")),
         Total(None, "faturado", setembro, Decimal("2000.30")),
         Total(None, "pedidos", setembro, Decimal("2.00")),
     ]
+
+
+def test_totais_por_ramo() -> None:
+    abertos = [t for t in calcular(_vendas(), VENDAS, None) if t.dimensao]
+    setembro = date(2026, 9, 1)
+
+    custo = {(t.mes, t.dimensao): t.valor for t in abertos if t.medida == "custo_ramo"}
+    assert custo == {
+        (date(2026, 8, 1), "MERCEARIA"): Decimal("800.00"),
+        (setembro, "MERCEARIA"): Decimal("500.00"),
+        (setembro, "CONSTRUTORA"): Decimal("300.00"),
+        # ramo vazio não se mistura com o total do mês (dimensão "")
+        (setembro, SEM_DIMENSAO): Decimal("700.00"),
+    }
+    faturado = {(t.mes, t.dimensao): t.valor for t in abertos if t.medida == "faturado_ramo"}
+    assert faturado[(setembro, "MERCEARIA")] == Decimal("600.10")
 
 
 def test_totais_por_empresa() -> None:
     dados = _vendas(EMPRESA=["A", "A", "B", "B", "B"])
     totais = calcular(dados, VENDAS, "EMPRESA")
 
-    faturado = {(t.empresa, t.mes): t.valor for t in totais if t.medida == "faturado"}
+    faturado = {
+        (t.empresa, t.mes): t.valor for t in totais if t.medida == "faturado" and not t.dimensao
+    }
     assert faturado == {
         ("A", date(2026, 8, 1)): Decimal("999.00"),
         ("A", date(2026, 9, 1)): Decimal("600.10"),

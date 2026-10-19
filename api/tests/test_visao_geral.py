@@ -254,6 +254,7 @@ def vendas_do_bruno(admin_conn: psycopg.Connection[tuple[Any, ...]]) -> Iterator
     yield
     admin_conn.execute("delete from mart.resumo_mensal where cliente_id = %s", (CLIENTE_B,))
     admin_conn.execute("delete from cfg.parametro_cliente where cliente_id = %s", (CLIENTE_B,))
+    admin_conn.execute("delete from cfg.feriado where cliente_id = %s", (CLIENTE_B,))
     for tabela in ("f_vendas_nilo_maia", "f_metas_nilo_maia"):
         admin_conn.execute(
             f"delete from mart.{tabela} where _cliente_id = %s",  # noqa: S608
@@ -275,34 +276,93 @@ def test_secao_vendas_do_mes_mais_recente(client: TestClient) -> None:
     kpis = {k["rotulo"]: k for k in vendas["kpis"]}
     assert list(kpis) == [
         "Meta de setembro",
-        "Faturado em setembro",
-        "Atingimento da meta",
-        "Clientes que compraram",
-        "Ticket médio por pedido",
+        "Faturado até 15/09",
+        "Projeção de fechamento",
+        "A realizar por dia útil",
     ]
+    # setembro/2026: 21 dias úteis (7/09 é feriado); até 15/09, 10
     assert kpis["Meta de setembro"]["valor"]["valor"] == 4000
     # linha sem data e agosto ficam de fora
-    assert kpis["Faturado em setembro"]["valor"]["valor"] == 2000
-    assert kpis["Faturado em setembro"]["contexto"] == "vendas até 15/09"
-    assert kpis["Atingimento da meta"]["valor"]["valor"] == 50
-    assert kpis["Atingimento da meta"]["contexto"] == "R$ 2 mil abaixo da meta"
-    assert kpis["Clientes que compraram"]["valor"]["valor"] == 2
-    assert kpis["Clientes que compraram"]["contexto"] == "2 pedidos"
-    assert kpis["Ticket médio por pedido"]["valor"]["valor"] == 1000
-    # farol padrão: 50% da meta é crítico
-    assert kpis["Faturado em setembro"]["status"] == "critico"
-    assert kpis["Atingimento da meta"]["status"] == "critico"
-    assert "status" not in kpis["Clientes que compraram"]
+    faturado = kpis["Faturado até 15/09"]
+    assert faturado["valor"]["valor"] == 2000
+    assert faturado["contexto"] == "meta até a data: R$ 2 mil"  # 4000 × 10 / 21
+    assert faturado["status"] == "saudavel"
+    projecao = kpis["Projeção de fechamento"]
+    assert projecao["valor"]["valor"] == 4200  # 200 por dia × 21
+    assert projecao["contexto"] == "R$ 200 acima da meta"
+    assert projecao["status"] == "saudavel"
+    realizar = kpis["A realizar por dia útil"]
+    assert round(realizar["valor"]["valor"], 2) == 181.82  # 2000 / 11
+    assert realizar["contexto"] == "hoje vende R$ 200 por dia"
 
     [ind] = vendas["indicadores"]
     assert ind["id"] == "vendas-meta"
-    assert ind["periodos"]["mes"]["status"] == "critico"
-    assert ind["periodos"]["mes"]["ponteiro"] == 80
-    # agosto: 999 de 1000; setembro: 2000 de 4000
+    # o mês usa a projeção: 4200 de 4000
+    assert ind["periodos"]["mes"]["status"] == "saudavel"
+    assert ind["periodos"]["mes"]["ponteiro"] == 105
+    assert ind["periodos"]["mes"]["referencia"] == "projeção de R$ 4 mil contra meta de R$ 4 mil"
+    # ano com o realizado — agosto: 999 de 1000; setembro: 2000 de 4000
     assert ind["periodos"]["ano"]["referencia"] == "R$ 3 mil de ago a set contra meta de R$ 5 mil"
     assert ind["tendencia"]["rotulos"] == ["ago", "set"]
-    assert ind["tendencia"]["real"] == [999, 2000]
+    assert ind["tendencia"]["real"] == [999, 4200]
     assert ind["tendencia"]["referencia"] == [1000, 4000]
+
+
+@pytest.mark.usefixtures("vendas_do_bruno")
+def test_feriado_do_cliente_entra_nos_dias_uteis(
+    client: TestClient, admin_conn: psycopg.Connection[tuple[Any, ...]]
+) -> None:
+    admin_conn.execute(
+        "insert into cfg.feriado (cliente_id, data, nome) values (%s, '2026-09-14', 'Teste')",
+        (CLIENTE_B,),
+    )
+    [vendas] = client.get(VISAO_GERAL, headers=auth(OID_B)).json()["secoes"]
+    kpis = {k["rotulo"]: k for k in vendas["kpis"]}
+
+    # 9 dias úteis passados, 20 no mês
+    assert round(kpis["Projeção de fechamento"]["valor"]["valor"], 2) == 4444.44
+    assert kpis["A realizar por dia útil"]["contexto"] == "hoje vende R$ 222 por dia"
+
+
+@pytest.mark.usefixtures("vendas_do_bruno")
+def test_secao_custos_com_cmv_por_ramo(
+    client: TestClient, admin_conn: psycopg.Connection[tuple[Any, ...]]
+) -> None:
+    # setembro: MERCEARIA 600+400 com custo 850; CONSTRUTORA 1000 com custo 800
+    admin_conn.execute(
+        """
+        update mart.f_vendas_nilo_maia
+           set "en_precus" = case _linha when 2 then 500 when 3 then 350 when 4 then 800 end,
+               "en_ramo" = case _linha when 4 then 'CONSTRUTORA' else 'MERCEARIA' end
+         where _cliente_id = %s and _linha in (2, 3, 4)
+        """,
+        (CLIENTE_B,),
+    )
+    # agosto, no histórico por ramo: MERCEARIA com CMV de 80%
+    admin_conn.execute(
+        """
+        insert into mart.resumo_mensal
+            (cliente_id, empresa_id, tabela, medida, dimensao, mes, valor, data_snapshot)
+        values (%(c)s, null, %(t)s, 'faturado_ramo', 'MERCEARIA', %(ago)s, 1000, %(snap)s),
+               (%(c)s, null, %(t)s, 'custo_ramo', 'MERCEARIA', %(ago)s, 800, %(snap)s),
+               (%(c)s, null, %(t)s, 'custo', '', %(ago)s, 800, %(snap)s)
+        """,
+        {"c": CLIENTE_B, "t": "f_vendas_nilo_maia", "ago": "2026-08-01", "snap": "2026-10-11"},
+    )
+    secoes = {s["id"]: s for s in client.get(VISAO_GERAL, headers=auth(OID_B)).json()["secoes"]}
+
+    custos = secoes["custos"]
+    kpis = {k["rotulo"]: k for k in custos["kpis"]}
+    # 1650 / 2000
+    assert kpis["CMV do mês"]["valor"]["valor"] == 82.5
+    assert kpis["Lucro bruto até 15/09"]["valor"]["valor"] == 350
+    # total de agosto: 800 / 999
+    assert kpis["CMV do mês"]["contexto"].endswith("do mês anterior (80,1%)")
+    [mercearia] = [i for i in custos["indicadores"] if i["id"] == "cmv-mercearia"]
+    assert mercearia["nome"] == "CMV de mercearia"
+    assert mercearia["periodos"]["mes"]["valor"]["valor"] == 85  # 850 / 1000
+    assert mercearia["periodos"]["mes"]["status"] == "critico"  # +5 p.p.
+    assert mercearia["tendencia"]["rotulos"] == ["ago", "set"]
 
 
 @pytest.mark.usefixtures("vendas_do_bruno")
@@ -318,17 +378,19 @@ def test_faixas_do_farol_vem_de_cfg_parametro_cliente(
     admin_conn.execute(
         """
         insert into cfg.parametro_cliente (cliente_id, chave, valor, vigente_de)
-        values (%s, 'farol.vendas_meta', '{"atencao": 50, "critico": 40, "min": 0}', '2026-01-01')
+        values (%s, 'farol.vendas_meta',
+                '{"atencao": 120, "critico": 110, "min": 0, "max": 130}', '2026-01-01')
         """,
         (CLIENTE_B,),
     )
     [vendas] = client.get(VISAO_GERAL, headers=auth(OID_B)).json()["secoes"]
     ind = vendas["indicadores"][0]
 
-    assert ind["periodos"]["mes"]["status"] == "saudavel"
-    assert ind["periodos"]["mes"]["ponteiro"] == 50
+    # 105% da meta: abaixo dos 110% do parâmetro
+    assert ind["periodos"]["mes"]["status"] == "critico"
+    assert ind["periodos"]["mes"]["ponteiro"] == 105
     assert ind["gauge"]["min"] == 0
-    assert ind["gauge"]["faixas"][0] == {"de": 0, "ate": 40, "status": "critico"}
+    assert ind["gauge"]["faixas"][0] == {"de": 0, "ate": 110, "status": "critico"}
 
 
 @pytest.mark.usefixtures("vendas_do_bruno")

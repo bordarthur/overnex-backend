@@ -2,7 +2,9 @@
 
 Chave `farol.<indicador>`, valor jsonb com qualquer um destes campos (os ausentes vêm do
 padrão): {"atencao": 100, "critico": 90, "maior_melhor": true, "min": 80, "max": 110,
-"meta": 100}. Vale o parâmetro vigente na data de referência.
+"meta": 100, "referencia": 1120}. Vale o parâmetro vigente na data de referência.
+`referencia` é a meta fixa do indicador na unidade dele (ex.: 1.120 clientes), para os
+indicadores que, sem ela, comparam com a média dos meses anteriores.
 
 Parâmetro inválido não derruba a tela: registra no log e usa o padrão.
 """
@@ -29,6 +31,9 @@ class Farol:
     minimo: Decimal
     maximo: Decimal
     meta: Decimal
+    # referência fixa do indicador, na unidade dele (ex.: meta de 1.120 clientes).
+    # None = o indicador usa a referência dele (ex.: média dos meses anteriores).
+    referencia: Decimal | None = None
 
     def status(self, valor: Decimal) -> Status:
         s = status(valor, self.faixa)
@@ -68,6 +73,7 @@ class _Parametro(BaseModel):
     min: Decimal | None = None
     max: Decimal | None = None
     meta: Decimal | None = None
+    referencia: Decimal | None = None
 
 
 # PROVISÓRIOS: os mesmos limites do mockup, até o negócio definir os de cada cliente.
@@ -79,7 +85,52 @@ PADROES: dict[str, Farol] = {
         maximo=Decimal(110),
         meta=Decimal(100),
     ),
+    # os três abaixo: valor do mês em % da referência (média de 6 meses ou meta cadastrada)
+    "clientes_compraram": Farol(
+        faixa=Faixa(atencao=Decimal(100), critico=Decimal(90)),
+        minimo=Decimal(80),
+        maximo=Decimal(110),
+        meta=Decimal(100),
+    ),
+    "ticket_pedido": Farol(
+        faixa=Faixa(atencao=Decimal(100), critico=Decimal(95)),
+        minimo=Decimal(85),
+        maximo=Decimal(115),
+        meta=Decimal(100),
+    ),
+    # CMV: limites RELATIVOS, em p.p. acima da referência do ramo (ver deslocado())
+    "cmv": Farol(
+        faixa=Faixa(atencao=Decimal("0.3"), critico=Decimal("1.5"), maior_melhor=False),
+        minimo=Decimal(-4),
+        maximo=Decimal(6),
+        meta=Decimal(0),
+    ),
+    "produtos_cliente": Farol(
+        faixa=Faixa(atencao=Decimal(100), critico=Decimal(90)),
+        minimo=Decimal(70),
+        maximo=Decimal(110),
+        meta=Decimal(100),
+    ),
 }
+
+
+def deslocado(f: Farol, base: Decimal) -> Farol:
+    """Farol de limites relativos (ex.: CMV em p.p. da referência) levado para a base.
+
+    Com base 84 e o padrão do CMV: meta 84, atenção a partir de 84,3, crítico a partir
+    de 85,5, escala de 80 a 90.
+    """
+    return Farol(
+        faixa=Faixa(
+            atencao=f.faixa.atencao + base,
+            critico=f.faixa.critico + base,
+            maior_melhor=f.faixa.maior_melhor,
+        ),
+        minimo=f.minimo + base,
+        maximo=f.maximo + base,
+        meta=f.meta + base,
+        referencia=f.referencia,
+    )
 
 
 def _existe_tabela(conn: Conexao) -> bool:
@@ -119,6 +170,7 @@ def farol(conn: Conexao, cliente_id: UUID, indicador: str, referencia: date) -> 
             minimo=p.min if p.min is not None else padrao.minimo,
             maximo=p.max if p.max is not None else padrao.maximo,
             meta=p.meta if p.meta is not None else padrao.meta,
+            referencia=p.referencia if p.referencia is not None else padrao.referencia,
         )
     except (ValidationError, ValueError) as exc:
         logger.warning("Parâmetro farol.%s inválido (cliente %s): %s", indicador, cliente_id, exc)

@@ -17,7 +17,8 @@ from app.core.config import Settings, get_settings
 from app.seguranca.acesso import ContextoConsolidado, exigir_tela_consolidada
 from app.telas.moldura import cliente, rotulo_mes, ultima_carga
 from app.telas.visao_geral.contrato import Periodo, Secao, VisaoGeralPayload
-from app.telas.visao_geral.vendas import secao_vendas
+from app.telas.visao_geral.custos import secao_custos
+from app.telas.visao_geral.vendas import SecaoDoMes, secao_vendas
 
 CODIGO_TELA = "VG-01"
 DEMO = Path(__file__).with_name("demo.json")
@@ -35,7 +36,14 @@ def secoes_demo() -> list[Secao]:
 def _secoes(ctx: ContextoConsolidado) -> tuple[list[Secao], date | None]:
     """Seções montadas e o mês de referência mais recente entre elas."""
     # TODO(regra): demais seções e a lista de seções do cliente em cfg.painel. Ver TODO.md.
-    montadas = [s for s in (secao_vendas(ctx),) if s is not None]
+    montadas: list[SecaoDoMes] = []
+    vendas = secao_vendas(ctx)
+    if vendas is not None:
+        secao, base = vendas
+        montadas.append(secao)
+        custos = secao_custos(ctx, base)
+        if custos is not None:
+            montadas.append(custos)
     return [s.secao for s in montadas], max((s.mes for s in montadas), default=None)
 
 

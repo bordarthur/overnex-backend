@@ -27,3 +27,13 @@ def moeda(valor: Decimal) -> str:
 def inteiro(valor: int) -> str:
     """12345 → "12.345"."""
     return _pt(Decimal(valor), 0)
+
+
+def moeda_cheia(valor: Decimal) -> str:
+    """Sem abreviar, como `compacto: false` no front: R$ 2.995."""
+    return f"R$ {_pt(abs(valor), 0)}"
+
+
+def numero(valor: Decimal, casas: int = 0) -> str:
+    """2.345 com 1 casa → "2,3"."""
+    return ("-" if valor < 0 else "") + _pt(valor, casas)

@@ -37,6 +37,8 @@ Nada fica em `public`, e esses schemas não são expostos pelo PostgREST (`confi
 6. `..._janela_de_datas.sql` — `coluna_data` e `meses_retidos` em `cfg.fonte_carga`: a carga só grava as linhas dos últimos N meses de uma coluna de data (tabelas de movimento grandes).
 7. `..._janela_meses_fechados.sql` — `meses_fechados` em `cfg.fonte_carga`: a janela termina no mês anterior ao do snapshot (só meses completos).
 8. `..._resumo_mensal.sql` — `mart.resumo_mensal` (totais por mês das tabelas de movimento, calculados pela carga sobre o arquivo inteiro, antes da janela: histórico da Visão geral) e `cfg.parametro_cliente` (parâmetros do cliente inteiro, como as faixas do farol `farol.vendas_meta`).
+9. `..._feriado.sql` — `cfg.feriado`: feriados do cliente (estaduais, municipais, ponto facultativo) para os dias úteis da projeção de vendas. Os nacionais vêm da biblioteca `holidays`, na API.
+10. `..._resumo_dimensao.sql` — `dimensao` em `mart.resumo_mensal`: totais abertos por um valor do arquivo (ex.: faturado e custo por `en_ramo`, para o CMV por ramo). Vazio = total sem abertura.
 
 ### Storage
 
