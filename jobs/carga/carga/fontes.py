@@ -27,6 +27,8 @@ class Fonte:
     # janela de datas: só os últimos N meses desta coluna entram (ambos None = tudo)
     coluna_data: str | None = None
     meses_retidos: int | None = None
+    # True = só meses fechados: a janela termina no mês anterior ao do snapshot
+    meses_fechados: bool = False
 
 
 def listar_fontes_ativas(conn: Conexao) -> list[Fonte]:
@@ -34,7 +36,7 @@ def listar_fontes_ativas(conn: Conexao) -> list[Fonte]:
         return cur.execute(
             """
             select id, cliente_id, tipo, caminho_bucket, tabela_destino, coluna_empresa,
-                   coluna_data, meses_retidos
+                   coluna_data, meses_retidos, meses_fechados
               from cfg.fonte_carga
              where ativo
              order by id

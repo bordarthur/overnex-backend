@@ -12,6 +12,8 @@
 4. commit só se tudo deu certo. Até o commit, o painel vê os dados anteriores.
 """
 
+from datetime import timedelta
+
 import psycopg
 import pyarrow as pa
 from psycopg import sql
@@ -88,13 +90,25 @@ def carregar(
 
     dados = arquivo.read(columns=colunas)
     if fonte.coluna_data and fonte.meses_retidos and progresso.data_snapshot:
-        dados, fora, inicio = janela.filtrar(
-            dados, fonte.coluna_data, progresso.data_snapshot, fonte.meses_retidos
+        dados, fora, inicio, fim = janela.filtrar(
+            dados,
+            fonte.coluna_data,
+            progresso.data_snapshot,
+            fonte.meses_retidos,
+            meses_fechados=fonte.meses_fechados,
         )
-        progresso.avisos.append(
-            f"janela de {fonte.meses_retidos} meses em {fonte.coluna_data}: "
-            f"{fora} linhas antes de {inicio:%d/%m/%Y} ficaram de fora"
-        )
+        if fim is None:
+            progresso.avisos.append(
+                f"janela de {fonte.meses_retidos} meses em {fonte.coluna_data}: "
+                f"{fora} linhas antes de {inicio:%d/%m/%Y} ficaram de fora"
+            )
+        else:
+            ultimo_dia = fim - timedelta(days=1)
+            progresso.avisos.append(
+                f"janela de {fonte.meses_retidos} meses fechados em {fonte.coluna_data} "
+                f"({inicio:%d/%m/%Y} a {ultimo_dia:%d/%m/%Y}): "
+                f"{fora} linhas fora do período ficaram de fora"
+            )
     try:
         progresso.linhas_gravadas = _gravar(conn, fonte, tabela, colunas, dados)
     except psycopg.errors.DataError as exc:

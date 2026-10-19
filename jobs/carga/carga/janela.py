@@ -19,12 +19,32 @@ from carga.erros import ErroCarga
 FORMATOS = ("%Y-%m-%d", "%d/%m/%Y", "%Y/%m/%d")
 
 
+def _primeiro_dia(indice_mes: int) -> date:
+    return date(indice_mes // 12, indice_mes % 12 + 1, 1)
+
+
 def inicio_da_janela(data_snapshot: date, meses: int) -> date:
     """Dia 1 do mês do snapshot menos (meses - 1). Ex.: 14/10/2026 e 3 → 01/08/2026."""
     if meses < 1:
         raise ValueError("meses precisa ser >= 1")
-    indice = data_snapshot.year * 12 + (data_snapshot.month - 1) - (meses - 1)
-    return date(indice // 12, indice % 12 + 1, 1)
+    return _primeiro_dia(data_snapshot.year * 12 + (data_snapshot.month - 1) - (meses - 1))
+
+
+def limites_da_janela(
+    data_snapshot: date, meses: int, *, meses_fechados: bool = False
+) -> tuple[date, date | None]:
+    """(início, fim exclusivo) da janela. Fim None = sem limite (inclui o mês do snapshot).
+
+    Com meses_fechados, a janela termina no mês anterior ao do snapshot:
+    16/10/2026 e 1 → (01/09/2026, 01/10/2026), ou seja, só setembro.
+    """
+    if meses < 1:
+        raise ValueError("meses precisa ser >= 1")
+    if not meses_fechados:
+        return inicio_da_janela(data_snapshot, meses), None
+    fim = date(data_snapshot.year, data_snapshot.month, 1)
+    indice_fim = data_snapshot.year * 12 + (data_snapshot.month - 1)
+    return _primeiro_dia(indice_fim - meses), fim
 
 
 def _texto_para_data(coluna: pa.ChunkedArray[Any], nome: str) -> pa.ChunkedArray[Any]:
@@ -66,16 +86,22 @@ def datas_da_coluna(tabela: pa.Table, nome: str) -> pa.ChunkedArray[Any]:
 
 
 def filtrar(
-    tabela: pa.Table, coluna: str, data_snapshot: date, meses: int
-) -> tuple[pa.Table, int, date]:
-    """Mantém as linhas com data >= início da janela ou com data vazia.
+    tabela: pa.Table,
+    coluna: str,
+    data_snapshot: date,
+    meses: int,
+    *,
+    meses_fechados: bool = False,
+) -> tuple[pa.Table, int, date, date | None]:
+    """Mantém as linhas dentro da janela ou com data vazia.
 
-    Devolve (tabela filtrada, linhas descartadas, início da janela).
+    Devolve (tabela filtrada, linhas descartadas, início, fim exclusivo ou None).
     """
-    inicio = inicio_da_janela(data_snapshot, meses)
+    inicio, fim = limites_da_janela(data_snapshot, meses, meses_fechados=meses_fechados)
     datas = datas_da_coluna(tabela, coluna)
-    manter = pc.or_kleene(
-        pc.is_null(datas), pc.greater_equal(datas, pa.scalar(inicio, pa.date32()))
-    )
+    dentro = pc.greater_equal(datas, pa.scalar(inicio, pa.date32()))
+    if fim is not None:
+        dentro = pc.and_kleene(dentro, pc.less(datas, pa.scalar(fim, pa.date32())))
+    manter = pc.or_kleene(pc.is_null(datas), dentro)
     filtrada = tabela.filter(manter)
-    return filtrada, tabela.num_rows - filtrada.num_rows, inicio
+    return filtrada, tabela.num_rows - filtrada.num_rows, inicio, fim

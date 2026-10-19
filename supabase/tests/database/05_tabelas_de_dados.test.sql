@@ -5,7 +5,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 grant usage on schema extensions to api_site, carga;
 
-select plan(18);
+select plan(19);
 
 -- preparo padrão aplicado às 21 tabelas da migration 5
 select is(
@@ -80,6 +80,10 @@ select throws_ok(
 select throws_ok(
     $$update cfg.fonte_carga set coluna_data = 'Data', meses_retidos = 3 where tipo = 'lancamento'$$,
     '23514', null, 'janela só vale para o tipo tabela');
+
+select throws_ok(
+    $$update cfg.fonte_carga set meses_fechados = true where meses_retidos is null$$,
+    '23514', null, 'meses_fechados sem janela é recusado');
 
 -- a função de preparo não é chamável pelos roles da aplicação
 set local role api_site;

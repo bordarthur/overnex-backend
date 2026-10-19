@@ -230,16 +230,18 @@ def metas(competencias: list[str | None]) -> bytes:
     return buffer.getvalue()
 
 
-def criar_fonte_metas(admin: AdminConn, coluna_data: str | None, meses: int | None) -> None:
+def criar_fonte_metas(
+    admin: AdminConn, coluna_data: str | None, meses: int | None, *, fechados: bool = False
+) -> None:
     admin.execute("update cfg.fonte_carga set ativo = false")
     admin.execute(
         """
         insert into cfg.fonte_carga
             (cliente_id, tipo, caminho_bucket, tabela_destino, contem_dado_nominal,
-             coluna_data, meses_retidos)
-        values (%s, 'tabela', %s, 'f_metas_nilo_maia', false, %s, %s)
+             coluna_data, meses_retidos, meses_fechados)
+        values (%s, 'tabela', %s, 'f_metas_nilo_maia', false, %s, %s, %s)
         """,
-        (CLIENTE_A, CAMINHO_METAS, coluna_data, meses),
+        (CLIENTE_A, CAMINHO_METAS, coluna_data, meses, fechados),
     )
 
 
@@ -292,3 +294,20 @@ def test_janela_com_formato_nao_reconhecido(
     assert status == "erro"
     assert "formato não reconhecido" in str(mensagem)
     assert competencias(admin) == []
+
+
+def test_janela_so_mes_anterior_fechado(
+    settings: Settings, bucket: Bucket, admin: AdminConn
+) -> None:
+    criar_fonte_metas(admin, "Competencia", 1, fechados=True)
+    bucket.subir(CAMINHO_METAS, metas(["2026-10-05", "2026-09-30", "2026-09-01", "2026-08-31"]))
+
+    resultado = executar(settings)
+
+    status, *_, gravadas, mensagem = fonte(admin, resultado)
+    assert (status, gravadas) == ("ok", 2)
+    assert mensagem == (
+        "janela de 1 meses fechados em Competencia (01/09/2026 a 30/09/2026): "
+        "2 linhas fora do período ficaram de fora"
+    )
+    assert competencias(admin) == ["2026-09-30", "2026-09-01"]

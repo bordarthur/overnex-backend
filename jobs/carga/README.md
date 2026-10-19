@@ -60,12 +60,14 @@ Configuração em `cfg.fonte_carga`:
 | `coluna_empresa` | coluna do arquivo com a empresa, ex. `EMPRESA`. Vazia = a tabela é do cliente inteiro: todos os usuários do cliente veem todas as linhas |
 | `contem_dado_nominal` | `true` = só perfis com `ve_dado_nominal` em `cfg.perfil_tabela` leem pela API |
 | `coluna_data` + `meses_retidos` | janela de datas: só entram as linhas dos últimos N meses dessa coluna (veja abaixo). Vazias = a tabela entra inteira |
+| `meses_fechados` | `true` = a janela usa só meses fechados (termina no mês anterior ao do snapshot) |
 
 ### Janela de datas
 
 Para tabelas de movimento grandes (vendas, receitas, lançamentos…), a carga pode gravar só os últimos N meses:
 
 - **Início da janela:** dia 1 do mês do `_data_snapshot` menos N-1. Snapshot de 14/10 com N = 3 → a partir de 01/08. A referência é o snapshot, nunca "hoje".
+- **Só meses fechados** (`meses_fechados = true`): a janela termina no mês anterior ao do snapshot. Com N = 1 e snapshot de 16/10, entra só setembro (01/09 a 30/09). Serve para tabelas que o DW atualiza com atraso, em que o mês vigente ainda vem vazio.
 - **Data vazia:** a linha entra.
 - **Formatos aceitos:** colunas `date` ou `timestamp`, e texto como `AAAA-MM-DD`, `DD/MM/AAAA` ou `AAAA/MM/DD`, com ou sem hora. Cada coluna precisa usar um formato só; senão, a fonte falha com exemplos dos valores e o mart fica intacto.
 - **Quando filtra:** antes de qualquer coisa ir ao banco. As linhas fora da janela não ocupam nem a tabela temporária.

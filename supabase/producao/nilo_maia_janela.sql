@@ -16,7 +16,7 @@ update cfg.fonte_carga f
   from cfg.cliente c,
        (values
         -- tabela                               coluna de data
-        ('f_vendas_nilo_maia',                  'en_datemi'),          -- emissão
+        ('f_vendas_nilo_maia',                  'en_datemicao'),       -- emissão (en_datemi não tem o mês atual)
         ('f_receitas_nilo_maia',                'en_datemi'),          -- emissão
         ('f_compras_nilo_maia',                 'en_datemi'),          -- emissão
         ('f_recebidas_nilo_maia',               'en_dataemissao'),     -- emissão

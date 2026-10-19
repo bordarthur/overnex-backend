@@ -7,7 +7,7 @@ import pyarrow as pa
 import pytest
 
 from carga.erros import ErroCarga
-from carga.janela import datas_da_coluna, filtrar, inicio_da_janela
+from carga.janela import datas_da_coluna, filtrar, inicio_da_janela, limites_da_janela
 
 SNAPSHOT = date(2026, 10, 14)
 
@@ -61,9 +61,9 @@ def test_date_e_timestamp() -> None:
 def test_filtrar_mantem_janela_e_datas_vazias() -> None:
     tabela = _tabela(["2026-10-01", "2026-08-01", "2026-07-31", None, "", "2025-01-01"])
 
-    filtrada, fora, inicio = filtrar(tabela, "Data", SNAPSHOT, 3)
+    filtrada, fora, inicio, fim = filtrar(tabela, "Data", SNAPSHOT, 3)
 
-    assert inicio == date(2026, 8, 1)
+    assert (inicio, fim) == (date(2026, 8, 1), None)
     assert fora == 2
     assert filtrada.column("x").to_pylist() == [0, 1, 3, 4]
 
@@ -84,3 +84,30 @@ def test_coluna_inexistente_ou_de_outro_tipo() -> None:
         datas_da_coluna(_tabela(["2026-08-01"]), "Outra")
     with pytest.raises(ErroCarga, match="precisa ser data, timestamp ou texto"):
         datas_da_coluna(_tabela([1.5], pa.float64()), "Data")
+
+
+@pytest.mark.parametrize(
+    ("snapshot", "meses", "esperado"),
+    [
+        (date(2026, 10, 16), 1, (date(2026, 9, 1), date(2026, 10, 1))),  # só setembro
+        (date(2026, 10, 16), 3, (date(2026, 7, 1), date(2026, 10, 1))),
+        (date(2026, 1, 5), 1, (date(2025, 12, 1), date(2026, 1, 1))),  # vira o ano
+        (date(2026, 3, 1), 2, (date(2026, 1, 1), date(2026, 3, 1))),
+    ],
+)
+def test_limites_meses_fechados(snapshot: date, meses: int, esperado: tuple[date, date]) -> None:
+    assert limites_da_janela(snapshot, meses, meses_fechados=True) == esperado
+
+
+def test_limites_sem_meses_fechados_nao_tem_fim() -> None:
+    assert limites_da_janela(SNAPSHOT, 1) == (date(2026, 10, 1), None)
+
+
+def test_filtrar_so_mes_anterior_fechado() -> None:
+    tabela = _tabela(["2026-10-01", "2026-09-30", "2026-09-01", "2026-08-31", None])
+
+    filtrada, fora, inicio, fim = filtrar(tabela, "Data", SNAPSHOT, 1, meses_fechados=True)
+
+    assert (inicio, fim) == (date(2026, 9, 1), date(2026, 10, 1))
+    assert fora == 2  # 01/10 (mês do snapshot) e 31/08 (antes da janela)
+    assert filtrada.column("x").to_pylist() == [1, 2, 4]
