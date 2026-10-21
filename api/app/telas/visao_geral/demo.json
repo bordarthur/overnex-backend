@@ -76,7 +76,7 @@
             }
           },
           "tendencia": {
-            "rotulos": ["mai", "jun", "jul", "ago", "set", "out"],
+            "rotulos": ["mai-26", "jun-26", "jul-26", "ago-26", "set-26", "out-26"],
             "real": [6750000, 6660000, 7110000, 6690000, 6950000, 6540000],
             "referencia": [6680000, 6800000, 6900000, 6900000, 7020000, 6900000],
             "unidade": "brl",
@@ -118,7 +118,7 @@
             }
           },
           "tendencia": {
-            "rotulos": ["mai", "jun", "jul", "ago", "set", "out"],
+            "rotulos": ["mai-26", "jun-26", "jul-26", "ago-26", "set-26", "out-26"],
             "real": [1080, 1110, 1095, 1070, 1060, 1040],
             "referencia": [1100, 1100, 1120, 1120, 1120, 1120],
             "unidade": "qtd",
@@ -160,7 +160,7 @@
             }
           },
           "tendencia": {
-            "rotulos": ["mai", "jun", "jul", "ago", "set", "out"],
+            "rotulos": ["mai-26", "jun-26", "jul-26", "ago-26", "set-26", "out-26"],
             "real": [2870, 2905, 2940, 2960, 2980, 2995],
             "referencia": [2900, 2900, 2934, 2934, 2934, 2934],
             "unidade": "brl",
@@ -202,7 +202,7 @@
             }
           },
           "tendencia": {
-            "rotulos": ["mai", "jun", "jul", "ago", "set", "out"],
+            "rotulos": ["mai-26", "jun-26", "jul-26", "ago-26", "set-26", "out-26"],
             "real": [2.5, 2.5, 2.4, 2.4, 2.3, 2.3],
             "referencia": [2.6, 2.6, 2.6, 2.6, 2.6, 2.6],
             "unidade": "qtd",
@@ -278,7 +278,7 @@
             }
           },
           "tendencia": {
-            "rotulos": ["mai", "jun", "jul", "ago", "set", "out"],
+            "rotulos": ["mai-26", "jun-26", "jul-26", "ago-26", "set-26", "out-26"],
             "real": [70.2, 70.6, 71.1, 71.8, 72.4, 72.9],
             "referencia": [70, 70, 70, 70, 70, 70],
             "faixa": [66, 70.3],
@@ -321,7 +321,7 @@
             }
           },
           "tendencia": {
-            "rotulos": ["mai", "jun", "jul", "ago", "set", "out"],
+            "rotulos": ["mai-26", "jun-26", "jul-26", "ago-26", "set-26", "out-26"],
             "real": [65.4, 65.7, 65.5, 65.9, 65.8, 66.0],
             "referencia": [65.6, 65.6, 65.6, 65.6, 65.6, 65.6],
             "faixa": [62, 65.9],
@@ -364,7 +364,7 @@
             }
           },
           "tendencia": {
-            "rotulos": ["mai", "jun", "jul", "ago", "set", "out"],
+            "rotulos": ["mai-26", "jun-26", "jul-26", "ago-26", "set-26", "out-26"],
             "real": [60.9, 60.6, 60.4, 60.3, 60.1, 60.2],
             "referencia": [60.5, 60.5, 60.5, 60.5, 60.5, 60.5],
             "faixa": [57, 60.8],
@@ -407,7 +407,7 @@
             }
           },
           "tendencia": {
-            "rotulos": ["mai", "jun", "jul", "ago", "set", "out"],
+            "rotulos": ["mai-26", "jun-26", "jul-26", "ago-26", "set-26", "out-26"],
             "real": [64.8, 64.6, 64.4, 64.5, 64.2, 64.1],
             "referencia": [64.3, 64.3, 64.3, 64.3, 64.3, 64.3],
             "faixa": [61, 64.6],
@@ -484,7 +484,7 @@
             }
           },
           "tendencia": {
-            "rotulos": ["mai", "jun", "jul", "ago", "set", "out"],
+            "rotulos": ["mai-26", "jun-26", "jul-26", "ago-26", "set-26", "out-26"],
             "real": [10.7, 10.1, 9.7, 9.3, 9.0, 7.8],
             "referencia": [10, 10, 10, 10, 10, 10],
             "faixa": [9.5, 12],
@@ -527,7 +527,7 @@
             }
           },
           "tendencia": {
-            "rotulos": ["mai", "jun", "jul", "ago", "set", "out"],
+            "rotulos": ["mai-26", "jun-26", "jul-26", "ago-26", "set-26", "out-26"],
             "real": [20.6, 20.3, 20.5, 20.2, 20.0, 20.1],
             "referencia": [20.5, 20.4, 20.4, 20.4, 20.4, 20.4],
             "faixa": [18, 20.4],
@@ -570,7 +570,7 @@
             }
           },
           "tendencia": {
-            "rotulos": ["mai", "jun", "jul", "ago", "set", "out"],
+            "rotulos": ["mai-26", "jun-26", "jul-26", "ago-26", "set-26", "out-26"],
             "real": [11.8, 11.9, 12.0, 12.1, 12.0, 12.4],
             "referencia": [11.9, 11.9, 11.9, 11.9, 11.9, 11.9],
             "faixa": [10, 12.2],
@@ -613,7 +613,7 @@
             }
           },
           "tendencia": {
-            "rotulos": ["mai", "jun", "jul", "ago", "set", "out"],
+            "rotulos": ["mai-26", "jun-26", "jul-26", "ago-26", "set-26", "out-26"],
             "real": [0.82, 0.77, 0.72, 0.69, 0.64, 0.61],
             "referencia": [2, 2, 2, 2, 2, 2],
             "faixa": [0, 2],
@@ -697,7 +697,7 @@
             }
           ],
           "serie": {
-            "rotulos": ["out", "nov", "dez", "jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set"],
+            "rotulos": ["out-25", "nov-25", "dez-25", "jan-26", "fev-26", "mar-26", "abr-26", "mai-26", "jun-26", "jul-26", "ago-26", "set-26"],
             "valores": [5.0, 5.1, 5.3, 5.2, 5.1, 5.4, 5.6, 6.0, 6.4, 6.9, 7.1, 7.4],
             "media": 5.875
           }
@@ -739,7 +739,7 @@
             }
           },
           "tendencia": {
-            "rotulos": ["mai", "jun", "jul", "ago", "set", "out"],
+            "rotulos": ["mai-26", "jun-26", "jul-26", "ago-26", "set-26", "out-26"],
             "real": [12, 11, 10, 9, 8, 7],
             "referencia": [12, 12, 12, 12, 12, 12],
             "faixa": [12, 24],
@@ -782,7 +782,7 @@
             }
           },
           "tendencia": {
-            "rotulos": ["mai", "jun", "jul", "ago", "set", "out"],
+            "rotulos": ["mai-26", "jun-26", "jul-26", "ago-26", "set-26", "out-26"],
             "real": [28, 29, 30, 30, 31, 31],
             "referencia": [28, 28, 28, 28, 28, 28],
             "faixa": [15, 28],
@@ -825,7 +825,7 @@
             }
           },
           "tendencia": {
-            "rotulos": ["mai", "jun", "jul", "ago", "set", "out"],
+            "rotulos": ["mai-26", "jun-26", "jul-26", "ago-26", "set-26", "out-26"],
             "real": [18, 19, 20, 21, 21, 22],
             "referencia": [19, 19, 19, 19, 19, 19],
             "faixa": [10, 19],
@@ -868,7 +868,7 @@
             }
           },
           "tendencia": {
-            "rotulos": ["mai", "jun", "jul", "ago", "set", "out"],
+            "rotulos": ["mai-26", "jun-26", "jul-26", "ago-26", "set-26", "out-26"],
             "real": [93, 90, 91, 88, 84, 58],
             "referencia": [100, 100, 100, 100, 100, 100],
             "faixa": [80, 120],

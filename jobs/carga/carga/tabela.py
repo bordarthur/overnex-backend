@@ -6,6 +6,8 @@
    - coluna nova no arquivo, ainda sem coluna na tabela → ignorada, com aviso;
    se a fonte tem janela de datas (coluna_data + meses_retidos), só seguem as linhas
    dos últimos N meses (ou com a data vazia), antes de qualquer coisa ir ao banco;
+   coluna `date` no mart com texto (ou timestamp) no arquivo é convertida aqui, nos
+   formatos da janela (janela.datas_da_coluna): formato desconhecido → falha;
 3. em UMA transação: temp table + COPY; se a fonte tem coluna de empresa, traduz por
    cfg.mapa_empresa (valor sem mapeamento → falha listando); apaga TODAS as linhas do
    cliente na tabela e insere as do arquivo, numeradas em _linha; se a tabela tem modelo
@@ -32,19 +34,34 @@ from carga.validacao import conferir_colunas
 LOTE_COPY = 50_000
 
 
-def colunas_da_tabela(conn: Conexao, tabela: str) -> list[str]:
-    return [
-        r[0]
+def tipos_da_tabela(conn: Conexao, tabela: str) -> dict[str, str]:
+    """Coluna → tipo (information_schema.columns.data_type), na ordem da tabela."""
+    return {
+        r[0]: r[1]
         for r in conn.execute(
             """
-            select column_name
+            select column_name, data_type
               from information_schema.columns
              where table_schema = 'mart' and table_name = %s
              order by ordinal_position
             """,
             (tabela,),
         ).fetchall()
-    ]
+    }
+
+
+def converter_datas(dados: pa.Table, colunas: list[str]) -> pa.Table:
+    """As `colunas` (date no mart) que vêm em texto ou timestamp no arquivo viram date32.
+
+    Converter aqui, uma vez por carga, poupa a API de interpretar texto em cada leitura.
+    """
+    for nome in colunas:
+        if pa.types.is_date32(dados.schema.field(nome).type):
+            continue
+        dados = dados.set_column(
+            dados.schema.get_field_index(nome), nome, janela.datas_da_coluna(dados, nome)
+        )
+    return dados
 
 
 def carregar(
@@ -58,7 +75,8 @@ def carregar(
     if not tabela:
         raise ErroCarga("fonte do tipo 'tabela' sem tabela_destino em cfg.fonte_carga")
 
-    destino = colunas_da_tabela(conn, tabela)
+    tipos = tipos_da_tabela(conn, tabela)
+    destino = list(tipos)
     if not destino:
         raise ErroCarga(
             f"a tabela mart.{tabela} não existe: crie com uma migration "
@@ -113,6 +131,7 @@ def carregar(
                 f"({inicio:%d/%m/%Y} a {ultimo_dia:%d/%m/%Y}): "
                 f"{fora} linhas fora do período ficaram de fora"
             )
+    dados = converter_datas(dados, [c for c in colunas if tipos[c] == "date"])
     try:
         progresso.linhas_gravadas = _gravar(conn, fonte, tabela, colunas, dados, totais, progresso)
     except psycopg.errors.DataError as exc:

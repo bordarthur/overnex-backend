@@ -41,6 +41,7 @@ Nada fica em `public`, e esses schemas não são expostos pelo PostgREST (`confi
 10. `..._resumo_dimensao.sql` — `dimensao` em `mart.resumo_mensal`: totais abertos por um valor do arquivo (ex.: faturado e custo por `en_ramo`, para o CMV por ramo). Vazio = total sem abertura.
 11. `..._colunas_modelo.sql` — `colunas_modelo` em `cfg.fonte_carga`: nomes das colunas por papel (data, valor, custo…) para o resumo mensal e a Visão geral, quando o DW do cliente não usa os nomes padrão (ex.: PJ Cortes).
 12. `..._tabelas_pj_cortes.sql` — as 25 tabelas de dados da PJ Cortes, no padrão da migration 5.
+13. `..._datas_pj_cortes.sql` — as 24 colunas de data das tabelas de fatos da PJ passam de texto para `date` (a carga converte o texto do arquivo). Só depois de a carga e a API estarem com o código que trata coluna `date`.
 
 ### Storage
 
@@ -71,7 +72,8 @@ Cadastros de produção por cliente, para rodar à mão no SQL Editor. Não são
 
 - `nilo_maia_tabelas.sql` — fontes das 21 tabelas de dados da Nilo Maia. A de lançamentos passa a ser do tipo `tabela`; as outras entram inativas.
 - `nilo_maia_janela.sql` — janela de 3 meses nas 12 tabelas de movimento (depois da migration 6). Não ativa fontes.
-- `pj_cortes_cadastro.sql` — cliente, empresa, mapa de empresas, as 25 fontes (ativas, com `colunas_modelo` nas de vendas e metas), janela de 3 meses nas 9 tabelas de movimento grandes e o nome da abertura do CMV (`custos.abertura`). Depois das migrations 11 e 12.
+- `pj_cortes_cadastro.sql` — cliente, empresa, mapa de empresas, as 25 fontes (ativas, com `colunas_modelo` nas de vendas e metas), janela de 3 meses em 7 tabelas de movimento grandes (os títulos a receber e a pagar entram inteiros) e o nome da abertura do CMV (`custos.abertura`). Depois das migrations 11 e 12.
+- `pj_cortes_titulos_sem_janela.sql` — tira a janela de `f_receitas_pj` e `f_despesas_pj`. Só se o cadastro da PJ rodou antes de 21/10/2026 à noite, quando ainda punha janela nelas.
 - `pj_cortes_usuario_dev.sql` — perfil "Desenvolvimento" da PJ Cortes; o usuário de desenvolvimento sai da Nilo Maia e entra na PJ.
 - `nilo_maia_remover_tabelas.sql` — remove as tabelas `*_nilo_maia` do mart, com as fontes, o histórico de carga, o resumo mensal e as permissões delas. Mantém cliente, empresas e usuários.
 

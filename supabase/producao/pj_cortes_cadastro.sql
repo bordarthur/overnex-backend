@@ -14,7 +14,9 @@
 --
 -- Janela de 3 meses nas tabelas de movimento grandes; o resumo mensal da carga sai do
 -- arquivo inteiro, antes da janela (por isso a Agile fica vazia no mart e o histórico dela
--- continua na Visão geral). Metas, orçamentos, compras e dimensões entram inteiras.
+-- continua na Visão geral). Metas, orçamentos, compras e dimensões entram inteiras, e os
+-- títulos a receber e a pagar (f_receitas_pj, f_despesas_pj) também: a seção Financeiro
+-- precisa dos títulos antigos ainda em aberto e de 12 meses de histórico.
 
 begin;
 
@@ -105,9 +107,7 @@ update cfg.fonte_carga f
         -- tabela                       coluna de data
         ('f_vendas_pj',                 'en_dataemissao'),
         ('f_vendas_agile_pj_cortes',    'en_dataemissao'),   -- só tem até 03/2025: fica vazia
-        ('f_receitas_pj',               'en_dataemissao'),
         ('f_recebidas_pj',              'en_datarecebimento'),
-        ('f_despesas_pj',               'en_datemi'),
         ('f_pagas_pj',                  'en_datpag'),
         ('f_bordero_pj',                'Data'),
         ('f_645_pj',                    'Data'),
@@ -140,8 +140,8 @@ begin
       from cfg.fonte_carga f
       join cfg.cliente c on c.id = f.cliente_id
      where c.slug = 'pj-cortes' and f.tipo = 'tabela';
-    if fontes <> 25 or janelas <> 9 or modelos <> 3 then
-        raise exception 'esperava 25 fontes, 9 com janela e 3 com colunas_modelo; veio %, % e %',
+    if fontes <> 25 or janelas <> 7 or modelos <> 3 then
+        raise exception 'esperava 25 fontes, 7 com janela e 3 com colunas_modelo; veio %, % e %',
             fontes, janelas, modelos;
     end if;
     if (select count(*) from cfg.mapa_empresa m

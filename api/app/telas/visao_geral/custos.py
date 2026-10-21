@@ -33,7 +33,7 @@ from app.farol.parametro import Farol, deslocado, farol
 from app.seguranca.acesso import ContextoConsolidado
 from app.telas.contrato import Status
 from app.telas.moldura import MESES
-from app.telas.visao_geral.contra_referencia import MESES_CURTOS, Mensal, Razao
+from app.telas.visao_geral.contra_referencia import MESES_CURTOS, Mensal, Razao, rotulo_eixo
 from app.telas.visao_geral.contrato import Faixa as FaixaGauge
 from app.telas.visao_geral.contrato import (
     Gauge,
@@ -189,7 +189,7 @@ def indicador_cmv(id_: str, nome: str, ref: date, mensal: Mensal, base: Farol) -
             ano=periodo(valor_ano, f"de {intervalo}, contra {contra}"),
         ),
         tendencia=Tendencia(
-            rotulos=[MESES_CURTOS[m.month - 1] for m in tendencia],
+            rotulos=[rotulo_eixo(m) for m in tendencia],
             real=[cmv(mensal, [m]) or Decimal(0) for m in tendencia],
             referencia=[referencia.valor] * len(tendencia),
             # faixa saudável: do início da escala até o limite de atenção

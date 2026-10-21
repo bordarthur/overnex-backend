@@ -8,6 +8,7 @@ import pytest
 
 from carga.erros import ErroCarga
 from carga.janela import datas_da_coluna, filtrar, inicio_da_janela, limites_da_janela
+from carga.tabela import converter_datas
 
 SNAPSHOT = date(2026, 10, 14)
 
@@ -111,3 +112,28 @@ def test_filtrar_so_mes_anterior_fechado() -> None:
     assert (inicio, fim) == (date(2026, 9, 1), date(2026, 10, 1))
     assert fora == 2  # 01/10 (mês do snapshot) e 31/08 (antes da janela)
     assert filtrada.column("x").to_pylist() == [1, 2, 4]
+
+
+def test_converter_datas_so_nas_colunas_date_do_mart() -> None:
+    dados = pa.table(
+        {
+            "en_datemi": pa.array(["01/08/2026 00:00:00", "31/08/2026 00:00:00"]),
+            "en_datpag": pa.array(["", None], pa.string()),
+            "en_observacao": pa.array(["31/08/2026", "texto"]),
+            "_data_snapshot": pa.array([SNAPSHOT, SNAPSHOT], pa.date32()),
+        }
+    )
+
+    convertida = converter_datas(dados, ["en_datemi", "en_datpag", "_data_snapshot"])
+
+    assert convertida.column_names == dados.column_names
+    assert convertida.column("en_datemi").to_pylist() == [date(2026, 8, 1), date(2026, 8, 31)]
+    assert convertida.column("en_datpag").type == pa.date32()
+    assert convertida.column("en_datpag").to_pylist() == [None, None]
+    # coluna text no mart continua texto
+    assert convertida.column("en_observacao").to_pylist() == ["31/08/2026", "texto"]
+
+
+def test_converter_datas_recusa_formato_desconhecido() -> None:
+    with pytest.raises(ErroCarga, match="en_datemi"):
+        converter_datas(pa.table({"en_datemi": pa.array(["01/08/2026", "ontem"])}), ["en_datemi"])

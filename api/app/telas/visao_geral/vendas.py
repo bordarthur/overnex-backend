@@ -44,6 +44,7 @@ from app.telas.visao_geral.contra_referencia import (
     Mensal,
     Razao,
     indicador_contra_referencia,
+    rotulo_eixo,
 )
 from app.telas.visao_geral.contrato import Faixa as FaixaGauge
 from app.telas.visao_geral.contrato import (
@@ -75,8 +76,9 @@ COLUNAS_VENDAS: Mapping[str, str] = {
     "abertura": "en_ramo",
 }
 COLUNAS_METAS: Mapping[str, str] = {"data": "Competencia", "valor": "Valor"}
-# papéis somados; os outros são códigos e viram texto (ver de_todas)
+# papéis somados e papéis de data; os outros são códigos e viram texto (ver de_todas)
 NUMERICOS = frozenset({"valor", "custo"})
+DATAS = frozenset({"data", "emissao", "vencimento", "pagamento"})
 
 CLIENTES = Definicao(
     id="clientes-compraram",
@@ -135,6 +137,8 @@ class TabelaDoCliente:
 
     tabela: str
     colunas: Mapping[str, str]
+    # colunas já do tipo date no mart (a carga converte); as outras datas vêm em texto
+    datas: frozenset[str] = frozenset()
 
 
 @dataclass(frozen=True)
@@ -152,7 +156,8 @@ class BaseVendas:
 
 
 def data_texto(coluna: str) -> sql.Composable:
-    """Data guardada como texto no mart → date (mesmos formatos da janela da carga).
+    """Data guardada como texto no mart → date (mesmos formatos da janela da carga). Só
+    para tabela que ainda não tem a coluna como date (TabelaDoCliente.datas).
 
     Usa os 10 primeiros caracteres (ignora a hora); formato desconhecido vira null.
     """
@@ -173,11 +178,18 @@ def tabelas_do_cliente(
     mart, com a coluna de cada papel (`padrao` + cfg.fonte_carga.colunas_modelo)."""
     # to_jsonb(f): sem a migration 11 a coluna não existe e vale o padrão
     return [
-        TabelaDoCliente(r["tabela_destino"], {**padrao, **r["colunas_modelo"]})
+        TabelaDoCliente(
+            r["tabela_destino"], {**padrao, **r["colunas_modelo"]}, frozenset(r["datas"])
+        )
         for r in conn.execute(
             """
             select f.tabela_destino,
-                   coalesce(to_jsonb(f) -> 'colunas_modelo', '{}'::jsonb) as colunas_modelo
+                   coalesce(to_jsonb(f) -> 'colunas_modelo', '{}'::jsonb) as colunas_modelo,
+                   array(select c.column_name::text
+                           from information_schema.columns c
+                          where c.table_schema = 'mart'
+                            and c.table_name = f.tabela_destino
+                            and c.data_type = 'date') as datas
               from cfg.fonte_carga f
              where f.cliente_id = %s
                and f.tipo = 'tabela'
@@ -195,14 +207,15 @@ def de_todas(
 ) -> sql.Composable:
     """`select <campos> from <tabela> where <cliente e empresa>` de cada tabela, em union all.
 
-    `campos`: apelido → papel. "data" vira date (data_texto), valor e custo ficam como estão
-    e os códigos viram texto (o tipo pode mudar de uma tabela para outra).
+    `campos`: apelido → papel. As datas (DATAS) viram date (data_texto, se ainda em texto),
+    valor e custo ficam como estão e os códigos viram texto (o tipo pode mudar de uma tabela
+    para outra).
     """
 
     def expressao(t: TabelaDoCliente, papel: str) -> sql.Composable:
         coluna = t.colunas[papel]
-        if papel == "data":
-            return data_texto(coluna)
+        if papel in DATAS:
+            return sql.Identifier(coluna) if coluna in t.datas else data_texto(coluna)
         if papel in NUMERICOS:
             return sql.Identifier(coluna)
         return sql.SQL("{}::text").format(sql.Identifier(coluna))
@@ -399,7 +412,7 @@ def indicador_vendas_meta(
         ),
         periodos=PeriodosIndicador(mes=mes, ano=ano),
         tendencia=Tendencia(
-            rotulos=[MESES_CURTOS[m.month - 1] for m in tendencia],
+            rotulos=[rotulo_eixo(m) for m in tendencia],
             real=[
                 projecao if m == ref and projecao is not None else faturado[m] for m in tendencia
             ],
@@ -410,7 +423,7 @@ def indicador_vendas_meta(
     )
 
 
-def _mes_menos(mes: date, meses: int) -> date:
+def mes_menos(mes: date, meses: int) -> date:
     indice = mes.year * 12 + mes.month - 1 - meses
     return date(indice // 12, indice % 12 + 1, 1)
 
@@ -427,7 +440,7 @@ def secao_vendas(ctx: ContextoConsolidado) -> tuple[SecaoDoMes, BaseVendas] | No
         return None
 
     # histórico: tendência, acumulado do ano e média dos 6 meses anteriores
-    inicio = min(date(v.mes.year, 1, 1), _mes_menos(v.mes, MESES_TENDENCIA))
+    inicio = min(date(v.mes.year, 1, 1), mes_menos(v.mes, MESES_TENDENCIA))
     metas = _metas(conn, ctx, inicio, v.mes)
     mensal = _resumo_mensal(conn, ctx, tabelas, inicio, v.mes)
     # o mês de referência vem das tabelas, que são dos mesmos arquivos do resumo

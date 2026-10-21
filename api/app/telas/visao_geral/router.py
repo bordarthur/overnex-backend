@@ -18,6 +18,8 @@ from app.seguranca.acesso import ContextoConsolidado, exigir_tela_consolidada
 from app.telas.moldura import cliente, rotulo_mes, ultima_carga
 from app.telas.visao_geral.contrato import Periodo, Secao, VisaoGeralPayload
 from app.telas.visao_geral.custos import secao_custos
+from app.telas.visao_geral.financeiro import secao_financeiro
+from app.telas.visao_geral.resultado import secao_resultado
 from app.telas.visao_geral.vendas import SecaoDoMes, secao_vendas
 
 CODIGO_TELA = "VG-01"
@@ -33,9 +35,13 @@ def secoes_demo() -> list[Secao]:
     return TypeAdapter(list[Secao]).validate_python(dados["secoes"])
 
 
-def _secoes(ctx: ContextoConsolidado) -> tuple[list[Secao], date | None]:
-    """Seções montadas e o mês de referência mais recente entre elas."""
-    # TODO(regra): demais seções e a lista de seções do cliente em cfg.painel. Ver TODO.md.
+def _secoes(ctx: ContextoConsolidado, hoje: date) -> tuple[list[Secao], date | None]:
+    """Seções montadas e o mês de referência mais recente entre elas.
+
+    `hoje`: a data da última carga. Resultado usa o último mês fechado antes dela, e
+    Financeiro, a posição dos títulos nela.
+    """
+    # TODO(regra): Compras e Estoque, e a lista de seções do cliente em cfg.painel. Ver TODO.md.
     montadas: list[SecaoDoMes] = []
     vendas = secao_vendas(ctx)
     if vendas is not None:
@@ -44,6 +50,9 @@ def _secoes(ctx: ContextoConsolidado) -> tuple[list[Secao], date | None]:
         custos = secao_custos(ctx, base)
         if custos is not None:
             montadas.append(custos)
+    for outra in (secao_resultado(ctx, hoje), secao_financeiro(ctx, hoje)):
+        if outra is not None:
+            montadas.append(outra)
     return [s.secao for s in montadas], max((s.mes for s in montadas), default=None)
 
 
@@ -62,7 +71,7 @@ def visao_geral(
     if settings.visao_geral_demo:
         secoes, mes = secoes_demo(), None
     else:
-        secoes, mes = _secoes(ctx)
+        secoes, mes = _secoes(ctx, carga.data_snapshot if carga else date.today())
 
     # rótulos do mês dos números (ex.: mês fechado), ou do snapshot se não há seção
     ref = mes or (carga.data_snapshot if carga else None)

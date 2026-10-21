@@ -47,6 +47,7 @@ Para cada fonte `tabela`:
 2. confere as colunas contra a tabela do mart:
    - coluna da tabela que falta no arquivo → **falha**, mart intacto;
    - coluna nova no arquivo, ainda sem coluna na tabela → **ignorada**, e a fonte termina `ok` com aviso em `mart.carga_fonte.mensagem`;
+   - coluna `date` no mart que vem em texto (ou timestamp) no arquivo → **convertida** na carga, nos formatos da janela (abaixo); formato desconhecido → **falha** com exemplos. Declare as datas em texto do DW como `date` na migration: a API lê a coluna direto, sem interpretar texto a cada consulta (ex.: migration 13, PJ Cortes);
 3. em **uma** transação: temp table + `COPY`; se a fonte tem `coluna_empresa`, traduz o valor por `cfg.mapa_empresa` (valor sem mapeamento → falha listando); apaga **todas** as linhas do cliente na tabela e insere as do arquivo;
 4. commit só se tudo deu certo.
 

@@ -29,6 +29,11 @@ def inteiro(valor: int) -> str:
     return _pt(Decimal(valor), 0)
 
 
+def moeda_sinal(valor: Decimal) -> str:
+    """Como `moeda`, com "-" na frente do valor negativo: -R$ 51 mil."""
+    return ("-" if valor < 0 else "") + moeda(valor)
+
+
 def moeda_cheia(valor: Decimal) -> str:
     """Sem abreviar, como `compacto: false` no front: R$ 2.995."""
     return f"R$ {_pt(abs(valor), 0)}"

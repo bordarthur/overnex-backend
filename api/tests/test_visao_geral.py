@@ -303,7 +303,7 @@ def test_secao_vendas_do_mes_mais_recente(client: TestClient) -> None:
     assert ind["periodos"]["mes"]["referencia"] == "projeção de R$ 4 mil contra meta de R$ 4 mil"
     # ano com o realizado — agosto: 999 de 1000; setembro: 2000 de 4000
     assert ind["periodos"]["ano"]["referencia"] == "R$ 3 mil de ago a set contra meta de R$ 5 mil"
-    assert ind["tendencia"]["rotulos"] == ["ago", "set"]
+    assert ind["tendencia"]["rotulos"] == ["ago-26", "set-26"]
     assert ind["tendencia"]["real"] == [999, 4200]
     assert ind["tendencia"]["referencia"] == [1000, 4000]
 
@@ -362,7 +362,7 @@ def test_secao_custos_com_cmv_por_ramo(
     assert mercearia["nome"] == "CMV de mercearia"
     assert mercearia["periodos"]["mes"]["valor"]["valor"] == 85  # 850 / 1000
     assert mercearia["periodos"]["mes"]["status"] == "critico"  # +5 p.p.
-    assert mercearia["tendencia"]["rotulos"] == ["ago", "set"]
+    assert mercearia["tendencia"]["rotulos"] == ["ago-26", "set-26"]
 
 
 @pytest.mark.usefixtures("vendas_do_bruno")

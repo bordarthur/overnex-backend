@@ -111,6 +111,52 @@ PADROES: dict[str, Farol] = {
         maximo=Decimal(110),
         meta=Decimal(100),
     ),
+    # Resultado: limites RELATIVOS, em p.p. da receita líquida contra o orçado (ou a média)
+    "margem_ebitda": Farol(
+        faixa=Faixa(atencao=Decimal("-0.5"), critico=Decimal("-2.5")),
+        minimo=Decimal(-5),
+        maximo=Decimal(2),
+        meta=Decimal(0),
+    ),
+    "despesas_fixas": Farol(
+        faixa=Faixa(atencao=Decimal(0), critico=Decimal("0.6"), maior_melhor=False),
+        minimo=Decimal("-2.4"),
+        maximo=Decimal("2.6"),
+        meta=Decimal(0),
+    ),
+    "folha_receita": Farol(
+        faixa=Faixa(atencao=Decimal("0.3"), critico=Decimal("1.1"), maior_melhor=False),
+        minimo=Decimal("-1.9"),
+        maximo=Decimal("2.1"),
+        meta=Decimal(0),
+    ),
+    # Financeiro: vencido sobre a carteira, em p.p. acima da média de 12 meses (RELATIVO)
+    "inadimplencia": Farol(
+        faixa=Faixa(atencao=Decimal(0), critico=Decimal(2), maior_melhor=False),
+        minimo=Decimal(-6),
+        maximo=Decimal(4),
+        meta=Decimal(0),
+    ),
+    # prazos médios: limites RELATIVOS, em dias de distância da média de 6 meses
+    "prazo_recebimento": Farol(
+        faixa=Faixa(atencao=Decimal(0), critico=Decimal(5), maior_melhor=False),
+        minimo=Decimal(-13),
+        maximo=Decimal(17),
+        meta=Decimal(0),
+    ),
+    "prazo_pagamento": Farol(
+        faixa=Faixa(atencao=Decimal(0), critico=Decimal(-6)),
+        minimo=Decimal(-16),
+        maximo=Decimal(14),
+        meta=Decimal(0),
+    ),
+    # a pagar lançado nos próximos 30 dias, em % da média paga por mês
+    "pagar_lancado": Farol(
+        faixa=Faixa(atencao=Decimal(80), critico=Decimal(50)),
+        minimo=Decimal(0),
+        maximo=Decimal(120),
+        meta=Decimal(100),
+    ),
 }
 
 

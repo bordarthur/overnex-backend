@@ -46,3 +46,12 @@ def dias_uteis(inicio: date, fim: date, feriados: set[date]) -> int:
             total += 1
         dia += timedelta(days=1)
     return total
+
+
+def mais_dias_uteis(dia: date, n: int, feriados: set[date]) -> date:
+    """O n-ésimo dia útil depois de `dia` (D+n), sem contar o próprio `dia`."""
+    while n > 0:
+        dia += timedelta(days=1)
+        if dia.weekday() < 5 and dia not in feriados:
+            n -= 1
+    return dia

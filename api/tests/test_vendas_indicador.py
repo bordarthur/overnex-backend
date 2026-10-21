@@ -61,7 +61,7 @@ def test_indicador_mes_ano_e_tendencia() -> None:
     assert ano.valor.valor.quantize(D("0.1")) == D("90.8")
     assert ano.status == "atencao"
     assert ano.referencia == "R$ 545 de abr a set contra meta de R$ 600"
-    assert ind.tendencia.rotulos == ["abr", "mai", "jun", "jul", "ago", "set"]
+    assert ind.tendencia.rotulos == ["abr-26", "mai-26", "jun-26", "jul-26", "ago-26", "set-26"]
     assert ind.tendencia.real == [D(90), D(100), D(110), D(95), D(100), D(50)]
     assert ind.gauge.meta == D(100)
 
@@ -73,7 +73,7 @@ def test_tendencia_so_com_os_ultimos_6_meses_e_ano_so_do_ano() -> None:
     ind = indicador_vendas_meta(date(2026, 2, 1), faturado, metas, PADRAO)
 
     assert ind is not None
-    assert ind.tendencia.rotulos == ["set", "out", "nov", "dez", "jan", "fev"]
+    assert ind.tendencia.rotulos == ["set-25", "out-25", "nov-25", "dez-25", "jan-26", "fev-26"]
     assert ind.periodos.ano.referencia == "R$ 200 de jan a fev contra meta de R$ 200"
 
 
@@ -108,7 +108,7 @@ def test_clientes_contra_a_media_dos_6_meses_anteriores() -> None:
     # média mensal de mar a set
     assert ind.periodos.ano.valor.valor.quantize(D("0.1")) == D("97.9")
     assert ind.periodos.ano.referencia.startswith("de mar a set, contra a média")
-    assert ind.tendencia.rotulos == ["abr", "mai", "jun", "jul", "ago", "set"]
+    assert ind.tendencia.rotulos == ["abr-26", "mai-26", "jun-26", "jul-26", "ago-26", "set-26"]
     assert ind.tendencia.referencia == [D(100)] * 6
 
 

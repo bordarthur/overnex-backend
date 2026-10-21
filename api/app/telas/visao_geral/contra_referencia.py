@@ -31,6 +31,13 @@ Mensal = dict[date, dict[str, Decimal]]
 
 MESES_CURTOS = ("jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez")
 MESES_REFERENCIA = 6
+
+
+def rotulo_eixo(mes: date) -> str:
+    """Mês no eixo dos gráficos, com o ano: "out-26"."""
+    return f"{MESES_CURTOS[mes.month - 1]}-{mes.year % 100:02d}"
+
+
 MESES_TENDENCIA = 6
 
 
@@ -74,7 +81,8 @@ class Definicao:
     delta_percentual: bool = False
 
 
-def _intervalo(meses: Sequence[date]) -> str:
+def intervalo(meses: Sequence[date]) -> str:
+    """ "mar a ago"; com um mês só, "set"."""
     primeiro, ultimo = MESES_CURTOS[meses[0].month - 1], MESES_CURTOS[meses[-1].month - 1]
     return primeiro if len(meses) == 1 else f"{primeiro} a {ultimo}"
 
@@ -99,7 +107,7 @@ def indicador_contra_referencia(
         contra = (
             "o mês anterior"
             if len(anteriores) == 1
-            else f"a média de {len(anteriores)} meses ({_intervalo(anteriores)})"
+            else f"a média de {len(anteriores)} meses ({intervalo(anteriores)})"
         )
     if not referencia:
         return None
@@ -146,10 +154,10 @@ def indicador_contra_referencia(
         ),
         periodos=PeriodosIndicador(
             mes=periodo(valor_mes, f"contra {alvo}"),
-            ano=periodo(valor_ano, f"de {_intervalo(meses_ano)}, contra {alvo}"),
+            ano=periodo(valor_ano, f"de {intervalo(meses_ano)}, contra {alvo}"),
         ),
         tendencia=Tendencia(
-            rotulos=[MESES_CURTOS[m.month - 1] for m in tendencia],
+            rotulos=[rotulo_eixo(m) for m in tendencia],
             real=[d.razao.valor(mensal, [m]) or Decimal(0) for m in tendencia],
             referencia=[referencia] * len(tendencia),
             unidade=d.unidade,
