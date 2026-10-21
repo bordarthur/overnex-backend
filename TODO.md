@@ -1,6 +1,6 @@
 # TODO — Overnex backend
 
-Atualizado em 19/10/2026.
+Atualizado em 21/10/2026.
 
 ## Feito
 
@@ -18,6 +18,7 @@ Atualizado em 19/10/2026.
 - **Git:** branch padrão `main` no GitHub e `master` apagada. Repositório `dataflow` arquivado (o snapshot roda só pelo `diario.yml`).
 - **Rodada 4 — API para o front (sem login):** `GET /api/sessao` (usuário, cliente com `slug`, empresas, telas liberadas e períodos) e `GET /api/telas/visao-geral` (VG-01) com o contrato do front em Pydantic, em camelCase ([api/app/telas/visao_geral/contrato.py](api/app/telas/visao_geral/contrato.py)). `empresa` opcional: sem ela, a tela vale para todas as empresas do vínculo. `dadosAte` e `atualizadoEm` vêm da última carga `ok`. Seed com VG-01 liberada para Ana e Bruno, e `VISAO_GERAL_DEMO=1` (só dev) devolve as seções do mockup. `openapi.json` regenerado.
 - **Plano do Supabase:** continua no gratuito (500 MB) por enquanto. Em 16/10 o uso chegou perto de 500 MB, e as tabelas com janela passaram para 1 mês (o mês do snapshot).
+- **Troca da Nilo Maia pela PJ Cortes (21/10):** as tabelas da Nilo Maia saíram do mart ([nilo_maia_remover_tabelas.sql](supabase/producao/nilo_maia_remover_tabelas.sql)), e o snapshot passou a copiar as 25 tabelas da PJ. Código: `colunas_modelo` em `cfg.fonte_carga` (migration 11) para o DW da PJ, que usa outros nomes de coluna (`en_valortotal`, `en_dataemissao`…), e a Visão geral somando todas as tabelas `f_vendas_*` do cliente (a atual e a Agile, do sistema antigo, até 08/03/2025). CMV da PJ aberto por grupo do produto (`it_grupo`). Tabelas da PJ na migration 12.
 
 ## Conferir em produção
 
@@ -26,8 +27,14 @@ Atualizado em 19/10/2026.
   select pg_size_pretty(pg_database_size(current_database())) as banco;
   ```
   No plano gratuito, manter abaixo de ~400 MB para ter folga no pico da troca diária.
-- [ ] **Vendas no mês anterior fechado** (migration 7): `f_vendas_nilo_maia` tinha 0 linhas porque o DW não tem vendas do mês vigente (`en_datemi`). Depois do `db push`, configurar `meses_fechados = true` nela e conferir se ela enche. Avaliar o mesmo para as outras tabelas com janela.
-- [ ] **Vendas de setembro só até 19/09.** `f_vendas_nilo_maia` encheu em 19/10, mas a última venda em `en_datemicao` é de 19/09: o faturado de setembro (R$ 21,35 mi, 56% da meta de R$ 38 mi) parece incompleto. Conferir se o DW manda só os últimos 30 dias, se a janela corta algo e o tamanho do banco.
+- [ ] **Subir a PJ Cortes**, nesta ordem:
+  1. `supabase db push` (aplica as migrations 7 a 12 que faltarem);
+  2. [pj_cortes_cadastro.sql](supabase/producao/pj_cortes_cadastro.sql) e [pj_cortes_usuario_dev.sql](supabase/producao/pj_cortes_usuario_dev.sql) no SQL Editor;
+  3. rodar o workflow `diario.yml` (o bucket foi esvaziado em 21/10: o snapshot precisa rodar antes da carga);
+  4. conferir `mart.carga_fonte.mensagem` das 25 fontes. As colunas de data da janela (receitas, recebidas, despesas, pagas, borderô, 645, folha) não puderam ser testadas: se alguma vier em formato desconhecido, a fonte falha com exemplos e é só ajustar ou tirar a janela dela;
+  5. tamanho do banco (abaixo de ~400 MB).
+- [ ] **Medidas do .pbix da PJ.** O usuário vai trazer as medidas, tabelas e colunas calculadas do Power BI da PJ: revisar as regras provisórias de Vendas e Custos com elas (ex.: devolução abatendo o faturado, `f_devolucao_pj` e `f_devolucao_pj_agile`).
+- [ ] **'2 PJ Cortes'** só aparece no estoque (`en_filial` 2) e hoje aponta para a mesma empresa. Confirmar se é outra empresa.
 
 ## Antes de publicar a API
 
@@ -35,7 +42,7 @@ Atualizado em 19/10/2026.
 - [ ] **App registration no Entra ID** para a API (`ENTRA_TENANT_ID`, `ENTRA_AUDIENCE`). Os usuários dos clientes entram como convidados no tenant, ou o app passa a aceitar vários tenants (isso pede ajuste na validação do token).
 - [ ] **Usuários e perfis de produção:** `seg.usuario`, `seg.usuario_cliente`, `seg.usuario_perfil` e `seg.usuario_empresa`, além de `cfg.perfil_tela` e `cfg.perfil_tabela`. Sem isso, toda tela responde 403.
 - [ ] **Onde hospedar** (recomendado: Azure Container Apps, com a imagem gerada no GitHub Actions) e como front e API dividem o mesmo domínio (`/api` → API), já que a API não tem CORS.
-- [ ] **Usuário de desenvolvimento da Nilo Maia** ([supabase/producao/nilo_maia_usuario_dev.sql](supabase/producao/nilo_maia_usuario_dev.sql)): o `object_id_entra` é provisório, para o token fake da API local. Trocar pelo object id real do Entra quando o login entrar.
+- [ ] **Usuário de desenvolvimento da PJ Cortes** ([supabase/producao/pj_cortes_usuario_dev.sql](supabase/producao/pj_cortes_usuario_dev.sql), que tira o usuário da Nilo Maia): o `object_id_entra` é provisório, para o token fake da API local. Trocar pelo object id real do Entra quando o login entrar.
 - [ ] **VG-01 em `cfg.perfil_tela` de produção** para os perfis que veem a Visão geral (sem isso, a tela responde 403 e some de `/api/sessao`).
 - [ ] **Validar com Docker**, o que não foi possível na máquina de desenvolvimento. Os testes `db` da rodada 4 ([api/tests/test_visao_geral.py](api/tests/test_visao_geral.py)) ainda não rodaram contra o banco. Se não houver Docker, criar um workflow de CI no GitHub Actions que rode tudo isso a cada push:
   - `supabase start && supabase db reset && supabase test db`;

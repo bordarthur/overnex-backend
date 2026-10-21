@@ -7,9 +7,27 @@ import pyarrow as pa
 import pytest
 
 from carga.erros import ErroCarga
-from carga.resumo import MODELOS, SEM_DIMENSAO, Total, calcular, modelo_da_tabela
+from carga.resumo import SEM_DIMENSAO, Modelo, Total, calcular, modelo_da_tabela
 
-VENDAS = MODELOS["f_vendas_"]
+
+def _modelo(tabela: str, colunas_modelo: dict[str, str] | None = None) -> Modelo:
+    modelo = modelo_da_tabela(tabela, colunas_modelo)
+    assert modelo is not None
+    return modelo
+
+
+VENDAS = _modelo("f_vendas_nilo_maia")
+
+# colunas da PJ Cortes (outro DW): mesmos papéis, outros nomes
+COLUNAS_PJ = {
+    "data": "en_dataemissao",
+    "valor": "en_valortotal",
+    "custo": "en_custototal",
+    "pedido": "en_numpedido",
+    "cliente": "en_codigocliente",
+    "produto": "en_codigoproduto",
+    "abertura": "it_grupo",
+}
 
 
 def _vendas(**extra: list[object]) -> pa.Table:
@@ -32,8 +50,40 @@ def _vendas(**extra: list[object]) -> pa.Table:
 
 
 def test_modelo_pelo_prefixo() -> None:
-    assert modelo_da_tabela("f_vendas_nilo_maia") is VENDAS
+    assert modelo_da_tabela("f_vendas_pj") == VENDAS
     assert modelo_da_tabela("f_estoque_nilo_maia") is None
+
+
+def test_colunas_do_modelo_trocam_so_as_informadas() -> None:
+    modelo = _modelo("f_vendas_pj", {"valor": "en_valortotal", "abertura": "it_grupo"})
+    assert modelo.coluna_data == "en_datemicao"
+    assert "en_valortotal" in modelo.colunas
+    assert "en_VALTOT" not in modelo.colunas
+    assert {m.por for m in modelo.medidas} == {None, "it_grupo"}
+
+
+def test_papel_desconhecido_falha() -> None:
+    with pytest.raises(ErroCarga, match="papéis desconhecidos"):
+        modelo_da_tabela("f_vendas_pj", {"vlaor": "en_valortotal"})
+
+
+def test_mesmos_totais_com_os_nomes_da_pj() -> None:
+    nomes = {
+        padrao: COLUNAS_PJ[papel]
+        for papel, padrao in [
+            ("data", "en_datemicao"),
+            ("valor", "en_VALTOT"),
+            ("custo", "en_precus"),
+            ("pedido", "en_numdoc"),
+            ("cliente", "en_codcli"),
+            ("produto", "en_codigo"),
+            ("abertura", "en_ramo"),
+        ]
+    }
+    dados = _vendas()
+    pj = dados.rename_columns([nomes[c] for c in dados.column_names])
+
+    assert calcular(pj, _modelo("f_vendas_pj", COLUNAS_PJ), None) == calcular(dados, VENDAS, None)
 
 
 def test_totais_por_mes_sem_empresa() -> None:

@@ -2,7 +2,7 @@
 
 from collections import Counter
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from uuid import UUID
 
 from psycopg.rows import class_row
@@ -29,6 +29,8 @@ class Fonte:
     meses_retidos: int | None = None
     # True = só meses fechados: a janela termina no mês anterior ao do snapshot
     meses_fechados: bool = False
+    # papel → coluna do arquivo no resumo mensal (ex.: {"valor": "en_valortotal"}); vazio = padrão
+    colunas_modelo: dict[str, str] = field(default_factory=dict)
 
 
 def listar_fontes_ativas(conn: Conexao) -> list[Fonte]:
@@ -36,7 +38,7 @@ def listar_fontes_ativas(conn: Conexao) -> list[Fonte]:
         return cur.execute(
             """
             select id, cliente_id, tipo, caminho_bucket, tabela_destino, coluna_empresa,
-                   coluna_data, meses_retidos, meses_fechados
+                   coluna_data, meses_retidos, meses_fechados, colunas_modelo
               from cfg.fonte_carga
              where ativo
              order by id

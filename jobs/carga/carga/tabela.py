@@ -132,7 +132,11 @@ def _resumo(
 
     Falha no resumo não derruba a carga da tabela: vira aviso e o resumo anterior fica.
     """
-    modelo = resumo.modelo_da_tabela(tabela)
+    try:
+        modelo = resumo.modelo_da_tabela(tabela, fonte.colunas_modelo)
+    except ErroCarga as exc:
+        progresso.avisos.append(f"resumo mensal não calculado: {exc}")
+        return None
     if modelo is None:
         return None
     faltando = [c for c in modelo.colunas if c not in colunas]

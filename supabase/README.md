@@ -39,6 +39,8 @@ Nada fica em `public`, e esses schemas não são expostos pelo PostgREST (`confi
 8. `..._resumo_mensal.sql` — `mart.resumo_mensal` (totais por mês das tabelas de movimento, calculados pela carga sobre o arquivo inteiro, antes da janela: histórico da Visão geral) e `cfg.parametro_cliente` (parâmetros do cliente inteiro, como as faixas do farol `farol.vendas_meta`).
 9. `..._feriado.sql` — `cfg.feriado`: feriados do cliente (estaduais, municipais, ponto facultativo) para os dias úteis da projeção de vendas. Os nacionais vêm da biblioteca `holidays`, na API.
 10. `..._resumo_dimensao.sql` — `dimensao` em `mart.resumo_mensal`: totais abertos por um valor do arquivo (ex.: faturado e custo por `en_ramo`, para o CMV por ramo). Vazio = total sem abertura.
+11. `..._colunas_modelo.sql` — `colunas_modelo` em `cfg.fonte_carga`: nomes das colunas por papel (data, valor, custo…) para o resumo mensal e a Visão geral, quando o DW do cliente não usa os nomes padrão (ex.: PJ Cortes).
+12. `..._tabelas_pj_cortes.sql` — as 25 tabelas de dados da PJ Cortes, no padrão da migration 5.
 
 ### Storage
 
@@ -69,6 +71,9 @@ Cadastros de produção por cliente, para rodar à mão no SQL Editor. Não são
 
 - `nilo_maia_tabelas.sql` — fontes das 21 tabelas de dados da Nilo Maia. A de lançamentos passa a ser do tipo `tabela`; as outras entram inativas.
 - `nilo_maia_janela.sql` — janela de 3 meses nas 12 tabelas de movimento (depois da migration 6). Não ativa fontes.
+- `pj_cortes_cadastro.sql` — cliente, empresa, mapa de empresas, as 25 fontes (ativas, com `colunas_modelo` nas de vendas e metas), janela de 3 meses nas 9 tabelas de movimento grandes e o nome da abertura do CMV (`custos.abertura`). Depois das migrations 11 e 12.
+- `pj_cortes_usuario_dev.sql` — perfil "Desenvolvimento" da PJ Cortes; o usuário de desenvolvimento sai da Nilo Maia e entra na PJ.
+- `nilo_maia_remover_tabelas.sql` — remove as tabelas `*_nilo_maia` do mart, com as fontes, o histórico de carga, o resumo mensal e as permissões delas. Mantém cliente, empresas e usuários.
 
 ## Testes (pgTAP)
 
@@ -78,4 +83,4 @@ Cadastros de produção por cliente, para rodar à mão no SQL Editor. Não são
 | `02_sem_usuario` | sem `app.usuario_id` (ou vazio), nenhuma linha |
 | `03_role_carga` | `carga` não lê `seg`, não escreve em `cfg`, escreve no `mart` e cria tabela temporária |
 | `04_integridade` | `cfg.mapa_empresa` (e os outros vínculos) recusam empresa de outro cliente; `mart.carga_fonte` `ok` exige `data_snapshot` |
-| `05_tabelas_de_dados` | as 21 tabelas de dados têm RLS; nomes e tipos preservados; isolamento por cliente e por empresa; linhas sem empresa visíveis ao cliente inteiro; `carga` escreve, `api_site` só lê |
+| `05_tabelas_de_dados` | as 46 tabelas de dados (Nilo Maia e PJ Cortes) têm RLS; nomes e tipos preservados; isolamento por cliente e por empresa; linhas sem empresa visíveis ao cliente inteiro; `carga` escreve, `api_site` só lê |

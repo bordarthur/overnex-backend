@@ -61,10 +61,13 @@ Configuração em `cfg.fonte_carga`:
 | `contem_dado_nominal` | `true` = só perfis com `ve_dado_nominal` em `cfg.perfil_tabela` leem pela API |
 | `coluna_data` + `meses_retidos` | janela de datas: só entram as linhas dos últimos N meses dessa coluna (veja abaixo). Vazias = a tabela entra inteira |
 | `meses_fechados` | `true` = a janela usa só meses fechados (termina no mês anterior ao do snapshot) |
+| `colunas_modelo` | nomes das colunas por papel no resumo mensal e na Visão geral, só os que diferem do DW padrão. Ex. da PJ Cortes: `{"data": "en_dataemissao", "valor": "en_valortotal", "abertura": "it_grupo"}`. Vazio = nomes padrão |
 
 ### Resumo mensal
 
-Tabelas com modelo em [carga/resumo.py](carga/resumo.py) (hoje, `f_vendas_*`: faturado, custo, pedidos, clientes e pares cliente × produto por mês de `en_datemicao`, e faturado e custo por `en_ramo` na coluna `dimensao`) têm os totais mensais gravados em `mart.resumo_mensal`, na mesma transação da tabela. Os totais saem do **arquivo inteiro**, antes da janela de datas: a tabela pode guardar 1 mês, e o resumo guarda todo o histórico do arquivo em poucas linhas. É daí que a Visão geral tira a tendência de 6 meses e o acumulado do ano.
+Tabelas com modelo em [carga/resumo.py](carga/resumo.py) (hoje, `f_vendas_*`: faturado, custo, pedidos, clientes e pares cliente × produto por mês, e faturado e custo pela coluna de abertura na coluna `dimensao`) têm os totais mensais gravados em `mart.resumo_mensal`, na mesma transação da tabela. Os totais saem do **arquivo inteiro**, antes da janela de datas: a tabela pode guardar 1 mês, e o resumo guarda todo o histórico do arquivo em poucas linhas. É daí que a Visão geral tira a tendência de 6 meses e o acumulado do ano.
+
+As colunas são as do DW padrão (`en_datemicao`, `en_VALTOT`, `en_precus`, `en_numdoc`, `en_codcli`, `en_codigo`, `en_ramo`), trocadas pelas de `colunas_modelo` da fonte. Papéis: `data`, `valor`, `custo`, `pedido`, `cliente`, `produto`, `abertura`; papel desconhecido vira aviso. Um cliente pode ter mais de uma tabela `f_vendas_*` (ex.: PJ Cortes, a atual e a do sistema antigo): cada uma grava o seu resumo, e a Visão geral soma as duas. Os períodos não podem se sobrepor.
 
 Falha no resumo (coluna faltando, data em formato desconhecido, migration 8 não aplicada) não derruba a carga da tabela: vira aviso em `mart.carga_fonte.mensagem` e o resumo anterior fica.
 

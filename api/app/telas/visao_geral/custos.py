@@ -1,8 +1,10 @@
 """Seção Custos da Visão geral. REGRAS PROVISÓRIAS: confirmar com o negócio (ver TODO.md).
 
-Usa a tabela de vendas (f_vendas_*): custo = en_precus (custo TOTAL da linha, não o
-unitário), faturado = en_VALTOT, CMV = custo ÷ faturado, em %. A abertura é pelo ramo do
-cliente (en_ramo).
+Usa as tabelas de vendas (f_vendas_*): custo = en_precus (custo TOTAL da linha, não o
+unitário), faturado = en_VALTOT, CMV = custo ÷ faturado, em %. A abertura é pela coluna do
+papel "abertura": no DW padrão, o ramo do cliente (en_ramo); na PJ Cortes, o grupo do
+produto (it_grupo). Colunas por papel: ver vendas.py. O nome da abertura nos textos vem de
+custos.abertura em cfg.parametro_cliente (padrão: ramo do cliente).
 
 - referência: o CMV dos até 6 meses anteriores (soma do custo ÷ soma do faturado); não há
   orçado por ramo;
@@ -16,12 +18,15 @@ O histórico por ramo vem de mart.resumo_mensal com dimensão (migration 10); o 
 referência vem da própria tabela de vendas.
 """
 
+import logging
 import re
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
+from uuid import UUID
 
 from psycopg import sql
+from pydantic import BaseModel, ValidationError
 
 from app.core.db import Conexao
 from app.farol.parametro import Farol, deslocado, farol
@@ -42,7 +47,15 @@ from app.telas.visao_geral.contrato import (
 )
 from app.telas.visao_geral.projecao import projetar_faturado
 from app.telas.visao_geral.texto import moeda, numero
-from app.telas.visao_geral.vendas import BaseVendas, SecaoDoMes, data_texto, filtro_empresa
+from app.telas.visao_geral.vendas import (
+    BaseVendas,
+    SecaoDoMes,
+    TabelaDoCliente,
+    de_todas,
+    filtro_empresa,
+)
+
+logger = logging.getLogger(__name__)
 
 RAMOS_EM_DESTAQUE = 3
 MESES_REFERENCIA = 6
@@ -51,6 +64,43 @@ INDICADOR = "cmv"
 CMV = Razao("custo", "faturado")
 # rótulo da carga para linhas com o ramo vazio (carga/resumo.py, SEM_DIMENSAO)
 SEM_RAMO = "(vazio)"
+
+
+class Abertura(BaseModel):
+    """Nome da abertura nos textos (custos.abertura em cfg.parametro_cliente)."""
+
+    # "CMV sem ramo", "por ramo do cliente", "CMV dos demais ramos"
+    nome: str = "ramo"
+    descricao: str = "ramo do cliente"
+    plural: str = "ramos"
+
+
+def abertura(conn: Conexao, cliente_id: UUID) -> Abertura:
+    existe = conn.execute(
+        "select to_regclass('cfg.parametro_cliente') is not null as ok"
+    ).fetchone()
+    if not (existe and existe["ok"]):  # migration 8 ainda não aplicada
+        return Abertura()
+    linha = conn.execute(
+        """
+        select valor
+          from cfg.parametro_cliente
+         where cliente_id = %s
+           and chave = 'custos.abertura'
+           and vigente_de <= current_date
+           and (vigente_ate is null or vigente_ate >= current_date)
+         order by vigente_de desc
+         limit 1
+        """,
+        (cliente_id,),
+    ).fetchone()
+    if linha is None:
+        return Abertura()
+    try:
+        return Abertura.model_validate(linha["valor"])
+    except ValidationError as exc:
+        logger.warning("Parâmetro custos.abertura inválido (cliente %s): %s", cliente_id, exc)
+        return Abertura()
 
 
 def cmv(mensal: Mensal, meses: list[date]) -> Decimal | None:
@@ -155,29 +205,29 @@ def _id(ramo: str) -> str:
     return f"cmv-{slug or 'ramo'}"
 
 
-def _nome(ramo: str) -> str:
-    return "CMV sem ramo" if ramo == SEM_RAMO else f"CMV de {ramo.lower()}"
+def _nome(ramo: str, a: Abertura) -> str:
+    return f"CMV sem {a.nome}" if ramo == SEM_RAMO else f"CMV de {ramo.lower()}"
 
 
 def _ramos_do_mes(
-    conn: Conexao, ctx: ContextoConsolidado, tabela: str, mes: date
+    conn: Conexao, ctx: ContextoConsolidado, tabelas: list[TabelaDoCliente], mes: date
 ) -> dict[str, dict[str, Decimal]]:
-    """Faturado e custo do mês por ramo, da própria tabela de vendas."""
-    dia = data_texto("en_datemicao")
+    """Faturado e custo do mês por ramo (abertura), das próprias tabelas de vendas."""
+    campos = {"dia": "data", "ramo": "abertura", "valor": "valor", "custo": "custo"}
     return {
         r["ramo"]: {"faturado": r["faturado"], "custo": r["custo"]}
         for r in conn.execute(
             sql.SQL(
                 """
-                select coalesce(nullif("en_ramo", ''), %(sem_ramo)s) as ramo,
-                       coalesce(sum("en_VALTOT"), 0) as faturado,
-                       coalesce(sum("en_precus"), 0) as custo
-                  from {tabela}
-                 where _cliente_id = %(cliente)s and {filtro}
-                   and {dia} >= %(mes)s and {dia} < %(mes)s::date + interval '1 month'
+                with v as ({vendas})
+                select coalesce(nullif(ramo, ''), %(sem_ramo)s) as ramo,
+                       coalesce(sum(valor), 0) as faturado,
+                       coalesce(sum(custo), 0) as custo
+                  from v
+                 where dia >= %(mes)s and dia < %(mes)s::date + interval '1 month'
                  group by 1
                 """
-            ).format(tabela=sql.Identifier("mart", tabela), filtro=filtro_empresa(ctx), dia=dia),
+            ).format(vendas=de_todas(tabelas, campos, filtro_empresa(ctx))),
             {
                 "cliente": ctx.cliente_id,
                 "empresas": list(ctx.empresas),
@@ -189,7 +239,7 @@ def _ramos_do_mes(
 
 
 def _historico_por_ramo(
-    conn: Conexao, ctx: ContextoConsolidado, tabela: str, de: date, ate: date
+    conn: Conexao, ctx: ContextoConsolidado, tabelas: list[TabelaDoCliente], de: date, ate: date
 ) -> dict[str, Mensal]:
     """faturado_ramo e custo_ramo do resumo mensal; vazio sem a migration 10."""
     existe = conn.execute(
@@ -210,7 +260,7 @@ def _historico_por_ramo(
             """
             select dimensao, mes, medida, sum(valor) as valor
               from mart.resumo_mensal
-             where cliente_id = %(cliente)s and tabela = %(tabela)s and {filtro}
+             where cliente_id = %(cliente)s and tabela = any(%(tabelas)s) and {filtro}
                and medida = any(%(medidas)s) and dimensao <> ''
                and mes between %(de)s and %(ate)s
              group by dimensao, mes, medida
@@ -219,7 +269,7 @@ def _historico_por_ramo(
         {
             "cliente": ctx.cliente_id,
             "empresas": list(ctx.empresas),
-            "tabela": tabela,
+            "tabelas": [t.tabela for t in tabelas],
             "medidas": list(medidas),
             "de": de,
             "ate": ate,
@@ -315,8 +365,9 @@ def secao_custos(ctx: ContextoConsolidado, base: BaseVendas) -> SecaoDoMes | Non
         return None
     f = farol(conn, ctx.cliente_id, INDICADOR, v.mes)
 
-    do_mes = _ramos_do_mes(conn, ctx, base.tabela, v.mes)
-    historico = _historico_por_ramo(conn, ctx, base.tabela, base.inicio, v.mes)
+    a = abertura(conn, ctx.cliente_id)
+    do_mes = _ramos_do_mes(conn, ctx, base.tabelas, v.mes)
+    historico = _historico_por_ramo(conn, ctx, base.tabelas, base.inicio, v.mes)
     for ramo, medidas in do_mes.items():
         historico.setdefault(ramo, {})[v.mes] = medidas
 
@@ -324,16 +375,18 @@ def secao_custos(ctx: ContextoConsolidado, base: BaseVendas) -> SecaoDoMes | Non
     destaque = [r for r in destaque if r != SEM_RAMO][:RAMOS_EM_DESTAQUE]
     demais = _somar([m for r, m in historico.items() if r not in destaque])
 
-    indicadores = [indicador_cmv(_id(r), _nome(r), v.mes, historico[r], f) for r in destaque]
+    indicadores = [indicador_cmv(_id(r), _nome(r, a), v.mes, historico[r], f) for r in destaque]
     if demais:
-        indicadores.append(indicador_cmv("cmv-demais", "CMV dos demais ramos", v.mes, demais, f))
+        indicadores.append(
+            indicador_cmv("cmv-demais", f"CMV dos demais {a.plural}", v.mes, demais, f)
+        )
 
     nome_mes = MESES[v.mes.month - 1].lower()
     secao = Secao(
         id="custos",
         titulo="Custos",
         modulo=None,
-        resumo=f"Dados de {nome_mes} de {v.mes.year}, por ramo do cliente.",
+        resumo=f"Dados de {nome_mes} de {v.mes.year}, por {a.descricao}.",
         kpis=kpis_custos(
             v.mes,
             v.ultimo_dia,

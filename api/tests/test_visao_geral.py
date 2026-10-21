@@ -403,3 +403,119 @@ def test_secao_vendas_some_com_empresa_escolhida(client: TestClient) -> None:
 @pytest.mark.usefixtures("vendas_do_bruno")
 def test_secao_vendas_nao_vaza_para_outro_cliente(client: TestClient) -> None:
     assert client.get(VISAO_GERAL, headers=auth(OID_A)).json()["secoes"] == []
+
+
+CAMINHOS_PJ = [
+    "dataflow/dbo_f_vendas_teste_pj/dbo_f_vendas_teste_pj.parquet",
+    "dataflow/dbo_f_vendas_agile_teste_pj/dbo_f_vendas_agile_teste_pj.parquet",
+    "dataflow/dbo_f_metas_teste_pj/dbo_f_metas_teste_pj.parquet",
+]
+COLUNAS_PJ = (
+    '{"data": "en_dataemissao", "valor": "en_valortotal", "custo": "en_custototal",'
+    ' "pedido": "en_numpedido", "cliente": "en_codigocliente",'
+    ' "produto": "en_codigoproduto", "abertura": "it_grupo"}'
+)
+
+
+@pytest.fixture
+def vendas_pj_do_bruno(admin_conn: psycopg.Connection[tuple[Any, ...]]) -> Iterator[None]:
+    # Os números de vendas_do_bruno no formato da PJ Cortes: outras colunas (colunas_modelo)
+    # e duas tabelas de vendas, a atual (setembro) e a do sistema antigo (agosto).
+    admin_conn.execute(
+        """
+        insert into cfg.fonte_carga
+            (cliente_id, tipo, caminho_bucket, ativo, tabela_destino, contem_dado_nominal,
+             colunas_modelo)
+        values (%(c)s, 'tabela', %(v)s, false, 'f_vendas_pj', true, %(cols)s),
+               (%(c)s, 'tabela', %(a)s, false, 'f_vendas_agile_pj_cortes', true, %(cols)s),
+               (%(c)s, 'tabela', %(m)s, false, 'f_metas_comercial_pj', false, '{"data": "Data"}')
+        """,
+        {
+            "c": CLIENTE_B,
+            "v": CAMINHOS_PJ[0],
+            "a": CAMINHOS_PJ[1],
+            "m": CAMINHOS_PJ[2],
+            "cols": COLUNAS_PJ,
+        },
+    )
+    admin_conn.execute(
+        """
+        insert into mart.f_vendas_pj
+            (_linha, _cliente_id, "en_dataemissao", "en_codigocliente", "en_numpedido",
+             "en_codigoproduto", "en_valortotal", "en_custototal", "it_grupo")
+        values (1, %(c)s, '01/09/2026 00:00:00', 'C1', 'P1', 'X', 600, 500, 'BOVINOS'),
+               (2, %(c)s, '01/09/2026 00:00:00', 'C1', 'P1', 'Y', 400, 350, 'BOVINOS'),
+               (3, %(c)s, '15/09/2026 00:00:00', 'C2', 'P2', 'X', 1000, 800, 'SUINOS')
+        """,
+        {"c": CLIENTE_B},
+    )
+    admin_conn.execute(
+        """
+        insert into mart.f_vendas_agile_pj_cortes
+            (_linha, _cliente_id, "en_dataemissao", "en_codigocliente", "en_numpedido",
+             "en_valortotal", "en_custototal", "it_grupo")
+        values (1, %(c)s, '28/08/2026', 'C9', 'P0', 999, 800, 'BOVINOS')
+        """,
+        {"c": CLIENTE_B},
+    )
+    admin_conn.execute(
+        """
+        insert into mart.f_metas_comercial_pj (_linha, _cliente_id, "Data", "Valor")
+        values (1, %(c)s, '01/08/2026 00:00:00', 1000),
+               (2, %(c)s, '01/09/2026 00:00:00', 4000)
+        """,
+        {"c": CLIENTE_B},
+    )
+    # histórico da carga: cada tabela grava o seu
+    admin_conn.execute(
+        """
+        insert into mart.resumo_mensal
+            (cliente_id, empresa_id, tabela, medida, mes, valor, data_snapshot)
+        values (%(c)s, null, 'f_vendas_agile_pj_cortes', 'faturado', '2026-08-01', 999,
+                '2026-10-11'),
+               (%(c)s, null, 'f_vendas_pj', 'faturado', '2026-09-01', 2000, '2026-10-11')
+        """,
+        {"c": CLIENTE_B},
+    )
+    admin_conn.execute(
+        """
+        insert into cfg.parametro_cliente (cliente_id, chave, valor, vigente_de)
+        values (%s, 'custos.abertura',
+                '{"nome": "grupo", "descricao": "grupo de produto", "plural": "grupos"}',
+                '2026-01-01')
+        """,
+        (CLIENTE_B,),
+    )
+    yield
+    admin_conn.execute("delete from mart.resumo_mensal where cliente_id = %s", (CLIENTE_B,))
+    admin_conn.execute("delete from cfg.parametro_cliente where cliente_id = %s", (CLIENTE_B,))
+    for tabela in ("f_vendas_pj", "f_vendas_agile_pj_cortes", "f_metas_comercial_pj"):
+        admin_conn.execute(
+            f"delete from mart.{tabela} where _cliente_id = %s",  # noqa: S608
+            (CLIENTE_B,),
+        )
+    admin_conn.execute(
+        "delete from cfg.fonte_carga where cliente_id = %s and caminho_bucket = any(%s)",
+        (CLIENTE_B, CAMINHOS_PJ),
+    )
+
+
+@pytest.mark.usefixtures("vendas_pj_do_bruno")
+def test_vendas_com_colunas_da_pj_e_duas_tabelas(client: TestClient) -> None:
+    secoes = {s["id"]: s for s in client.get(VISAO_GERAL, headers=auth(OID_B)).json()["secoes"]}
+
+    vendas = secoes["vendas"]
+    assert vendas["resumo"] == "Dados de setembro de 2026."
+    kpis = {k["rotulo"]: k for k in vendas["kpis"]}
+    assert kpis["Meta de setembro"]["valor"]["valor"] == 4000
+    # agosto, da tabela antiga, fica fora do mês
+    assert kpis["Faturado até 15/09"]["valor"]["valor"] == 2000
+    [ind] = [i for i in vendas["indicadores"] if i["id"] == "vendas-meta"]
+    # agosto vem do resumo da tabela antiga
+    assert ind["periodos"]["ano"]["referencia"] == "R$ 3 mil de ago a set contra meta de R$ 5 mil"
+    assert ind["tendencia"]["real"] == [999, 4200]
+
+    custos = secoes["custos"]
+    assert custos["resumo"] == "Dados de setembro de 2026, por grupo de produto."
+    nomes = {i["nome"] for i in custos["indicadores"]}
+    assert nomes <= {"CMV de bovinos", "CMV de suinos", "CMV dos demais grupos"}

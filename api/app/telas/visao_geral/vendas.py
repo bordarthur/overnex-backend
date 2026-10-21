@@ -1,7 +1,12 @@
 """Seção Vendas da Visão geral. REGRAS PROVISÓRIAS: confirmar com o negócio (ver TODO.md).
 
-Lê a tabela de vendas (f_vendas_*) e a de metas (f_metas_*) que o cliente tem registradas
-em cfg.fonte_carga, e o histórico mensal de mart.resumo_mensal (gravado pela carga).
+Lê as tabelas de vendas (f_vendas_*) e de metas (f_metas_*) que o cliente tem registradas
+em cfg.fonte_carga, e o histórico mensal de mart.resumo_mensal (gravado pela carga). Com
+mais de uma tabela de vendas (ex.: PJ Cortes: a atual e a do sistema antigo), as linhas se
+somam: os períodos não podem se sobrepor.
+
+Colunas por papel: as do DW padrão (COLUNAS_VENDAS, COLUNAS_METAS), trocadas pelas de
+cfg.fonte_carga.colunas_modelo quando a fonte informa (migration 11). Abaixo, as padrão.
 
 - mês de referência: o mais recente com venda em en_datemicao (a janela da carga pode
   guardar só o mês fechado, então não é necessariamente o mês do snapshot);
@@ -20,6 +25,7 @@ Empresa: com uma empresa escolhida, só entram linhas dessa empresa. Tabela sem 
 empresa (empresa nula) só entra na visão de todas as empresas.
 """
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
@@ -55,6 +61,22 @@ from app.telas.visao_geral.texto import moeda, moeda_cheia, numero
 
 MESES_TENDENCIA = 6
 INDICADOR_META = "vendas_meta"
+
+# papel → coluna no DW padrão (os mesmos de jobs/carga/carga/resumo.py)
+COLUNAS_VENDAS: Mapping[str, str] = {
+    "data": "en_datemicao",
+    "valor": "en_VALTOT",
+    # custo total da linha (não o unitário)
+    "custo": "en_precus",
+    "pedido": "en_numdoc",
+    "cliente": "en_codcli",
+    "produto": "en_codigo",
+    # abertura do CMV da seção Custos
+    "abertura": "en_ramo",
+}
+COLUNAS_METAS: Mapping[str, str] = {"data": "Competencia", "valor": "Valor"}
+# papéis somados; os outros são códigos e viram texto (ver de_todas)
+NUMERICOS = frozenset({"valor", "custo"})
 
 CLIENTES = Definicao(
     id="clientes-compraram",
@@ -108,10 +130,18 @@ class MesDeVendas:
 
 
 @dataclass(frozen=True)
+class TabelaDoCliente:
+    """Tabela de dados do mart e o nome de cada papel nas colunas dela."""
+
+    tabela: str
+    colunas: Mapping[str, str]
+
+
+@dataclass(frozen=True)
 class BaseVendas:
     """O que a seção Vendas já calculou e a seção Custos reaproveita."""
 
-    tabela: str
+    tabelas: list[TabelaDoCliente]
     mes: MesDeVendas
     # histórico do resumo mensal, com o mês de referência vindo da tabela
     mensal: Mensal
@@ -136,22 +166,60 @@ def data_texto(coluna: str) -> sql.Composable:
     ).format(c=c)
 
 
-def tabela_do_cliente(conn: Conexao, cliente_id: UUID, prefixo: str) -> str | None:
-    """Tabela de dados do cliente que começa com `prefixo` (ex.: f_vendas_) e existe no mart."""
-    linha = conn.execute(
-        """
-        select f.tabela_destino
-          from cfg.fonte_carga f
-         where f.cliente_id = %s
-           and f.tipo = 'tabela'
-           and starts_with(f.tabela_destino, %s)
-           and to_regclass('mart.' || quote_ident(f.tabela_destino)) is not null
-         order by f.tabela_destino
-         limit 1
-        """,
-        (cliente_id, prefixo),
-    ).fetchone()
-    return linha["tabela_destino"] if linha else None
+def tabelas_do_cliente(
+    conn: Conexao, cliente_id: UUID, prefixo: str, padrao: Mapping[str, str]
+) -> list[TabelaDoCliente]:
+    """Tabelas de dados do cliente que começam com `prefixo` (ex.: f_vendas_) e existem no
+    mart, com a coluna de cada papel (`padrao` + cfg.fonte_carga.colunas_modelo)."""
+    # to_jsonb(f): sem a migration 11 a coluna não existe e vale o padrão
+    return [
+        TabelaDoCliente(r["tabela_destino"], {**padrao, **r["colunas_modelo"]})
+        for r in conn.execute(
+            """
+            select f.tabela_destino,
+                   coalesce(to_jsonb(f) -> 'colunas_modelo', '{}'::jsonb) as colunas_modelo
+              from cfg.fonte_carga f
+             where f.cliente_id = %s
+               and f.tipo = 'tabela'
+               and starts_with(f.tabela_destino, %s)
+               and to_regclass('mart.' || quote_ident(f.tabela_destino)) is not null
+             order by f.tabela_destino
+            """,
+            (cliente_id, prefixo),
+        )
+    ]
+
+
+def de_todas(
+    tabelas: list[TabelaDoCliente], campos: Mapping[str, str], filtro: sql.Composable
+) -> sql.Composable:
+    """`select <campos> from <tabela> where <cliente e empresa>` de cada tabela, em union all.
+
+    `campos`: apelido → papel. "data" vira date (data_texto), valor e custo ficam como estão
+    e os códigos viram texto (o tipo pode mudar de uma tabela para outra).
+    """
+
+    def expressao(t: TabelaDoCliente, papel: str) -> sql.Composable:
+        coluna = t.colunas[papel]
+        if papel == "data":
+            return data_texto(coluna)
+        if papel in NUMERICOS:
+            return sql.Identifier(coluna)
+        return sql.SQL("{}::text").format(sql.Identifier(coluna))
+
+    return sql.SQL(" union all ").join(
+        sql.SQL(
+            "select {campos} from {tabela} where _cliente_id = %(cliente)s and {filtro}"
+        ).format(
+            campos=sql.SQL(", ").join(
+                sql.SQL("{} as {}").format(expressao(t, papel), sql.Identifier(apelido))
+                for apelido, papel in campos.items()
+            ),
+            tabela=sql.Identifier("mart", t.tabela),
+            filtro=filtro,
+        )
+        for t in tabelas
+    )
 
 
 def filtro_empresa(ctx: ContextoConsolidado, coluna: str = "_empresa_id") -> sql.Composable:
@@ -161,33 +229,34 @@ def filtro_empresa(ctx: ContextoConsolidado, coluna: str = "_empresa_id") -> sql
     return sql.SQL("({c} is null or {c} = any(%(empresas)s))").format(c=c)
 
 
-def _vendas_do_mes(conn: Conexao, ctx: ContextoConsolidado, tabela: str) -> MesDeVendas | None:
+def _vendas_do_mes(
+    conn: Conexao, ctx: ContextoConsolidado, tabelas: list[TabelaDoCliente]
+) -> MesDeVendas | None:
+    campos = {
+        "dia": "data",
+        "valor": "valor",
+        "custo": "custo",
+        "cliente": "cliente",
+        "pedido": "pedido",
+        "produto": "produto",
+    }
     linha = conn.execute(
         sql.SQL(
             """
-            with v as (
-                select {dia} as dia, "en_VALTOT" as valor, "en_precus" as custo,
-                       "en_codcli", "en_numdoc", "en_codigo"
-                  from {tabela}
-                 where _cliente_id = %(cliente)s and {filtro}
-            ),
+            with v as ({vendas}),
             ref as (select date_trunc('month', max(dia))::date as mes from v)
             select ref.mes,
                    max(v.dia) as ultimo_dia,
                    coalesce(sum(v.valor), 0) as faturado,
                    coalesce(sum(v.custo), 0) as custo,
-                   count(distinct v."en_codcli") as clientes,
-                   count(distinct v."en_numdoc") as pedidos,
-                   count(distinct (v."en_codcli", v."en_codigo")) as clientes_produtos
+                   count(distinct v.cliente) as clientes,
+                   count(distinct v.pedido) as pedidos,
+                   count(distinct (v.cliente, v.produto)) as clientes_produtos
               from v
               join ref on v.dia >= ref.mes and v.dia < ref.mes + interval '1 month'
              group by ref.mes
             """
-        ).format(
-            dia=data_texto("en_datemicao"),
-            tabela=sql.Identifier("mart", tabela),
-            filtro=filtro_empresa(ctx),
-        ),
+        ).format(vendas=de_todas(tabelas, campos, filtro_empresa(ctx))),
         {"cliente": ctx.cliente_id, "empresas": list(ctx.empresas)},
     ).fetchone()
     if linha is None:
@@ -205,27 +274,23 @@ def _vendas_do_mes(conn: Conexao, ctx: ContextoConsolidado, tabela: str) -> MesD
 
 def _metas(conn: Conexao, ctx: ContextoConsolidado, de: date, ate: date) -> dict[date, Decimal]:
     """Meta por mês, de `de` até `ate` (meses inteiros); meses sem meta ficam de fora."""
-    tabela = tabela_do_cliente(conn, ctx.cliente_id, "f_metas_")
-    if tabela is None:
+    tabelas = tabelas_do_cliente(conn, ctx.cliente_id, "f_metas_", COLUNAS_METAS)
+    if not tabelas:
         return {}
-    competencia = data_texto("Competencia")
+    campos = {"competencia": "data", "valor": "valor"}
     return {
         r["mes"]: r["meta"]
         for r in conn.execute(
             sql.SQL(
                 """
-                select date_trunc('month', {competencia})::date as mes, sum("Valor") as meta
-                  from {tabela}
-                 where _cliente_id = %(cliente)s and {filtro}
-                   and {competencia} >= %(de)s
-                   and {competencia} < %(ate)s::date + interval '1 month'
+                with m as ({metas})
+                select date_trunc('month', competencia)::date as mes, sum(valor) as meta
+                  from m
+                 where competencia >= %(de)s
+                   and competencia < %(ate)s::date + interval '1 month'
                  group by 1
                 """
-            ).format(
-                tabela=sql.Identifier("mart", tabela),
-                filtro=filtro_empresa(ctx),
-                competencia=competencia,
-            ),
+            ).format(metas=de_todas(tabelas, campos, filtro_empresa(ctx))),
             {"cliente": ctx.cliente_id, "empresas": list(ctx.empresas), "de": de, "ate": ate},
         )
         if r["meta"]
@@ -233,7 +298,7 @@ def _metas(conn: Conexao, ctx: ContextoConsolidado, de: date, ate: date) -> dict
 
 
 def _resumo_mensal(
-    conn: Conexao, ctx: ContextoConsolidado, tabela: str, de: date, ate: date
+    conn: Conexao, ctx: ContextoConsolidado, tabelas: list[TabelaDoCliente], de: date, ate: date
 ) -> Mensal:
     """Totais por mês e medida do histórico (mart.resumo_mensal); vazio sem a migration 8."""
     existe = conn.execute("select to_regclass('mart.resumo_mensal') is not null as ok").fetchone()
@@ -245,7 +310,7 @@ def _resumo_mensal(
             """
             select mes, medida, sum(valor) as valor
               from mart.resumo_mensal
-             where cliente_id = %(cliente)s and tabela = %(tabela)s and {filtro}
+             where cliente_id = %(cliente)s and tabela = any(%(tabelas)s) and {filtro}
                and mes between %(de)s and %(ate)s
              group by mes, medida
             """
@@ -253,7 +318,7 @@ def _resumo_mensal(
         {
             "cliente": ctx.cliente_id,
             "empresas": list(ctx.empresas),
-            "tabela": tabela,
+            "tabelas": [t.tabela for t in tabelas],
             "de": de,
             "ate": ate,
         },
@@ -354,18 +419,18 @@ def secao_vendas(ctx: ContextoConsolidado) -> tuple[SecaoDoMes, BaseVendas] | No
     """Seção Vendas e a base para a de Custos; None se o cliente não tem tabela de vendas
     ou não há venda no recorte."""
     conn = ctx.sessao.conn
-    tabela = tabela_do_cliente(conn, ctx.cliente_id, "f_vendas_")
-    if tabela is None:
+    tabelas = tabelas_do_cliente(conn, ctx.cliente_id, "f_vendas_", COLUNAS_VENDAS)
+    if not tabelas:
         return None
-    v = _vendas_do_mes(conn, ctx, tabela)
+    v = _vendas_do_mes(conn, ctx, tabelas)
     if v is None:
         return None
 
     # histórico: tendência, acumulado do ano e média dos 6 meses anteriores
     inicio = min(date(v.mes.year, 1, 1), _mes_menos(v.mes, MESES_TENDENCIA))
     metas = _metas(conn, ctx, inicio, v.mes)
-    mensal = _resumo_mensal(conn, ctx, tabela, inicio, v.mes)
-    # o mês de referência vem da tabela, que é do mesmo arquivo do resumo
+    mensal = _resumo_mensal(conn, ctx, tabelas, inicio, v.mes)
+    # o mês de referência vem das tabelas, que são dos mesmos arquivos do resumo
     mensal[v.mes] = {
         "faturado": v.faturado,
         "pedidos": Decimal(v.pedidos),
@@ -400,7 +465,7 @@ def secao_vendas(ctx: ContextoConsolidado) -> tuple[SecaoDoMes, BaseVendas] | No
         cartoes=[],
         indicadores=[i for i in indicadores if i is not None],
     )
-    base = BaseVendas(tabela=tabela, mes=v, mensal=mensal, inicio=inicio, feriados=feriados_mes)
+    base = BaseVendas(tabelas=tabelas, mes=v, mensal=mensal, inicio=inicio, feriados=feriados_mes)
     return SecaoDoMes(secao=secao, mes=v.mes), base
 
 

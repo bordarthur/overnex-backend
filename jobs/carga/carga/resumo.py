@@ -3,13 +3,14 @@
 Os totais saem do arquivo INTEIRO, antes da janela de datas: a tabela do mart pode guardar
 só 1 mês, mas a Visão geral pede tendência de 6 meses e acumulado do ano.
 
-As medidas de cada tipo de tabela ficam em MODELOS, pelo prefixo do nome (as colunas são
-as do DW padrão). Tabela sem modelo não gera resumo. Uma medida com `por` é aberta pelos
+As medidas de cada tipo de tabela ficam em MODELOS, pelo prefixo do nome. As colunas são
+as do DW padrão, trocadas pelas de cfg.fonte_carga.colunas_modelo quando a fonte informa
+(ex.: PJ Cortes). Tabela sem modelo não gera resumo. Uma medida com `por` é aberta pelos
 valores dessa coluna (mart.resumo_mensal.dimensao, migration 10); valor vazio na coluna
 vira SEM_DIMENSAO.
 """
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
@@ -22,6 +23,7 @@ import pyarrow.compute as pc
 from carga import janela
 from carga.arquivo import listar_valores
 from carga.db import Conexao
+from carga.erros import ErroCarga
 
 
 @dataclass(frozen=True)
@@ -52,22 +54,41 @@ class Modelo:
         )
 
 
-MODELOS: Mapping[str, Modelo] = {
-    "f_vendas_": Modelo(
-        coluna_data="en_datemicao",
+# Nomes das colunas no DW padrão, por papel. Fonte com outros nomes informa só os que
+# mudam em cfg.fonte_carga.colunas_modelo (migration 11).
+COLUNAS_VENDAS: Mapping[str, str] = {
+    "data": "en_datemicao",
+    "valor": "en_VALTOT",
+    # custo total da linha (não o unitário)
+    "custo": "en_precus",
+    "pedido": "en_numdoc",
+    "cliente": "en_codcli",
+    "produto": "en_codigo",
+    # abertura do CMV da seção Custos (Nilo Maia: ramo do cliente; PJ: grupo do produto)
+    "abertura": "en_ramo",
+}
+
+
+def _modelo_vendas(c: Mapping[str, str]) -> Modelo:
+    return Modelo(
+        coluna_data=c["data"],
         medidas=(
-            Medida("faturado", ("en_VALTOT",), "sum"),
-            Medida("pedidos", ("en_numdoc",), "count_distinct"),
-            Medida("clientes", ("en_codcli",), "count_distinct"),
+            Medida("faturado", (c["valor"],), "sum"),
+            Medida("pedidos", (c["pedido"],), "count_distinct"),
+            Medida("clientes", (c["cliente"],), "count_distinct"),
             # pares cliente × produto: ÷ clientes = produtos distintos por cliente
-            Medida("clientes_produtos", ("en_codcli", "en_codigo"), "count_distinct"),
-            # en_precus é o custo total da linha (não o unitário)
-            Medida("custo", ("en_precus",), "sum"),
-            # CMV por ramo do cliente (seção Custos)
-            Medida("faturado_ramo", ("en_VALTOT",), "sum", por="en_ramo"),
-            Medida("custo_ramo", ("en_precus",), "sum", por="en_ramo"),
+            Medida("clientes_produtos", (c["cliente"], c["produto"]), "count_distinct"),
+            Medida("custo", (c["custo"],), "sum"),
+            # CMV por abertura (seção Custos); o nome "_ramo" ficou da primeira versão
+            Medida("faturado_ramo", (c["valor"],), "sum", por=c["abertura"]),
+            Medida("custo_ramo", (c["custo"],), "sum", por=c["abertura"]),
         ),
-    ),
+    )
+
+
+# prefixo da tabela → (colunas padrão, construtor do modelo)
+MODELOS: Mapping[str, tuple[Mapping[str, str], Callable[[Mapping[str, str]], Modelo]]] = {
+    "f_vendas_": (COLUNAS_VENDAS, _modelo_vendas),
 }
 
 
@@ -85,10 +106,17 @@ class Total:
 SEM_DIMENSAO = "(vazio)"
 
 
-def modelo_da_tabela(tabela: str) -> Modelo | None:
-    for prefixo, modelo in MODELOS.items():
+def modelo_da_tabela(tabela: str, colunas_modelo: Mapping[str, str] | None = None) -> Modelo | None:
+    """Modelo pelo prefixo da tabela, com os nomes de `colunas_modelo` no lugar dos padrão."""
+    for prefixo, (padrao, construir) in MODELOS.items():
         if tabela.startswith(prefixo):
-            return modelo
+            desconhecidos = sorted(set(colunas_modelo or {}) - set(padrao))
+            if desconhecidos:
+                raise ErroCarga(
+                    f"cfg.fonte_carga.colunas_modelo com papéis desconhecidos {desconhecidos}"
+                    f" (aceitos: {sorted(padrao)})"
+                )
+            return construir({**padrao, **(colunas_modelo or {})})
     return None
 
 
