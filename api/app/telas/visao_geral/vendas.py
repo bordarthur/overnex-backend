@@ -310,7 +310,7 @@ def _metas(conn: Conexao, ctx: ContextoConsolidado, de: date, ate: date) -> dict
     }
 
 
-def _resumo_mensal(
+def resumo_mensal(
     conn: Conexao, ctx: ContextoConsolidado, tabelas: list[TabelaDoCliente], de: date, ate: date
 ) -> Mensal:
     """Totais por mês e medida do histórico (mart.resumo_mensal); vazio sem a migration 8."""
@@ -442,7 +442,7 @@ def secao_vendas(ctx: ContextoConsolidado) -> tuple[SecaoDoMes, BaseVendas] | No
     # histórico: tendência, acumulado do ano e média dos 6 meses anteriores
     inicio = min(date(v.mes.year, 1, 1), mes_menos(v.mes, MESES_TENDENCIA))
     metas = _metas(conn, ctx, inicio, v.mes)
-    mensal = _resumo_mensal(conn, ctx, tabelas, inicio, v.mes)
+    mensal = resumo_mensal(conn, ctx, tabelas, inicio, v.mes)
     # o mês de referência vem das tabelas, que são dos mesmos arquivos do resumo
     mensal[v.mes] = {
         "faturado": v.faturado,

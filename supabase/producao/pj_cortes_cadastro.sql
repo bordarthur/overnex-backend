@@ -12,9 +12,9 @@
 -- 08/03/2025) se somam na Visão geral. As duas usam as colunas da PJ (colunas_modelo).
 -- Custos: CMV aberto por grupo do produto (it_grupo).
 --
--- Janela de 3 meses nas tabelas de movimento grandes; o resumo mensal da carga sai do
--- arquivo inteiro, antes da janela (por isso a Agile fica vazia no mart e o histórico dela
--- continua na Visão geral). Metas, orçamentos, compras e dimensões entram inteiras, e os
+-- Janela de 3 meses nas tabelas de movimento grandes (13 em f_vendas_pj: o mês da carga e
+-- os 12 anteriores); o resumo mensal da carga sai do arquivo inteiro, antes da janela (por
+-- isso a Agile fica vazia no mart e o histórico dela continua na Visão geral). Metas, orçamentos, compras e dimensões entram inteiras, e os
 -- títulos a receber e a pagar (f_receitas_pj, f_despesas_pj) também: a seção Financeiro
 -- precisa dos títulos antigos ainda em aberto e de 12 meses de histórico.
 
@@ -70,7 +70,7 @@ select c.id,
         ('f_compras_pj',                     'EMPRESA',      true,    '{}'),  -- en_observacao
         ('f_despesas_pj',                    'EMPRESA',      true,    '{}'),  -- en_observacao
         ('f_devolucao_pj',                   'EMPRESA',      true,    '{}'),  -- en_codigocliente
-        ('f_devolucao_pj_agile',             null,           true,    '{}'),  -- en_codcli
+        ('f_devolucao_pj_agile',             null,           true,    '{"data": "en_datemi", "valor": "en_VALTOT"}'),  -- en_codcli
         ('f_estoque_pj',                     'EMPRESA',      false,   '{}'),
         ('f_folha_pj_cortes',                'EMPRESA',      true,    '{}'),  -- NOME
         ('f_lancamentos_pj_cortes',          null,           true,    '{}'),  -- 2 linhas sem Empresa
@@ -98,21 +98,21 @@ select c.id,
  where c.slug = 'pj-cortes'
 on conflict (cliente_id, tipo, caminho_bucket) do nothing;
 
--- 4. janela de 3 meses nas tabelas de movimento grandes
+-- 4. janela nas tabelas de movimento grandes
 update cfg.fonte_carga f
    set coluna_data = v.coluna_data,
-       meses_retidos = 3
+       meses_retidos = v.meses
   from cfg.cliente c,
        (values
-        -- tabela                       coluna de data
-        ('f_vendas_pj',                 'en_dataemissao'),
-        ('f_vendas_agile_pj_cortes',    'en_dataemissao'),   -- só tem até 03/2025: fica vazia
-        ('f_recebidas_pj',              'en_datarecebimento'),
-        ('f_pagas_pj',                  'en_datpag'),
-        ('f_bordero_pj',                'Data'),
-        ('f_645_pj',                    'Data'),
-        ('f_folha_pj_cortes',           'Data')
-       ) v (tabela, coluna_data)
+        -- tabela                       coluna de data        meses
+        ('f_vendas_pj',                 'en_dataemissao',     13),
+        ('f_vendas_agile_pj_cortes',    'en_dataemissao',     3),   -- só tem até 03/2025: fica vazia
+        ('f_recebidas_pj',              'en_datarecebimento', 3),
+        ('f_pagas_pj',                  'en_datpag',          3),
+        ('f_bordero_pj',                'Data',               3),
+        ('f_645_pj',                    'Data',               3),
+        ('f_folha_pj_cortes',           'Data',               3)
+       ) v (tabela, coluna_data, meses)
  where c.id = f.cliente_id
    and c.slug = 'pj-cortes'
    and f.tabela_destino = v.tabela;
@@ -140,8 +140,8 @@ begin
       from cfg.fonte_carga f
       join cfg.cliente c on c.id = f.cliente_id
      where c.slug = 'pj-cortes' and f.tipo = 'tabela';
-    if fontes <> 25 or janelas <> 7 or modelos <> 3 then
-        raise exception 'esperava 25 fontes, 7 com janela e 3 com colunas_modelo; veio %, % e %',
+    if fontes <> 25 or janelas <> 7 or modelos <> 4 then
+        raise exception 'esperava 25 fontes, 7 com janela e 4 com colunas_modelo; veio %, % e %',
             fontes, janelas, modelos;
     end if;
     if (select count(*) from cfg.mapa_empresa m

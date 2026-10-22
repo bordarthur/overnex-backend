@@ -10,6 +10,8 @@ from app.telas.visao_geral.resultado import (
     DESPESAS_FIXAS_RECEITA,
     MARGEM_EBITDA,
     cenario_do_orcamento,
+    dre_por_mes,
+    grupos_da_operacao,
     kpis_resultado,
     medidas_da_dre,
 )
@@ -61,6 +63,53 @@ def test_dre_pelo_grupo_com_despesa_negativa_ou_positiva() -> None:
             # 100 - 10 + 5 - 15 - 20
             "lucro_liquido": D(60),
         }
+
+
+def test_vendas_e_devolucoes_somam_aos_lancamentos() -> None:
+    operacao = grupos_da_operacao(
+        {SET: {"faturado": D(1000), "custo": D(600), "pedidos": D(40)}},
+        {SET: D(30), date(2026, 10, 1): D(5)},
+    )
+    assert operacao.grupos == {
+        SET: {"100": D(1000), "120": D(600), "110": D(30)},
+        date(2026, 10, 1): {"110": D(5)},
+    }
+
+    # lançamentos: 20 de dedução e 50 de despesa variável; agosto só tem lançamento sem
+    # receita, e outubro só devolução: nenhum dos dois vira mês da DRE
+    lancados = {SET: {"110": D(-20), "130": D(-50)}, date(2026, 8, 1): {"140": D(-9)}}
+    real = dre_por_mes(lancados, {}, operacao)
+
+    assert list(real) == [SET]
+    assert real[SET]["receita_liquida"] == D(950)  # 1000 - (30 + 20)
+    assert real[SET]["margem_contribuicao"] == D(300)  # 950 - 600 - 50
+
+
+def test_despesas_pelo_de_para_com_o_sinal_do_power_bi() -> None:
+    operacao = grupos_da_operacao(
+        {SET: {"faturado": D(1000), "custo": D(600)}},
+        {},
+        [
+            (SET, "140.01.01", D(80)),  # salário: despesa fixa e folha
+            (SET, "140.02.03", D(20)),
+            (SET, "130.03.01", D(-5)),  # estorno: abate a despesa variável
+            (SET, "100.02.03", D(-40)),  # frete retorno: crédito no contas a pagar é receita
+            (SET, "120.01.52", D(10)),
+        ],
+    )
+    assert operacao.grupos[SET] == {
+        "100": D(1040),
+        "120": D(610),
+        "140": D(100),
+        "130": D(-5),
+    }
+    assert operacao.folha == {SET: D(80)}
+
+    real = dre_por_mes({SET: {"130": D(-50)}}, {SET: D(-20)}, operacao)
+    assert real[SET]["receita_liquida"] == D(1040)
+    assert real[SET]["margem_contribuicao"] == D(385)  # 1040 - 610 - (50 - 5)
+    assert real[SET]["ebitda"] == D(285)
+    assert real[SET]["folha"] == D(100)  # 20 lançado + 80 do contas a pagar
 
 
 def test_sem_receita_bruta_nao_ha_dre() -> None:

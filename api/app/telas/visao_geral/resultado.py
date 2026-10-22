@@ -2,14 +2,29 @@
 
 Lê os lançamentos gerenciais (f_lancamentos_*: data de competência, valor e Id_Descritivo)
 e o orçamento (f_orcamento_*, menos os orçamentos comercial e de ticket) que o cliente tem
-em cfg.fonte_carga. Colunas por papel: COLUNAS_LANCAMENTOS e COLUNAS_ORCAMENTO (as da PJ
-Cortes), trocadas pelas de cfg.fonte_carga.colunas_modelo.
+em cfg.fonte_carga. Colunas por papel: COLUNAS_LANCAMENTOS, COLUNAS_ORCAMENTO,
+COLUNAS_DEVOLUCAO e COLUNAS_DESPESAS (as da PJ Cortes), trocadas pelas de
+cfg.fonte_carga.colunas_modelo.
+
+Do realizado, além dos lançamentos, entra a operação, como na DRE do Power BI da PJ:
+- vendas: receita bruta = faturado e CMV = custo das vendas (mart.resumo_mensal, o
+  histórico inteiro das tabelas f_vendas_*);
+- devoluções (f_devolucao_*, valor na data de emissão) nas deduções;
+- despesas do contas a pagar (f_despesas_*) na data de emissão, com o grupo da DRE pelo
+  de-para da conta do ERP (cfg.conta_dre, migration 14; conta sem de-para ou com
+  fora_da_dre fica de fora). Valor da DRE = −en_valor, como no Power BI: despesa positiva
+  é custo; negativa (crédito, estorno) abate o grupo, e nos grupos de receita é receita.
+Ainda não entram: a folha gerencial e a inadimplência. O Power BI usa a data de
+competência das despesas a partir de 2026 (en_datcomp, que não vem no arquivo). O
+orçamento continua só o das tabelas f_orcamento_*.
 
 O Id_Descritivo segue o plano gerencial do mockup: os 3 primeiros dígitos são o grupo da
 DRE (GRUPOS) e 140.01 é a folha (despesas com pessoal). Id fora do plano fica de fora.
 
-- sinal: cada grupo entra pelo valor absoluto da soma do mês, com o sinal dele na DRE;
-  assim não importa se o DW grava despesa negativa ou positiva;
+- sinal: no realizado, como no Power BI, o lançamento soma com Tipo "E" e subtrai com
+  "S", e a despesa do contas a pagar entra por −en_valor; o crédito (estorno) abate o
+  grupo. No orçado, que não tem Tipo, cada grupo entra pelo valor absoluto da soma do
+  mês, com o sinal dele na DRE (não importa se o DW grava despesa negativa ou positiva);
 - mês de referência: o último mês FECHADO com receita bruta, anterior ao mês da última
   carga (o mês corrente ainda não tem todos os lançamentos);
 - referência: o orçado do mês (cenário "Base" ou, se o orçamento tiver um só cenário,
@@ -21,7 +36,8 @@ DRE (GRUPOS) e 140.01 é a folha (despesas com pessoal). Id fora do plano fica d
 """
 
 import logging
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterable, Mapping, Sequence
+from dataclasses import dataclass, field
 from datetime import date
 from decimal import Decimal
 
@@ -37,11 +53,13 @@ from app.telas.visao_geral.contrato import Indicador, Kpi, Secao, Valor
 from app.telas.visao_geral.relativo import MESES_REFERENCIA, Medidor, Serie, indicador_relativo
 from app.telas.visao_geral.texto import moeda_sinal, numero
 from app.telas.visao_geral.vendas import (
+    COLUNAS_VENDAS,
     SecaoDoMes,
     TabelaDoCliente,
     de_todas,
     filtro_empresa,
     mes_menos,
+    resumo_mensal,
     tabelas_do_cliente,
 )
 
@@ -52,12 +70,20 @@ COLUNAS_LANCAMENTOS: Mapping[str, str] = {
     "data": "Data_de_Competencia",
     "valor": "Valor_Regime_de_Competencia",
     "conta": "Id_Descritivo",
+    # E = entrada (soma), S = saída (subtrai)
+    "tipo": "Tipo",
 }
 COLUNAS_ORCAMENTO: Mapping[str, str] = {
     "data": "Data",
     "valor": "Valor",
     "conta": "Id_Descritivo",
     "cenario": "Cenario",
+}
+COLUNAS_DEVOLUCAO: Mapping[str, str] = {"data": "en_dataemissao", "valor": "en_valortotal"}
+COLUNAS_DESPESAS: Mapping[str, str] = {
+    "data": "en_datemi",
+    "valor": "en_valor",
+    "conta": "en_codigoplanocliente",
 }
 # começam com f_orcamento_, mas são metas de venda, não o orçamento da DRE
 FORA_DO_ORCAMENTO = ("f_orcamento_comercial_", "f_orcamento_ticket_")
@@ -77,6 +103,8 @@ RECEITAS_NAO_OPERACIONAIS = "190"
 IMPOSTOS_RESULTADO = "200"
 # 140.01: despesas com pessoal (5 primeiros dígitos)
 FOLHA = "14001"
+# grupos em que a despesa negativa do contas a pagar é receita
+GRUPOS_DE_RECEITA = frozenset({RECEITA_BRUTA, RECEITAS_FINANCEIRAS, RECEITAS_NAO_OPERACIONAIS})
 # histórico lido: tendência, acumulado do ano e média dos meses anteriores
 MESES_HISTORICO = 36
 
@@ -154,6 +182,203 @@ def cenario_do_orcamento(cenarios: Sequence[str]) -> str | None:
     return None
 
 
+@dataclass(frozen=True)
+class Operacao:
+    """Mês → grupo da DRE → valor da operação (vendas, devoluções e despesas), já na
+    direção da DRE: positivo = receita nos grupos de receita e despesa nos de custo."""
+
+    grupos: dict[date, dict[str, Decimal]] = field(default_factory=dict)
+    # despesas com pessoal (140.01) do contas a pagar
+    folha: dict[date, Decimal] = field(default_factory=dict)
+
+
+def grupos_da_operacao(
+    vendas: Mensal,
+    devolucoes: Mapping[date, Decimal],
+    despesas: Iterable[tuple[date, str, Decimal]] = (),
+) -> Operacao:
+    """Vendas (faturado e custo do resumo mensal), devoluções e despesas por mês e grupo
+    da DRE. Despesas: (mês, Id_Descritivo, valor com o sinal do contas a pagar: positivo
+    = saída), do contas a pagar e dos lançamentos."""
+    op = Operacao()
+
+    def somar(mes: date, grupo: str, valor: Decimal) -> None:
+        do_mes = op.grupos.setdefault(mes, {})
+        do_mes[grupo] = do_mes.get(grupo, Decimal(0)) + valor
+
+    for mes, medidas in vendas.items():
+        if "faturado" in medidas:
+            somar(mes, RECEITA_BRUTA, medidas["faturado"])
+        if "custo" in medidas:
+            somar(mes, CUSTOS, medidas["custo"])
+    for mes, valor in devolucoes.items():
+        somar(mes, DEDUCOES, valor)
+    for mes, id_descritivo, valor in despesas:
+        digitos = "".join(c for c in id_descritivo if c.isdigit())
+        grupo = digitos[:3]
+        # valor da DRE = −en_valor; nos grupos de custo a despesa entra positiva
+        somar(mes, grupo, -valor if grupo in GRUPOS_DE_RECEITA else valor)
+        if digitos[:5] == FOLHA:
+            op.folha[mes] = op.folha.get(mes, Decimal(0)) + valor
+    return op
+
+
+def dre_por_mes(
+    lancados: Mapping[date, Mapping[str, Decimal]],
+    folha: Mapping[date, Decimal],
+    operacao: Operacao,
+) -> Mensal:
+    """Linhas da DRE por mês: os grupos lançados somados aos da operação. Mês sem receita
+    bruta fica de fora.
+
+    O lançado entra em valor absoluto (pode gravar despesa negativa); a operação já vem
+    na direção da DRE, e um crédito, como um estorno, abate o grupo."""
+    mensal: Mensal = {}
+    for mes in set(lancados) | set(operacao.grupos):
+        grupos = {g: abs(v) for g, v in lancados.get(mes, {}).items()}
+        for grupo, valor in operacao.grupos.get(mes, {}).items():
+            grupos[grupo] = grupos.get(grupo, Decimal(0)) + valor
+        folha_mes = abs(folha.get(mes, Decimal(0))) + operacao.folha.get(mes, Decimal(0))
+        medidas = medidas_da_dre(grupos, folha_mes)
+        if medidas is not None:
+            mensal[mes] = medidas
+    return mensal
+
+
+def _com_as_colunas(conn: Conexao, tabelas: list[TabelaDoCliente]) -> list[TabelaDoCliente]:
+    """Só as tabelas que têm as colunas de todos os papéis; as outras ficam de fora com
+    aviso (ex.: colunas_modelo ainda não cadastrado), em vez de derrubar a seção."""
+    existentes: dict[str, set[str]] = {}
+    for r in conn.execute(
+        """
+        select table_name::text as tabela, column_name::text as coluna
+          from information_schema.columns
+         where table_schema = 'mart' and table_name = any(%s)
+        """,
+        ([t.tabela for t in tabelas],),
+    ):
+        existentes.setdefault(r["tabela"], set()).add(r["coluna"])
+    validas = []
+    for t in tabelas:
+        faltam = sorted(set(t.colunas.values()) - existentes.get(t.tabela, set()))
+        if faltam:
+            logger.warning("mart.%s sem as colunas %s: fica fora da DRE", t.tabela, faltam)
+        else:
+            validas.append(t)
+    return validas
+
+
+def _operacao(conn: Conexao, ctx: ContextoConsolidado, de: date, ate: date) -> Operacao:
+    """Grupos da DRE que vêm das vendas, das devoluções e das despesas, de `de` até o mês
+    de `ate`."""
+    vendas = tabelas_do_cliente(conn, ctx.cliente_id, "f_vendas_", COLUNAS_VENDAS)
+    devolucoes = _com_as_colunas(
+        conn, tabelas_do_cliente(conn, ctx.cliente_id, "f_devolucao_", COLUNAS_DEVOLUCAO)
+    )
+    resumo = resumo_mensal(conn, ctx, vendas, de, ate) if vendas else {}
+    por_mes: dict[date, Decimal] = {}
+    if devolucoes:
+        por_mes = {
+            r["mes"]: r["valor"]
+            for r in conn.execute(
+                sql.SQL(
+                    """
+                    with d as ({linhas})
+                    select date_trunc('month', dia)::date as mes, sum(valor) as valor
+                      from d
+                     where dia >= %(de)s and dia < %(ate)s::date + interval '1 month'
+                     group by 1
+                    """
+                ).format(
+                    linhas=de_todas(
+                        devolucoes, {"dia": "data", "valor": "valor"}, filtro_empresa(ctx)
+                    )
+                ),
+                {"cliente": ctx.cliente_id, "empresas": list(ctx.empresas), "de": de, "ate": ate},
+            )
+            if r["valor"]
+        }
+    despesas = [*_lancamentos(conn, ctx, de, ate), *_despesas(conn, ctx, de, ate)]
+    return grupos_da_operacao(resumo, por_mes, despesas)
+
+
+def _lancamentos(
+    conn: Conexao, ctx: ContextoConsolidado, de: date, ate: date
+) -> list[tuple[date, str, Decimal]]:
+    """(mês, Id_Descritivo, valor) dos lançamentos com o sinal do contas a pagar: saída
+    (Tipo "S") positiva, entrada ("E") negativa."""
+    tabelas = _com_as_colunas(
+        conn, tabelas_do_cliente(conn, ctx.cliente_id, "f_lancamentos_", COLUNAS_LANCAMENTOS)
+    )
+    if not tabelas:
+        return []
+    return [
+        (r["mes"], r["conta"], r["valor"])
+        for r in conn.execute(
+            sql.SQL(
+                """
+                with l as ({linhas})
+                select date_trunc('month', dia)::date as mes, conta,
+                       sum(case when upper(trim(tipo)) = 'E' then -valor else valor end)
+                           as valor
+                  from l
+                 where conta is not null
+                   and dia >= %(de)s and dia < %(ate)s::date + interval '1 month'
+                 group by 1, 2
+                """
+            ).format(
+                linhas=de_todas(
+                    tabelas,
+                    {"dia": "data", "conta": "conta", "valor": "valor", "tipo": "tipo"},
+                    filtro_empresa(ctx),
+                )
+            ),
+            {"cliente": ctx.cliente_id, "empresas": list(ctx.empresas), "de": de, "ate": ate},
+        )
+        if r["valor"]
+    ]
+
+
+def _despesas(
+    conn: Conexao, ctx: ContextoConsolidado, de: date, ate: date
+) -> list[tuple[date, str, Decimal]]:
+    """(mês, Id_Descritivo, soma de en_valor) das despesas com de-para em cfg.conta_dre;
+    vazio sem a migration 14 ou sem tabela de despesas."""
+    existe = conn.execute("select to_regclass('cfg.conta_dre') is not null as ok").fetchone()
+    if not (existe and existe["ok"]):
+        return []
+    tabelas = _com_as_colunas(
+        conn, tabelas_do_cliente(conn, ctx.cliente_id, "f_despesas_", COLUNAS_DESPESAS)
+    )
+    if not tabelas:
+        return []
+    return [
+        (r["mes"], r["id_descritivo"], r["valor"])
+        for r in conn.execute(
+            sql.SQL(
+                """
+                with d as ({linhas})
+                select date_trunc('month', d.dia)::date as mes, c.id_descritivo,
+                       sum(d.valor) as valor
+                  from d
+                  join cfg.conta_dre c on c.cliente_id = %(cliente)s and c.conta = d.conta
+                 where c.fora_da_dre is null and c.id_descritivo is not null
+                   and d.dia >= %(de)s and d.dia < %(ate)s::date + interval '1 month'
+                 group by 1, 2
+                """
+            ).format(
+                linhas=de_todas(
+                    tabelas,
+                    {"dia": "data", "valor": "valor", "conta": "conta"},
+                    filtro_empresa(ctx),
+                )
+            ),
+            {"cliente": ctx.cliente_id, "empresas": list(ctx.empresas), "de": de, "ate": ate},
+        )
+        if r["valor"]
+    ]
+
+
 def _dre_mensal(
     conn: Conexao,
     ctx: ContextoConsolidado,
@@ -161,8 +386,26 @@ def _dre_mensal(
     de: date,
     ate: date,
     cenario: str | None = None,
+    operacao: Operacao | None = None,
 ) -> Mensal:
-    """Linhas da DRE por mês, de `de` até o fim do mês de `ate`."""
+    """Linhas da DRE por mês, de `de` até o fim do mês de `ate`: os lançamentos (ou o
+    orçamento) de `tabelas` e, no realizado, os grupos da `operacao`."""
+    grupos: dict[date, dict[str, Decimal]] = {}
+    folha: dict[date, Decimal] = {}
+    if tabelas:
+        grupos, folha = _lancados(conn, ctx, tabelas, de, ate, cenario)
+    return dre_por_mes(grupos, folha, operacao or Operacao())
+
+
+def _lancados(
+    conn: Conexao,
+    ctx: ContextoConsolidado,
+    tabelas: list[TabelaDoCliente],
+    de: date,
+    ate: date,
+    cenario: str | None,
+) -> tuple[dict[date, dict[str, Decimal]], dict[date, Decimal]]:
+    """Soma por mês e grupo da DRE (3 primeiros dígitos do Id_Descritivo), e a folha."""
     campos = {"dia": "data", "conta": "conta", "valor": "valor"}
     filtro_cenario = sql.SQL("")
     if cenario is not None:
@@ -205,12 +448,7 @@ def _dre_mensal(
     ):
         grupos.setdefault(r["mes"], {})[r["grupo"]] = r["valor"]
         folha[r["mes"]] = folha.get(r["mes"], Decimal(0)) + r["folha"]
-    mensal: Mensal = {}
-    for mes, por_grupo in grupos.items():
-        medidas = medidas_da_dre(por_grupo, folha.get(mes, Decimal(0)))
-        if medidas is not None:
-            mensal[mes] = medidas
-    return mensal
+    return grupos, folha
 
 
 def _orcado(conn: Conexao, ctx: ContextoConsolidado, de: date, ate: date) -> Mensal:
@@ -312,15 +550,13 @@ def kpis_resultado(
 
 
 def secao_resultado(ctx: ContextoConsolidado, hoje: date) -> SecaoDoMes | None:
-    """Seção Resultado; None sem lançamentos ou sem mês fechado com receita."""
+    """Seção Resultado; None sem lançamentos nem vendas, ou sem mês fechado com receita."""
     conn = ctx.sessao.conn
-    tabelas = tabelas_do_cliente(conn, ctx.cliente_id, "f_lancamentos_", COLUNAS_LANCAMENTOS)
-    if not tabelas:
-        return None
     # meses fechados: até o mês anterior ao da última carga
     ate = mes_menos(date(hoje.year, hoje.month, 1), 1)
     de = mes_menos(ate, MESES_HISTORICO)
-    real = _dre_mensal(conn, ctx, tabelas, de, ate)
+    # lançamentos, vendas, devoluções e despesas: tudo na operação, com sinal
+    real = _dre_mensal(conn, ctx, [], de, ate, operacao=_operacao(conn, ctx, de, ate))
     if not real:
         return None
     ref = max(real)

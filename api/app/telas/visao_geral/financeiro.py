@@ -7,14 +7,15 @@ cfg.fonte_carga.colunas_modelo. Essas tabelas precisam entrar SEM janela de data
 antigo ainda em aberto e a série de 12 meses dependem do arquivo inteiro.
 
 - "hoje": a data da última carga;
-- título em aberto numa data: emitido até ela e sem pagamento até ela. Pagamento anterior
-  à emissão (data vazia gravada como 1899 ou 1900 em alguns ERPs) conta como sem
-  pagamento, e sem vencimento vale a emissão. O valor em aberto é o do título inteiro
-  (baixa parcial fica de fora);
-- vencido (modelo D+2): em aberto com vencimento + 2 dias úteis antes da data. O pagamento
-  feito no vencimento pode levar até 2 dias úteis para compensar; até lá o título ainda
-  está a vencer. Vale para a receber e a pagar. As faixas de atraso contam os dias
-  corridos desde o vencimento;
+- título em aberto numa data: emitido até ela e sem pagamento até ela. Pagamento antes de
+  1901 (data vazia gravada como 1899 ou 1900 em alguns ERPs) conta como sem pagamento;
+  pagamento anterior à emissão (adiantamento) conta como pago. Sem vencimento vale a
+  emissão. O valor em aberto é o do título inteiro (baixa parcial fica de fora);
+- modelo D+2, como no Power BI da PJ: o pagamento feito no vencimento pode levar 2 dias
+  úteis para compensar. A vencer: vencimento a partir da data; vencido: vencimento + 2 dias
+  úteis até a data; entre os dois, em compensação (fora dos dois cartões, dentro da
+  carteira). Vale para a receber e a pagar. As faixas de atraso contam os dias corridos
+  desde o vencimento;
 - cartões: a receber a vencer e vencido, a pagar nos próximos 30 dias (com quanto isso é
   da média paga por mês nos 6 meses fechados anteriores) e a pagar vencido;
 - inadimplência: vencido ÷ carteira em aberto hoje, por faixa de atraso, e a mesma conta
@@ -108,6 +109,7 @@ PRAZO = Razao("dias_valor", "valor")
 class Carteira:
     """Títulos em aberto numa data, por faixa de atraso."""
 
+    # vencimento a partir da data
     a_vencer: Decimal
     # a vencer nos próximos DIAS_A_PAGAR dias (parte de a_vencer)
     proximos_dias: Decimal
@@ -115,6 +117,8 @@ class Carteira:
     ate_60: Decimal
     ate_90: Decimal
     mais_90: Decimal
+    # já passou do vencimento, mas ainda dentro dos 2 dias úteis do D+2
+    compensando: Decimal = Decimal(0)
 
     @property
     def vencido(self) -> Decimal:
@@ -122,7 +126,7 @@ class Carteira:
 
     @property
     def total(self) -> Decimal:
-        return self.a_vencer + self.vencido
+        return self.a_vencer + self.compensando + self.vencido
 
 
 @dataclass(frozen=True)
@@ -135,9 +139,9 @@ class PontoSerie:
 
 def ultimo_vencimento_vencido(dia: date, feriados: set[date]) -> date:
     """Vencimento mais recente que já está vencido em `dia` no modelo D+2: aquele cujo
-    vencimento + DIAS_COMPENSACAO dias úteis cai antes de `dia`."""
+    vencimento + DIAS_COMPENSACAO dias úteis cai até `dia` (no próprio D+2 já venceu)."""
     vencimento = dia - timedelta(days=1)
-    while mais_dias_uteis(vencimento, DIAS_COMPENSACAO, feriados) >= dia:
+    while mais_dias_uteis(vencimento, DIAS_COMPENSACAO, feriados) > dia:
         vencimento -= timedelta(days=1)
     return vencimento
 
@@ -153,7 +157,8 @@ def _titulos(tabelas: list[TabelaDoCliente], ctx: ContextoConsolidado) -> sql.Co
         """
         select emissao,
                coalesce(vencimento, emissao) as vencimento,
-               case when pagamento >= emissao then pagamento end as pagamento,
+               -- antes de 1901: data vazia gravada como 1899/1900
+               case when pagamento >= date '1901-01-01' then pagamento end as pagamento,
                valor
           from ({linhas}) t
          where emissao is not null and valor > 0
@@ -180,9 +185,11 @@ def _carteira(
                   from t
                  where emissao <= %(hoje)s and (pagamento is null or pagamento > %(hoje)s)
             )
-            select coalesce(sum(valor) filter (where not vencido), 0) as a_vencer,
-                   coalesce(sum(valor) filter (where not vencido and atraso >= -%(dias)s::int),
-                            0) as proximos_dias,
+            select coalesce(sum(valor) filter (where atraso <= 0), 0) as a_vencer,
+                   coalesce(sum(valor) filter (where atraso between -%(dias)s::int and 0), 0)
+                       as proximos_dias,
+                   coalesce(sum(valor) filter (where atraso > 0 and not vencido), 0)
+                       as compensando,
                    coalesce(sum(valor) filter (where vencido and atraso <= 30), 0) as ate_30,
                    coalesce(sum(valor) filter (where vencido and atraso between 31 and 60), 0)
                        as ate_60,
@@ -247,7 +254,8 @@ def _serie(
 def _pagos_por_mes(
     conn: Conexao, ctx: ContextoConsolidado, tabelas: list[TabelaDoCliente], de: date, hoje: date
 ) -> Mensal:
-    """Por mês de pagamento: valor pago e dias até o pagamento × valor (para o prazo)."""
+    """Por mês de pagamento: valor pago e dias até o pagamento × valor (para o prazo).
+    Pagamento antes da emissão (adiantamento) conta 0 dias."""
     return {
         r["mes"]: {"valor": r["valor"], "dias_valor": r["dias_valor"]}
         for r in conn.execute(
@@ -255,7 +263,7 @@ def _pagos_por_mes(
                 """
                 with t as ({titulos})
                 select date_trunc('month', pagamento)::date as mes,
-                       sum((pagamento - emissao) * valor) as dias_valor,
+                       sum(greatest(pagamento - emissao, 0) * valor) as dias_valor,
                        sum(valor) as valor
                   from t
                  where pagamento >= %(de)s and pagamento <= %(hoje)s
@@ -277,9 +285,9 @@ def media_paga(pagos: Mensal, hoje: date) -> Decimal | None:
 
 
 def _status_carteira(rotulo: str) -> Status:
-    return (
-        "saudavel" if rotulo == "A vencer" else "atencao" if rotulo == "1 a 30 dias" else "critico"
-    )
+    if rotulo in ("A vencer", "Em compensação"):
+        return "saudavel"
+    return "atencao" if rotulo == "1 a 30 dias" else "critico"
 
 
 def cartao_inadimplencia(
@@ -296,6 +304,8 @@ def cartao_inadimplencia(
     media = sum((v for _, v in pontos), Decimal(0)) / len(pontos)
     faixas = [
         ("A vencer", carteira.a_vencer),
+        # só aparece com valor: some no dia em que nada está compensando
+        *([("Em compensação", carteira.compensando)] if carteira.compensando else []),
         ("1 a 30 dias", carteira.ate_30),
         ("31 a 60 dias", carteira.ate_60),
         ("61 a 90 dias", carteira.ate_90),
@@ -314,7 +324,8 @@ def cartao_inadimplencia(
         ],
         nota=(
             f"Carteira em aberto em {hoje:%d/%m}: {moeda(carteira.total)}. "
-            "O título conta como vencido depois de 2 dias úteis do vencimento (D+2)."
+            "O título vence de fato 2 dias úteis depois do vencimento (D+2); até lá, fica "
+            "em compensação."
         ),
         carteira=[
             ItemCarteira(
@@ -333,6 +344,10 @@ def cartao_inadimplencia(
     )
 
 
+def _compensando(c: Carteira) -> str:
+    return f"; {moeda(c.compensando)} em compensação (D+2)" if c.compensando else ""
+
+
 def kpis_financeiro(
     receber: Carteira | None,
     pagar: Carteira | None,
@@ -347,7 +362,7 @@ def kpis_financeiro(
             Kpi(
                 rotulo="A receber a vencer",
                 valor=Valor(valor=receber.a_vencer, unidade="brl"),
-                contexto=f"carteira de {moeda(receber.total)}",
+                contexto=f"carteira de {moeda(receber.total)}" + _compensando(receber),
             ),
             Kpi(
                 rotulo="A receber vencido",
@@ -373,7 +388,7 @@ def kpis_financeiro(
             Kpi(
                 rotulo="A pagar vencido",
                 valor=Valor(valor=pagar.vencido, unidade="brl"),
-                contexto="títulos em aberto já vencidos",
+                contexto="títulos em aberto já vencidos" + _compensando(pagar),
             ),
         ]
     return kpis

@@ -42,6 +42,7 @@ Nada fica em `public`, e esses schemas não são expostos pelo PostgREST (`confi
 11. `..._colunas_modelo.sql` — `colunas_modelo` em `cfg.fonte_carga`: nomes das colunas por papel (data, valor, custo…) para o resumo mensal e a Visão geral, quando o DW do cliente não usa os nomes padrão (ex.: PJ Cortes).
 12. `..._tabelas_pj_cortes.sql` — as 25 tabelas de dados da PJ Cortes, no padrão da migration 5.
 13. `..._datas_pj_cortes.sql` — as 24 colunas de data das tabelas de fatos da PJ passam de texto para `date` (a carga converte o texto do arquivo). Só depois de a carga e a API estarem com o código que trata coluna `date`.
+14. `..._conta_dre.sql` — `cfg.conta_dre`: de-para da conta do ERP do cliente (ex.: `en_codigoplanocliente` do Winthor) para o Id_Descritivo do plano gerencial, para as despesas do contas a pagar entrarem na DRE da seção Resultado. `fora_da_dre` = motivo de a conta não entrar. Conteúdo por cliente em `producao/<cliente>_contas_dre.sql`.
 
 ### Storage
 
@@ -74,6 +75,8 @@ Cadastros de produção por cliente, para rodar à mão no SQL Editor. Não são
 - `nilo_maia_janela.sql` — janela de 3 meses nas 12 tabelas de movimento (depois da migration 6). Não ativa fontes.
 - `pj_cortes_cadastro.sql` — cliente, empresa, mapa de empresas, as 25 fontes (ativas, com `colunas_modelo` nas de vendas e metas), janela de 3 meses em 7 tabelas de movimento grandes (os títulos a receber e a pagar entram inteiros) e o nome da abertura do CMV (`custos.abertura`). Depois das migrations 11 e 12.
 - `pj_cortes_titulos_sem_janela.sql` — tira a janela de `f_receitas_pj` e `f_despesas_pj`. Só se o cadastro da PJ rodou antes de 21/10/2026 à noite, quando ainda punha janela nelas.
+- `pj_cortes_vendas_13_meses.sql` — janela de 13 meses em `f_vendas_pj` e as colunas da devolução da Agile (`colunas_modelo`). Só se o cadastro da PJ rodou antes de 22/10/2026.
+- `pj_cortes_contas_dre.sql` — de-para das 238 contas do Winthor da PJ para o plano gerencial (gerado dos arquivos `Codigo_Sistema_x_Id_Descritivo` e `Plano_de_Conta` do Power BI), com as exclusões conhecidas da DRE do Power BI em `fora_da_dre`. Depois da migration 14; pode rodar de novo (troca todas as contas da PJ).
 - `pj_cortes_usuario_dev.sql` — perfil "Desenvolvimento" da PJ Cortes; o usuário de desenvolvimento sai da Nilo Maia e entra na PJ.
 - `nilo_maia_remover_tabelas.sql` — remove as tabelas `*_nilo_maia` do mart, com as fontes, o histórico de carga, o resumo mensal e as permissões delas. Mantém cliente, empresas e usuários.
 
@@ -86,3 +89,4 @@ Cadastros de produção por cliente, para rodar à mão no SQL Editor. Não são
 | `03_role_carga` | `carga` não lê `seg`, não escreve em `cfg`, escreve no `mart` e cria tabela temporária |
 | `04_integridade` | `cfg.mapa_empresa` (e os outros vínculos) recusam empresa de outro cliente; `mart.carga_fonte` `ok` exige `data_snapshot` |
 | `05_tabelas_de_dados` | as 46 tabelas de dados (Nilo Maia e PJ Cortes) têm RLS; nomes e tipos preservados; isolamento por cliente e por empresa; linhas sem empresa visíveis ao cliente inteiro; `carga` escreve, `api_site` só lê |
+| `09_conta_dre` | cada cliente lê só o próprio de-para de contas; `api_site` não cadastra; conta sem Id_Descritivo precisa do motivo |

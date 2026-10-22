@@ -136,13 +136,39 @@ def test_d_mais_2_conta_dias_uteis() -> None:
     assert mais_dias_uteis(date(2026, 10, 30), 2, {date(2026, 11, 2)}) == date(2026, 11, 4)
 
 
-def test_vencido_so_depois_da_compensacao() -> None:
-    # quarta 21/10: vencimento na segunda 19 compensa até hoje, ainda a vencer; o de
-    # domingo 18 compensou até terça 20, já venceu
-    assert ultimo_vencimento_vencido(HOJE, set()) == date(2026, 10, 18)
-    # quarta 4/11 com o feriado de 2/11: o de sexta 30/10 compensa até hoje
-    assert ultimo_vencimento_vencido(date(2026, 11, 4), {date(2026, 11, 2)}) == date(2026, 10, 29)
-    assert ultimo_vencimento_vencido(date(2026, 11, 4), set()) == date(2026, 11, 1)
+def test_vencido_no_proprio_d_mais_2() -> None:
+    # quarta 21/10: o de segunda 19 tem D+2 hoje, já venceu (como no Power BI); o de
+    # terça 20 só em 22/10
+    assert ultimo_vencimento_vencido(HOJE, set()) == date(2026, 10, 19)
+    # terça 3/11 com o feriado de 2/11: o de sexta 30/10 tem D+2 só em 4/11
+    assert ultimo_vencimento_vencido(date(2026, 11, 3), {date(2026, 11, 2)}) == date(2026, 10, 29)
+    assert ultimo_vencimento_vencido(date(2026, 11, 3), set()) == date(2026, 11, 1)
+
+
+def test_compensando_fica_fora_dos_cartoes_e_dentro_da_carteira() -> None:
+    c = Carteira(
+        a_vencer=D(9000),
+        proximos_dias=D(4000),
+        ate_30=D(450),
+        ate_60=D(140),
+        ate_90=D(70),
+        mais_90=D(80),
+        compensando=D(260),
+    )
+    assert c.total == D(10000)
+
+    kpis = kpis_financeiro(c, c, None, None, PADROES["pagar_lancado"])
+    assert kpis[0].valor.valor == D(9000)
+    assert kpis[0].contexto == "carteira de R$ 10 mil; R$ 260 em compensação (D+2)"
+    assert kpis[3].contexto == "títulos em aberto já vencidos; R$ 260 em compensação (D+2)"
+
+    cartao = cartao_inadimplencia(HOJE, c, _serie("5", "6"), PADROES["inadimplencia"])
+    assert cartao is not None
+    assert [(i.rotulo, i.status) for i in cartao.carteira][:2] == [
+        ("A vencer", "saudavel"),
+        ("Em compensação", "saudavel"),
+    ]
+    assert sum(i.percentual for i in cartao.carteira) == 100
 
 
 def test_titulos_leem_coluna_date_sem_converter() -> None:
