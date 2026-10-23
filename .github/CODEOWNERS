@@ -1,0 +1,3 @@
+# Mudanças na automação (CI, Git Flow) precisam da aprovação do dono do repositório:
+# o workflow de Git Flow roda com o token do GitHub App, que passa por cima dos rulesets.
+/.github/ @bordarthur

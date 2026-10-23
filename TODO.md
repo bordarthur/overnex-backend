@@ -118,4 +118,6 @@ O front (`overnex-frontend`) já desenha a Visão geral a partir de um JSON fixo
 
 ## Infraestrutura
 
+- [ ] **Configurar o GitHub para colaboradores**, como em [CONTRIBUTING.md](CONTRIBUTING.md): branch `dev`, GitHub App (`APP_ID`, `APP_PRIVATE_KEY`), rulesets em `main` e `dev` com os checks `api` e `carga` do [ci.yml](.github/workflows/ci.yml) e colaboradores com papel Write. O CI ainda não roda os testes com banco (ver "Validar com Docker").
+
 - [ ] **Mover o agendamento para um Container Apps Job no Azure.** Só o agendamento muda; o CLI (`uv run python -m carga`) fica igual.

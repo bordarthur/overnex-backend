@@ -1,0 +1,278 @@
+# Git Flow automático: quando uma PR recebe a aprovação que faltava, faz o merge e,
+# em release/ e hotfix/, cria a tag vX.Y.Z, a release e sincroniza main -> dev.
+#
+# Configuração (Settings do repositório; passo a passo em CONTRIBUTING.md):
+# - GitHub App instalado no repositório, com Contents, Pull requests e Workflows em
+#   leitura e escrita, e Checks e Commit statuses em leitura (sem Workflows, o merge de
+#   PR que muda .github/workflows é recusado). Variável APP_ID e segredo APP_PRIVATE_KEY
+#   em Actions.
+# - Rulesets em main e dev exigindo PR com 1 aprovação e o CI verde, com o App no bypass.
+#
+# Segurança: o arquivo que roda é o da branch da PR, não o da main. Uma PR que muda
+# .github/ pode mudar esta automação, que usa o token do App (que passa por cima dos
+# rulesets). Por isso .github/ tem dono no CODEOWNERS e o ruleset exige a aprovação dele.
+#
+# Pode rodar de novo ("Re-run jobs"): cada passo pula o que já foi feito, então uma
+# release que falhou depois do merge (tag, release, sincronização) termina no re-run.
+name: automacao-pr
+
+on:
+  pull_request_review:
+    types: [submitted]
+
+# O GITHUB_TOKEN só lê. Tudo que escreve (merge, push em dev, tag, release,
+# apagar branch) usa o token do GitHub App, que está no bypass dos rulesets.
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  processar-pr:
+    # Só roda em aprovações, e nunca para PRs vindas de forks
+    if: >-
+      github.event.review.state == 'approved' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+
+    # Valores do evento passam por variáveis de ambiente (nunca interpolados
+    # direto no shell) para evitar injeção de comando via nome de branch.
+    env:
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      HEAD_REF: ${{ github.event.pull_request.head.ref }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      BASE_REF: ${{ github.event.pull_request.base.ref }}
+
+    steps:
+      - name: Gerar token do GitHub App
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: Validar PR
+        id: gate
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          set -euo pipefail
+
+          DEV_BRANCH="dev"
+          if git ls-remote --exit-code --heads origin development >/dev/null 2>&1; then
+            DEV_BRANCH="development"
+          fi
+
+          case "$HEAD_REF" in
+            feature/*|feat/*)
+              BRANCH_TYPE="feature"
+              EXPECTED_BASE="$DEV_BRANCH"
+              echo "feature_name=${HEAD_REF#*/}" >> "$GITHUB_OUTPUT"
+              ;;
+            release/*|hotfix/*)
+              BRANCH_TYPE="${HEAD_REF%%/*}"
+              EXPECTED_BASE="main"
+              VERSION="${HEAD_REF#*/}"
+              if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+                echo "::error::Versão inválida: $VERSION. Use o formato X.Y.Z (ex: 1.0.0)"
+                exit 1
+              fi
+              echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "Branch '$HEAD_REF' fora do padrão (feature/, feat/, release/, hotfix/). Nada a fazer."
+              exit 0
+              ;;
+          esac
+
+          if [[ "$BASE_REF" != "$EXPECTED_BASE" ]]; then
+            echo "::error::PR de $BRANCH_TYPE deve ter como destino '$EXPECTED_BASE', mas aponta para '$BASE_REF'."
+            exit 1
+          fi
+
+          STATE=$(gh pr view "$PR_NUMBER" --json state -q '.state')
+          if [[ "$STATE" == "CLOSED" ]]; then
+            echo "PR #$PR_NUMBER foi fechada sem merge. Nada a fazer."
+            exit 0
+          fi
+          if [[ "$STATE" == "MERGED" ]]; then
+            # Feature já mergeada: nada a fazer. Release/hotfix: re-run que terminará
+            # os passos depois do merge (tag, release, sincronização).
+            [[ "$BRANCH_TYPE" == "feature" ]] && { echo "PR #$PR_NUMBER já mergeada. Nada a fazer."; exit 0; }
+            {
+              echo "branch_type=$BRANCH_TYPE"
+              echo "dev_branch=$DEV_BRANCH"
+              echo "merged=true"
+              echo "ready=true"
+            } >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [[ "$BRANCH_TYPE" != "feature" ]] && git ls-remote --exit-code --tags origin "refs/tags/v$VERSION" >/dev/null 2>&1; then
+            echo "::error::A tag v$VERSION já existe."
+            exit 1
+          fi
+
+          # A aprovação vale para o commit aprovado. Se chegou commit depois, espera a próxima.
+          CURRENT_SHA=$(gh pr view "$PR_NUMBER" --json headRefOid -q '.headRefOid')
+          if [[ "$CURRENT_SHA" != "$HEAD_SHA" ]]; then
+            echo "::notice::A PR recebeu commits depois desta aprovação. Aguardando nova aprovação."
+            exit 0
+          fi
+
+          # Respeitar o número de aprovações exigido pelas regras da branch.
+          # (O App está no bypass, então quem garante isso é este passo.)
+          DECISION=$(gh pr view "$PR_NUMBER" --json reviewDecision -q '.reviewDecision')
+          if [[ -n "$DECISION" && "$DECISION" != "APPROVED" ]]; then
+            echo "::notice::Revisões ainda não satisfazem as regras da branch ($DECISION). Aguardando mais aprovações."
+            exit 0
+          fi
+
+          # A branch precisa conter tudo que já está no destino
+          if ! git merge-base --is-ancestor "origin/$BASE_REF" "$HEAD_SHA"; then
+            echo "::error::'$HEAD_REF' está desatualizada em relação a '$BASE_REF'. Faça merge/rebase de '$BASE_REF' e peça nova aprovação."
+            exit 1
+          fi
+
+          # Esperar os checks obrigatórios (CI) terminarem e exigir sucesso
+          set +e
+          OUT=$(gh pr checks "$PR_NUMBER" --required --watch --interval 20 2>&1)
+          RC=$?
+          set -e
+          echo "$OUT"
+          if [[ $RC -ne 0 ]] && ! grep -Eqi "no (required )?checks" <<<"$OUT"; then
+            echo "::error::Os checks obrigatórios não passaram."
+            exit 1
+          fi
+
+          {
+            echo "branch_type=$BRANCH_TYPE"
+            echo "dev_branch=$DEV_BRANCH"
+            echo "merged=false"
+            echo "ready=true"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Configurar autor dos commits (bot do App)
+        if: steps.gate.outputs.ready == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
+        run: |
+          set -euo pipefail
+          BOT_ID=$(gh api "/users/${APP_SLUG}%5Bbot%5D" -q '.id')
+          git config user.name  "${APP_SLUG}[bot]"
+          git config user.email "${BOT_ID}+${APP_SLUG}[bot]@users.noreply.github.com"
+
+      - name: Merge
+        if: steps.gate.outputs.ready == 'true' && steps.gate.outputs.merged != 'true'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          BRANCH_TYPE: ${{ steps.gate.outputs.branch_type }}
+          VERSION: ${{ steps.gate.outputs.version }}
+          FEATURE_NAME: ${{ steps.gate.outputs.feature_name }}
+          DEV_BRANCH: ${{ steps.gate.outputs.dev_branch }}
+        run: |
+          set -euo pipefail
+          # --match-head-commit: se chegou commit depois da validação, o merge é recusado
+          if [[ "$BRANCH_TYPE" == "feature" ]]; then
+            gh pr merge "$PR_NUMBER" --merge --match-head-commit "$HEAD_SHA" \
+              --subject "feat: merge $FEATURE_NAME" \
+              --body "Merge automático da feature $FEATURE_NAME em $DEV_BRANCH"
+          else
+            gh pr merge "$PR_NUMBER" --merge --match-head-commit "$HEAD_SHA" \
+              --subject "$BRANCH_TYPE: v$VERSION" \
+              --body "${BRANCH_TYPE^} v$VERSION"
+          fi
+
+      - name: Tag e release
+        if: steps.gate.outputs.ready == 'true' && steps.gate.outputs.branch_type != 'feature'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          BRANCH_TYPE: ${{ steps.gate.outputs.branch_type }}
+          VERSION: ${{ steps.gate.outputs.version }}
+        run: |
+          set -euo pipefail
+          LABEL="${BRANCH_TYPE^}"   # Release / Hotfix
+
+          # O commit de merge que realmente entrou na main
+          MERGE_SHA=""
+          for _ in 1 2 3 4 5 6; do
+            MERGE_SHA=$(gh pr view "$PR_NUMBER" --json mergeCommit -q '.mergeCommit.oid // empty')
+            [[ -n "$MERGE_SHA" ]] && break
+            sleep 5
+          done
+          if [[ -z "$MERGE_SHA" ]]; then
+            echo "::error::Não foi possível obter o commit de merge da PR #$PR_NUMBER."
+            exit 1
+          fi
+          git fetch origin main
+
+          if git ls-remote --exit-code --tags origin "refs/tags/v$VERSION" >/dev/null 2>&1; then
+            echo "Tag v$VERSION já existe (re-run)."
+          else
+            git tag -a "v$VERSION" "$MERGE_SHA" -m "$LABEL v$VERSION"
+            git push origin "v$VERSION"
+          fi
+
+          if gh release view "v$VERSION" >/dev/null 2>&1; then
+            echo "Release v$VERSION já existe (re-run)."
+          else
+            gh release create "v$VERSION" --verify-tag \
+              --title "$LABEL v$VERSION" \
+              --generate-notes
+          fi
+
+      - name: Sincronizar main -> dev
+        if: steps.gate.outputs.ready == 'true' && steps.gate.outputs.branch_type != 'feature'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          BRANCH_TYPE: ${{ steps.gate.outputs.branch_type }}
+          VERSION: ${{ steps.gate.outputs.version }}
+          DEV_BRANCH: ${{ steps.gate.outputs.dev_branch }}
+        run: |
+          set -euo pipefail
+          git fetch origin main "$DEV_BRANCH"
+          if git merge-base --is-ancestor origin/main "origin/$DEV_BRANCH"; then
+            echo "$DEV_BRANCH já contém a main."
+            exit 0
+          fi
+
+          git checkout -B "$DEV_BRANCH" "origin/$DEV_BRANCH"
+          if git merge --no-ff origin/main -m "chore: sync main into $DEV_BRANCH after $BRANCH_TYPE v$VERSION"; then
+            # Push direto, permitido pelo bypass do App
+            git push origin "$DEV_BRANCH"
+            exit 0
+          fi
+
+          # Conflito: abre uma PR para alguém resolver manualmente
+          git merge --abort
+          SYNC_BRANCH="chore/sync-main-v$VERSION"
+          if git ls-remote --exit-code --heads origin "$SYNC_BRANCH" >/dev/null 2>&1; then
+            echo "::warning::Conflito ao sincronizar main em $DEV_BRANCH; a branch $SYNC_BRANCH já existe."
+            exit 0
+          fi
+          git push origin "origin/main:refs/heads/$SYNC_BRANCH"
+          gh pr create --base "$DEV_BRANCH" --head "$SYNC_BRANCH" \
+            --title "chore: sync main into $DEV_BRANCH (v$VERSION)" \
+            --body "O merge automático de main em $DEV_BRANCH após v$VERSION teve conflitos. Resolva nesta PR."
+          echo "::warning::Conflito ao sincronizar main em $DEV_BRANCH; PR de sincronização aberta."
+
+      - name: Apagar a branch da PR
+        if: steps.gate.outputs.ready == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          set -euo pipefail
+          if git ls-remote --exit-code --heads origin "$HEAD_REF" >/dev/null 2>&1; then
+            git push origin --delete "$HEAD_REF"
+          fi
