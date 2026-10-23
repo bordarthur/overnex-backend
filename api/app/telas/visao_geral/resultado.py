@@ -25,10 +25,14 @@ DRE (GRUPOS) e 140.01 é a folha (despesas com pessoal). Id fora do plano fica d
   "S", e a despesa do contas a pagar entra por −en_valor; o crédito (estorno) abate o
   grupo. No orçado, que não tem Tipo, cada grupo entra pelo valor absoluto da soma do
   mês, com o sinal dele na DRE (não importa se o DW grava despesa negativa ou positiva);
-- mês de referência: o último mês FECHADO com receita bruta, anterior ao mês da última
-  carga (o mês corrente ainda não tem todos os lançamentos);
-- referência: o orçado do mês (cenário "Base" ou, se o orçamento tiver um só cenário,
-  esse) ou, sem ele, a média dos 6 meses anteriores (relativo.py);
+- mês de referência: o último mês FECHADO com receita bruta até `ate` (o mês escolhido na
+  tela, se fechado; senão o anterior ao mês da última carga, que ainda não tem todos os
+  lançamentos). Sem tabela f_lancamentos_* a seção não sai: só com vendas, o EBITDA
+  seria o faturado;
+- referência: o orçado do mês ou, sem ele, a média dos 6 meses anteriores (relativo.py).
+  Cenário do orçado: o de `orcamento.cenario` em cfg.parametro_cliente (ex.:
+  {"cenario": "Meta"}); sem o parâmetro, "Base" ou, se o orçamento tiver um só cenário,
+  esse. Com vários e nenhum escolhido, não há orçado (aviso no log uma vez por processo);
 - velocímetros: margem EBITDA, despesas fixas e folha, em % da receita líquida;
 - cartões: EBITDA e lucro líquido do mês, ponto de equilíbrio (despesas fixas ÷ margem de
   contribuição em % da receita líquida) e margem de segurança ((receita líquida − ponto
@@ -36,15 +40,16 @@ DRE (GRUPOS) e 140.01 é a folha (despesas com pessoal). Id fora do plano fica d
 """
 
 import logging
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Hashable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import date
 from decimal import Decimal
 
 from psycopg import sql
 
+from app.core.cache import existe
 from app.core.db import Conexao
-from app.farol.parametro import farol
+from app.farol.parametro import farol, parametros_do_cliente, vigente
 from app.seguranca.acesso import ContextoConsolidado
 from app.telas.contrato import Status
 from app.telas.moldura import MESES
@@ -88,6 +93,8 @@ COLUNAS_DESPESAS: Mapping[str, str] = {
 # começam com f_orcamento_, mas são metas de venda, não o orçamento da DRE
 FORA_DO_ORCAMENTO = ("f_orcamento_comercial_", "f_orcamento_ticket_")
 CENARIO_PADRAO = "base"
+# cfg.parametro_cliente: {"cenario": "<nome>"}, o cenário do orçamento usado como orçado
+PARAMETRO_CENARIO = "orcamento.cenario"
 
 # grupos do plano gerencial (3 primeiros dígitos do Id_Descritivo)
 RECEITA_BRUTA = "100"
@@ -171,10 +178,13 @@ def medidas_da_dre(grupos: Mapping[str, Decimal], folha: Decimal) -> dict[str, D
     }
 
 
-def cenario_do_orcamento(cenarios: Sequence[str]) -> str | None:
-    """Cenário usado, em minúsculas: "base" se houver, senão o único; None se houver vários
-    e nenhum "base" (não dá para escolher)."""
+def cenario_do_orcamento(cenarios: Sequence[str], escolhido: str | None = None) -> str | None:
+    """Cenário usado, em minúsculas: o `escolhido` (parâmetro do cliente) se existir no
+    orçamento; sem ele, "base" se houver, senão o único; None se houver vários e nenhum
+    "base" (não dá para escolher) ou se o escolhido não existir."""
     distintos = {c.strip().lower() for c in cenarios if c.strip()}
+    if escolhido is not None:
+        return escolhido.strip().lower() if escolhido.strip().lower() in distintos else None
     if CENARIO_PADRAO in distintos:
         return CENARIO_PADRAO
     if len(distintos) == 1:
@@ -245,22 +255,12 @@ def dre_por_mes(
     return mensal
 
 
-def _com_as_colunas(conn: Conexao, tabelas: list[TabelaDoCliente]) -> list[TabelaDoCliente]:
+def com_as_colunas(tabelas: list[TabelaDoCliente]) -> list[TabelaDoCliente]:
     """Só as tabelas que têm as colunas de todos os papéis; as outras ficam de fora com
     aviso (ex.: colunas_modelo ainda não cadastrado), em vez de derrubar a seção."""
-    existentes: dict[str, set[str]] = {}
-    for r in conn.execute(
-        """
-        select table_name::text as tabela, column_name::text as coluna
-          from information_schema.columns
-         where table_schema = 'mart' and table_name = any(%s)
-        """,
-        ([t.tabela for t in tabelas],),
-    ):
-        existentes.setdefault(r["tabela"], set()).add(r["coluna"])
     validas = []
     for t in tabelas:
-        faltam = sorted(set(t.colunas.values()) - existentes.get(t.tabela, set()))
+        faltam = sorted(set(t.colunas.values()) - t.existentes)
         if faltam:
             logger.warning("mart.%s sem as colunas %s: fica fora da DRE", t.tabela, faltam)
         else:
@@ -272,8 +272,8 @@ def _operacao(conn: Conexao, ctx: ContextoConsolidado, de: date, ate: date) -> O
     """Grupos da DRE que vêm das vendas, das devoluções e das despesas, de `de` até o mês
     de `ate`."""
     vendas = tabelas_do_cliente(conn, ctx.cliente_id, "f_vendas_", COLUNAS_VENDAS)
-    devolucoes = _com_as_colunas(
-        conn, tabelas_do_cliente(conn, ctx.cliente_id, "f_devolucao_", COLUNAS_DEVOLUCAO)
+    devolucoes = com_as_colunas(
+        tabelas_do_cliente(conn, ctx.cliente_id, "f_devolucao_", COLUNAS_DEVOLUCAO)
     )
     resumo = resumo_mensal(conn, ctx, vendas, de, ate) if vendas else {}
     por_mes: dict[date, Decimal] = {}
@@ -307,8 +307,8 @@ def _lancamentos(
 ) -> list[tuple[date, str, Decimal]]:
     """(mês, Id_Descritivo, valor) dos lançamentos com o sinal do contas a pagar: saída
     (Tipo "S") positiva, entrada ("E") negativa."""
-    tabelas = _com_as_colunas(
-        conn, tabelas_do_cliente(conn, ctx.cliente_id, "f_lancamentos_", COLUNAS_LANCAMENTOS)
+    tabelas = com_as_colunas(
+        tabelas_do_cliente(conn, ctx.cliente_id, "f_lancamentos_", COLUNAS_LANCAMENTOS)
     )
     if not tabelas:
         return []
@@ -344,11 +344,10 @@ def _despesas(
 ) -> list[tuple[date, str, Decimal]]:
     """(mês, Id_Descritivo, soma de en_valor) das despesas com de-para em cfg.conta_dre;
     vazio sem a migration 14 ou sem tabela de despesas."""
-    existe = conn.execute("select to_regclass('cfg.conta_dre') is not null as ok").fetchone()
-    if not (existe and existe["ok"]):
+    if not existe(conn, "cfg.conta_dre"):
         return []
-    tabelas = _com_as_colunas(
-        conn, tabelas_do_cliente(conn, ctx.cliente_id, "f_despesas_", COLUNAS_DESPESAS)
+    tabelas = com_as_colunas(
+        tabelas_do_cliente(conn, ctx.cliente_id, "f_despesas_", COLUNAS_DESPESAS)
     )
     if not tabelas:
         return []
@@ -470,15 +469,32 @@ def _orcado(conn: Conexao, ctx: ContextoConsolidado, de: date, ate: date) -> Men
     ]
     if not cenarios:  # orçamento sem cenário: vale tudo
         return _dre_mensal(conn, ctx, tabelas, de, ate)
-    cenario = cenario_do_orcamento(cenarios)
+    parametro = vigente(parametros_do_cliente(conn, ctx.cliente_id), PARAMETRO_CENARIO, ate)
+    escolhido = parametro.get("cenario") if isinstance(parametro, dict) else None
+    cenario = cenario_do_orcamento(cenarios, escolhido)
     if cenario is None:
-        logger.warning(
-            "Orçamento do cliente %s com vários cenários e nenhum 'Base' (%s): sem orçado",
+        _avisar_uma_vez(
+            (ctx.cliente_id, escolhido, tuple(sorted(cenarios))),
+            "Orçamento do cliente %s sem cenário escolhido (%s em %s; cenários: %s): sem "
+            "orçado. Cadastre o cenário em cfg.parametro_cliente.",
             ctx.cliente_id,
+            repr(escolhido) if escolhido else "nenhum",
+            PARAMETRO_CENARIO,
             ", ".join(sorted(cenarios)),
         )
         return {}
     return _dre_mensal(conn, ctx, tabelas, de, ate, cenario)
+
+
+_avisados: set[Hashable] = set()
+
+
+def _avisar_uma_vez(chave: Hashable, mensagem: str, *args: object) -> None:
+    """O aviso sai uma vez por processo, não a cada vez que a tela abre."""
+    if chave in _avisados:
+        return
+    _avisados.add(chave)
+    logger.warning(mensagem, *args)
 
 
 def _contra(medida: str, ref: date, real: Mensal, orcado: Mensal) -> str:
@@ -549,11 +565,13 @@ def kpis_resultado(
     return kpis
 
 
-def secao_resultado(ctx: ContextoConsolidado, hoje: date) -> SecaoDoMes | None:
-    """Seção Resultado; None sem lançamentos nem vendas, ou sem mês fechado com receita."""
+def secao_resultado(ctx: ContextoConsolidado, ate: date) -> SecaoDoMes | None:
+    """Seção Resultado; None sem tabela de lançamentos ou sem mês fechado com receita.
+
+    `ate`: o último mês fechado que entra (primeiro dia)."""
     conn = ctx.sessao.conn
-    # meses fechados: até o mês anterior ao da última carga
-    ate = mes_menos(date(hoje.year, hoje.month, 1), 1)
+    if not tabelas_do_cliente(conn, ctx.cliente_id, "f_lancamentos_", COLUNAS_LANCAMENTOS):
+        return None
     de = mes_menos(ate, MESES_HISTORICO)
     # lançamentos, vendas, devoluções e despesas: tudo na operação, com sinal
     real = _dre_mensal(conn, ctx, [], de, ate, operacao=_operacao(conn, ctx, de, ate))
@@ -584,7 +602,8 @@ def secao_resultado(ctx: ContextoConsolidado, hoje: date) -> SecaoDoMes | None:
         id="resultado",
         titulo="Resultado",
         modulo=None,
-        resumo=f"Dados de {nome_mes} de {ref.year}, o último mês fechado, contra {contra}.",
+        # "mês fechado", não "o último": com o mês escolhido na tela, pode ser um anterior
+        resumo=f"Dados de {nome_mes} de {ref.year}, mês fechado, contra {contra}.",
         kpis=kpis_resultado(ref, real, orcado, status_ebitda),
         cartoes=[],
         indicadores=indicadores,

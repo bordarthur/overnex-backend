@@ -24,6 +24,8 @@ class Settings(BaseSettings):
     auth_fake: bool = False
     # Visão geral com as seções fictícias de app/telas/visao_geral/demo.json (só dev).
     visao_geral_demo: bool = False
+    # Prazo da resposta pronta da Visão geral em memória (0 desliga; ver telas/visao_geral).
+    visao_geral_cache_segundos: int = 900
 
     db_pool_min: int = 1
     db_pool_max: int = 10

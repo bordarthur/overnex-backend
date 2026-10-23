@@ -97,7 +97,7 @@ Sem `AMBIENTE` definido, a API sobe como `prod` e exige `ENTRA_TENANT_ID` e `ENT
 ```
 app/
   main.py              cria o app; sem CORS; erros sem detalhe interno; GET /health
-  core/config.py       Settings (DATABASE_URL, ENTRA_*, AMBIENTE, AUTH_FAKE, VISAO_GERAL_DEMO)
+  core/config.py       Settings (DATABASE_URL, ENTRA_*, AMBIENTE, AUTH_FAKE, VISAO_GERAL_DEMO, VISAO_GERAL_CACHE_SEGUNDOS)
   core/db.py           pool psycopg (prepare_threshold=None) + uma transação por requisição
   seguranca/auth.py    get_usuario: valida o JWT do Entra (JWKS, iss, aud, exp, tid)
   seguranca/acesso.py  checagem em 6 etapas + seg.log_acesso
@@ -124,8 +124,8 @@ scripts/export_openapi.py
 
 Respondem em camelCase, no formato de `src/contracts/visaoGeral.ts` do front. Campo opcional sem valor sai do JSON (como `campo?:` no TypeScript); campo obrigatório que aceita nulo vai como `null` (`logoUrl`, `delta`, `modulo`).
 
-- **`GET /api/sessao`** — etapas 1 a 3 da checagem (sem tela). Devolve `usuario`, `cliente` (com `slug`, para o front montar a URL), `papel`, `empresas` do vínculo (filtro "Empresa"), `telas` liberadas (códigos, para o menu) e `periodos` com dados (hoje só o mês do último snapshot).
-- **`GET /api/telas/visao-geral?empresa=<uuid opcional>`** — tela `VG-01`. Sem `empresa`, vale para todas as empresas do vínculo (etapa 5 exige ao menos uma). `dadosAte` é a `data_snapshot` e `atualizadoEm` é o `fim` (com fuso) da última fonte `ok` do cliente; os dois vêm `null` se nunca houve carga. As `secoes` vêm vazias até as regras dos indicadores existirem (ou da demo, com `VISAO_GERAL_DEMO=1`).
+- **`GET /api/sessao`** — etapas 1 a 3 da checagem (sem tela). Devolve `usuario`, `cliente` (com `slug`, para o front montar a URL), `papel`, `empresas` do vínculo (filtro "Empresa"), `telas` liberadas (códigos, para o menu) e `periodos` com dados: os meses com faturado no resumo mensal das tabelas `f_vendas_*` e o mês do último snapshot, do mais recente para o mais antigo (até 24). O primeiro é o padrão da Visão geral.
+- **`GET /api/telas/visao-geral?mes=<AAAA-MM opcional>&empresa=<uuid opcional>`** — tela `VG-01`. Sem `empresa`, vale para todas as empresas do vínculo (etapa 5 exige ao menos uma). `mes` precisa ser um dos `periodos` de `/api/sessao` (senão 422, "Mês sem dados."); sem ele, cada seção usa o seu mês mais recente. A resposta pronta fica em memória por `VISAO_GERAL_CACHE_SEGUNDOS` (padrão 15 min), com chave no cliente, nas empresas, no mês e na última carga; o acesso é conferido e registrado a cada requisição. `dadosAte` é a `data_snapshot` e `atualizadoEm` é o `fim` (com fuso) da última fonte `ok` do cliente; os dois vêm `null` se nunca houve carga. As `secoes` vêm vazias até as regras dos indicadores existirem (ou da demo, com `VISAO_GERAL_DEMO=1`).
 - `logoUrl` só sai quando `cfg.cliente.logo_url` é um caminho do próprio domínio (`/…`); fora disso vem `null`, porque a CSP do front recusa imagem de fora.
 
 ### Tabelas de dados: `GET /api/dados/{tabela}`

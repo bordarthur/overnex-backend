@@ -11,6 +11,8 @@ os.environ.setdefault(
 )
 os.environ["AMBIENTE"] = "dev"
 os.environ["AUTH_FAKE"] = "1"
+# os testes mudam dados entre uma requisição e outra, sem carga nova
+os.environ["VISAO_GERAL_CACHE_SEGUNDOS"] = "0"
 
 from collections.abc import Iterator
 

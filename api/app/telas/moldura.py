@@ -1,5 +1,7 @@
-"""Partes comuns à sessão e às telas no formato do front (camelCase): cliente e última carga."""
+"""Partes comuns à sessão e às telas no formato do front (camelCase): cliente, última
+carga e meses com dados."""
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import date, datetime
 from uuid import UUID
@@ -7,7 +9,12 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict
 from pydantic.alias_generators import to_camel
 
+from app.core.cache import existe
 from app.core.db import Conexao
+from app.telas.calendario import ultimo_dia_do_mes
+
+# meses no filtro "Período"
+MESES_NA_LISTA = 24
 
 MESES = (
     "Janeiro",
@@ -96,3 +103,49 @@ def ultima_carga(conn: Conexao, cliente_id: UUID) -> UltimaCarga | None:
     if linha is None:
         return None
     return UltimaCarga(data_snapshot=linha["data_snapshot"], fim=linha["fim"])
+
+
+@dataclass(frozen=True)
+class MesComDados:
+    # primeiro dia do mês
+    mes: date
+    # no mês do snapshot, a data do snapshot; nos outros, o último dia do mês
+    dados_ate: date
+
+
+def meses_disponiveis(meses: Iterable[date], data_snapshot: date | None) -> list[MesComDados]:
+    """Os `meses` e o mês do snapshot, do mais recente para o mais antigo, até
+    MESES_NA_LISTA; nenhum depois do mês do snapshot."""
+    todos = {m.replace(day=1) for m in meses}
+    snapshot = data_snapshot.replace(day=1) if data_snapshot else None
+    if snapshot is not None:
+        todos = {m for m in todos if m <= snapshot} | {snapshot}
+    return [
+        MesComDados(
+            mes=m,
+            dados_ate=data_snapshot if data_snapshot and m == snapshot else ultimo_dia_do_mes(m),
+        )
+        for m in sorted(todos, reverse=True)[:MESES_NA_LISTA]
+    ]
+
+
+def meses_com_dados(
+    conn: Conexao, cliente_id: UUID, carga: UltimaCarga | None
+) -> list[MesComDados]:
+    """Meses com faturado no resumo mensal das tabelas f_vendas_* do cliente, mais o mês
+    do último snapshot (filtro "Período" do front)."""
+    meses: list[date] = []
+    if existe(conn, "mart.resumo_mensal"):  # sem a migration 8, só o mês do snapshot
+        meses = [
+            r["mes"]
+            for r in conn.execute(
+                """
+                select distinct mes
+                  from mart.resumo_mensal
+                 where cliente_id = %s and medida = 'faturado'
+                   and starts_with(tabela, 'f_vendas_')
+                """,
+                (cliente_id,),
+            )
+        ]
+    return meses_disponiveis(meses, carga.data_snapshot if carga else None)

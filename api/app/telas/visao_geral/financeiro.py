@@ -166,28 +166,53 @@ def _titulos(tabelas: list[TabelaDoCliente], ctx: ContextoConsolidado) -> sql.Co
     ).format(linhas=de_todas(tabelas, campos, filtro_empresa(ctx)))
 
 
-def _carteira(
+@dataclass(frozen=True)
+class Leitura:
+    """As três contas de uma tabela de títulos, de uma leitura só."""
+
+    carteira: Carteira
+    serie: list[PontoSerie]
+    # por mês de pagamento: valor pago e dias até o pagamento × valor
+    pagos: Mensal
+
+
+def _ler(
     conn: Conexao,
     ctx: ContextoConsolidado,
     tabelas: list[TabelaDoCliente],
     hoje: date,
     limite: date,
-) -> Carteira:
-    """Em aberto em `hoje`; vencido = vencimento até `limite` (ultimo_vencimento_vencido)."""
-    linha = conn.execute(
+    limites_serie: Mapping[date, date],
+    de: date,
+) -> Leitura:
+    """Lê os títulos uma vez (CTE materializada) e calcula, na mesma consulta:
+    - carteira: em aberto em `hoje`; vencido = vencimento até `limite`
+      (ultimo_vencimento_vencido);
+    - série: vencido e em aberto em cada dia de `limites_serie` (dia →
+      ultimo_vencimento_vencido); vazio, sem série;
+    - pagos: por mês de pagamento, de `de` até `hoje`, o valor pago e os dias até o
+      pagamento × valor (para o prazo). Pagamento antes da emissão (adiantamento) conta 0
+      dias.
+    """
+    linhas = conn.execute(
         sql.SQL(
             """
-            with t as ({titulos}),
+            with t as materialized ({titulos}),
             a as (
                 select %(hoje)s::date - vencimento as atraso,
                        vencimento <= %(limite)s as vencido,
                        valor
                   from t
                  where emissao <= %(hoje)s and (pagamento is null or pagamento > %(hoje)s)
+            ),
+            fim as (
+                select * from unnest(%(dias)s::date[], %(limites)s::date[]) as f (dia, limite)
             )
-            select coalesce(sum(valor) filter (where atraso <= 0), 0) as a_vencer,
-                   coalesce(sum(valor) filter (where atraso between -%(dias)s::int and 0), 0)
-                       as proximos_dias,
+            select 'carteira' as parte,
+                   null::date as dia,
+                   coalesce(sum(valor) filter (where atraso <= 0), 0) as a_vencer,
+                   coalesce(sum(valor) filter (where atraso between -%(dias_a_pagar)s::int and 0),
+                            0) as proximos_dias,
                    coalesce(sum(valor) filter (where atraso > 0 and not vencido), 0)
                        as compensando,
                    coalesce(sum(valor) filter (where vencido and atraso <= 30), 0) as ate_30,
@@ -195,8 +220,29 @@ def _carteira(
                        as ate_60,
                    coalesce(sum(valor) filter (where vencido and atraso between 61 and 90), 0)
                        as ate_90,
-                   coalesce(sum(valor) filter (where vencido and atraso > 90), 0) as mais_90
+                   coalesce(sum(valor) filter (where vencido and atraso > 90), 0) as mais_90,
+                   null::numeric as vencido,
+                   null::numeric as aberto,
+                   null::numeric as dias_valor,
+                   null::numeric as pago
               from a
+            union all
+            select 'serie', fim.dia, null, null, null, null, null, null, null,
+                   coalesce(sum(t.valor) filter (where t.vencimento <= fim.limite), 0),
+                   coalesce(sum(t.valor), 0),
+                   null, null
+              from fim
+              left join t
+                on t.emissao <= fim.dia and (t.pagamento is null or t.pagamento > fim.dia)
+             group by fim.dia
+            union all
+            select 'pagos', date_trunc('month', pagamento)::date,
+                   null, null, null, null, null, null, null, null, null,
+                   sum(greatest(pagamento - emissao, 0) * valor),
+                   sum(valor)
+              from t
+             where pagamento >= %(de)s and pagamento <= %(hoje)s
+             group by 2
             """
         ).format(titulos=_titulos(tabelas, ctx)),
         {
@@ -204,75 +250,33 @@ def _carteira(
             "empresas": list(ctx.empresas),
             "hoje": hoje,
             "limite": limite,
-            "dias": DIAS_A_PAGAR,
+            "dias_a_pagar": DIAS_A_PAGAR,
+            "dias": list(limites_serie),
+            "limites": list(limites_serie.values()),
+            "de": de,
         },
-    ).fetchone()
-    if linha is None:  # agregado sem group by sempre devolve uma linha
+    ).fetchall()
+    carteira: Carteira | None = None
+    serie: list[PontoSerie] = []
+    pagos: Mensal = {}
+    for r in linhas:
+        if r["parte"] == "carteira":
+            carteira = Carteira(
+                a_vencer=r["a_vencer"],
+                proximos_dias=r["proximos_dias"],
+                ate_30=r["ate_30"],
+                ate_60=r["ate_60"],
+                ate_90=r["ate_90"],
+                mais_90=r["mais_90"],
+                compensando=r["compensando"],
+            )
+        elif r["parte"] == "serie":
+            serie.append(PontoSerie(dia=r["dia"], vencido=r["vencido"], aberto=r["aberto"]))
+        else:
+            pagos[r["dia"]] = {"valor": r["pago"], "dias_valor": r["dias_valor"]}
+    if carteira is None:  # agregado sem group by sempre devolve uma linha
         raise LookupError("carteira sem linha")
-    return Carteira(**linha)
-
-
-def _serie(
-    conn: Conexao,
-    ctx: ContextoConsolidado,
-    tabelas: list[TabelaDoCliente],
-    limites: Mapping[date, date],
-) -> list[PontoSerie]:
-    """Vencido e em aberto em cada dia de `limites` (dia → ultimo_vencimento_vencido)."""
-    # materialized: sem ele o Postgres refaz os títulos (e a conversão das datas que ainda
-    # estão em texto) para cada dia
-    return [
-        PontoSerie(dia=r["dia"], vencido=r["vencido"], aberto=r["aberto"])
-        for r in conn.execute(
-            sql.SQL(
-                """
-                with t as materialized ({titulos}),
-                fim as (
-                    select * from unnest(%(dias)s::date[], %(limites)s::date[]) as f (dia, limite)
-                )
-                select fim.dia,
-                       coalesce(sum(t.valor) filter (where t.vencimento <= fim.limite), 0)
-                           as vencido,
-                       coalesce(sum(t.valor), 0) as aberto
-                  from fim
-                  left join t
-                    on t.emissao <= fim.dia and (t.pagamento is null or t.pagamento > fim.dia)
-                 group by fim.dia
-                 order by fim.dia
-                """
-            ).format(titulos=_titulos(tabelas, ctx)),
-            {
-                "cliente": ctx.cliente_id,
-                "empresas": list(ctx.empresas),
-                "dias": list(limites),
-                "limites": list(limites.values()),
-            },
-        )
-    ]
-
-
-def _pagos_por_mes(
-    conn: Conexao, ctx: ContextoConsolidado, tabelas: list[TabelaDoCliente], de: date, hoje: date
-) -> Mensal:
-    """Por mês de pagamento: valor pago e dias até o pagamento × valor (para o prazo).
-    Pagamento antes da emissão (adiantamento) conta 0 dias."""
-    return {
-        r["mes"]: {"valor": r["valor"], "dias_valor": r["dias_valor"]}
-        for r in conn.execute(
-            sql.SQL(
-                """
-                with t as ({titulos})
-                select date_trunc('month', pagamento)::date as mes,
-                       sum(greatest(pagamento - emissao, 0) * valor) as dias_valor,
-                       sum(valor) as valor
-                  from t
-                 where pagamento >= %(de)s and pagamento <= %(hoje)s
-                 group by 1
-                """
-            ).format(titulos=_titulos(tabelas, ctx)),
-            {"cliente": ctx.cliente_id, "empresas": list(ctx.empresas), "de": de, "hoje": hoje},
-        )
-    }
+    return Leitura(carteira=carteira, serie=sorted(serie, key=lambda p: p.dia), pagos=pagos)
 
 
 def media_paga(pagos: Mensal, hoje: date) -> Decimal | None:
@@ -421,28 +425,35 @@ def secao_financeiro(ctx: ContextoConsolidado, hoje: date) -> SecaoDoMes | None:
     pagar: Carteira | None = None
     pagos_pagar: Mensal = {}
     if a_receber:
-        receber = _carteira(conn, ctx, a_receber, hoje, limite)
         fins = [ultimo_dia_do_mes(mes_menos(aberto, n)) for n in range(MESES_SERIE, 0, -1)]
-        serie = _serie(
-            conn, ctx, a_receber, {d: ultimo_vencimento_vencido(d, feriados_periodo) for d in fins}
+        leitura = _ler(
+            conn,
+            ctx,
+            a_receber,
+            hoje,
+            limite,
+            {d: ultimo_vencimento_vencido(d, feriados_periodo) for d in fins},
+            de,
         )
+        receber = leitura.carteira
         cartao = cartao_inadimplencia(
-            hoje, receber, serie, farol(conn, ctx.cliente_id, "inadimplencia", hoje)
+            hoje, receber, leitura.serie, farol(conn, ctx.cliente_id, "inadimplencia", hoje)
         )
         if cartao is not None:
             cartoes.append(cartao)
-        pagos_receber = _pagos_por_mes(conn, ctx, a_receber, de, hoje)
         ind = _prazo(
             PRAZO_RECEBIMENTO,
-            pagos_receber,
+            leitura.pagos,
             hoje,
             farol(conn, ctx.cliente_id, "prazo_recebimento", hoje),
         )
         if ind is not None:
             indicadores.append(ind)
     if a_pagar:
-        pagar = _carteira(conn, ctx, a_pagar, hoje, limite)
-        pagos_pagar = _pagos_por_mes(conn, ctx, a_pagar, de, hoje)
+        # sem série: o gráfico de inadimplência é só do a receber
+        leitura = _ler(conn, ctx, a_pagar, hoje, limite, {}, de)
+        pagar = leitura.carteira
+        pagos_pagar = leitura.pagos
         ind = _prazo(
             PRAZO_PAGAMENTO, pagos_pagar, hoje, farol(conn, ctx.cliente_id, "prazo_pagamento", hoje)
         )

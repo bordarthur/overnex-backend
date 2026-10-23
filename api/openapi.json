@@ -77,6 +77,25 @@
         ],
         "parameters": [
           {
+            "name": "mes",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Mês da tela (AAAA-MM), um dos de /api/sessao.",
+              "title": "Mes"
+            },
+            "description": "Mês da tela (AAAA-MM), um dos de /api/sessao."
+          },
+          {
             "name": "empresa",
             "in": "query",
             "required": false,
@@ -114,14 +133,7 @@
             "description": "Acesso negado."
           },
           "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
+            "description": "`mes` fora do formato AAAA-MM, ou mês sem dados."
           }
         }
       }

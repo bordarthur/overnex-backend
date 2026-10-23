@@ -122,6 +122,14 @@ def test_cenario_base_ou_o_unico() -> None:
     assert cenario_do_orcamento(["Meta", "Otimista"]) is None
 
 
+def test_cenario_escolhido_por_parametro() -> None:
+    cenarios = ["Conservador", "Meta", "Super Meta", "Base"]
+    # o parâmetro vence o "Base"
+    assert cenario_do_orcamento(cenarios, " meta ") == "meta"
+    # cenário que não existe no orçamento: sem orçado
+    assert cenario_do_orcamento(cenarios, "Otimista") is None
+
+
 def test_margem_ebitda_contra_o_orcado() -> None:
     real = _mensal("100", "100", "100", "100", "100", "100", "78")  # mar a set
     orcado = {m: _dre("100") for m in real}

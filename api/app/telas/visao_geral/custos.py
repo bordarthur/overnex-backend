@@ -15,7 +15,8 @@ custos.abertura em cfg.parametro_cliente (padrão: ramo do cliente).
   CMV contra a referência, aplicada ao faturado projetado em dias úteis).
 
 O histórico por ramo vem de mart.resumo_mensal com dimensão (migration 10); o mês de
-referência vem da própria tabela de vendas.
+referência vem da própria tabela de vendas ou, fora da janela dela, também do resumo
+(faturado_ramo e custo_ramo).
 """
 
 import logging
@@ -28,8 +29,9 @@ from uuid import UUID
 from psycopg import sql
 from pydantic import BaseModel, ValidationError
 
+from app.core.cache import existe_coluna
 from app.core.db import Conexao
-from app.farol.parametro import Farol, deslocado, farol
+from app.farol.parametro import Farol, deslocado, farol, parametros_do_cliente, vigente
 from app.seguranca.acesso import ContextoConsolidado
 from app.telas.contrato import Status
 from app.telas.moldura import MESES
@@ -76,28 +78,11 @@ class Abertura(BaseModel):
 
 
 def abertura(conn: Conexao, cliente_id: UUID) -> Abertura:
-    existe = conn.execute(
-        "select to_regclass('cfg.parametro_cliente') is not null as ok"
-    ).fetchone()
-    if not (existe and existe["ok"]):  # migration 8 ainda não aplicada
-        return Abertura()
-    linha = conn.execute(
-        """
-        select valor
-          from cfg.parametro_cliente
-         where cliente_id = %s
-           and chave = 'custos.abertura'
-           and vigente_de <= current_date
-           and (vigente_ate is null or vigente_ate >= current_date)
-         order by vigente_de desc
-         limit 1
-        """,
-        (cliente_id,),
-    ).fetchone()
-    if linha is None:
+    valor = vigente(parametros_do_cliente(conn, cliente_id), "custos.abertura", date.today())
+    if valor is None:
         return Abertura()
     try:
-        return Abertura.model_validate(linha["valor"])
+        return Abertura.model_validate(valor)
     except ValidationError as exc:
         logger.warning("Parâmetro custos.abertura inválido (cliente %s): %s", cliente_id, exc)
         return Abertura()
@@ -242,16 +227,7 @@ def _historico_por_ramo(
     conn: Conexao, ctx: ContextoConsolidado, tabelas: list[TabelaDoCliente], de: date, ate: date
 ) -> dict[str, Mensal]:
     """faturado_ramo e custo_ramo do resumo mensal; vazio sem a migration 10."""
-    existe = conn.execute(
-        """
-        select exists (
-            select 1 from information_schema.columns
-             where table_schema = 'mart' and table_name = 'resumo_mensal'
-               and column_name = 'dimensao'
-        ) as ok
-        """
-    ).fetchone()
-    if not (existe and existe["ok"]):
+    if not existe_coluna(conn, "mart.resumo_mensal", "dimensao"):
         return {}
     medidas = {"faturado_ramo": "faturado", "custo_ramo": "custo"}
     por_ramo: dict[str, Mensal] = {}
@@ -366,10 +342,13 @@ def secao_custos(ctx: ContextoConsolidado, base: BaseVendas) -> SecaoDoMes | Non
     f = farol(conn, ctx.cliente_id, INDICADOR, v.mes)
 
     a = abertura(conn, ctx.cliente_id)
-    do_mes = _ramos_do_mes(conn, ctx, base.tabelas, v.mes)
     historico = _historico_por_ramo(conn, ctx, base.tabelas, base.inicio, v.mes)
-    for ramo, medidas in do_mes.items():
-        historico.setdefault(ramo, {})[v.mes] = medidas
+    if base.do_resumo:
+        do_mes = {ramo: m[v.mes] for ramo, m in historico.items() if v.mes in m}
+    else:
+        do_mes = _ramos_do_mes(conn, ctx, base.tabelas, v.mes)
+        for ramo, medidas in do_mes.items():
+            historico.setdefault(ramo, {})[v.mes] = medidas
 
     destaque = sorted(do_mes, key=lambda r: do_mes[r]["faturado"], reverse=True)
     destaque = [r for r in destaque if r != SEM_RAMO][:RAMOS_EM_DESTAQUE]

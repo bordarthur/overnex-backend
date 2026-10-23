@@ -7,16 +7,21 @@ padrão): {"atencao": 100, "critico": 90, "maior_melhor": true, "min": 80, "max"
 indicadores que, sem ela, comparam com a média dos meses anteriores.
 
 Parâmetro inválido não derruba a tela: registra no log e usa o padrão.
+
+Os parâmetros do cliente são lidos uma vez por requisição (parametros_do_cliente) e
+escolhidos aqui pela vigência.
 """
 
 import logging
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, ValidationError
 
+from app.core.cache import existe, memo
 from app.core.db import Conexao
 from app.farol.status import Faixa, status
 from app.telas.contrato import Status
@@ -179,32 +184,55 @@ def deslocado(f: Farol, base: Decimal) -> Farol:
     )
 
 
-def _existe_tabela(conn: Conexao) -> bool:
-    linha = conn.execute("select to_regclass('cfg.parametro_cliente') is not null as ok").fetchone()
-    return bool(linha and linha["ok"])
+@dataclass(frozen=True)
+class Parametro:
+    chave: str
+    valor: Any
+    vigente_de: date
+    vigente_ate: date | None
+
+
+def parametros_do_cliente(conn: Conexao, cliente_id: UUID) -> list[Parametro]:
+    """Todos os parâmetros do cliente (cfg.parametro_cliente), uma vez por requisição;
+    vazio sem a migration 8."""
+
+    def ler() -> list[Parametro]:
+        if not existe(conn, "cfg.parametro_cliente"):
+            return []
+        return [
+            Parametro(r["chave"], r["valor"], r["vigente_de"], r["vigente_ate"])
+            for r in conn.execute(
+                """
+                select chave, valor, vigente_de, vigente_ate
+                  from cfg.parametro_cliente
+                 where cliente_id = %s
+                """,
+                (cliente_id,),
+            )
+        ]
+
+    return memo(("parametros", cliente_id), ler)
+
+
+def vigente(parametros: list[Parametro], chave: str, data: date) -> Any | None:
+    """Valor do parâmetro vigente na data (o de vigente_de mais recente); None sem ele."""
+    validos = [
+        p
+        for p in parametros
+        if p.chave == chave
+        and p.vigente_de <= data
+        and (p.vigente_ate is None or p.vigente_ate >= data)
+    ]
+    return max(validos, key=lambda p: p.vigente_de).valor if validos else None
 
 
 def farol(conn: Conexao, cliente_id: UUID, indicador: str, referencia: date) -> Farol:
     padrao = PADROES[indicador]
-    if not _existe_tabela(conn):  # migration 8 ainda não aplicada
-        return padrao
-    linha = conn.execute(
-        """
-        select valor
-          from cfg.parametro_cliente
-         where cliente_id = %s
-           and chave = %s
-           and vigente_de <= %s
-           and (vigente_ate is null or vigente_ate >= %s)
-         order by vigente_de desc
-         limit 1
-        """,
-        (cliente_id, f"farol.{indicador}", referencia, referencia),
-    ).fetchone()
-    if linha is None:
+    valor = vigente(parametros_do_cliente(conn, cliente_id), f"farol.{indicador}", referencia)
+    if valor is None:
         return padrao
     try:
-        p = _Parametro.model_validate(linha["valor"])
+        p = _Parametro.model_validate(valor)
         return Farol(
             faixa=Faixa(
                 atencao=p.atencao if p.atencao is not None else padrao.faixa.atencao,

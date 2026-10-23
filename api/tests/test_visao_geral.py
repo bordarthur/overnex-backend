@@ -372,6 +372,70 @@ def test_periodos_com_o_mes_dos_numeros(client: TestClient) -> None:
 
 
 @pytest.mark.usefixtures("vendas_do_bruno")
+def test_sessao_lista_os_meses_com_venda_do_mais_recente(client: TestClient) -> None:
+    # agosto e setembro no resumo da carga; outubro é o mês do snapshot (11/10)
+    assert client.get(SESSAO, headers=auth(OID_B)).json()["periodos"] == [
+        {"id": "2026-10", "rotulo": "Outubro de 2026", "dadosAte": "2026-10-11"},
+        {"id": "2026-09", "rotulo": "Setembro de 2026", "dadosAte": "2026-09-30"},
+        {"id": "2026-08", "rotulo": "Agosto de 2026", "dadosAte": "2026-08-31"},
+    ]
+
+
+@pytest.mark.usefixtures("vendas_do_bruno")
+def test_visao_geral_de_mes_fechado(client: TestClient) -> None:
+    corpo = client.get(VISAO_GERAL, params={"mes": "2026-08"}, headers=auth(OID_B)).json()
+
+    assert corpo["periodos"] == [
+        {"id": "mes", "rotulo": "Agosto de 2026"},
+        {"id": "ano", "rotulo": "Acumulado de 2026"},
+    ]
+    # dadosAte continua o da última carga
+    assert corpo["dadosAte"] == "2026-10-11"
+    [vendas] = corpo["secoes"]
+    assert vendas["resumo"] == "Dados de agosto de 2026."
+    kpis = {k["rotulo"]: k for k in vendas["kpis"]}
+    # mês fechado: sem projeção nem "A realizar"; o faturado é o do mês inteiro
+    assert list(kpis) == ["Meta de agosto", "Faturado em agosto"]
+    assert kpis["Faturado em agosto"]["valor"]["valor"] == 999
+    assert kpis["Faturado em agosto"]["contexto"] == "vendas até 31/08"
+
+
+@pytest.mark.usefixtures("vendas_do_bruno")
+def test_visao_geral_de_mes_fora_da_tabela_sai_do_resumo(
+    client: TestClient, admin_conn: psycopg.Connection[tuple[Any, ...]]
+) -> None:
+    # julho só no resumo da carga, fora da janela da tabela de vendas
+    admin_conn.execute(
+        """
+        insert into mart.resumo_mensal
+            (cliente_id, empresa_id, tabela, medida, mes, valor, data_snapshot)
+        values (%(c)s, null, 'f_vendas_nilo_maia', 'faturado', '2026-07-01', 500, '2026-10-11'),
+               (%(c)s, null, 'f_vendas_nilo_maia', 'pedidos', '2026-07-01', 5, '2026-10-11')
+        """,
+        {"c": CLIENTE_B},
+    )
+    corpo = client.get(VISAO_GERAL, params={"mes": "2026-07"}, headers=auth(OID_B)).json()
+
+    [vendas] = corpo["secoes"]
+    kpis = {k["rotulo"]: k for k in vendas["kpis"]}
+    # sem meta em julho: só o faturado do mês inteiro
+    assert list(kpis) == ["Faturado em julho"]
+    assert kpis["Faturado em julho"]["valor"]["valor"] == 500
+    assert kpis["Faturado em julho"]["contexto"] == "vendas até 31/07"
+
+
+def test_visao_geral_mes_fora_do_formato_422(client: TestClient) -> None:
+    r = client.get(VISAO_GERAL, params={"mes": "2026-13"}, headers=auth(OID_A))
+    assert r.status_code == 422
+
+
+def test_visao_geral_mes_sem_dados_422(client: TestClient) -> None:
+    r = client.get(VISAO_GERAL, params={"mes": "2025-01"}, headers=auth(OID_A))
+    assert r.status_code == 422
+    assert r.json() == {"detail": "Mês sem dados."}
+
+
+@pytest.mark.usefixtures("vendas_do_bruno")
 def test_faixas_do_farol_vem_de_cfg_parametro_cliente(
     client: TestClient, admin_conn: psycopg.Connection[tuple[Any, ...]]
 ) -> None:
@@ -443,9 +507,9 @@ def vendas_pj_do_bruno(admin_conn: psycopg.Connection[tuple[Any, ...]]) -> Itera
         insert into mart.f_vendas_pj
             (_linha, _cliente_id, "en_dataemissao", "en_codigocliente", "en_numpedido",
              "en_codigoproduto", "en_valortotal", "en_custototal", "it_grupo")
-        values (1, %(c)s, '01/09/2026 00:00:00', 'C1', 'P1', 'X', 600, 500, 'BOVINOS'),
-               (2, %(c)s, '01/09/2026 00:00:00', 'C1', 'P1', 'Y', 400, 350, 'BOVINOS'),
-               (3, %(c)s, '15/09/2026 00:00:00', 'C2', 'P2', 'X', 1000, 800, 'SUINOS')
+        values (1, %(c)s, '2026-09-01', 'C1', 'P1', 'X', 600, 500, 'BOVINOS'),
+               (2, %(c)s, '2026-09-01', 'C1', 'P1', 'Y', 400, 350, 'BOVINOS'),
+               (3, %(c)s, '2026-09-15', 'C2', 'P2', 'X', 1000, 800, 'SUINOS')
         """,
         {"c": CLIENTE_B},
     )
@@ -454,15 +518,15 @@ def vendas_pj_do_bruno(admin_conn: psycopg.Connection[tuple[Any, ...]]) -> Itera
         insert into mart.f_vendas_agile_pj_cortes
             (_linha, _cliente_id, "en_dataemissao", "en_codigocliente", "en_numpedido",
              "en_valortotal", "en_custototal", "it_grupo")
-        values (1, %(c)s, '28/08/2026', 'C9', 'P0', 999, 800, 'BOVINOS')
+        values (1, %(c)s, '2026-08-28', 'C9', 'P0', 999, 800, 'BOVINOS')
         """,
         {"c": CLIENTE_B},
     )
     admin_conn.execute(
         """
         insert into mart.f_metas_comercial_pj (_linha, _cliente_id, "Data", "Valor")
-        values (1, %(c)s, '01/08/2026 00:00:00', 1000),
-               (2, %(c)s, '01/09/2026 00:00:00', 4000)
+        values (1, %(c)s, '2026-08-01', 1000),
+               (2, %(c)s, '2026-09-01', 4000)
         """,
         {"c": CLIENTE_B},
     )

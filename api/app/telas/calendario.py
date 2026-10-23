@@ -9,6 +9,7 @@ from uuid import UUID
 
 import holidays
 
+from app.core.cache import existe, memo
 from app.core.db import Conexao
 
 
@@ -24,17 +25,18 @@ def feriados_nacionais(ano: int) -> set[date]:
 def feriados(conn: Conexao, cliente_id: UUID, inicio: date, fim: date) -> set[date]:
     """Nacionais + do cliente entre `inicio` e `fim` (inclusive)."""
     nacionais = set().union(*(feriados_nacionais(a) for a in range(inicio.year, fim.year + 1)))
-    existe = conn.execute("select to_regclass('cfg.feriado') is not null as ok").fetchone()
-    do_cliente: set[date] = set()
-    if existe and existe["ok"]:  # sem a migration 9, só os nacionais
-        do_cliente = {
-            r["data"]
-            for r in conn.execute(
-                "select data from cfg.feriado where cliente_id = %s and data between %s and %s",
-                (cliente_id, inicio, fim),
-            )
-        }
+    do_cliente = memo(("feriados", cliente_id), lambda: _feriados_do_cliente(conn, cliente_id))
     return {d for d in nacionais | do_cliente if inicio <= d <= fim}
+
+
+def _feriados_do_cliente(conn: Conexao, cliente_id: UUID) -> set[date]:
+    """Todos os feriados do cliente (cfg.feriado é pequena); vazio sem a migration 9."""
+    if not existe(conn, "cfg.feriado"):
+        return set()
+    return {
+        r["data"]
+        for r in conn.execute("select data from cfg.feriado where cliente_id = %s", (cliente_id,))
+    }
 
 
 def dias_uteis(inicio: date, fim: date, feriados: set[date]) -> int:

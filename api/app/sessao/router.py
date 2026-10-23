@@ -1,8 +1,9 @@
 """GET /api/sessao: o que a moldura do front precisa antes de abrir uma tela.
 
 Usuário, cliente, empresas do vínculo (filtro "Empresa"), telas liberadas (menu) e
-períodos com dados (filtro "Período"). O cliente vem do vínculo no banco, nunca da URL do
-front: o `slug` volta aqui para o front montar a URL certa.
+períodos com dados (filtro "Período": os meses com faturado no resumo mensal e o mês do
+último snapshot, do mais recente para o mais antigo). O cliente vem do vínculo no banco,
+nunca da URL do front: o `slug` volta aqui para o front montar a URL certa.
 """
 
 from datetime import date
@@ -12,7 +13,14 @@ from uuid import UUID
 from fastapi import APIRouter, Depends
 
 from app.seguranca.acesso import ContextoSessao, exigir_sessao
-from app.telas.moldura import Cliente, ModeloCamel, cliente, rotulo_mes, ultima_carga
+from app.telas.moldura import (
+    Cliente,
+    ModeloCamel,
+    cliente,
+    meses_com_dados,
+    rotulo_mes,
+    ultima_carga,
+)
 
 router = APIRouter(prefix="/api/sessao", tags=["sessao"])
 
@@ -93,20 +101,13 @@ def sessao(ctx: Annotated[ContextoSessao, Depends(exigir_sessao)]) -> SessaoPayl
         )
     ]
 
-    # TODO(historico): com mart.indicador_mensal, listar também os meses fechados.
-    # Hoje as tabelas de movimento guardam só o mês do último snapshot.
-    carga = ultima_carga(conn, ctx.cliente_id)
-    periodos = (
-        [
-            PeriodoDisponivel(
-                id=carga.data_snapshot.strftime("%Y-%m"),
-                rotulo=rotulo_mes(carga.data_snapshot),
-                dados_ate=carga.data_snapshot,
-            )
-        ]
-        if carga
-        else []
-    )
+    # do mais recente para o mais antigo; o primeiro é o padrão da Visão geral
+    periodos = [
+        PeriodoDisponivel(
+            id=m.mes.strftime("%Y-%m"), rotulo=rotulo_mes(m.mes), dados_ate=m.dados_ate
+        )
+        for m in meses_com_dados(conn, ctx.cliente_id, ultima_carga(conn, ctx.cliente_id))
+    ]
 
     base = cliente(conn, ctx.cliente_id)
     return SessaoPayload(
