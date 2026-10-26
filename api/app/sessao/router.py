@@ -1,9 +1,10 @@
 """GET /api/sessao: o que a moldura do front precisa antes de abrir uma tela.
 
-Usuário, cliente, empresas do vínculo (filtro "Empresa"), telas liberadas (menu) e
-períodos com dados (filtro "Período": os meses com faturado no resumo mensal e o mês do
-último snapshot, do mais recente para o mais antigo). O cliente vem do vínculo no banco,
-nunca da URL do front: o `slug` volta aqui para o front montar a URL certa.
+Usuário (nome e e-mail do cadastro em seg.usuario, não do token), cliente, empresas do
+vínculo (filtro "Empresa"), telas liberadas (menu) e períodos com dados (filtro "Período":
+os meses com faturado no resumo mensal e o mês do último snapshot, do mais recente para o
+mais antigo). O cliente vem do vínculo no banco, nunca da URL do front: o `slug` volta aqui
+para o front montar a URL certa.
 """
 
 from datetime import date
@@ -66,7 +67,7 @@ def sessao(ctx: Annotated[ContextoSessao, Depends(exigir_sessao)]) -> SessaoPayl
     conn = ctx.sessao.conn
 
     usuario = conn.execute(
-        "select email from seg.usuario where id = %s", (ctx.usuario_id,)
+        "select nome, email from seg.usuario where id = %s", (ctx.usuario_id,)
     ).fetchone()
     slug = conn.execute("select slug from cfg.cliente where id = %s", (ctx.cliente_id,)).fetchone()
     if usuario is None or slug is None:  # o vínculo já garantiu os dois
@@ -111,7 +112,7 @@ def sessao(ctx: Annotated[ContextoSessao, Depends(exigir_sessao)]) -> SessaoPayl
 
     base = cliente(conn, ctx.cliente_id)
     return SessaoPayload(
-        usuario=Usuario(nome=ctx.sessao.usuario.nome, email=usuario["email"]),
+        usuario=Usuario(nome=usuario["nome"], email=usuario["email"]),
         cliente=ClienteSessao(
             nome=base.nome, sigla=base.sigla, logo_url=base.logo_url, slug=slug["slug"]
         ),

@@ -31,6 +31,276 @@
         }
       }
     },
+    "/api/auth/entrar": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Entrar",
+        "operationId": "entrar_api_auth_entrar_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PedidoEntrar"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespostaAuth"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "E-mail ou senha não conferem. Confira os dois e tente de novo."
+          },
+          "429": {
+            "description": "Foram 5 tentativas com a senha errada. (5 senhas erradas para o e-mail em 15 min) ou Muitas tentativas. Tente de novo em alguns minutos. Com Retry-After em segundos."
+          },
+          "403": {
+            "description": "Tem login, mas não está ativo no Overnex. Sem cookie."
+          },
+          "415": {
+            "description": "Content-Type diferente de application/json."
+          },
+          "503": {
+            "description": "Supabase Auth fora do ar."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/renovar": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Renovar",
+        "operationId": "renovar_api_auth_renovar_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/PedidoVazio"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": " Corpo"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespostaAuth"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão expirada. Entre de novo. Cookie apagado."
+          },
+          "403": {
+            "description": "Usuário desativado no Overnex. Cookie apagado."
+          },
+          "415": {
+            "description": "Content-Type diferente de application/json."
+          },
+          "503": {
+            "description": "Supabase Auth fora do ar (ou no limite). O cookie fica."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/sair": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Sair",
+        "description": "Encerra a sessão no GoTrue (se veio o access token) e apaga o cookie. Sempre 204.",
+        "operationId": "sair_api_auth_sair_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/PedidoVazio"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": " Corpo"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "415": {
+            "description": "Content-Type diferente de application/json."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/auth/esqueci-senha": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Esqueci Senha",
+        "description": "Pede o e-mail de recuperação. 204 exista ou não o e-mail (não revela quem tem conta).",
+        "operationId": "esqueci_senha_api_auth_esqueci_senha_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PedidoEsqueciSenha"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "415": {
+            "description": "Content-Type diferente de application/json."
+          },
+          "429": {
+            "description": "Muitas tentativas. Tente de novo em alguns minutos. Com Retry-After em segundos."
+          },
+          "503": {
+            "description": "Supabase Auth fora do ar."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/definir-senha": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Definir Senha",
+        "description": "Link do convite ou da recuperação: confere o link, grava a senha e já entra.",
+        "operationId": "definir_senha_api_auth_definir_senha_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PedidoDefinirSenha"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespostaAuth"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A senha não atende à política; o texto diz o que falta."
+          },
+          "410": {
+            "description": "Este link não vale mais. (vencido, já usado ou inexistente)"
+          },
+          "429": {
+            "description": "Muitas tentativas. Tente de novo em alguns minutos. Com Retry-After em segundos."
+          },
+          "403": {
+            "description": "Tem login, mas não está ativo no Overnex. Sem cookie."
+          },
+          "415": {
+            "description": "Content-Type diferente de application/json."
+          },
+          "503": {
+            "description": "Supabase Auth fora do ar."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/sessao": {
       "get": {
         "tags": [
@@ -946,6 +1216,83 @@
         ],
         "title": "Kpi"
       },
+      "PedidoDefinirSenha": {
+        "properties": {
+          "tokenHash": {
+            "type": "string",
+            "maxLength": 512,
+            "minLength": 1,
+            "title": "Tokenhash"
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "convite",
+              "recuperacao"
+            ],
+            "title": "Tipo"
+          },
+          "senha": {
+            "type": "string",
+            "maxLength": 1024,
+            "title": "Senha"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "tokenHash",
+          "tipo",
+          "senha"
+        ],
+        "title": "PedidoDefinirSenha"
+      },
+      "PedidoEntrar": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "maxLength": 254,
+            "minLength": 1,
+            "title": "Email"
+          },
+          "senha": {
+            "type": "string",
+            "maxLength": 1024,
+            "minLength": 1,
+            "title": "Senha"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "email",
+          "senha"
+        ],
+        "title": "PedidoEntrar"
+      },
+      "PedidoEsqueciSenha": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "maxLength": 254,
+            "minLength": 1,
+            "title": "Email"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "email"
+        ],
+        "title": "PedidoEsqueciSenha"
+      },
+      "PedidoVazio": {
+        "properties": {},
+        "additionalProperties": false,
+        "type": "object",
+        "title": "PedidoVazio",
+        "description": "Corpo `{}` de renovar e sair (pode vir vazio, mas com Content-Type: application/json)."
+      },
       "Periodo": {
         "properties": {
           "id": {
@@ -1036,6 +1383,30 @@
           "valor"
         ],
         "title": "Ponto"
+      },
+      "RespostaAuth": {
+        "properties": {
+          "accessToken": {
+            "type": "string",
+            "title": "Accesstoken"
+          },
+          "expiraEm": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Expiraem"
+          },
+          "usuario": {
+            "$ref": "#/components/schemas/UsuarioAuth"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "accessToken",
+          "expiraEm",
+          "usuario"
+        ],
+        "title": "RespostaAuth"
       },
       "ScreenPayload": {
         "properties": {
@@ -1374,6 +1745,32 @@
           "email"
         ],
         "title": "Usuario"
+      },
+      "UsuarioAuth": {
+        "properties": {
+          "nome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nome"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "nome",
+          "email"
+        ],
+        "title": "UsuarioAuth"
       },
       "ValidationError": {
         "properties": {

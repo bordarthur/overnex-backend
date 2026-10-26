@@ -11,6 +11,11 @@ os.environ.setdefault(
 )
 os.environ["AMBIENTE"] = "dev"
 os.environ["AUTH_FAKE"] = "1"
+# login com e-mail e senha: valores só para o app montar (nenhum teste chama o Supabase)
+os.environ["AUTH_PROVEDOR"] = "supabase"
+os.environ["SUPABASE_URL"] = "https://projeto-teste.supabase.co"
+os.environ["SUPABASE_ANON_KEY"] = "sb_publishable_teste"
+os.environ["FRONT_URL"] = "https://overnex.teste"
 # os testes mudam dados entre uma requisição e outra, sem carga nova
 os.environ["VISAO_GERAL_CACHE_SEGUNDOS"] = "0"
 
@@ -19,6 +24,13 @@ from collections.abc import Iterator
 import psycopg
 import pytest
 from fastapi.testclient import TestClient
+
+from app.core.config import ConfigCadastro, Settings
+
+# Os testes não leem o api/.env de quem roda (que pode ter COOKIE_SEGURO, chaves, o banco de
+# produção…): só o ambiente acima e o de cada teste.
+for _modelo in (Settings, ConfigCadastro):
+    _modelo.model_config["env_file"] = None
 
 # Conexão administrativa (postgres) só para conferir efeitos, como o log de acesso.
 DATABASE_URL_ADMIN = os.environ.get(

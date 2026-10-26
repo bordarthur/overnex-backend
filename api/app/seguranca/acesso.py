@@ -86,33 +86,69 @@ class _Vinculo:
     papel: str
 
 
-class _Checagem:
-    """Etapas comuns e o registro em seg.log_acesso de um pedido de acesso."""
+@dataclass(frozen=True)
+class FatosAcesso:
+    """O que seg.contexto_acesso devolve: tudo de que as etapas 1 a 5 precisam."""
 
-    def __init__(self, sessao: Sessao, recurso: str, empresa_id: UUID | None) -> None:
+    usuario_id: UUID | None
+    ativo: bool
+    # (cliente_id, papel) dos vínculos com cliente ativo
+    vinculos: tuple[tuple[UUID, str], ...]
+    # cliente_id → algum perfil que libera a tela vê dado nominal (só se algum libera)
+    perfis_tela: dict[UUID, bool]
+    # (cliente_id, empresa_id) liberadas, na ordem nome, id da empresa
+    empresas: tuple[tuple[UUID, UUID], ...]
+
+
+def ler_fatos(sessao: Sessao, codigo_tela: str | None) -> FatosAcesso:
+    """Uma ida ao banco: define app.usuario_id na transação e lê os fatos da checagem."""
+    linha = sessao.conn.execute(
+        "select * from seg.contexto_acesso(%s, %s)",
+        (sessao.usuario.id_autenticacao, codigo_tela),
+    ).fetchone()
+    if linha is None:  # a função sempre devolve uma linha
+        raise LookupError("seg.contexto_acesso não devolveu linha")
+    return FatosAcesso(
+        usuario_id=linha["usuario_id"],
+        ativo=bool(linha["ativo"]),
+        vinculos=tuple((UUID(v["cliente_id"]), v["papel"]) for v in linha["vinculos"]),
+        perfis_tela={UUID(c): bool(ve) for c, ve in linha["perfis_tela"].items()},
+        empresas=tuple((UUID(e["cliente_id"]), UUID(e["empresa_id"])) for e in linha["empresas"]),
+    )
+
+
+class _Checagem:
+    """Etapas comuns e o registro em seg.log_acesso de um pedido de acesso.
+
+    Os fatos vêm de uma consulta só (seg.contexto_acesso); as decisões são feitas aqui. O
+    log fica pendente na sessão e é gravado junto com o commit (app/core/db.py).
+    """
+
+    def __init__(
+        self,
+        sessao: Sessao,
+        recurso: str,
+        empresa_id: UUID | None,
+        codigo_tela: str | None = None,
+    ) -> None:
         self.sessao = sessao
         self.recurso = recurso
         self.empresa_id = empresa_id
         self.cliente_id: UUID | None = None
+        self.fatos = ler_fatos(sessao, codigo_tela)
 
     def _registrar(self, etapa_negada: int | None = None, motivo: str | None = None) -> None:
-        self.sessao.conn.execute(
-            """
-            insert into seg.log_acesso
-                (usuario_id, object_id_entra, cliente_id, empresa_id, codigo_tela,
-                 resultado, etapa_negada, motivo)
-            values (%s, %s, %s, %s, %s, %s, %s, %s)
-            """,
+        self.sessao.logs.append(
             (
-                self.sessao.usuario_id,
-                self.sessao.usuario.object_id,
+                self.fatos.usuario_id,
+                self.sessao.usuario.id_autenticacao,
                 self.cliente_id,
                 self.empresa_id,
                 self.recurso,
                 "negado" if etapa_negada else "permitido",
                 etapa_negada,
                 motivo,
-            ),
+            )
         )
 
     def negar(self, etapa: int, motivo: str) -> AcessoNegado:
@@ -124,93 +160,45 @@ class _Checagem:
 
     def vinculo(self, papeis: frozenset[str]) -> _Vinculo:
         """Etapas 1 a 3."""
-        conn = self.sessao.conn
+        fatos = self.fatos
 
         # 1. usuário ativo
-        usuario_id = self.sessao.usuario_id
-        if usuario_id is None or not self.sessao.usuario_ativo:
+        if fatos.usuario_id is None or not fatos.ativo:
             raise self.negar(1, "usuário inexistente ou inativo")
 
         # 2. vínculo com cliente (ativo). RLS já restringe ao próprio usuário.
-        vinculos = conn.execute(
-            """
-            select uc.cliente_id, uc.papel
-              from seg.usuario_cliente uc
-              join cfg.cliente c on c.id = uc.cliente_id and c.ativo
-             where uc.usuario_id = %s
-            """,
-            (usuario_id,),
-        ).fetchall()
-        if not vinculos:
+        if not fatos.vinculos:
             raise self.negar(2, "sem vínculo com cliente ativo")
-        if len(vinculos) > 1:
+        if len(fatos.vinculos) > 1:
             # TODO: usuário com mais de um cliente (consultor LANN) — escolher o cliente.
             raise self.negar(2, "mais de um vínculo de cliente (ainda não suportado)")
-        self.cliente_id = vinculos[0]["cliente_id"]
-        papel: str = vinculos[0]["papel"]
+        cliente_id, papel = fatos.vinculos[0]
+        self.cliente_id = cliente_id
 
         # 3. papel
         if papel not in papeis:
             raise self.negar(3, f"papel '{papel}' não permitido em {self.recurso}")
 
-        assert self.cliente_id is not None  # noqa: S101 — definido acima
-        return _Vinculo(usuario_id=usuario_id, cliente_id=self.cliente_id, papel=papel)
+        return _Vinculo(usuario_id=fatos.usuario_id, cliente_id=cliente_id, papel=papel)
 
     def empresa_no_vinculo(self, vinculo: _Vinculo, empresa_id: UUID) -> None:
         """Etapa 5."""
-        pertence = self.sessao.conn.execute(
-            """
-            select exists (
-                select 1
-                  from seg.usuario_empresa ue
-                  join cfg.empresa e on e.id = ue.empresa_id and e.cliente_id = ue.cliente_id
-                 where ue.usuario_id = %s
-                   and ue.cliente_id = %s
-                   and ue.empresa_id = %s
-            ) as ok
-            """,
-            (vinculo.usuario_id, vinculo.cliente_id, empresa_id),
-        ).fetchone()
-        if not (pertence and pertence["ok"]):
+        if (vinculo.cliente_id, empresa_id) not in self.fatos.empresas:
             raise self.negar(5, "empresa fora do vínculo do usuário")
 
     def empresas_do_vinculo(self, vinculo: _Vinculo) -> tuple[UUID, ...]:
         """Etapa 5 sem empresa pedida: todas as do vínculo; nenhuma = negado."""
-        empresas = tuple(
-            r["empresa_id"]
-            for r in self.sessao.conn.execute(
-                """
-                select ue.empresa_id
-                  from seg.usuario_empresa ue
-                  join cfg.empresa e on e.id = ue.empresa_id and e.cliente_id = ue.cliente_id
-                 where ue.usuario_id = %s
-                   and ue.cliente_id = %s
-                 order by e.nome, e.id
-                """,
-                (vinculo.usuario_id, vinculo.cliente_id),
-            )
-        )
+        empresas = tuple(e for c, e in self.fatos.empresas if c == vinculo.cliente_id)
         if not empresas:
             raise self.negar(5, "nenhuma empresa no vínculo do usuário")
         return empresas
 
 
-def _perfil_libera_tela(checagem: _Checagem, vinculo: _Vinculo, codigo_tela: str) -> bool:
+def _perfil_libera_tela(checagem: _Checagem, vinculo: _Vinculo) -> bool:
     """Etapa 4; devolve se algum perfil que libera a tela vê dado nominal."""
-    perfil = checagem.sessao.conn.execute(
-        """
-        select bool_or(pt.ve_dado_nominal) as ve_dado_nominal
-          from seg.usuario_perfil up
-          join cfg.perfil_tela pt on pt.perfil_id = up.perfil_id
-         where up.usuario_id = %s
-           and up.cliente_id = %s
-           and pt.codigo_tela = %s
-        """,
-        (vinculo.usuario_id, vinculo.cliente_id, codigo_tela),
-    ).fetchone()
-    if perfil is None or perfil["ve_dado_nominal"] is None:
+    ve_dado_nominal = checagem.fatos.perfis_tela.get(vinculo.cliente_id)
+    if ve_dado_nominal is None:
         raise checagem.negar(4, "nenhum perfil do usuário libera a tela")
-    ve_dado_nominal: bool = perfil["ve_dado_nominal"]
     return ve_dado_nominal
 
 
@@ -235,11 +223,11 @@ def verificar_acesso_consolidado(
     papeis: frozenset[str] = TODOS_OS_PAPEIS,
     exige_dado_nominal: bool = False,
 ) -> ContextoConsolidado:
-    checagem = _Checagem(sessao, codigo_tela, empresa_id)
+    checagem = _Checagem(sessao, codigo_tela, empresa_id, codigo_tela)
     vinculo = checagem.vinculo(papeis)
 
     # 4. perfil libera a tela
-    ve_dado_nominal = _perfil_libera_tela(checagem, vinculo, codigo_tela)
+    ve_dado_nominal = _perfil_libera_tela(checagem, vinculo)
 
     # 5. empresa pedida pertence ao vínculo; sem empresa, todas as do vínculo
     if empresa_id is not None:
@@ -273,11 +261,11 @@ def verificar_acesso(
     papeis: frozenset[str] = TODOS_OS_PAPEIS,
     exige_dado_nominal: bool = False,
 ) -> ContextoAcesso:
-    checagem = _Checagem(sessao, codigo_tela, empresa_id)
+    checagem = _Checagem(sessao, codigo_tela, empresa_id, codigo_tela)
     vinculo = checagem.vinculo(papeis)
 
     # 4. perfil libera a tela
-    ve_dado_nominal = _perfil_libera_tela(checagem, vinculo, codigo_tela)
+    ve_dado_nominal = _perfil_libera_tela(checagem, vinculo)
 
     # 5. empresa pedida pertence ao vínculo
     checagem.empresa_no_vinculo(vinculo, empresa_id)

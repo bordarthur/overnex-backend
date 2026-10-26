@@ -1,8 +1,9 @@
 """Pool de conexões e a transação por requisição."""
 
 from collections.abc import Iterator
-from dataclasses import dataclass
-from typing import Annotated
+from contextlib import contextmanager
+from dataclasses import dataclass, field
+from typing import Annotated, Any
 from uuid import UUID
 
 from fastapi import Depends, Request
@@ -16,6 +17,13 @@ from app.seguranca.auth import UsuarioToken, get_usuario
 
 Conexao = Connection[DictRow]
 Pool = ConnectionPool[Conexao]
+
+INSERIR_LOG_ACESSO = """
+    insert into seg.log_acesso
+        (usuario_id, id_autenticacao, cliente_id, empresa_id, codigo_tela,
+         resultado, etapa_negada, motivo)
+    values (%s, %s, %s, %s, %s, %s, %s, %s)
+"""
 
 
 def criar_pool(settings: Settings) -> Pool:
@@ -40,41 +48,64 @@ def get_pool(request: Request) -> Pool:
 
 @dataclass(frozen=True)
 class Sessao:
-    """Conexão da requisição, já com app.usuario_id definido na transação."""
+    """Conexão da requisição. app.usuario_id é definido pela checagem de acesso
+    (seg.contexto_acesso, em app/seguranca/acesso.py); antes dela, o RLS não mostra nada."""
 
     conn: Conexao
     usuario: UsuarioToken
-    usuario_id: UUID | None
-    usuario_ativo: bool
+    pool: Pool | None = None
+    # linhas de seg.log_acesso da requisição: gravadas junto com o commit (ver get_sessao)
+    logs: list[tuple[Any, ...]] = field(default_factory=list)
+
+
+def _gravar_logs_e_confirmar(conn: Conexao, logs: list[tuple[Any, ...]]) -> None:
+    """Insere os logs pendentes e faz o commit numa ida ao banco só (pipeline)."""
+    if not logs:
+        conn.commit()
+        return
+    with conn.pipeline():
+        with conn.cursor() as cur:
+            cur.executemany(INSERIR_LOG_ACESSO, logs)
+        conn.commit()
 
 
 def get_sessao(
     usuario: Annotated[UsuarioToken, Depends(get_usuario)],
     pool: Annotated[Pool, Depends(get_pool)],
 ) -> Iterator[Sessao]:
-    """Abre UMA transação por requisição e define app.usuario_id nela.
+    """Abre UMA transação por requisição.
 
-    - sucesso: commit;
-    - AcessoNegado: commit (grava o log do acesso negado; nada além dele foi escrito);
-    - qualquer outro erro: rollback.
+    - sucesso: grava o log de acesso e faz commit;
+    - AcessoNegado: idem (grava o log do acesso negado; nada além dele foi escrito);
+    - qualquer outro erro: rollback (o log daquela requisição também não fica, como antes).
     """
     with pool.connection() as conn:
+        sessao = Sessao(conn=conn, usuario=usuario, pool=pool)
         try:
-            linha = conn.execute(
-                "select id, ativo from seg.resolver_usuario(%s)", (usuario.object_id,)
-            ).fetchone()
-            usuario_id: UUID | None = linha["id"] if linha else None
-            ativo = bool(linha and linha["ativo"])
-            conn.execute(
-                "select set_config('app.usuario_id', %s, true)",
-                (str(usuario_id) if usuario_id else "",),
-            )
-            yield Sessao(conn=conn, usuario=usuario, usuario_id=usuario_id, usuario_ativo=ativo)
+            yield sessao
         except AcessoNegado:
-            conn.commit()
+            _gravar_logs_e_confirmar(conn, sessao.logs)
             raise
         except BaseException:
             conn.rollback()
             raise
         else:
-            conn.commit()
+            _gravar_logs_e_confirmar(conn, sessao.logs)
+
+
+@contextmanager
+def conexao_paralela(pool: Pool, usuario_id: UUID) -> Iterator[Conexao]:
+    """Outra conexão para o mesmo usuário (consultas da mesma tela em paralelo).
+
+    Só leitura: define app.usuario_id na transação (o mesmo RLS da conexão principal) e
+    desfaz tudo no fim. Só use com o usuario_id de uma checagem de acesso que passou.
+    """
+    with pool.connection() as conn:
+        try:
+            conn.execute(
+                "select set_config('app.usuario_id', %s, true)",
+                (str(usuario_id),),
+            )
+            yield conn
+        finally:
+            conn.rollback()

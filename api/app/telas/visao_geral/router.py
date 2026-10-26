@@ -15,11 +15,16 @@ Desempenho: a resposta pronta fica em memória por VISAO_GERAL_CACHE_SEGUNDOS (p
 min; 0 desliga), com chave no cliente, nas empresas, no mês e na última carga: uma carga
 nova troca a chave. Parâmetros mudados no banco (farol, de-para) valem depois do prazo. O
 acesso continua conferido e registrado a cada requisição. Ao montar, fontes, parâmetros e
-feriados do cliente são lidos uma vez só (app/core/cache.py).
+feriados do cliente são lidos uma vez só (app/core/cache.py), e as seções independentes
+rodam em paralelo, cada ramo com uma conexão própria do mesmo usuário (_em_paralelo): o
+tempo da tela é o do ramo mais lento, não a soma.
 """
 
+import contextvars
 import json
-from dataclasses import dataclass
+from collections.abc import Callable, Sequence
+from concurrent.futures import Future, ThreadPoolExecutor, wait
+from dataclasses import dataclass, replace
 from datetime import date
 from functools import cache
 from pathlib import Path
@@ -30,6 +35,7 @@ from pydantic import TypeAdapter
 
 from app.core.cache import CacheComPrazo, por_requisicao
 from app.core.config import Settings, get_settings
+from app.core.db import conexao_paralela
 from app.seguranca.acesso import ContextoConsolidado, exigir_tela_consolidada
 from app.telas.calendario import ultimo_dia_do_mes
 from app.telas.moldura import (
@@ -51,6 +57,8 @@ DEMO = Path(__file__).with_name("demo.json")
 FORMATO_MES = r"^\d{4}-(0[1-9]|1[0-2])$"
 # respostas prontas (VISAO_GERAL_CACHE_SEGUNDOS); a resposta é imutável (modelo frozen)
 _respostas: CacheComPrazo[VisaoGeralPayload] = CacheComPrazo(maximo=256)
+# ramos das seções em paralelo (cada um usa uma conexão do pool)
+_ramos = ThreadPoolExecutor(max_workers=8, thread_name_prefix="visao-geral")
 
 router = APIRouter(prefix="/api/telas", tags=["telas"])
 
@@ -101,20 +109,64 @@ def mes_escolhido(mes: str, disponiveis: list[MesComDados]) -> date:
     return escolhido
 
 
+type Ramo = Callable[[ContextoConsolidado], list[SecaoDoMes]]
+
+
+def _em_paralelo(ctx: ContextoConsolidado, ramos: Sequence[Ramo]) -> list[list[SecaoDoMes]]:
+    """Roda os ramos ao mesmo tempo e devolve os resultados na ordem.
+
+    O primeiro usa a conexão da requisição; cada um dos outros, uma conexão própria do
+    mesmo usuário (app.usuario_id da checagem que passou, o mesmo RLS), só leitura. O cache
+    por requisição (app/core/cache.py) vai junto: cada thread recebe uma cópia do contexto,
+    que aponta para o mesmo dicionário. Sem pool (testes), roda em sequência.
+    """
+    pool = ctx.sessao.pool
+    if pool is None or len(ramos) < 2:
+        return [ramo(ctx) for ramo in ramos]
+
+    def em_outra_conexao(ramo: Ramo) -> list[SecaoDoMes]:
+        with conexao_paralela(pool, ctx.usuario_id) as conn:
+            return ramo(replace(ctx, sessao=replace(ctx.sessao, conn=conn)))
+
+    futuros: list[Future[list[SecaoDoMes]]] = [
+        _ramos.submit(contextvars.copy_context().run, em_outra_conexao, ramo) for ramo in ramos[1:]
+    ]
+    try:
+        primeiro = ramos[0](ctx)
+    finally:
+        # espera todos, mesmo com erro: nenhuma conexão fica em uso depois da requisição
+        wait(futuros)
+    # result() relança o erro de um ramo
+    return [primeiro, *(f.result() for f in futuros)]
+
+
 def _secoes(ctx: ContextoConsolidado, r: Recorte) -> tuple[list[Secao], date | None]:
-    """Seções montadas e o mês de referência mais recente entre elas."""
+    """Seções montadas e o mês de referência mais recente entre elas.
+
+    Três ramos independentes, em paralelo: Vendas e Custos (Custos usa a base de Vendas),
+    Resultado e Financeiro.
+    """
     # TODO(regra): Compras e Estoque, e a lista de seções do cliente em cfg.painel. Ver TODO.md.
-    montadas: list[SecaoDoMes] = []
-    vendas = secao_vendas(ctx, r.mes, fechado=r.fechado)
-    if vendas is not None:
+
+    def vendas_e_custos(c: ContextoConsolidado) -> list[SecaoDoMes]:
+        vendas = secao_vendas(c, r.mes, fechado=r.fechado)
+        if vendas is None:
+            return []
         secao, base = vendas
-        montadas.append(secao)
-        custos = secao_custos(ctx, base)
-        if custos is not None:
-            montadas.append(custos)
-    for outra in (secao_resultado(ctx, r.ultimo_fechado), secao_financeiro(ctx, r.posicao)):
-        if outra is not None:
-            montadas.append(outra)
+        custos = secao_custos(c, base)
+        return [secao] if custos is None else [secao, custos]
+
+    def resultado(c: ContextoConsolidado) -> list[SecaoDoMes]:
+        s = secao_resultado(c, r.ultimo_fechado)
+        return [] if s is None else [s]
+
+    def financeiro(c: ContextoConsolidado) -> list[SecaoDoMes]:
+        s = secao_financeiro(c, r.posicao)
+        return [] if s is None else [s]
+
+    montadas = [
+        s for ramo in _em_paralelo(ctx, [vendas_e_custos, resultado, financeiro]) for s in ramo
+    ]
     return [s.secao for s in montadas], max((s.mes for s in montadas), default=None)
 
 

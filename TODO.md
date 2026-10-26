@@ -1,33 +1,25 @@
 # TODO — Overnex backend
 
-Atualizado em 22/10/2026.
+Última atualização: 23/10/2026.
 
-## Feito
+## A fazer
 
-- **Rodada 1 — banco e API:** schemas `cfg`/`seg`/`mart`, roles `api_site` e `carga`, RLS em tudo, seed "Padrão LANN" e testes pgTAP. API FastAPI com login do Entra ID, checagem de acesso em 6 etapas, FIN-01 de exemplo, `/health` e Dockerfile.
-- **Rodada 2 — carga e agendamento:** carga diária do Storage para o mart, com validação de data e troca em uma transação. Workflow `diario.yml`: snapshot às 9h e, se der certo, a carga.
-- **Rodada 3 — tabelas de dados:** as 21 tabelas do bucket da Nilo Maia têm tabela no mart com as mesmas colunas (migration 5). A carga genérica (tipo `tabela`) preenche essas tabelas, e o front lê por `GET /api/dados/{tabela}`. O inventário do bucket (`python -m carga.inspecionar`) gera o SQL de tabelas novas.
-- **Janela de datas** (migration 6): as tabelas de movimento guardam só os últimos meses. Em produção: 3 meses nas médias, 1 mês sugerido para receitas e vendas.
-- **Proteção contra disco cheio:** a carga para logo no início se o banco estiver só leitura, e para a carga inteira se o disco encher no meio.
-- **Produção:**
-  - migrations 1 a 6 aplicadas;
-  - cliente, empresas e mapa da Nilo Maia cadastrados;
-  - `nilo_maia_tabelas.sql` e `nilo_maia_janela.sql` rodados;
-  - Secret `DATABASE_URL_CARGA` e senha do role `carga` funcionando;
-  - banco recuperado do modo só leitura de 14/10 (tabelas grandes esvaziadas com `truncate` e recarregadas com janela).
-- **Git:** branch padrão `main` no GitHub e `master` apagada. Repositório `dataflow` arquivado (o snapshot roda só pelo `diario.yml`).
-- **Rodada 4 — API para o front (sem login):** `GET /api/sessao` (usuário, cliente com `slug`, empresas, telas liberadas e períodos) e `GET /api/telas/visao-geral` (VG-01) com o contrato do front em Pydantic, em camelCase ([api/app/telas/visao_geral/contrato.py](api/app/telas/visao_geral/contrato.py)). `empresa` opcional: sem ela, a tela vale para todas as empresas do vínculo. `dadosAte` e `atualizadoEm` vêm da última carga `ok`. Seed com VG-01 liberada para Ana e Bruno, e `VISAO_GERAL_DEMO=1` (só dev) devolve as seções do mockup. `openapi.json` regenerado.
-- **Plano do Supabase:** continua no gratuito (500 MB) por enquanto. Em 16/10 o uso chegou perto de 500 MB, e as tabelas com janela passaram para 1 mês (o mês do snapshot).
-- **Troca da Nilo Maia pela PJ Cortes (21/10):** as tabelas da Nilo Maia saíram do mart ([nilo_maia_remover_tabelas.sql](supabase/producao/nilo_maia_remover_tabelas.sql)), e o snapshot passou a copiar as 25 tabelas da PJ. Código: `colunas_modelo` em `cfg.fonte_carga` (migration 11) para o DW da PJ, que usa outros nomes de coluna (`en_valortotal`, `en_dataemissao`…), e a Visão geral somando todas as tabelas `f_vendas_*` do cliente (a atual e a Agile, do sistema antigo, até 08/03/2025). CMV da PJ aberto por grupo do produto (`it_grupo`). Tabelas da PJ na migration 12.
-- **Seções Resultado e Financeiro da Visão geral (21/10), com regras provisórias:** [resultado.py](api/app/telas/visao_geral/resultado.py), [financeiro.py](api/app/telas/visao_geral/financeiro.py) e os velocímetros contra orçado ou média em [relativo.py](api/app/telas/visao_geral/relativo.py). Testes sem banco em `test_resultado.py` e `test_financeiro.py`; o SQL foi conferido só com o parser do Postgres (`pglast`), sem rodar contra um banco.
-- **Períodos anteriores na Visão geral (22/10):** `/api/sessao` lista os meses com faturado no resumo mensal das tabelas `f_vendas_*`, mais o mês do último snapshot, do mais recente para o mais antigo (até 24; `dadosAte` = data do snapshot no mês dele, senão o último dia do mês). `GET /api/telas/visao-geral?mes=AAAA-MM` usa o mês escolhido: Vendas e Custos no mês (fechado: sem projeção nem "A realizar"), Resultado no mês se fechado (no mês do snapshot, o último fechado antes dele), Financeiro com a posição no último dia do mês (no mês do snapshot, na data dele). Formato inválido ou mês fora da lista → 422 ("Mês sem dados."). Sem `mes`, nada muda. Limites:
-  - mês fora da janela das tabelas de vendas (hoje 3 meses na PJ; 13 depois do `pj_cortes_vendas_13_meses.sql` e de uma carga): Vendas e Custos saem do resumo mensal, e os cartões do dia a dia ("Faturado até", "Lucro bruto até") viram o total do mês; clientes e produtos por cliente somam as tabelas (cliente que comprou nas duas conta duas vezes);
-  - a lista vem das vendas: cliente sem resumo de vendas só tem o mês do snapshot;
-  - os testes `db` novos (`tests/test_visao_geral.py`) não rodaram sem Docker; conferido à mão contra o banco da PJ (out, ago, mai/2026 e dez/2025, e os dois 422).
-- **Visão geral mais rápida (22/10):** o tempo era quase todo latência (banco em `us-east-1`, ~120 ms por consulta a partir do Brasil), não consulta pesada. Fontes, parâmetros (`cfg.parametro_cliente`) e feriados do cliente agora são lidos uma vez por requisição, e as checagens de "tabela/coluna existe" ficam em memória ([app/core/cache.py](api/app/core/cache.py)): de ~70 para ~30 consultas, de 9,8 s para ~5 s a partir do Brasil. A resposta pronta fica em memória por `VISAO_GERAL_CACHE_SEGUNDOS` (padrão 15 min; chave: cliente, empresas, mês e última carga): repetir a tela ou voltar a um mês já visto leva ~1 s (só as checagens de acesso). O Financeiro lê cada tabela de títulos uma vez só (carteira, série de inadimplência e pagos na mesma consulta, `_ler`), em vez de 5 leituras: mês novo em ~3,5–4 s; saída conferida idêntica em 7 meses. Parâmetro mudado no banco sem carga nova vale depois do prazo. O que falta: hospedar a API na mesma região do banco (item "Onde hospedar"), que deve levar a tela para 1–2 s.
-- **Resultado só com tabela de lançamentos (22/10):** desde que as vendas entraram na DRE, um cliente só com vendas ganhava a seção com EBITDA = faturado. Voltou a regra antiga: sem `f_lancamentos_*`, a seção não sai.
-## Conferir em produção
+### Login com e-mail e senha (em andamento)
 
+Feito em 23/10/2026 (código; nada aplicado em produção): `AUTH_PROVEDOR=supabase` (padrão; o Entra fica desligado por configuração), validação do JWT do Supabase pelo JWKS do projeto (ES256), rotas `POST /api/auth/entrar|renovar|sair|esqueci-senha|definir-senha` repassando ao GoTrue, refresh token no cookie `ovx_refresh`, limite de tentativas em memória, [migration 15](supabase/migrations/20261023000015_usuario_id_autenticacao.sql) (`id_autenticacao` e `nome` em `seg.usuario`) e o CLI de cadastro (`python -m app.cli.convidar_usuario`). Contrato em [api/README.md](api/README.md#login-com-e-mail-e-senha-apiauth). Ajustado ao mockup Login M2.0.0 do front: 401 "E-mail ou senha não conferem…", 429 "Foram 5 tentativas com a senha errada." com `Retry-After`, 410 "Este link não vale mais." e a política de senha do front (8 caracteres, maiúscula e número) na API. Testado só sem banco (`pytest -m "not db"`, com o GoTrue simulado); o SQL foi conferido só com o `pglast`. Falta:
+
+- [ ] **Rodar os testes `db` e o pgTAP** (precisa de Docker ou do Postgres local): `tests/test_auth_cadastro.py`, `tests/test_convidar_usuario.py` (SQL do CLI), `tests/test_visao_geral.py` (nome da sessão vindo de `seg.usuario`) e `supabase/tests/database/10_usuario_id_autenticacao.test.sql`.
+- [ ] **Aplicar a migration 15 em produção** (`supabase db push`). Ela renomeia `object_id_entra`: a API em produção precisa subir junto com o código novo (a antiga quebra com a coluna renomeada, e a nova quebra sem ela).
+- [ ] **Configurar o Supabase Auth no painel**, passo a passo em [api/README.md](api/README.md#configurar-o-supabase-auth-uma-vez-no-painel): desligar "Allow new users to sign up", Site URL e Redirect URLs, modelos de Convite e de Recuperação em português com `{{ .TokenHash }}`, senha com mínimo de 8 caracteres e **sem** exigência de caracteres (a regra do front, maiúscula e número, é conferida pela API; o Supabase não tem essa combinação).
+- [ ] **SMTP próprio no Supabase Auth.** O SMTP padrão só entrega para e-mails do time do projeto e só 2 por hora: sem SMTP próprio, convite e "esqueci a senha" não chegam aos clientes. Depois, subir o limite de e-mails em Authentication → Rate Limits.
+- [ ] **Usuário de desenvolvimento no Supabase Auth** (ver item em "Antes de publicar a API") e `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `FRONT_URL` (e, para quem cadastra, `SUPABASE_SERVICE_ROLE_KEY` e `DATABASE_URL_ADMIN`) no `api/.env` local: sem as três primeiras, a API não sobe mais.
+- [ ] **Front:** tela de login, "esqueci a senha", página `/definir-senha` (lê `token_hash` e `type` da URL), access token só em memória, `renovar` ao abrir a página e antes de `expiraEm`, `sair`. Tratar 401 de qualquer rota chamando `renovar` uma vez.
+- [ ] **Limite de tentativas compartilhado** se a API tiver mais de uma instância: hoje cada processo conta as suas tentativas, em memória ([api/app/auth/limite.py](api/app/auth/limite.py)). Com várias réplicas, o limite efetivo se multiplica; trocar por algo compartilhado (Postgres ou Redis).
+- [ ] **Limites de taxa do Supabase Auth.** Todas as chamadas saem do IP da API, e os limites por IP do Supabase valem para todos os usuários somados: `/token` (login e renovação juntos) 150 a cada 5 min, `/verify` 30 e `/recover` 30 a cada 5 min. Com poucas dezenas de usuários há folga (cada sessão renova uma vez por hora); acompanhar os avisos "Limite do Supabase Auth atingido" no log da API e, se aparecerem, subir os limites em Authentication → Rate Limits ou decidir o `Sb-Forwarded-For` (ver "A decidir").
+
+### Conferir em produção
+
+- [ ] **Aplicar a migration 16** ([contexto_acesso](supabase/migrations/20261023000016_contexto_acesso.sql), `supabase db push`) **antes** de subir a API com o código de 23/10/2026 (tarde): a checagem de acesso passou a chamar `seg.contexto_acesso`, e sem a função toda tela responde 500. Depois, medir de novo a Visão geral (mês novo e mês já visto) e o `/api/sessao`.
 - [ ] **Tamanho do banco com a janela de 1 mês.** Depois do `truncate` e da primeira carga com 1 mês, conferir:
   ```sql
   select pg_size_pretty(pg_database_size(current_database())) as banco;
@@ -50,24 +42,23 @@ Atualizado em 22/10/2026.
 - [ ] **Medidas do .pbix da PJ.** O usuário vai trazer as medidas, tabelas e colunas calculadas do Power BI da PJ: revisar as regras provisórias de Vendas, Custos, Resultado e Financeiro com elas (ex.: devolução abatendo o faturado, `f_devolucao_pj` e `f_devolucao_pj_agile`).
 - [ ] **'2 PJ Cortes'** só aparece no estoque (`en_filial` 2) e hoje aponta para a mesma empresa. Confirmar se é outra empresa.
 
-## Antes de publicar a API
+### Antes de publicar a API
 
 - [ ] **Senha do role `api_site`** no Supabase (`alter role api_site with login password '…'`).
-- [ ] **App registration no Entra ID** para a API (`ENTRA_TENANT_ID`, `ENTRA_AUDIENCE`). Os usuários dos clientes entram como convidados no tenant, ou o app passa a aceitar vários tenants (isso pede ajuste na validação do token).
-- [ ] **Usuários e perfis de produção:** `seg.usuario`, `seg.usuario_cliente`, `seg.usuario_perfil` e `seg.usuario_empresa`, além de `cfg.perfil_tela` e `cfg.perfil_tabela`. Sem isso, toda tela responde 403.
-- [ ] **Onde hospedar** (recomendado: Azure Container Apps, com a imagem gerada no GitHub Actions) e como front e API dividem o mesmo domínio (`/api` → API), já que a API não tem CORS.
-- [ ] **Usuário de desenvolvimento da PJ Cortes** ([supabase/producao/pj_cortes_usuario_dev.sql](supabase/producao/pj_cortes_usuario_dev.sql), que tira o usuário da Nilo Maia): o `object_id_entra` é provisório, para o token fake da API local. Trocar pelo object id real do Entra quando o login entrar.
+- [ ] **Usuários e perfis de produção:** perfis em `cfg.perfil_acesso`, `cfg.perfil_tela` e `cfg.perfil_tabela`; os usuários entram pelo CLI de cadastro (`python -m app.cli.convidar_usuario`, ver [api/README.md](api/README.md#cadastro-de-usuários-pela-lann)), que grava `seg.usuario` e os vínculos. Sem isso, toda tela responde 403.
+- [ ] **Onde hospedar** (recomendado: Azure Container Apps, com a imagem gerada no GitHub Actions) e como front e API dividem o mesmo domínio (`/api` → API), já que a API não tem CORS. Atrás do proxy, definir `FORWARDED_ALLOW_IPS` no contêiner (o IP do proxy, ou `*` se a API só for alcançável por ele): sem isso, o limite de tentativas do login vê todos os usuários com o IP do proxy. No ambiente da API: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `FRONT_URL` e `AMBIENTE=prod` (nunca `SUPABASE_SERVICE_ROLE_KEY` nem `DATABASE_URL_ADMIN`).
+- [ ] **Usuário de desenvolvimento da PJ Cortes** ([supabase/producao/pj_cortes_usuario_dev.sql](supabase/producao/pj_cortes_usuario_dev.sql), que tira o usuário da Nilo Maia): o `id_autenticacao` é provisório, para o token fake da API local. Depois da migration 15, criar o usuário no Supabase Auth e rodar [usuario_dev_supabase_auth.sql](supabase/producao/usuario_dev_supabase_auth.sql), que troca pelo id real. Avisar o front: o token fake passa a precisar desse id em `VITE_AUTH_FAKE_OBJECT_ID`.
 - [ ] **VG-01 em `cfg.perfil_tela` de produção** para os perfis que veem a Visão geral (sem isso, a tela responde 403 e some de `/api/sessao`).
 - [ ] **Validar com Docker**, o que não foi possível na máquina de desenvolvimento. Os testes `db` da rodada 4 ([api/tests/test_visao_geral.py](api/tests/test_visao_geral.py)) ainda não rodaram contra o banco. Se não houver Docker, criar um workflow de CI no GitHub Actions que rode tudo isso a cada push:
   - `supabase start && supabase db reset && supabase test db`;
   - `uv run pytest` em `api/` e em `jobs/carga/`;
   - `docker build` da API.
 
-## Para o front consumir (Visão geral)
+### Para o front consumir (Visão geral)
 
 O front (`overnex-frontend`) já desenha a Visão geral a partir de um JSON fixo; o contrato está em `src/contracts/visaoGeral.ts` e o exemplo completo em `src/api/fixtures/visao-geral.json`, no repositório do front. O front não calcula nada: todo número, status, ponteiro, delta e texto precisa vir pronto da API.
 
-- [ ] **No front:** proxy `/api` → `http://127.0.0.1:8000` no `vite.config.ts`, cliente HTTP no lugar do `criarMockClient` (token `fake:<object_id>` em dev), filtros a partir de `/api/sessao` e tipos gerados do `api/openapi.json` (apagar o contrato escrito à mão). Atenção: `dadosAte` e `atualizadoEm` podem vir `null` (cliente sem carga), o que o contrato escrito à mão não previa.
+- [ ] **No front:** proxy `/api` → `http://127.0.0.1:8000` no `vite.config.ts`, cliente HTTP no lugar do `criarMockClient` (login por `/api/auth/*`, ou token `fake:<id_autenticacao>` em dev), filtros a partir de `/api/sessao` e tipos gerados do `api/openapi.json` (apagar o contrato escrito à mão). Atenção: `dadosAte` e `atualizadoEm` podem vir `null` (cliente sem carga), o que o contrato escrito à mão não previa.
 - [ ] **Seção Vendas com regras provisórias** em [api/app/telas/visao_geral/vendas.py](api/app/telas/visao_geral/vendas.py): 4 cartões (meta, faturado até a última venda contra a meta até a data, projeção de fechamento e a realizar por dia útil, em dias úteis — [projecao.py](api/app/telas/visao_geral/projecao.py)) e 4 velocímetros. "Vendas contra a meta" usa a projeção no mês e o realizado no ano; "Clientes que compraram", "Ticket por pedido" e "Produtos por cliente" comparam com a média dos 6 meses anteriores, ou com a meta em `referencia` de `farol.<indicador>` em `cfg.parametro_cliente` ([contra_referencia.py](api/app/telas/visao_geral/contra_referencia.py)). Confirmar com o negócio: faturado = soma de `en_VALTOT` por `en_datemicao`, pedidos = `en_numdoc` distintos, produtos por cliente = pares `en_codcli` × `en_codigo` distintos ÷ clientes, dia útil = segunda a sexta fora de feriado, status de "A realizar" = ritmo atual ÷ ritmo necessário. "Produtos por cliente" só aparece depois de uma carga com o código novo (medida `clientes_produtos`).
 - [ ] **Seção Custos com regras provisórias** em [api/app/telas/visao_geral/custos.py](api/app/telas/visao_geral/custos.py): CMV = `en_precus` (custo total da linha) ÷ `en_VALTOT`, aberto por `en_ramo` (ramo do cliente, não linha de produto). Cartões: CMV do mês, margem bruta, lucro bruto e efeito no lucro do mês (na projeção). Velocímetros: os 3 ramos com mais faturado e "demais ramos", contra o CMV dos 6 meses anteriores, com faixas relativas em p.p. (`farol.cmv`: +0,3 atenção, +1,5 crítico). Confirmar com o negócio: a referência (não há orçado por ramo), as faixas e se o faturado bruto serve de base (o mockup usa receita líquida).
 - [ ] **DRE da PJ na seção Resultado, como a do Power BI.** Desde 22/10 o realizado soma: lançamentos manuais (com o sinal do `Tipo`: E soma, S subtrai), receita bruta e CMV das vendas (resumo mensal: faturado e `en_custototal`, histórico inteiro), devoluções (`f_devolucao_*`) nas deduções e despesas do contas a pagar (`f_despesas_*`, −`en_valor`, na emissão) pelo de-para [cfg.conta_dre](supabase/migrations/20261022000014_conta_dre.sql). Conferido com o Power BI em 2025 (de-para numa tabela temporária, pelo código real): receita bruta 227,19 × 227,20 mi, receita líquida 224,38 × 224,29, margem de contribuição 12,59 × 11,02, EBITDA 6,46 × 5,18. Para subir: aplicar a migration 14 e rodar [pj_cortes_contas_dre.sql](supabase/producao/pj_cortes_contas_dre.sql) (sem eles, as despesas ficam fora e o EBITDA sai alto). O que falta para bater:
@@ -92,7 +83,7 @@ O front (`overnex-frontend`) já desenha a Visão geral a partir de um JSON fixo
 - [ ] **Sigla do cliente:** hoje sai das iniciais do nome ("Padrão LANN Alfa" → "PA"). Se precisar de outra, criar a coluna `cfg.cliente.sigla`.
 - [ ] **Mesmo domínio em produção.** O front sobe como Azure Static Web Apps (`staticwebapp.config.json`, CSP `connect-src 'self'`) e a API não tem CORS: `/api` precisa ser servido pelo mesmo domínio (backend vinculado do Static Web Apps ou um proxy na frente dos dois). Complementa o item "Onde hospedar".
 
-## Regras de negócio
+### Regras de negócio
 
 - [ ] **FIN-01 com regra real, lendo `mart.f_lancamentos_agrupados_nilo_maia`.** Hoje ele lê `mart.lancamento`, que fica vazio para a Nilo Maia. Falta decidir qual data (competência ou caixa), qual valor (realizado ou previsto) e como a conta vira linha do demonstrativo. Atenção: o FIN-01 mostra 12 meses, e lançamentos está com janela de 3; ver [api/app/telas/fin_01.py](api/app/telas/fin_01.py).
 - [ ] **Aplicar `cfg.regra_lancamento`** (reclassificar/excluir) na carga. O ponto está marcado em [jobs/carga/carga/lancamento.py](jobs/carga/carga/lancamento.py).
@@ -100,15 +91,14 @@ O front (`overnex-frontend`) já desenha a Visão geral a partir de um JSON fixo
 - [ ] **Tabelas sem coluna de empresa** (15 das 21, como vendas, receitas e compras): todo usuário do cliente vê todas as linhas. Se `CODFILIAL` ou outra coluna identificar a empresa, dá para mapear e separar.
 - [ ] **Usar `cfg.parametro` e `cfg.painel`.** Existem e têm dados no seed, mas nada os lê ainda.
 
-## API
+### API
 
 - [ ] **Endpoints de tela agregados.** `/api/dados/{tabela}` entrega linha a linha, até 5000 por página. As telas devem pedir dados já agregados, em endpoints próprios como o FIN-01.
 - [ ] **Admin:** cadastros de clientes, empresas, perfis, usuários e vínculos, e regras, restritos ao papel `admin` do próprio cliente; ver [api/app/admin/router.py](api/app/admin/router.py). Os grants de escrita existem, mas faltam as políticas RLS de escrita.
 - [ ] **Gravar `seg.log_alteracao`** nas alterações de cadastro (por trigger ou pela API).
 - [ ] **PDF das telas** a partir do mesmo `ScreenPayload`; ver [api/app/pdf/router.py](api/app/pdf/router.py).
-- [ ] **Usuário com mais de um cliente** (consultor LANN). Hoje a etapa 2 da checagem nega quem tem mais de um vínculo; ver [api/app/seguranca/acesso.py](api/app/seguranca/acesso.py).
 
-## Carga
+### Carga
 
 - [ ] **Trocar `delete` por `truncate` nas tabelas de um cliente só.** O `delete` + `insert` diário faz cada tabela ocupar até o dobro do tamanho dos dados. Com `truncate`, o espaço antigo é liberado na hora; durante a troca, quem estiver lendo espera alguns segundos em vez de ver os dados antigos.
 - [ ] **Execução interrompida** (timeout ou runner morto) deixa `mart.carga` e `mart.carga_fonte` em `rodando`. Marcar essas linhas como `erro` na execução seguinte.
@@ -116,8 +106,39 @@ O front (`overnex-frontend`) já desenha a Visão geral a partir de um JSON fixo
 - [ ] **Ler o Parquet em lotes.** Hoje cada arquivo é lido inteiro em memória (o de vendas tem 35 MB compactado).
 - [ ] **Arquivo vazio** falha e mantém o mart. Para tabelas que podem ficar vazias de verdade, decidir se o certo é esvaziar a tabela.
 
-## Infraestrutura
+### Infraestrutura
 
 - [ ] **Configurar o GitHub para colaboradores**, como em [CONTRIBUTING.md](CONTRIBUTING.md): branch `dev`, GitHub App (`APP_ID`, `APP_PRIVATE_KEY`), rulesets em `main` e `dev` com os checks `api` e `carga` do [ci.yml](.github/workflows/ci.yml) e colaboradores com papel Write. O CI ainda não roda os testes com banco (ver "Validar com Docker").
 
 - [ ] **Mover o agendamento para um Container Apps Job no Azure.** Só o agendamento muda; o CLI (`uv run python -m carga`) fica igual.
+
+## A decidir
+
+- [ ] **Microsoft Entra ID.** O login agora é por e-mail e senha no Supabase Auth; a validação do Entra continua em [api/app/seguranca/auth.py](api/app/seguranca/auth.py) (`validar_token_entra`), desligada por configuração (`AUTH_PROVEDOR=entra` liga). Decidir se volta (por exemplo, para os consultores da LANN) e como: app registration da API (`ENTRA_TENANT_ID`, `ENTRA_AUDIENCE`), usuários dos clientes como convidados no tenant ou o app aceitando vários tenants (pede ajuste na validação do token), e se os dois provedores convivem (hoje é um ou outro; `seg.usuario.id_autenticacao` guarda o id de um só).
+- [ ] **IP do cliente para o Supabase Auth (`Sb-Forwarded-For`).** Com o header, o Supabase conta os limites por IP de cada usuário em vez de somar tudo no IP da API. Exige uma chave secreta na API (não aceita a publishable nem as legadas) e ligar a opção em Authentication → Rate Limits. Hoje a chave secreta fica só no CLI de cadastro, por decisão; ligar isso põe uma chave com poder de administrador no ambiente da API.
+- [ ] **Usuário com mais de um cliente** (consultor LANN). Hoje a etapa 2 da checagem nega quem tem mais de um vínculo ([api/app/seguranca/acesso.py](api/app/seguranca/acesso.py)), e o CLI de cadastro só cria usuário novo com um cliente. Decidir como o consultor escolhe o cliente (pelo `slug` na URL do front, num seletor depois do login…) e como o cadastro acrescenta um vínculo a quem já existe.
+
+## Concluído
+
+- **13/10/2026 — Rodada 1, banco e API:** schemas `cfg`/`seg`/`mart`, roles `api_site` e `carga`, RLS em tudo, seed "Padrão LANN" e testes pgTAP. API FastAPI com login do Entra ID, checagem de acesso em 6 etapas, FIN-01 de exemplo, `/health` e Dockerfile.
+- **14/10/2026 — Rodada 2, carga e agendamento:** carga diária do Storage para o mart, com validação de data e troca em uma transação. Workflow `diario.yml`: snapshot às 9h e, se der certo, a carga.
+- **14/10/2026 — Rodada 3, tabelas de dados:** as 21 tabelas do bucket da Nilo Maia têm tabela no mart com as mesmas colunas (migration 5). A carga genérica (tipo `tabela`) preenche essas tabelas, e o front lê por `GET /api/dados/{tabela}`. O inventário do bucket (`python -m carga.inspecionar`) gera o SQL de tabelas novas.
+- **14/10/2026 — Janela de datas** (migration 6): as tabelas de movimento guardam só os últimos meses. Em produção: 3 meses nas médias, 1 mês sugerido para receitas e vendas.
+- **14/10/2026 — Proteção contra disco cheio:** a carga para logo no início se o banco estiver só leitura, e para a carga inteira se o disco encher no meio.
+- **14/10/2026 — Produção:**
+  - migrations 1 a 6 aplicadas;
+  - cliente, empresas e mapa da Nilo Maia cadastrados;
+  - `nilo_maia_tabelas.sql` e `nilo_maia_janela.sql` rodados;
+  - Secret `DATABASE_URL_CARGA` e senha do role `carga` funcionando;
+  - banco recuperado do modo só leitura de 14/10 (tabelas grandes esvaziadas com `truncate` e recarregadas com janela).
+- **14/10/2026 — Git:** branch padrão `main` no GitHub e `master` apagada. Repositório `dataflow` arquivado (o snapshot roda só pelo `diario.yml`).
+- **19/10/2026 — Rodada 4, API para o front (sem login):** `GET /api/sessao` (usuário, cliente com `slug`, empresas, telas liberadas e períodos) e `GET /api/telas/visao-geral` (VG-01) com o contrato do front em Pydantic, em camelCase ([api/app/telas/visao_geral/contrato.py](api/app/telas/visao_geral/contrato.py)). `empresa` opcional: sem ela, a tela vale para todas as empresas do vínculo. `dadosAte` e `atualizadoEm` vêm da última carga `ok`. Seed com VG-01 liberada para Ana e Bruno, e `VISAO_GERAL_DEMO=1` (só dev) devolve as seções do mockup. `openapi.json` regenerado.
+- **16/10/2026 — Plano do Supabase:** continua no gratuito (500 MB) por enquanto. Em 16/10 o uso chegou perto de 500 MB, e as tabelas com janela passaram para 1 mês (o mês do snapshot).
+- **21/10/2026 — Troca da Nilo Maia pela PJ Cortes:** as tabelas da Nilo Maia saíram do mart ([nilo_maia_remover_tabelas.sql](supabase/producao/nilo_maia_remover_tabelas.sql)), e o snapshot passou a copiar as 25 tabelas da PJ. Código: `colunas_modelo` em `cfg.fonte_carga` (migration 11) para o DW da PJ, que usa outros nomes de coluna (`en_valortotal`, `en_dataemissao`…), e a Visão geral somando todas as tabelas `f_vendas_*` do cliente (a atual e a Agile, do sistema antigo, até 08/03/2025). CMV da PJ aberto por grupo do produto (`it_grupo`). Tabelas da PJ na migration 12.
+- **21/10/2026 — Seções Resultado e Financeiro da Visão geral, com regras provisórias:** [resultado.py](api/app/telas/visao_geral/resultado.py), [financeiro.py](api/app/telas/visao_geral/financeiro.py) e os velocímetros contra orçado ou média em [relativo.py](api/app/telas/visao_geral/relativo.py). Testes sem banco em `test_resultado.py` e `test_financeiro.py`; o SQL foi conferido só com o parser do Postgres (`pglast`), sem rodar contra um banco.
+- **22/10/2026 — Períodos anteriores na Visão geral:** `/api/sessao` lista os meses com faturado no resumo mensal das tabelas `f_vendas_*`, mais o mês do último snapshot, do mais recente para o mais antigo (até 24; `dadosAte` = data do snapshot no mês dele, senão o último dia do mês). `GET /api/telas/visao-geral?mes=AAAA-MM` usa o mês escolhido: Vendas e Custos no mês (fechado: sem projeção nem "A realizar"), Resultado no mês se fechado (no mês do snapshot, o último fechado antes dele), Financeiro com a posição no último dia do mês (no mês do snapshot, na data dele). Formato inválido ou mês fora da lista → 422 ("Mês sem dados."). Sem `mes`, nada muda. Limites:
+  - mês fora da janela das tabelas de vendas (hoje 3 meses na PJ; 13 depois do `pj_cortes_vendas_13_meses.sql` e de uma carga): Vendas e Custos saem do resumo mensal, e os cartões do dia a dia ("Faturado até", "Lucro bruto até") viram o total do mês; clientes e produtos por cliente somam as tabelas (cliente que comprou nas duas conta duas vezes);
+  - a lista vem das vendas: cliente sem resumo de vendas só tem o mês do snapshot;
+  - os testes `db` novos (`tests/test_visao_geral.py`) não rodaram sem Docker; conferido à mão contra o banco da PJ (out, ago, mai/2026 e dez/2025, e os dois 422).
+- **22/10/2026 — Visão geral mais rápida:** o tempo era quase todo latência (banco em `us-east-1`, ~120 ms por consulta a partir do Brasil), não consulta pesada. Fontes, parâmetros (`cfg.parametro_cliente`) e feriados do cliente agora são lidos uma vez por requisição, e as checagens de "tabela/coluna existe" ficam em memória ([app/core/cache.py](api/app/core/cache.py)): de ~70 para ~30 consultas, de 9,8 s para ~5 s a partir do Brasil. A resposta pronta fica em memória por `VISAO_GERAL_CACHE_SEGUNDOS` (padrão 15 min; chave: cliente, empresas, mês e última carga): repetir a tela ou voltar a um mês já visto leva ~1 s (só as checagens de acesso). O Financeiro lê cada tabela de títulos uma vez só (carteira, série de inadimplência e pagos na mesma consulta, `_ler`), em vez de 5 leituras: mês novo em ~3,5–4 s; saída conferida idêntica em 7 meses. Parâmetro mudado no banco sem carga nova vale depois do prazo. O que falta: hospedar a API na mesma região do banco (item "Onde hospedar"), que deve levar a tela para 1–2 s.
+- **22/10/2026 — Resultado só com tabela de lançamentos:** desde que as vendas entraram na DRE, um cliente só com vendas ganhava a seção com EBITDA = faturado. Voltou a regra antiga: sem `f_lancamentos_*`, a seção não sai.

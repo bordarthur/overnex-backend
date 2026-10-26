@@ -8,6 +8,9 @@
 --
 -- Mesmo token fake da API local: `Bearer fake:0d000000-0000-4000-8000-0000000001a1`
 -- (AMBIENTE=dev e AUTH_FAKE=1). Se o usuário ainda não existe, ele é criado com esse id.
+--
+-- Depois da migration 15 (id_autenticacao). Para o login com e-mail e senha, troque o id
+-- pelo do Supabase Auth com usuario_dev_supabase_auth.sql.
 
 begin;
 
@@ -36,7 +39,7 @@ select p.id, f.tabela_destino, true
 on conflict do nothing;
 
 -- 2. usuário: sai da Nilo Maia (perfis e empresas saem em cascata) e entra na PJ Cortes
-insert into seg.usuario (object_id_entra, email, tipo)
+insert into seg.usuario (id_autenticacao, email, tipo)
 values ('0d000000-0000-4000-8000-0000000001a1', 'diretoria@lannconsult.com.br', 'lann')
 on conflict do nothing;
 
