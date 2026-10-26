@@ -170,7 +170,7 @@ def test_sessao_da_ana(client: TestClient) -> None:
 
     assert r.status_code == 200
     assert r.json() == {
-        "usuario": {"nome": "Usuário fake", "email": "ana@alfa.example"},
+        "usuario": {"nome": "Ana Alfa", "email": "ana@alfa.example"},
         "cliente": {
             "nome": "Padrão LANN Alfa",
             "sigla": "PA",

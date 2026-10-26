@@ -21,7 +21,7 @@ Postgres local: `127.0.0.1:54322`. O seed define as senhas locais dos roles:
 | Schema | Conteúdo |
 |---|---|
 | `cfg` | cadastros: cliente, empresa, painel, perfis, parâmetros, regras, fontes da carga, mapa de empresas |
-| `seg` | usuários, vínculos (cliente, perfil, empresa), log de acesso e de alteração |
+| `seg` | usuários (ligados ao Supabase Auth por `id_autenticacao`), vínculos (cliente, perfil, empresa), log de acesso e de alteração |
 | `mart` | `lancamento` (dado das telas), `carga` e `carga_fonte` (controle da carga) |
 | `stg` | reservado, sem tabelas: a carga usa tabela temporária |
 
@@ -43,6 +43,8 @@ Nada fica em `public`, e esses schemas não são expostos pelo PostgREST (`confi
 12. `..._tabelas_pj_cortes.sql` — as 25 tabelas de dados da PJ Cortes, no padrão da migration 5.
 13. `..._datas_pj_cortes.sql` — as 24 colunas de data das tabelas de fatos da PJ passam de texto para `date` (a carga converte o texto do arquivo). Só depois de a carga e a API estarem com o código que trata coluna `date`.
 14. `..._conta_dre.sql` — `cfg.conta_dre`: de-para da conta do ERP do cliente (ex.: `en_codigoplanocliente` do Winthor) para o Id_Descritivo do plano gerencial, para as despesas do contas a pagar entrarem na DRE da seção Resultado. `fora_da_dre` = motivo de a conta não entrar. Conteúdo por cliente em `producao/<cliente>_contas_dre.sql`.
+15. `..._usuario_id_autenticacao.sql` — login com e-mail e senha no Supabase Auth: `seg.usuario.object_id_entra` vira `id_autenticacao` (o `sub` do token, `auth.users.id`; continua `uuid not null unique`, sem FK para `auth.users`), entra `seg.usuario.nome` (cadastrado pela LANN, usado em `/api/sessao`), `seg.log_acesso.object_id_entra` vira `id_autenticacao` e `seg.resolver_usuario` passa a procurar pelo id do provedor. Os scripts de `producao/` que criam usuário já usam o nome novo: rode-os só depois desta migration.
+16. `..._contexto_acesso.sql` — `seg.contexto_acesso(id_autenticacao, codigo_tela)`: numa chamada, define `app.usuario_id` e devolve os fatos da checagem de acesso (vínculos com cliente ativo, perfis que liberam a tela, empresas). SECURITY INVOKER: roda como `api_site`, sob o RLS. A API passa a depender dela: aplique antes de subir a API com o código de 23/10/2026 (tarde).
 
 ### Storage
 
@@ -77,7 +79,8 @@ Cadastros de produção por cliente, para rodar à mão no SQL Editor. Não são
 - `pj_cortes_titulos_sem_janela.sql` — tira a janela de `f_receitas_pj` e `f_despesas_pj`. Só se o cadastro da PJ rodou antes de 21/10/2026 à noite, quando ainda punha janela nelas.
 - `pj_cortes_vendas_13_meses.sql` — janela de 13 meses em `f_vendas_pj` e as colunas da devolução da Agile (`colunas_modelo`). Só se o cadastro da PJ rodou antes de 22/10/2026.
 - `pj_cortes_contas_dre.sql` — de-para das 238 contas do Winthor da PJ para o plano gerencial (gerado dos arquivos `Codigo_Sistema_x_Id_Descritivo` e `Plano_de_Conta` do Power BI), com as exclusões conhecidas da DRE do Power BI em `fora_da_dre`. Depois da migration 14; pode rodar de novo (troca todas as contas da PJ).
-- `pj_cortes_usuario_dev.sql` — perfil "Desenvolvimento" da PJ Cortes; o usuário de desenvolvimento sai da Nilo Maia e entra na PJ.
+- `pj_cortes_usuario_dev.sql` — perfil "Desenvolvimento" da PJ Cortes; o usuário de desenvolvimento sai da Nilo Maia e entra na PJ. Depois da migration 15.
+- `usuario_dev_supabase_auth.sql` — troca o `id_autenticacao` provisório do usuário de desenvolvimento pelo id dele no Supabase Auth (lê `auth.users` pelo e-mail). Antes, crie o usuário em Authentication → Users. Depois, o token fake antigo para de valer: o front que usa `VITE_AUTH_FAKE_OBJECT_ID` precisa do id novo (o script mostra).
 - `nilo_maia_remover_tabelas.sql` — remove as tabelas `*_nilo_maia` do mart, com as fontes, o histórico de carga, o resumo mensal e as permissões delas. Mantém cliente, empresas e usuários.
 
 ## Testes (pgTAP)
@@ -90,3 +93,5 @@ Cadastros de produção por cliente, para rodar à mão no SQL Editor. Não são
 | `04_integridade` | `cfg.mapa_empresa` (e os outros vínculos) recusam empresa de outro cliente; `mart.carga_fonte` `ok` exige `data_snapshot` |
 | `05_tabelas_de_dados` | as 46 tabelas de dados (Nilo Maia e PJ Cortes) têm RLS; nomes e tipos preservados; isolamento por cliente e por empresa; linhas sem empresa visíveis ao cliente inteiro; `carga` escreve, `api_site` só lê |
 | `09_conta_dre` | cada cliente lê só o próprio de-para de contas; `api_site` não cadastra; conta sem Id_Descritivo precisa do motivo |
+| `10_usuario_id_autenticacao` | `seg.usuario` com `id_autenticacao` (not null, único, sem FK) e `nome`; `seg.resolver_usuario` acha o usuário pelo id do provedor |
+| `11_contexto_acesso` | `seg.contexto_acesso` define `app.usuario_id` e devolve vínculos, perfis da tela e empresas do usuário (na ordem por nome); desconhecido: listas vazias |

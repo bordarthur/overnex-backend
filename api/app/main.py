@@ -10,7 +10,11 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from app.admin.router import router as admin_router
-from app.core.config import Ambiente, Settings, get_settings
+from app.auth.gotrue import GoTrue, GoTrueIndisponivel
+from app.auth.limite import Limites
+from app.auth.router import MSG_INDISPONIVEL, ErroAuth, apagar_cookie
+from app.auth.router import router as auth_router
+from app.core.config import Ambiente, ProvedorAuth, Settings, get_settings
 from app.core.db import Pool, criar_pool, get_pool
 from app.core.erros import AcessoNegado
 from app.dados.router import router as dados_router
@@ -26,6 +30,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # Settings inválido (ex.: AUTH_FAKE fora de dev) levanta aqui e o app não sobe.
     settings = settings or get_settings()
     dev = settings.ambiente is Ambiente.DEV
+    login_supabase = settings.auth_provedor is ProvedorAuth.SUPABASE
+    gotrue = (
+        GoTrue(settings.supabase_url, settings.supabase_anon_key.get_secret_value())
+        if login_supabase
+        else None
+    )
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -37,6 +47,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             yield
         finally:
             pool.close()
+            if gotrue is not None:
+                gotrue.close()
 
     app = FastAPI(
         title="Overnex API",
@@ -46,11 +58,29 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         redoc_url=None,
         openapi_url="/openapi.json" if dev else None,
     )
+    app.state.gotrue = gotrue
+    app.state.limites_auth = Limites()
 
     @app.exception_handler(AcessoNegado)
     async def _acesso_negado(request: Request, exc: AcessoNegado) -> JSONResponse:
         return JSONResponse(
             status_code=status.HTTP_403_FORBIDDEN, content={"detail": "Acesso negado."}
+        )
+
+    @app.exception_handler(ErroAuth)
+    async def _erro_auth(request: Request, exc: ErroAuth) -> JSONResponse:
+        resposta = JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+        resposta.headers["Cache-Control"] = "no-store"
+        if exc.retry_after is not None:
+            resposta.headers["Retry-After"] = str(exc.retry_after)
+        if exc.apagar_cookie:
+            apagar_cookie(resposta, settings)
+        return resposta
+
+    @app.exception_handler(GoTrueIndisponivel)
+    async def _gotrue_indisponivel(request: Request, exc: GoTrueIndisponivel) -> JSONResponse:
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, content={"detail": MSG_INDISPONIVEL}
         )
 
     @app.exception_handler(RequestValidationError)
@@ -79,6 +109,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             ) from exc
         return {"status": "ok"}
 
+    if login_supabase:
+        app.include_router(auth_router)
     app.include_router(sessao_router)
     app.include_router(visao_geral_router)
     app.include_router(fin_01_router)

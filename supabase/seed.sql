@@ -9,8 +9,12 @@
 --   empresa A1 e1000000-0000-4000-8000-0000000000a1
 --   empresa A2 e1000000-0000-4000-8000-0000000000a2
 --   empresa B1 e1000000-0000-4000-8000-0000000000b1
---   usuário A  d1000000-0000-4000-8000-00000000000a  (oid Entra 0d000000-0000-4000-8000-00000000000a)
---   usuário B  d1000000-0000-4000-8000-00000000000b  (oid Entra 0d000000-0000-4000-8000-00000000000b)
+--   usuário A  d1000000-0000-4000-8000-00000000000a  (id_autenticacao 0d000000-0000-4000-8000-00000000000a)
+--   usuário B  d1000000-0000-4000-8000-00000000000b  (id_autenticacao 0d000000-0000-4000-8000-00000000000b)
+--
+-- Os id_autenticacao do seed não existem no Supabase Auth local: servem ao token fake
+-- (AUTH_FAKE=1). Para testar o login de verdade no local, crie o usuário no Studio
+-- (Authentication → Users) e troque o id_autenticacao dele.
 
 -- Senhas locais dos roles. Em produção a senha é definida manualmente.
 alter role api_site with login password 'api_site_local';
@@ -44,9 +48,9 @@ insert into cfg.parametro (empresa_id, chave, valor, vigente_de) values
     ('e1000000-0000-4000-8000-0000000000a2', 'meta_margem', '0.15', '2025-01-01'),
     ('e1000000-0000-4000-8000-0000000000b1', 'meta_margem', '0.22', '2025-01-01');
 
-insert into seg.usuario (id, object_id_entra, email, tipo) values
-    ('d1000000-0000-4000-8000-00000000000a', '0d000000-0000-4000-8000-00000000000a', 'ana@alfa.example', 'cliente'),
-    ('d1000000-0000-4000-8000-00000000000b', '0d000000-0000-4000-8000-00000000000b', 'bruno@beta.example', 'cliente');
+insert into seg.usuario (id, id_autenticacao, email, nome, tipo) values
+    ('d1000000-0000-4000-8000-00000000000a', '0d000000-0000-4000-8000-00000000000a', 'ana@alfa.example', 'Ana Alfa', 'cliente'),
+    ('d1000000-0000-4000-8000-00000000000b', '0d000000-0000-4000-8000-00000000000b', 'bruno@beta.example', 'Bruno Beta', 'cliente');
 
 insert into seg.usuario_cliente (usuario_id, cliente_id, papel) values
     ('d1000000-0000-4000-8000-00000000000a', 'c1000000-0000-4000-8000-00000000000a', 'gestor'),
