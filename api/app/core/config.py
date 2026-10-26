@@ -52,9 +52,10 @@ class Settings(BaseSettings):
     # Prazo da resposta pronta da Visão geral em memória (0 desliga; ver telas/visao_geral).
     visao_geral_cache_segundos: int = 900
 
-    # a Visão geral usa até 3 conexões por requisição (seções em paralelo); com o mínimo em 3,
-    # elas já estão abertas (abrir uma conexão nova ao pooler custa várias idas e voltas)
-    db_pool_min: int = 3
+    # Conexões sempre abertas. Abrir uma nova ao pooler custa ~0,4 s (várias idas e voltas):
+    # a Visão geral usa até 3 por requisição (seções em paralelo), a Equipe comercial 2, e a
+    # pré-montagem depois de /api/sessao (app/telas/preparo.py) roda junto com a tela aberta.
+    db_pool_min: int = 8
     db_pool_max: int = 20
 
     @model_validator(mode="after")

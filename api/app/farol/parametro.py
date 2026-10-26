@@ -199,19 +199,20 @@ def parametros_do_cliente(conn: Conexao, cliente_id: UUID) -> list[Parametro]:
     def ler() -> list[Parametro]:
         if not existe(conn, "cfg.parametro_cliente"):
             return []
-        return [
-            Parametro(r["chave"], r["valor"], r["vigente_de"], r["vigente_ate"])
-            for r in conn.execute(
-                """
-                select chave, valor, vigente_de, vigente_ate
-                  from cfg.parametro_cliente
-                 where cliente_id = %s
-                """,
-                (cliente_id,),
-            )
-        ]
+        return parametros_das_linhas(conn.execute(SQL_PARAMETROS, (cliente_id,)).fetchall())
 
     return memo(("parametros", cliente_id), ler)
+
+
+SQL_PARAMETROS = """
+    select chave, valor, vigente_de, vigente_ate
+      from cfg.parametro_cliente
+     where cliente_id = %s
+"""
+
+
+def parametros_das_linhas(linhas: list[Any]) -> list[Parametro]:
+    return [Parametro(r["chave"], r["valor"], r["vigente_de"], r["vigente_ate"]) for r in linhas]
 
 
 def vigente(parametros: list[Parametro], chave: str, data: date) -> Any | None:

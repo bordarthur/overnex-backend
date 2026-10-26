@@ -1,0 +1,1950 @@
+{
+  "tela": "vendas",
+  "versaoContrato": "1.0",
+  "cliente": {
+    "nome": "Cliente Demo",
+    "sigla": "CD",
+    "logoUrl": null
+  },
+  "dadosAte": "2026-10-12",
+  "atualizadoEm": "2026-10-13T12:02:00Z",
+  "filtros": [
+    {
+      "id": "canal",
+      "rotulo": "Canal",
+      "opcoes": [
+        {
+          "id": "todos",
+          "rotulo": "Todos"
+        },
+        {
+          "id": "varejo",
+          "rotulo": "Varejo"
+        },
+        {
+          "id": "atacado",
+          "rotulo": "Atacado"
+        },
+        {
+          "id": "televendas",
+          "rotulo": "Televendas"
+        }
+      ],
+      "padrao": "todos"
+    },
+    {
+      "id": "linha",
+      "rotulo": "Linha",
+      "opcoes": [
+        {
+          "id": "todas",
+          "rotulo": "Todas"
+        },
+        {
+          "id": "bovinos",
+          "rotulo": "Bovinos"
+        },
+        {
+          "id": "aves",
+          "rotulo": "Aves"
+        },
+        {
+          "id": "embutidos",
+          "rotulo": "Embutidos"
+        },
+        {
+          "id": "suinos",
+          "rotulo": "Suínos"
+        },
+        {
+          "id": "peixes",
+          "rotulo": "Peixes"
+        },
+        {
+          "id": "laticinios",
+          "rotulo": "Laticínios"
+        }
+      ],
+      "padrao": "todas"
+    }
+  ],
+  "destaques": [
+    {
+      "rotulo": "Vendido até 12/10",
+      "valor": {
+        "valor": 2180000,
+        "unidade": "brl"
+      },
+      "contexto": "7 de 21 dias úteis; 31,6% da meta"
+    },
+    {
+      "rotulo": "Projeção de fechamento",
+      "valor": {
+        "valor": 6540000,
+        "unidade": "brl"
+      },
+      "contexto": "94,8% da meta, se o ritmo de R$ 311 mil por dia se mantiver",
+      "status": "atencao"
+    },
+    {
+      "rotulo": "Média diária necessária para a meta",
+      "valor": {
+        "valor": 337143,
+        "unidade": "brl"
+      },
+      "contexto": "R$ 26 mil a mais por dia, nos 14 dias úteis que faltam"
+    }
+  ],
+  "kpis": [],
+  "apoios": [
+    {
+      "rotulo": "Pedidos",
+      "valor": {
+        "valor": 728,
+        "unidade": "qtd",
+        "casas": 0
+      }
+    },
+    {
+      "rotulo": "Ticket por pedido",
+      "valor": {
+        "valor": 2995,
+        "unidade": "brl",
+        "compacto": false
+      }
+    },
+    {
+      "rotulo": "Margem bruta das vendas",
+      "valor": {
+        "valor": 33.3,
+        "unidade": "pct",
+        "casas": 1
+      }
+    },
+    {
+      "rotulo": "Pedidos por cliente",
+      "valor": {
+        "valor": 2.1,
+        "unidade": "qtd",
+        "casas": 1
+      }
+    }
+  ],
+  "cartoes": [
+    {
+      "id": "andamento-mes",
+      "tipo": "andamento-mes",
+      "largura": 12,
+      "titulo": "Como o mês está andando",
+      "subtitulo": "A régua mostra o mês inteiro; o gráfico, o acumulado por dia útil",
+      "nota": "A venda só anda nos dias úteis: por isso a linha é uma escadinha, plana nos fins de semana e no feriado de 12/10 (faixas cinzas). Linha cheia: vendido. Tracejada: projeção no ritmo atual. Cinza: meta e supermeta acumuladas. O trecho vermelho no fim é o que falta para a meta.",
+      "regua": {
+        "trechos": [
+          {
+            "estilo": "realizado",
+            "rotulo": "Vendido até hoje",
+            "de": 0,
+            "ate": 2180000,
+            "valor": {
+              "valor": 2180000,
+              "unidade": "brl"
+            }
+          },
+          {
+            "estilo": "projecao",
+            "rotulo": "Projeção no ritmo atual",
+            "de": 2180000,
+            "ate": 6540000,
+            "valor": {
+              "valor": 4360000,
+              "unidade": "brl"
+            },
+            "comSinal": true
+          },
+          {
+            "estilo": "falta",
+            "rotulo": "Falta para a meta",
+            "de": 6540000,
+            "ate": 6900000,
+            "valor": {
+              "valor": 360000,
+              "unidade": "brl"
+            }
+          }
+        ],
+        "marcas": [
+          {
+            "rotulo": "Meta R$ 6,90 mi",
+            "valor": 6900000
+          },
+          {
+            "rotulo": "Supermeta",
+            "valor": 7590000,
+            "secundaria": true
+          }
+        ]
+      },
+      "estatisticas": [
+        {
+          "rotulo": "Dias úteis",
+          "valor": "7 de 21",
+          "contexto": "faltam 14"
+        },
+        {
+          "rotulo": "Ritmo atual",
+          "valor": {
+            "valor": 311429,
+            "unidade": "brl",
+            "sufixo": "por dia"
+          },
+          "contexto": "média dos dias vendidos"
+        },
+        {
+          "rotulo": "Necessário para a meta",
+          "valor": {
+            "valor": 337143,
+            "unidade": "brl",
+            "sufixo": "por dia"
+          },
+          "contexto": "+R$ 26 mil por dia sobre o ritmo",
+          "status": "atencao"
+        },
+        {
+          "rotulo": "Melhor e pior dia",
+          "valor": "R$ 341 · 287 mil",
+          "contexto": "02/10 e 05/10"
+        },
+        {
+          "rotulo": "Para a supermeta",
+          "valor": {
+            "valor": 1050000,
+            "unidade": "brl"
+          },
+          "contexto": "acima da projeção",
+          "status": "critico"
+        },
+        {
+          "rotulo": "No mesmo dia de setembro",
+          "valor": {
+            "valor": 2271911,
+            "unidade": "brl"
+          },
+          "contexto": "−R$ 92 mil contra hoje",
+          "status": "atencao"
+        }
+      ],
+      "visoes": [
+        {
+          "id": "valor",
+          "rotulo": "Valor",
+          "grafico": {
+            "tipo": "degraus",
+            "unidade": "brl",
+            "dias": [
+              {
+                "rotulo": "01",
+                "titulo": "01/10 · qui",
+                "util": true,
+                "eixo": true,
+                "eixoCurto": true
+              },
+              {
+                "rotulo": "02",
+                "titulo": "02/10 · sex",
+                "util": true
+              },
+              {
+                "rotulo": "03",
+                "titulo": "03/10 · sáb · sem venda",
+                "util": false
+              },
+              {
+                "rotulo": "04",
+                "titulo": "04/10 · dom · sem venda",
+                "util": false
+              },
+              {
+                "rotulo": "05",
+                "titulo": "05/10 · seg",
+                "util": true,
+                "eixo": true
+              },
+              {
+                "rotulo": "06",
+                "titulo": "06/10 · ter",
+                "util": true
+              },
+              {
+                "rotulo": "07",
+                "titulo": "07/10 · qua",
+                "util": true
+              },
+              {
+                "rotulo": "08",
+                "titulo": "08/10 · qui",
+                "util": true,
+                "eixo": true,
+                "eixoCurto": true
+              },
+              {
+                "rotulo": "09",
+                "titulo": "09/10 · sex",
+                "util": true
+              },
+              {
+                "rotulo": "10",
+                "titulo": "10/10 · sáb · sem venda",
+                "util": false
+              },
+              {
+                "rotulo": "11",
+                "titulo": "11/10 · dom · sem venda",
+                "util": false
+              },
+              {
+                "rotulo": "12",
+                "titulo": "12/10 · seg · sem venda",
+                "util": false,
+                "eixo": true
+              },
+              {
+                "rotulo": "13",
+                "titulo": "13/10 · ter",
+                "util": true
+              },
+              {
+                "rotulo": "14",
+                "titulo": "14/10 · qua",
+                "util": true
+              },
+              {
+                "rotulo": "15",
+                "titulo": "15/10 · qui",
+                "util": true,
+                "eixo": true,
+                "eixoCurto": true
+              },
+              {
+                "rotulo": "16",
+                "titulo": "16/10 · sex",
+                "util": true
+              },
+              {
+                "rotulo": "17",
+                "titulo": "17/10 · sáb · sem venda",
+                "util": false
+              },
+              {
+                "rotulo": "18",
+                "titulo": "18/10 · dom · sem venda",
+                "util": false
+              },
+              {
+                "rotulo": "19",
+                "titulo": "19/10 · seg",
+                "util": true,
+                "eixo": true
+              },
+              {
+                "rotulo": "20",
+                "titulo": "20/10 · ter",
+                "util": true
+              },
+              {
+                "rotulo": "21",
+                "titulo": "21/10 · qua",
+                "util": true
+              },
+              {
+                "rotulo": "22",
+                "titulo": "22/10 · qui",
+                "util": true,
+                "eixo": true,
+                "eixoCurto": true
+              },
+              {
+                "rotulo": "23",
+                "titulo": "23/10 · sex",
+                "util": true
+              },
+              {
+                "rotulo": "24",
+                "titulo": "24/10 · sáb · sem venda",
+                "util": false
+              },
+              {
+                "rotulo": "25",
+                "titulo": "25/10 · dom · sem venda",
+                "util": false
+              },
+              {
+                "rotulo": "26",
+                "titulo": "26/10 · seg",
+                "util": true,
+                "eixo": true
+              },
+              {
+                "rotulo": "27",
+                "titulo": "27/10 · ter",
+                "util": true
+              },
+              {
+                "rotulo": "28",
+                "titulo": "28/10 · qua",
+                "util": true
+              },
+              {
+                "rotulo": "29",
+                "titulo": "29/10 · qui",
+                "util": true,
+                "eixo": true,
+                "eixoCurto": true
+              },
+              {
+                "rotulo": "30",
+                "titulo": "30/10 · sex",
+                "util": true
+              },
+              {
+                "rotulo": "31",
+                "titulo": "31/10 · sáb · sem venda",
+                "util": false
+              }
+            ],
+            "series": [
+              {
+                "nome": "Supermeta acumulada",
+                "estilo": "supermeta",
+                "valores": [
+                  361428.6, 722857.1, 722857.1, 722857.1, 1084285.7, 1445714.3, 1807142.9, 2168571.4, 2530000,
+                  2530000, 2530000, 2530000, 2891428.6, 3252857.1, 3614285.7, 3975714.3, 3975714.3, 3975714.3,
+                  4337142.9, 4698571.4, 5060000, 5421428.6, 5782857.1, 5782857.1, 5782857.1, 6144285.7,
+                  6505714.3, 6867142.9, 7228571.4, 7590000, 7590000
+                ],
+                "rotuloFim": "Supermeta R$ 7,59 mi",
+                "rotuloFimCurto": "Super"
+              },
+              {
+                "nome": "Meta acumulada",
+                "estilo": "meta",
+                "valores": [
+                  328571.4, 657142.9, 657142.9, 657142.9, 985714.3, 1314285.7, 1642857.1, 1971428.6, 2300000,
+                  2300000, 2300000, 2300000, 2628571.4, 2957142.9, 3285714.3, 3614285.7, 3614285.7, 3614285.7,
+                  3942857.1, 4271428.6, 4600000, 4928571.4, 5257142.9, 5257142.9, 5257142.9, 5585714.3,
+                  5914285.7, 6242857.1, 6571428.6, 6900000, 6900000
+                ],
+                "rotuloFim": "Meta R$ 6,90 mi",
+                "rotuloFimCurto": "Meta"
+              },
+              {
+                "nome": "Projeção acumulada",
+                "estilo": "projecao",
+                "valores": [
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  2180000,
+                  2491428.6,
+                  2802857.1,
+                  3114285.7,
+                  3425714.3,
+                  3425714.3,
+                  3425714.3,
+                  3737142.9,
+                  4048571.4,
+                  4360000,
+                  4671428.6,
+                  4982857.1,
+                  4982857.1,
+                  4982857.1,
+                  5294285.7,
+                  5605714.3,
+                  5917142.9,
+                  6228571.4,
+                  6540000,
+                  6540000
+                ],
+                "rotuloFim": "Projeção R$ 6,54 mi",
+                "rotuloFimCurto": "Proj."
+              },
+              {
+                "nome": "Vendido acumulado",
+                "estilo": "realizado",
+                "valores": [
+                  298000,
+                  639000,
+                  639000,
+                  639000,
+                  926000,
+                  1248000,
+                  1553000,
+                  1883000,
+                  2180000,
+                  2180000,
+                  2180000,
+                  2180000,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null
+                ]
+              }
+            ],
+            "hoje": {
+              "indice": 11,
+              "rotulo": "hoje: R$ 2,18 mi"
+            },
+            "falta": {
+              "de": 6540000,
+              "ate": 6900000
+            }
+          }
+        },
+        {
+          "id": "volume",
+          "rotulo": "Volume",
+          "grafico": {
+            "tipo": "degraus",
+            "unidade": "qtd",
+            "sufixo": "t",
+            "dias": [
+              {
+                "rotulo": "01",
+                "titulo": "01/10 · qui",
+                "util": true,
+                "eixo": true,
+                "eixoCurto": true
+              },
+              {
+                "rotulo": "02",
+                "titulo": "02/10 · sex",
+                "util": true
+              },
+              {
+                "rotulo": "03",
+                "titulo": "03/10 · sáb · sem venda",
+                "util": false
+              },
+              {
+                "rotulo": "04",
+                "titulo": "04/10 · dom · sem venda",
+                "util": false
+              },
+              {
+                "rotulo": "05",
+                "titulo": "05/10 · seg",
+                "util": true,
+                "eixo": true
+              },
+              {
+                "rotulo": "06",
+                "titulo": "06/10 · ter",
+                "util": true
+              },
+              {
+                "rotulo": "07",
+                "titulo": "07/10 · qua",
+                "util": true
+              },
+              {
+                "rotulo": "08",
+                "titulo": "08/10 · qui",
+                "util": true,
+                "eixo": true,
+                "eixoCurto": true
+              },
+              {
+                "rotulo": "09",
+                "titulo": "09/10 · sex",
+                "util": true
+              },
+              {
+                "rotulo": "10",
+                "titulo": "10/10 · sáb · sem venda",
+                "util": false
+              },
+              {
+                "rotulo": "11",
+                "titulo": "11/10 · dom · sem venda",
+                "util": false
+              },
+              {
+                "rotulo": "12",
+                "titulo": "12/10 · seg · sem venda",
+                "util": false,
+                "eixo": true
+              },
+              {
+                "rotulo": "13",
+                "titulo": "13/10 · ter",
+                "util": true
+              },
+              {
+                "rotulo": "14",
+                "titulo": "14/10 · qua",
+                "util": true
+              },
+              {
+                "rotulo": "15",
+                "titulo": "15/10 · qui",
+                "util": true,
+                "eixo": true,
+                "eixoCurto": true
+              },
+              {
+                "rotulo": "16",
+                "titulo": "16/10 · sex",
+                "util": true
+              },
+              {
+                "rotulo": "17",
+                "titulo": "17/10 · sáb · sem venda",
+                "util": false
+              },
+              {
+                "rotulo": "18",
+                "titulo": "18/10 · dom · sem venda",
+                "util": false
+              },
+              {
+                "rotulo": "19",
+                "titulo": "19/10 · seg",
+                "util": true,
+                "eixo": true
+              },
+              {
+                "rotulo": "20",
+                "titulo": "20/10 · ter",
+                "util": true
+              },
+              {
+                "rotulo": "21",
+                "titulo": "21/10 · qua",
+                "util": true
+              },
+              {
+                "rotulo": "22",
+                "titulo": "22/10 · qui",
+                "util": true,
+                "eixo": true,
+                "eixoCurto": true
+              },
+              {
+                "rotulo": "23",
+                "titulo": "23/10 · sex",
+                "util": true
+              },
+              {
+                "rotulo": "24",
+                "titulo": "24/10 · sáb · sem venda",
+                "util": false
+              },
+              {
+                "rotulo": "25",
+                "titulo": "25/10 · dom · sem venda",
+                "util": false
+              },
+              {
+                "rotulo": "26",
+                "titulo": "26/10 · seg",
+                "util": true,
+                "eixo": true
+              },
+              {
+                "rotulo": "27",
+                "titulo": "27/10 · ter",
+                "util": true
+              },
+              {
+                "rotulo": "28",
+                "titulo": "28/10 · qua",
+                "util": true
+              },
+              {
+                "rotulo": "29",
+                "titulo": "29/10 · qui",
+                "util": true,
+                "eixo": true,
+                "eixoCurto": true
+              },
+              {
+                "rotulo": "30",
+                "titulo": "30/10 · sex",
+                "util": true
+              },
+              {
+                "rotulo": "31",
+                "titulo": "31/10 · sáb · sem venda",
+                "util": false
+              }
+            ],
+            "series": [
+              {
+                "nome": "Supermeta acumulada",
+                "estilo": "supermeta",
+                "valores": [
+                  26.9, 53.8, 53.8, 53.8, 80.7, 107.6, 134.6, 161.5, 188.4, 188.4, 188.4, 188.4, 215.3, 242.2,
+                  269.1, 296, 296, 296, 322.9, 349.9, 376.8, 403.7, 430.6, 430.6, 430.6, 457.5, 484.4, 511.3,
+                  538.2, 565.2, 565.2
+                ],
+                "rotuloFim": "Supermeta 565 t",
+                "rotuloFimCurto": "Super"
+              },
+              {
+                "nome": "Meta acumulada",
+                "estilo": "meta",
+                "valores": [
+                  24.5, 48.9, 48.9, 48.9, 73.4, 97.9, 122.3, 146.8, 171.3, 171.3, 171.3, 171.3, 195.7, 220.2,
+                  244.7, 269.1, 269.1, 269.1, 293.6, 318.1, 342.5, 367, 391.4, 391.4, 391.4, 415.9, 440.4,
+                  464.8, 489.3, 513.8, 513.8
+                ],
+                "rotuloFim": "Meta 514 t",
+                "rotuloFimCurto": "Meta"
+              },
+              {
+                "nome": "Projeção acumulada",
+                "estilo": "projecao",
+                "valores": [
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  162.3,
+                  185.5,
+                  208.7,
+                  231.9,
+                  255.1,
+                  255.1,
+                  255.1,
+                  278.3,
+                  301.5,
+                  324.6,
+                  347.8,
+                  371,
+                  371,
+                  371,
+                  394.2,
+                  417.4,
+                  440.6,
+                  463.8,
+                  487,
+                  487
+                ],
+                "rotuloFim": "Projeção 487 t",
+                "rotuloFimCurto": "Proj."
+              },
+              {
+                "nome": "Vendido acumulado",
+                "estilo": "realizado",
+                "valores": [
+                  22.2,
+                  47.6,
+                  47.6,
+                  47.6,
+                  69,
+                  92.9,
+                  115.6,
+                  140.2,
+                  162.3,
+                  162.3,
+                  162.3,
+                  162.3,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null
+                ]
+              }
+            ],
+            "hoje": {
+              "indice": 11,
+              "rotulo": "hoje: 162 t"
+            },
+            "falta": {
+              "de": 487,
+              "ate": 513.8
+            }
+          }
+        }
+      ],
+      "explicacao": "A régua mostra o mês inteiro: vendido, o que falta no ritmo atual e o que falta para a meta. O gráfico mostra o acumulado por dia útil; as faixas cinzas são os dias sem venda."
+    },
+    {
+      "id": "fatores-meta",
+      "tipo": "fatores",
+      "largura": 5,
+      "titulo": "Por que a meta escorrega",
+      "subtitulo": "Faturamento = clientes × pedidos por cliente × ticket",
+      "total": {
+        "rotulo": "Faturamento projetado",
+        "valor": {
+          "valor": 6540000,
+          "unidade": "brl"
+        },
+        "contexto": "−5,2% contra a meta",
+        "status": "critico"
+      },
+      "fatores": [
+        {
+          "nome": "Clientes que compram no mês",
+          "causa": true,
+          "colunas": [
+            {
+              "rotulo": "Projeção",
+              "valor": {
+                "valor": 1040,
+                "unidade": "qtd",
+                "casas": 0
+              }
+            },
+            {
+              "rotulo": "Meta",
+              "valor": {
+                "valor": 1120,
+                "unidade": "qtd",
+                "casas": 0
+              }
+            },
+            {
+              "rotulo": "Diferença",
+              "valor": {
+                "valor": -7.1,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "comSinal": true,
+              "status": "critico"
+            }
+          ]
+        },
+        {
+          "nome": "Pedidos por cliente",
+          "operador": "×",
+          "colunas": [
+            {
+              "rotulo": "Projeção",
+              "valor": {
+                "valor": 2.1,
+                "unidade": "qtd",
+                "casas": 1
+              }
+            },
+            {
+              "rotulo": "Meta",
+              "valor": {
+                "valor": 2.1,
+                "unidade": "qtd",
+                "casas": 1
+              }
+            },
+            {
+              "rotulo": "Diferença",
+              "valor": {
+                "valor": 0,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "comSinal": true
+            }
+          ]
+        },
+        {
+          "nome": "Ticket por pedido",
+          "operador": "×",
+          "colunas": [
+            {
+              "rotulo": "Projeção",
+              "valor": {
+                "valor": 2995,
+                "unidade": "brl",
+                "compacto": false
+              }
+            },
+            {
+              "rotulo": "Meta",
+              "valor": {
+                "valor": 2934,
+                "unidade": "brl",
+                "compacto": false
+              }
+            },
+            {
+              "rotulo": "Diferença",
+              "valor": {
+                "valor": 2.1,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "comSinal": true,
+              "status": "saudavel"
+            }
+          ]
+        }
+      ],
+      "conclusao": [
+        {
+          "texto": "O que derruba a meta é "
+        },
+        {
+          "texto": "positivação",
+          "destaque": true
+        },
+        {
+          "texto": ": 80 clientes a menos que o planejado, 77% deles no varejo. Ticket e frequência estão no ponto."
+        }
+      ],
+      "explicacao": "O faturamento é clientes × pedidos por cliente × ticket. O fator em vermelho é o que mais explica a diferença para a meta."
+    },
+    {
+      "id": "ritmo-dia",
+      "tipo": "graficos",
+      "largura": 7,
+      "titulo": "Ritmo por dia útil",
+      "subtitulo": "Vendido por dia contra a meta diária e o que falta fazer por dia",
+      "legenda": [
+        {
+          "nome": "Meta diária",
+          "marca": "media"
+        },
+        {
+          "nome": "Necessário",
+          "marca": "minimo"
+        }
+      ],
+      "graficos": [
+        {
+          "grafico": {
+            "tipo": "barras",
+            "unidade": "brl",
+            "grupos": [
+              {
+                "rotulo": "01",
+                "titulo": "01/10",
+                "barras": [
+                  {
+                    "nome": "Vendido",
+                    "valor": 298000,
+                    "estilo": "atencao"
+                  }
+                ]
+              },
+              {
+                "rotulo": "02",
+                "titulo": "02/10",
+                "barras": [
+                  {
+                    "nome": "Vendido",
+                    "valor": 341000,
+                    "estilo": "saudavel"
+                  }
+                ]
+              },
+              {
+                "rotulo": "05",
+                "titulo": "05/10",
+                "barras": [
+                  {
+                    "nome": "Vendido",
+                    "valor": 287000,
+                    "estilo": "atencao"
+                  }
+                ]
+              },
+              {
+                "rotulo": "06",
+                "titulo": "06/10",
+                "barras": [
+                  {
+                    "nome": "Vendido",
+                    "valor": 322000,
+                    "estilo": "atencao"
+                  }
+                ]
+              },
+              {
+                "rotulo": "07",
+                "titulo": "07/10",
+                "barras": [
+                  {
+                    "nome": "Vendido",
+                    "valor": 305000,
+                    "estilo": "atencao"
+                  }
+                ]
+              },
+              {
+                "rotulo": "08",
+                "titulo": "08/10",
+                "barras": [
+                  {
+                    "nome": "Vendido",
+                    "valor": 330000,
+                    "estilo": "saudavel"
+                  }
+                ]
+              },
+              {
+                "rotulo": "09",
+                "titulo": "09/10",
+                "barras": [
+                  {
+                    "nome": "Vendido",
+                    "valor": 297000,
+                    "estilo": "atencao"
+                  }
+                ]
+              },
+              {
+                "rotulo": "13",
+                "titulo": "13/10",
+                "barras": [
+                  {
+                    "nome": "Necessário",
+                    "valor": 337143,
+                    "estilo": "fantasma"
+                  }
+                ]
+              },
+              {
+                "rotulo": "14",
+                "titulo": "14/10",
+                "barras": [
+                  {
+                    "nome": "Necessário",
+                    "valor": 337143,
+                    "estilo": "fantasma"
+                  }
+                ]
+              },
+              {
+                "rotulo": "15",
+                "titulo": "15/10",
+                "barras": [
+                  {
+                    "nome": "Necessário",
+                    "valor": 337143,
+                    "estilo": "fantasma"
+                  }
+                ]
+              },
+              {
+                "rotulo": "16",
+                "titulo": "16/10",
+                "barras": [
+                  {
+                    "nome": "Necessário",
+                    "valor": 337143,
+                    "estilo": "fantasma"
+                  }
+                ]
+              },
+              {
+                "rotulo": "19",
+                "titulo": "19/10",
+                "barras": [
+                  {
+                    "nome": "Necessário",
+                    "valor": 337143,
+                    "estilo": "fantasma"
+                  }
+                ]
+              },
+              {
+                "rotulo": "20",
+                "titulo": "20/10",
+                "barras": [
+                  {
+                    "nome": "Necessário",
+                    "valor": 337143,
+                    "estilo": "fantasma"
+                  }
+                ]
+              },
+              {
+                "rotulo": "21",
+                "titulo": "21/10",
+                "barras": [
+                  {
+                    "nome": "Necessário",
+                    "valor": 337143,
+                    "estilo": "fantasma"
+                  }
+                ]
+              },
+              {
+                "rotulo": "22",
+                "titulo": "22/10",
+                "barras": [
+                  {
+                    "nome": "Necessário",
+                    "valor": 337143,
+                    "estilo": "fantasma"
+                  }
+                ]
+              },
+              {
+                "rotulo": "23",
+                "titulo": "23/10",
+                "barras": [
+                  {
+                    "nome": "Necessário",
+                    "valor": 337143,
+                    "estilo": "fantasma"
+                  }
+                ]
+              },
+              {
+                "rotulo": "26",
+                "titulo": "26/10",
+                "barras": [
+                  {
+                    "nome": "Necessário",
+                    "valor": 337143,
+                    "estilo": "fantasma"
+                  }
+                ]
+              },
+              {
+                "rotulo": "27",
+                "titulo": "27/10",
+                "barras": [
+                  {
+                    "nome": "Necessário",
+                    "valor": 337143,
+                    "estilo": "fantasma"
+                  }
+                ]
+              },
+              {
+                "rotulo": "28",
+                "titulo": "28/10",
+                "barras": [
+                  {
+                    "nome": "Necessário",
+                    "valor": 337143,
+                    "estilo": "fantasma"
+                  }
+                ]
+              },
+              {
+                "rotulo": "29",
+                "titulo": "29/10",
+                "barras": [
+                  {
+                    "nome": "Necessário",
+                    "valor": 337143,
+                    "estilo": "fantasma"
+                  }
+                ]
+              },
+              {
+                "rotulo": "30",
+                "titulo": "30/10",
+                "barras": [
+                  {
+                    "nome": "Necessário",
+                    "valor": 337143,
+                    "estilo": "fantasma"
+                  }
+                ]
+              }
+            ],
+            "referencias": [
+              {
+                "nome": "Meta diária",
+                "valor": 328571,
+                "estilo": "media"
+              },
+              {
+                "nome": "Necessário",
+                "valor": 337143,
+                "estilo": "minimo"
+              }
+            ]
+          }
+        }
+      ],
+      "explicacao": "Cada barra é o que foi vendido num dia útil. A linha cinza é a meta diária original; a amarela é quanto precisa vender por dia daqui para frente para bater a meta. Se a amarela está acima da cinza, a empresa está atrasada."
+    },
+    {
+      "id": "linhas-produto",
+      "tipo": "tabela",
+      "largura": 8,
+      "titulo": "Linhas de produto ou serviço: receita e margem",
+      "subtitulo": "Participação no mês e margem bruta, contra a média dos últimos 3 meses",
+      "nota": "Bovinos, a linha de menor margem, ganhou 3 p.p. de participação e perdeu 1,9 p.p. de margem. Isso explica boa parte da queda da margem bruta no Resultado.",
+      "colunas": [
+        {
+          "rotulo": "Linha",
+          "alinhar": "esquerda"
+        },
+        {
+          "rotulo": "Receita"
+        },
+        {
+          "rotulo": "Part."
+        },
+        {
+          "rotulo": "vs 3 meses",
+          "ocultarNoCelular": true
+        },
+        {
+          "rotulo": "Margem"
+        },
+        {
+          "rotulo": "vs 3 meses",
+          "ocultarNoCelular": true
+        },
+        {
+          "rotulo": "Farol",
+          "ocultarNoCelular": true
+        }
+      ],
+      "linhas": [
+        {
+          "status": "critico",
+          "celulas": [
+            {
+              "valor": "Bovinos",
+              "negrito": true
+            },
+            {
+              "valor": {
+                "valor": 741000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 34,
+                "unidade": "pct",
+                "casas": 0
+              }
+            },
+            {
+              "valor": {
+                "valor": 3,
+                "unidade": "pp",
+                "casas": 1
+              },
+              "comSinal": true,
+              "seta": true,
+              "tom": "apagado"
+            },
+            {
+              "valor": {
+                "valor": 28.5,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "negrito": true
+            },
+            {
+              "valor": {
+                "valor": -1.9,
+                "unidade": "pp",
+                "casas": 1
+              },
+              "comSinal": true,
+              "tom": "critico"
+            },
+            {
+              "pill": "critico"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Aves",
+              "negrito": true
+            },
+            {
+              "valor": {
+                "valor": 458000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 21,
+                "unidade": "pct",
+                "casas": 0
+              }
+            },
+            {
+              "valor": {
+                "valor": -1,
+                "unidade": "pp",
+                "casas": 1
+              },
+              "comSinal": true,
+              "seta": true,
+              "tom": "apagado"
+            },
+            {
+              "valor": {
+                "valor": 34,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "negrito": true
+            },
+            {
+              "valor": {
+                "valor": 0.4,
+                "unidade": "pp",
+                "casas": 1
+              },
+              "comSinal": true,
+              "tom": "saudavel"
+            },
+            {
+              "pill": "saudavel"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Embutidos",
+              "negrito": true
+            },
+            {
+              "valor": {
+                "valor": 283000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 13,
+                "unidade": "pct",
+                "casas": 0
+              }
+            },
+            {
+              "valor": {
+                "valor": -0.5,
+                "unidade": "pp",
+                "casas": 1
+              },
+              "comSinal": true,
+              "seta": true,
+              "tom": "apagado"
+            },
+            {
+              "valor": {
+                "valor": 39.8,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "negrito": true
+            },
+            {
+              "valor": {
+                "valor": 0.2,
+                "unidade": "pp",
+                "casas": 1
+              },
+              "comSinal": true,
+              "tom": "saudavel"
+            },
+            {
+              "pill": "saudavel"
+            }
+          ]
+        },
+        {
+          "status": "atencao",
+          "celulas": [
+            {
+              "valor": "Suínos",
+              "negrito": true
+            },
+            {
+              "valor": {
+                "valor": 262000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 12,
+                "unidade": "pct",
+                "casas": 0
+              }
+            },
+            {
+              "valor": {
+                "valor": 0,
+                "unidade": "pp",
+                "casas": 1
+              },
+              "comSinal": true,
+              "seta": true,
+              "tom": "apagado"
+            },
+            {
+              "valor": {
+                "valor": 31.2,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "negrito": true
+            },
+            {
+              "valor": {
+                "valor": -0.6,
+                "unidade": "pp",
+                "casas": 1
+              },
+              "comSinal": true,
+              "tom": "critico"
+            },
+            {
+              "pill": "atencao"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Peixes",
+              "negrito": true
+            },
+            {
+              "valor": {
+                "valor": 196000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 9,
+                "unidade": "pct",
+                "casas": 0
+              }
+            },
+            {
+              "valor": {
+                "valor": -1,
+                "unidade": "pp",
+                "casas": 1
+              },
+              "comSinal": true,
+              "seta": true,
+              "tom": "apagado"
+            },
+            {
+              "valor": {
+                "valor": 38.5,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "negrito": true
+            },
+            {
+              "valor": {
+                "valor": 0.3,
+                "unidade": "pp",
+                "casas": 1
+              },
+              "comSinal": true,
+              "tom": "saudavel"
+            },
+            {
+              "pill": "saudavel"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Laticínios",
+              "negrito": true
+            },
+            {
+              "valor": {
+                "valor": 174000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 8,
+                "unidade": "pct",
+                "casas": 0
+              }
+            },
+            {
+              "valor": {
+                "valor": -0.5,
+                "unidade": "pp",
+                "casas": 1
+              },
+              "comSinal": true,
+              "seta": true,
+              "tom": "apagado"
+            },
+            {
+              "valor": {
+                "valor": 36.1,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "negrito": true
+            },
+            {
+              "valor": {
+                "valor": 0.1,
+                "unidade": "pp",
+                "casas": 1
+              },
+              "comSinal": true,
+              "tom": "saudavel"
+            },
+            {
+              "pill": "saudavel"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Outros",
+              "negrito": true
+            },
+            {
+              "valor": {
+                "valor": 66000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 3,
+                "unidade": "pct",
+                "casas": 0
+              }
+            },
+            {
+              "valor": {
+                "valor": 0,
+                "unidade": "pp",
+                "casas": 1
+              },
+              "comSinal": true,
+              "seta": true,
+              "tom": "apagado"
+            },
+            {
+              "valor": {
+                "valor": 41,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "negrito": true
+            },
+            {
+              "valor": {
+                "valor": 0,
+                "unidade": "pp",
+                "casas": 1
+              },
+              "comSinal": true
+            },
+            {
+              "pill": "saudavel"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "canais",
+      "tipo": "contra-meta",
+      "largura": 4,
+      "titulo": "Canais",
+      "subtitulo": "Projeção de cada canal contra a meta",
+      "layout": "blocos",
+      "rotuloRealizado": "Projeção",
+      "rotuloMeta": "meta",
+      "nota": "O varejo responde por R$ 397 mil abaixo da meta; o atacado compensa R$ 194 mil.",
+      "itens": [
+        {
+          "nome": "Atacado",
+          "status": "saudavel",
+          "atingimento": {
+            "valor": 107,
+            "unidade": "pct",
+            "casas": 0
+          },
+          "realizado": {
+            "valor": 2844000,
+            "unidade": "brl"
+          },
+          "meta": {
+            "valor": 2650000,
+            "unidade": "brl"
+          },
+          "diferenca": {
+            "valor": 194000,
+            "unidade": "brl"
+          },
+          "diferencaRuim": false,
+          "detalhes": ["Vendido até hoje R$ 948 mil", "2 vendedores"]
+        },
+        {
+          "nome": "Varejo",
+          "status": "critico",
+          "atingimento": {
+            "valor": 88,
+            "unidade": "pct",
+            "casas": 0
+          },
+          "realizado": {
+            "valor": 3003000,
+            "unidade": "brl"
+          },
+          "meta": {
+            "valor": 3400000,
+            "unidade": "brl"
+          },
+          "diferenca": {
+            "valor": -397000,
+            "unidade": "brl"
+          },
+          "diferencaRuim": true,
+          "detalhes": ["Vendido até hoje R$ 1,00 mi", "3 vendedores"]
+        },
+        {
+          "nome": "Televendas",
+          "status": "critico",
+          "atingimento": {
+            "valor": 82,
+            "unidade": "pct",
+            "casas": 0
+          },
+          "realizado": {
+            "valor": 693000,
+            "unidade": "brl"
+          },
+          "meta": {
+            "valor": 850000,
+            "unidade": "brl"
+          },
+          "diferenca": {
+            "valor": -157000,
+            "unidade": "brl"
+          },
+          "diferencaRuim": true,
+          "detalhes": ["Vendido até hoje R$ 231 mil", "1 vendedor"]
+        }
+      ],
+      "explicacao": "Mostra a projeção de cada canal contra a soma das metas dos vendedores dele. O traço na barra é 100% da meta."
+    },
+    {
+      "id": "vendas-12-meses",
+      "tipo": "graficos",
+      "largura": 12,
+      "titulo": "Vendas nos últimos 12 meses",
+      "subtitulo": "Barras: realizado; traço: meta; linha de cima: atingimento ou ticket por cliente. Barra vermelha é mês abaixo da meta.",
+      "graficos": [
+        {
+          "titulo": "Vendas por mês",
+          "grafico": {
+            "tipo": "combo",
+            "unidade": "brl",
+            "nomes": {
+              "valor": "Vendido",
+              "referencia": "Meta",
+              "linha": "% da meta"
+            },
+            "escalaLinha": {
+              "unidade": "pct",
+              "casas": 0
+            },
+            "pontos": [
+              {
+                "rotulo": "out-25",
+                "valor": 6640000,
+                "referencia": 6550000,
+                "linha": 101.4
+              },
+              {
+                "rotulo": "nov-25",
+                "valor": 6710000,
+                "referencia": 6600000,
+                "linha": 101.7
+              },
+              {
+                "rotulo": "dez-25",
+                "valor": 7020000,
+                "referencia": 6900000,
+                "linha": 101.7
+              },
+              {
+                "rotulo": "jan-26",
+                "valor": 6380000,
+                "referencia": 6400000,
+                "linha": 99.7
+              },
+              {
+                "rotulo": "fev-26",
+                "valor": 6510000,
+                "referencia": 6450000,
+                "linha": 100.9
+              },
+              {
+                "rotulo": "mar-26",
+                "valor": 6800000,
+                "referencia": 6700000,
+                "linha": 101.5
+              },
+              {
+                "rotulo": "abr-26",
+                "valor": 6860000,
+                "referencia": 6750000,
+                "linha": 101.6
+              },
+              {
+                "rotulo": "mai-26",
+                "valor": 6750000,
+                "referencia": 6680000,
+                "linha": 101
+              },
+              {
+                "rotulo": "jun-26",
+                "valor": 6660000,
+                "referencia": 6800000,
+                "status": "critico",
+                "linha": 97.9
+              },
+              {
+                "rotulo": "jul-26",
+                "valor": 7110000,
+                "referencia": 6900000,
+                "linha": 103
+              },
+              {
+                "rotulo": "ago-26",
+                "valor": 6690000,
+                "referencia": 6900000,
+                "status": "critico",
+                "linha": 97
+              },
+              {
+                "rotulo": "set-26",
+                "valor": 6950000,
+                "referencia": 6800000,
+                "linha": 102.2
+              }
+            ]
+          }
+        },
+        {
+          "titulo": "Clientes que compraram e ticket por cliente",
+          "grafico": {
+            "tipo": "combo",
+            "unidade": "qtd",
+            "nomes": {
+              "valor": "Clientes",
+              "referencia": "Meta de clientes",
+              "linha": "Ticket por cliente"
+            },
+            "escalaLinha": {
+              "unidade": "brl"
+            },
+            "pontos": [
+              {
+                "rotulo": "out-25",
+                "valor": 1102,
+                "referencia": 1100,
+                "linha": 6025
+              },
+              {
+                "rotulo": "nov-25",
+                "valor": 1095,
+                "referencia": 1100,
+                "linha": 6128
+              },
+              {
+                "rotulo": "dez-25",
+                "valor": 1120,
+                "referencia": 1100,
+                "linha": 6268
+              },
+              {
+                "rotulo": "jan-26",
+                "valor": 1060,
+                "referencia": 1100,
+                "status": "critico",
+                "linha": 6019
+              },
+              {
+                "rotulo": "fev-26",
+                "valor": 1075,
+                "referencia": 1100,
+                "status": "critico",
+                "linha": 6056
+              },
+              {
+                "rotulo": "mar-26",
+                "valor": 1098,
+                "referencia": 1120,
+                "linha": 6193
+              },
+              {
+                "rotulo": "abr-26",
+                "valor": 1090,
+                "referencia": 1120,
+                "status": "critico",
+                "linha": 6294
+              },
+              {
+                "rotulo": "mai-26",
+                "valor": 1080,
+                "referencia": 1120,
+                "status": "critico",
+                "linha": 6250
+              },
+              {
+                "rotulo": "jun-26",
+                "valor": 1110,
+                "referencia": 1120,
+                "linha": 6000
+              },
+              {
+                "rotulo": "jul-26",
+                "valor": 1095,
+                "referencia": 1120,
+                "status": "critico",
+                "linha": 6493
+              },
+              {
+                "rotulo": "ago-26",
+                "valor": 1070,
+                "referencia": 1120,
+                "status": "critico",
+                "linha": 6252
+              },
+              {
+                "rotulo": "set-26",
+                "valor": 1060,
+                "referencia": 1120,
+                "status": "critico",
+                "linha": 6557
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "participacao-linhas",
+      "tipo": "graficos",
+      "largura": 12,
+      "titulo": "Participação de cada linha nas vendas, mês a mês",
+      "subtitulo": "Bovinos foi de 30% para 34% das vendas em 12 meses; como é a linha de menor margem, a margem total cai.",
+      "graficos": [
+        {
+          "grafico": {
+            "tipo": "empilhado",
+            "unidade": "pct",
+            "casas": 0,
+            "rotulos": [
+              "out-25",
+              "nov-25",
+              "dez-25",
+              "jan-26",
+              "fev-26",
+              "mar-26",
+              "abr-26",
+              "mai-26",
+              "jun-26",
+              "jul-26",
+              "ago-26",
+              "set-26"
+            ],
+            "series": [
+              {
+                "nome": "Bovinos",
+                "valores": [30, 30, 31, 31, 31, 32, 32, 33, 33, 33, 34, 34]
+              },
+              {
+                "nome": "Aves",
+                "valores": [23, 23, 23, 22, 22, 22, 22, 22, 21, 21, 21, 21]
+              },
+              {
+                "nome": "Embutidos",
+                "valores": [14, 14, 14, 14, 14, 13, 13, 13, 13, 13, 13, 13]
+              },
+              {
+                "nome": "Suínos",
+                "valores": [12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12]
+              },
+              {
+                "nome": "Peixes",
+                "valores": [10, 10, 9, 10, 10, 10, 10, 9, 10, 10, 9, 9]
+              },
+              {
+                "nome": "Laticínios",
+                "valores": [8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8]
+              },
+              {
+                "nome": "Outros",
+                "valores": [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 """Pool de conexões e a transação por requisição."""
 
-from collections.abc import Iterator
+from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from typing import Annotated, Any
@@ -9,6 +9,7 @@ from uuid import UUID
 from fastapi import Depends, Request
 from psycopg import Connection
 from psycopg.rows import DictRow, dict_row
+from psycopg.sql import Composed
 from psycopg_pool import ConnectionPool
 
 from app.core.config import Settings
@@ -109,3 +110,20 @@ def conexao_paralela(pool: Pool, usuario_id: UUID) -> Iterator[Conexao]:
             yield conn
         finally:
             conn.rollback()
+
+
+def em_uma_ida(
+    conn: Conexao, consultas: Mapping[str, tuple[str | Composed, Any]]
+) -> dict[str, list[DictRow]]:
+    """Várias consultas numa ida e volta só (pipeline do psycopg): nome → linhas.
+
+    O banco fica a ~100 ms de ida e volta; consultas pequenas e independentes custam quase
+    só a rede, então vão juntas. Rodam em ordem, na transação da conexão: a primeira que
+    falhar desfaz a transação e levanta o erro.
+    """
+    if not consultas:
+        return {}
+    with conn.pipeline():
+        cursores = {nome: conn.execute(q, p) for nome, (q, p) in consultas.items()}
+        # o primeiro fetch manda tudo e espera as respostas; os outros já estão aqui
+        return {nome: c.fetchall() for nome, c in cursores.items()}

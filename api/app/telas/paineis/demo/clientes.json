@@ -1,0 +1,1165 @@
+{
+  "tela": "clientes",
+  "versaoContrato": "1.0",
+  "cliente": {
+    "nome": "Cliente Demo",
+    "sigla": "CD",
+    "logoUrl": null
+  },
+  "dadosAte": "2026-10-12",
+  "atualizadoEm": "2026-10-13T12:02:00Z",
+  "filtros": [],
+  "aviso": {
+    "tom": "info",
+    "texto": [
+      {
+        "texto": "Painel universal: não depende de saber quem é o cliente. Serve para restaurante, loja, serviço e distribuidora. As análises cliente a cliente estão em Carteira de clientes, no módulo Distribuidora."
+      }
+    ]
+  },
+  "destaques": [],
+  "kpis": [
+    {
+      "rotulo": "Atendimentos no mês",
+      "valor": {
+        "valor": 2184,
+        "unidade": "qtd",
+        "casas": 0
+      },
+      "contexto": "projeção; média de 12 meses: 2.330",
+      "status": "atencao"
+    },
+    {
+      "rotulo": "Ticket médio por atendimento",
+      "valor": {
+        "valor": 2995,
+        "unidade": "brl",
+        "compacto": false
+      },
+      "contexto": "+3,1% sobre a média de 12 meses",
+      "status": "saudavel"
+    },
+    {
+      "rotulo": "Itens por atendimento",
+      "valor": {
+        "valor": 4.8,
+        "unidade": "qtd",
+        "casas": 1
+      },
+      "contexto": "média de 12 meses: 5,1",
+      "status": "atencao"
+    },
+    {
+      "rotulo": "Atendimentos por dia útil",
+      "valor": {
+        "valor": 104,
+        "unidade": "qtd",
+        "casas": 0
+      },
+      "contexto": "segunda e sexta são os dias mais fortes"
+    }
+  ],
+  "apoios": [],
+  "cartoes": [
+    {
+      "id": "atendimentos-ticket",
+      "tipo": "graficos",
+      "largura": 12,
+      "titulo": "Atendimentos e ticket médio",
+      "subtitulo": "Quantos atendimentos houve em cada mês e quanto cada um valeu. A barra amarela é a projeção de outubro.",
+      "graficos": [
+        {
+          "titulo": "Atendimentos por mês",
+          "nota": "Barra escura: acima da média de 12 meses (tracejado). Clara: abaixo.",
+          "grafico": {
+            "tipo": "barras",
+            "unidade": "qtd",
+            "rotulosNasBarras": true,
+            "grupos": [
+              {
+                "rotulo": "out",
+                "titulo": "out-25",
+                "barras": [
+                  {
+                    "nome": "Atendimentos",
+                    "valor": 2330,
+                    "estilo": "serie-media"
+                  }
+                ]
+              },
+              {
+                "rotulo": "nov",
+                "titulo": "nov-25",
+                "barras": [
+                  {
+                    "nome": "Atendimentos",
+                    "valor": 2338,
+                    "estilo": "serie-media"
+                  }
+                ]
+              },
+              {
+                "rotulo": "dez",
+                "titulo": "dez-25",
+                "barras": [
+                  {
+                    "nome": "Atendimentos",
+                    "valor": 2417,
+                    "estilo": "serie-media"
+                  }
+                ]
+              },
+              {
+                "rotulo": "jan",
+                "titulo": "jan-26",
+                "barras": [
+                  {
+                    "nome": "Atendimentos",
+                    "valor": 2270,
+                    "estilo": "serie-clara"
+                  }
+                ]
+              },
+              {
+                "rotulo": "fev",
+                "titulo": "fev-26",
+                "barras": [
+                  {
+                    "nome": "Atendimentos",
+                    "valor": 2292,
+                    "estilo": "serie-clara"
+                  }
+                ]
+              },
+              {
+                "rotulo": "mar",
+                "titulo": "mar-26",
+                "barras": [
+                  {
+                    "nome": "Atendimentos",
+                    "valor": 2361,
+                    "estilo": "serie-media"
+                  }
+                ]
+              },
+              {
+                "rotulo": "abr",
+                "titulo": "abr-26",
+                "barras": [
+                  {
+                    "nome": "Atendimentos",
+                    "valor": 2361,
+                    "estilo": "serie-media"
+                  }
+                ]
+              },
+              {
+                "rotulo": "mai",
+                "titulo": "mai-26",
+                "barras": [
+                  {
+                    "nome": "Atendimentos",
+                    "valor": 2312,
+                    "estilo": "serie-clara"
+                  }
+                ]
+              },
+              {
+                "rotulo": "jun",
+                "titulo": "jun-26",
+                "barras": [
+                  {
+                    "nome": "Atendimentos",
+                    "valor": 2269,
+                    "estilo": "serie-clara"
+                  }
+                ]
+              },
+              {
+                "rotulo": "jul",
+                "titulo": "jul-26",
+                "barras": [
+                  {
+                    "nome": "Atendimentos",
+                    "valor": 2402,
+                    "estilo": "serie-media"
+                  }
+                ]
+              },
+              {
+                "rotulo": "ago",
+                "titulo": "ago-26",
+                "barras": [
+                  {
+                    "nome": "Atendimentos",
+                    "valor": 2245,
+                    "estilo": "serie-clara"
+                  }
+                ]
+              },
+              {
+                "rotulo": "set",
+                "titulo": "set-26",
+                "barras": [
+                  {
+                    "nome": "Atendimentos",
+                    "valor": 2328,
+                    "estilo": "serie-media"
+                  }
+                ]
+              },
+              {
+                "rotulo": "out*",
+                "titulo": "Outubro (projeção)",
+                "barras": [
+                  {
+                    "nome": "Atendimentos",
+                    "valor": 2184,
+                    "estilo": "projecao"
+                  }
+                ]
+              }
+            ],
+            "referencias": [
+              {
+                "nome": "Média de 12 meses",
+                "valor": 2327,
+                "estilo": "media"
+              }
+            ]
+          }
+        },
+        {
+          "titulo": "Ticket médio por atendimento",
+          "nota": "Subiu de R$ 2.850 para R$ 2.995 em 12 meses.",
+          "grafico": {
+            "tipo": "linhas",
+            "unidade": "brl",
+            "rotulos": [
+              "out",
+              "nov",
+              "dez",
+              "jan",
+              "fev",
+              "mar",
+              "abr",
+              "mai",
+              "jun",
+              "jul",
+              "ago",
+              "set",
+              "out*"
+            ],
+            "titulos": [
+              "out-25",
+              "nov-25",
+              "dez-25",
+              "jan-26",
+              "fev-26",
+              "mar-26",
+              "abr-26",
+              "mai-26",
+              "jun-26",
+              "jul-26",
+              "ago-26",
+              "set-26",
+              "Outubro (projeção)"
+            ],
+            "series": [
+              {
+                "nome": "Ticket médio",
+                "valores": [2850, 2870, 2905, 2810, 2840, 2880, 2905, 2920, 2935, 2960, 2980, 2985, 2995],
+                "estilo": "principal",
+                "area": true
+              }
+            ],
+            "referencia": {
+              "valor": 2903,
+              "rotulo": "média R$ 2.903"
+            },
+            "marcadores": [
+              {
+                "serie": 0,
+                "i": 0,
+                "rotulo": "R$ 2.850"
+              },
+              {
+                "serie": 0,
+                "i": 12,
+                "rotulo": "R$ 2.995"
+              }
+            ]
+          }
+        }
+      ],
+      "explicacao": "À esquerda, quantos atendimentos (pedidos ou cupons) houve em cada mês; a última barra é a projeção de outubro e o tracejado, a média de 12 meses. À direita, quanto cada atendimento vale em média."
+    },
+    {
+      "id": "dia-semana",
+      "tipo": "graficos",
+      "largura": 7,
+      "titulo": "Movimento por dia da semana",
+      "subtitulo": "Média de atendimentos por dia nos últimos 3 meses; o traço são os 3 meses anteriores. Linha: ticket médio.",
+      "nota": "Quinta perdeu 5 atendimentos por dia em relação ao trimestre anterior. Sábado tem ticket 30% menor: são reposições pequenas.",
+      "graficos": [
+        {
+          "grafico": {
+            "tipo": "combo",
+            "unidade": "qtd",
+            "nomes": {
+              "valor": "Últimos 3 meses",
+              "referencia": "3 meses anteriores",
+              "linha": "Ticket médio"
+            },
+            "escalaLinha": {
+              "unidade": "brl"
+            },
+            "pontos": [
+              {
+                "rotulo": "Seg",
+                "titulo": "Segunda",
+                "valor": 118,
+                "referencia": 124,
+                "status": "critico",
+                "linha": 3050
+              },
+              {
+                "rotulo": "Ter",
+                "titulo": "Terça",
+                "valor": 126,
+                "referencia": 122,
+                "linha": 2980
+              },
+              {
+                "rotulo": "Qua",
+                "titulo": "Quarta",
+                "valor": 112,
+                "referencia": 115,
+                "status": "critico",
+                "linha": 2940
+              },
+              {
+                "rotulo": "Qui",
+                "titulo": "Quinta",
+                "valor": 109,
+                "referencia": 114,
+                "status": "critico",
+                "linha": 2910
+              },
+              {
+                "rotulo": "Sex",
+                "titulo": "Sexta",
+                "valor": 121,
+                "referencia": 125,
+                "status": "critico",
+                "linha": 3020
+              },
+              {
+                "rotulo": "Sáb",
+                "titulo": "Sábado",
+                "valor": 38,
+                "referencia": 41,
+                "status": "critico",
+                "linha": 2120
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "faixas-valor",
+      "tipo": "faixas",
+      "largura": 5,
+      "titulo": "Atendimentos por faixa de valor",
+      "subtitulo": "Participação nos atendimentos e na receita, últimos 3 meses",
+      "series": ["Atendimentos", "Receita"],
+      "escala": {
+        "unidade": "pct",
+        "casas": 0
+      },
+      "linhas": [
+        {
+          "rotulo": "Até R$ 500",
+          "valores": [22, 3]
+        },
+        {
+          "rotulo": "R$ 500 a 2 mil",
+          "valores": [31, 12]
+        },
+        {
+          "rotulo": "R$ 2 a 5 mil",
+          "valores": [27, 28]
+        },
+        {
+          "rotulo": "R$ 5 a 10 mil",
+          "valores": [13, 27]
+        },
+        {
+          "rotulo": "Acima de R$ 10 mil",
+          "valores": [7, 30]
+        }
+      ],
+      "chamada": {
+        "status": "atencao",
+        "texto": [
+          {
+            "texto": "7% dos atendimentos",
+            "destaque": true
+          },
+          {
+            "texto": ", os acima de R$ 10 mil, fazem "
+          },
+          {
+            "texto": "30% da receita",
+            "destaque": true
+          },
+          {
+            "texto": ". Já os até R$ 500 são 22% do movimento e 3% da receita."
+          }
+        ]
+      },
+      "explicacao": "Divide os atendimentos pelo valor de cada venda e mostra quanto cada faixa pesa no movimento e na receita."
+    },
+    {
+      "id": "curva-abc",
+      "tipo": "curva-abc",
+      "largura": 12,
+      "titulo": "Curva ABC de produtos e serviços",
+      "subtitulo": "O que sustenta a receita e a margem nos últimos 12 meses. Vale para prato, peça, serviço ou produto.",
+      "classes": [
+        {
+          "rotulo": "Curva A",
+          "acao": "Proteger",
+          "quantidade": {
+            "valor": 62,
+            "unidade": "qtd",
+            "casas": 0,
+            "sufixo": "itens"
+          },
+          "textos": [
+            [
+              {
+                "texto": "15% dos itens · "
+              },
+              {
+                "texto": "80%",
+                "destaque": true
+              },
+              {
+                "texto": " da receita · "
+              },
+              {
+                "texto": "71%",
+                "destaque": true
+              },
+              {
+                "texto": " da margem"
+              }
+            ],
+            [
+              {
+                "texto": "Nunca pode faltar; acompanhe preço e custo toda semana."
+              }
+            ]
+          ],
+          "status": "saudavel"
+        },
+        {
+          "rotulo": "Curva B",
+          "acao": "Desenvolver",
+          "quantidade": {
+            "valor": 103,
+            "unidade": "qtd",
+            "casas": 0,
+            "sufixo": "itens"
+          },
+          "textos": [
+            [
+              {
+                "texto": "25% dos itens · "
+              },
+              {
+                "texto": "15%",
+                "destaque": true
+              },
+              {
+                "texto": " da receita · "
+              },
+              {
+                "texto": "19%",
+                "destaque": true
+              },
+              {
+                "texto": " da margem"
+              }
+            ],
+            [
+              {
+                "texto": "Itens que podem subir para A com exposição e venda casada."
+              }
+            ]
+          ],
+          "status": "atencao"
+        },
+        {
+          "rotulo": "Curva C",
+          "acao": "Enxugar",
+          "quantidade": {
+            "valor": 247,
+            "unidade": "qtd",
+            "casas": 0,
+            "sufixo": "itens"
+          },
+          "textos": [
+            [
+              {
+                "texto": "60% dos itens · "
+              },
+              {
+                "texto": "5%",
+                "destaque": true
+              },
+              {
+                "texto": " da receita · "
+              },
+              {
+                "texto": "10%",
+                "destaque": true
+              },
+              {
+                "texto": " da margem"
+              }
+            ],
+            [
+              {
+                "texto": "Muitos itens e pouca receita: revisar o cardápio ou o catálogo."
+              }
+            ]
+          ]
+        }
+      ],
+      "grafico": {
+        "tipo": "linhas",
+        "unidade": "pct",
+        "casas": 0,
+        "piso": 0,
+        "rotulos": ["0%", "5%", "10%", "15%", "20%", "30%", "40%", "50%", "60%", "70%", "80%", "90%", "100%"],
+        "titulos": [
+          "0% dos itens",
+          "5% dos itens",
+          "10% dos itens",
+          "15% dos itens",
+          "20% dos itens",
+          "30% dos itens",
+          "40% dos itens",
+          "50% dos itens",
+          "60% dos itens",
+          "70% dos itens",
+          "80% dos itens",
+          "90% dos itens",
+          "100% dos itens"
+        ],
+        "series": [
+          {
+            "nome": "Receita acumulada",
+            "valores": [0, 48, 68, 80, 86, 92, 95, 96.6, 97.8, 98.6, 99.2, 99.7, 100],
+            "estilo": "principal",
+            "area": true
+          }
+        ],
+        "marcadores": [
+          {
+            "serie": 0,
+            "i": 3,
+            "rotulo": "15% dos itens → 80%"
+          }
+        ]
+      },
+      "notaGrafico": "Receita acumulada contra o percentual de itens, do que mais vende para o que menos vende.",
+      "explicacao": "Ordena os itens do que mais vende para o que menos vende. A curva A são os poucos itens que fazem 80% da receita; a C, os muitos que fazem pouco. Serve para qualquer negócio: prato, peça, serviço."
+    },
+    {
+      "id": "cruzamento-abc",
+      "tipo": "matriz",
+      "largura": 5,
+      "titulo": "Cruzamento: curva de receita × curva de margem",
+      "subtitulo": "Quantos itens em cada combinação. Curva de margem pela margem percentual: A acima de 33%, B de 27% a 33%, C abaixo de 27%.",
+      "linhas": ["Receita A", "Receita B", "Receita C"],
+      "colunas": ["Margem A", "Margem B", "Margem C"],
+      "valores": [
+        [
+          {
+            "valor": 38,
+            "status": "saudavel"
+          },
+          {
+            "valor": 16
+          },
+          {
+            "valor": 8,
+            "status": "critico"
+          }
+        ],
+        [
+          {
+            "valor": 18
+          },
+          {
+            "valor": 52
+          },
+          {
+            "valor": 33
+          }
+        ],
+        [
+          {
+            "valor": 6
+          },
+          {
+            "valor": 35
+          },
+          {
+            "valor": 206
+          }
+        ]
+      ],
+      "chamada": {
+        "status": "critico",
+        "texto": [
+          {
+            "texto": "8 itens",
+            "destaque": true
+          },
+          {
+            "texto": " estão na curva A de receita e na C de margem: vendem muito e deixam pouco. São os primeiros a rever preço ou custo."
+          }
+        ]
+      },
+      "explicacao": "Compara a curva de receita com a curva de margem de cada item. O canto vermelho são itens que vendem muito e deixam pouco: o primeiro lugar para rever preço ou custo."
+    },
+    {
+      "id": "itens-mais-vendem",
+      "tipo": "tabela",
+      "variante": "compacta",
+      "largura": 7,
+      "titulo": "Os itens que mais vendem",
+      "subtitulo": "Curva A de receita, com a curva de margem e a tendência",
+      "colunas": [
+        {
+          "rotulo": "Item",
+          "alinhar": "esquerda"
+        },
+        {
+          "rotulo": "Receita 12 meses"
+        },
+        {
+          "rotulo": "Acumulado",
+          "ocultarNoCelular": true
+        },
+        {
+          "rotulo": "Margem"
+        },
+        {
+          "rotulo": "Curva de margem",
+          "alinhar": "centro"
+        },
+        {
+          "rotulo": "vs 3 meses",
+          "ocultarNoCelular": true
+        }
+      ],
+      "linhas": [
+        {
+          "celulas": [
+            {
+              "valor": "Peito de frango",
+              "sub": "Aves"
+            },
+            {
+              "valor": {
+                "valor": 7400000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 9,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "tom": "apagado"
+            },
+            {
+              "valor": {
+                "valor": 31,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": "B",
+              "negrito": true,
+              "fundo": "atencao"
+            },
+            {
+              "valor": {
+                "valor": 2.3,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "comSinal": true,
+              "seta": true,
+              "tom": "saudavel"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Contrafilé",
+              "sub": "Bovinos"
+            },
+            {
+              "valor": {
+                "valor": 6800000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 18,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "tom": "apagado"
+            },
+            {
+              "valor": {
+                "valor": 22.8,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": "C",
+              "negrito": true,
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": -4.1,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "comSinal": true,
+              "seta": true,
+              "tom": "critico"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Picanha",
+              "sub": "Bovinos"
+            },
+            {
+              "valor": {
+                "valor": 4900000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 24,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "tom": "apagado"
+            },
+            {
+              "valor": {
+                "valor": 35.8,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": "A",
+              "negrito": true,
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": -4.1,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "comSinal": true,
+              "seta": true,
+              "tom": "critico"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Coxa e sobrecoxa",
+              "sub": "Aves"
+            },
+            {
+              "valor": {
+                "valor": 4600000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 29,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "tom": "apagado"
+            },
+            {
+              "valor": {
+                "valor": 30.7,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": "B",
+              "negrito": true,
+              "fundo": "atencao"
+            },
+            {
+              "valor": {
+                "valor": 2.3,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "comSinal": true,
+              "seta": true,
+              "tom": "saudavel"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Alcatra",
+              "sub": "Bovinos"
+            },
+            {
+              "valor": {
+                "valor": 3900000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 34,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "tom": "apagado"
+            },
+            {
+              "valor": {
+                "valor": 27.9,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": "B",
+              "negrito": true,
+              "fundo": "atencao"
+            },
+            {
+              "valor": {
+                "valor": -4.1,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "comSinal": true,
+              "seta": true,
+              "tom": "critico"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Patinho",
+              "sub": "Bovinos"
+            },
+            {
+              "valor": {
+                "valor": 3400000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 39,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "tom": "apagado"
+            },
+            {
+              "valor": {
+                "valor": 25.7,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": "C",
+              "negrito": true,
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": -4.1,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "comSinal": true,
+              "seta": true,
+              "tom": "critico"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Frango inteiro",
+              "sub": "Aves"
+            },
+            {
+              "valor": {
+                "valor": 3100000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 42,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "tom": "apagado"
+            },
+            {
+              "valor": {
+                "valor": 26.4,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": "C",
+              "negrito": true,
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": 2.3,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "comSinal": true,
+              "seta": true,
+              "tom": "saudavel"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Muçarela",
+              "sub": "Laticínios"
+            },
+            {
+              "valor": {
+                "valor": 3000000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 46,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "tom": "apagado"
+            },
+            {
+              "valor": {
+                "valor": 31,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": "B",
+              "negrito": true,
+              "fundo": "atencao"
+            },
+            {
+              "valor": {
+                "valor": 1.1,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "comSinal": true,
+              "seta": true,
+              "tom": "saudavel"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Pernil",
+              "sub": "Suínos"
+            },
+            {
+              "valor": {
+                "valor": 2800000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 50,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "tom": "apagado"
+            },
+            {
+              "valor": {
+                "valor": 26.7,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": "C",
+              "negrito": true,
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": 0.8,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "comSinal": true,
+              "seta": true,
+              "tom": "saudavel"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Acém",
+              "sub": "Bovinos"
+            },
+            {
+              "valor": {
+                "valor": 2600000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 53,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "tom": "apagado"
+            },
+            {
+              "valor": {
+                "valor": 21.5,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": "C",
+              "negrito": true,
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": -4.1,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "comSinal": true,
+              "seta": true,
+              "tom": "critico"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "itens-atendimento",
+      "tipo": "graficos",
+      "largura": 12,
+      "titulo": "Itens por atendimento, mês a mês",
+      "subtitulo": "Quantos itens diferentes entram em cada atendimento. O tracejado é a média de 12 meses.",
+      "nota": "A cesta está encolhendo desde maio: cada atendimento leva menos itens, e o ticket só se mantém porque os preços subiram.",
+      "graficos": [
+        {
+          "grafico": {
+            "tipo": "linhas",
+            "unidade": "qtd",
+            "casas": 1,
+            "rotulos": [
+              "out-25",
+              "nov-25",
+              "dez-25",
+              "jan-26",
+              "fev-26",
+              "mar-26",
+              "abr-26",
+              "mai-26",
+              "jun-26",
+              "jul-26",
+              "ago-26",
+              "set-26"
+            ],
+            "series": [
+              {
+                "nome": "Itens por atendimento",
+                "valores": [5.2, 5.2, 5.1, 5.3, 5.2, 5.1, 5.1, 5, 5, 4.9, 4.9, 4.8],
+                "estilo": "principal"
+              }
+            ],
+            "referencia": {
+              "valor": 5.07,
+              "rotulo": "média 5,1"
+            },
+            "marcadores": [
+              {
+                "serie": 0,
+                "i": 11,
+                "rotulo": "4,8"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

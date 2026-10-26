@@ -14,17 +14,16 @@ fechado; Financeiro, a posição no snapshot). Com ele (ver Recorte):
 Desempenho: a resposta pronta fica em memória por VISAO_GERAL_CACHE_SEGUNDOS (padrão 15
 min; 0 desliga), com chave no cliente, nas empresas, no mês e na última carga: uma carga
 nova troca a chave. Parâmetros mudados no banco (farol, de-para) valem depois do prazo. O
-acesso continua conferido e registrado a cada requisição. Ao montar, fontes, parâmetros e
-feriados do cliente são lidos uma vez só (app/core/cache.py), e as seções independentes
-rodam em paralelo, cada ramo com uma conexão própria do mesmo usuário (_em_paralelo): o
-tempo da tela é o do ramo mais lento, não a soma.
+acesso continua conferido e registrado a cada requisição. Duas requisições da mesma chave
+ao mesmo tempo (ex.: a pré-montagem depois de /api/sessao e o clique) montam uma vez só.
+Ao montar, última carga, cliente, fontes, parâmetros e feriados vêm numa ida ao banco
+(app/telas/preleitura.py), e as seções independentes rodam em paralelo, cada ramo com uma
+conexão própria do mesmo usuário (_em_paralelo): o tempo da tela é o do ramo mais lento.
 """
 
-import contextvars
 import json
 from collections.abc import Callable, Sequence
-from concurrent.futures import Future, ThreadPoolExecutor, wait
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from datetime import date
 from functools import cache
 from pathlib import Path
@@ -35,17 +34,11 @@ from pydantic import TypeAdapter
 
 from app.core.cache import CacheComPrazo, por_requisicao
 from app.core.config import Settings, get_settings
-from app.core.db import conexao_paralela
 from app.seguranca.acesso import ContextoConsolidado, exigir_tela_consolidada
 from app.telas.calendario import ultimo_dia_do_mes
-from app.telas.moldura import (
-    MesComDados,
-    UltimaCarga,
-    cliente,
-    meses_com_dados,
-    rotulo_mes,
-    ultima_carga,
-)
+from app.telas.moldura import MesComDados, rotulo_mes
+from app.telas.paralelo import em_paralelo
+from app.telas.preleitura import Inicio, preler
 from app.telas.visao_geral.contrato import Periodo, Secao, VisaoGeralPayload
 from app.telas.visao_geral.custos import secao_custos
 from app.telas.visao_geral.financeiro import secao_financeiro
@@ -57,8 +50,6 @@ DEMO = Path(__file__).with_name("demo.json")
 FORMATO_MES = r"^\d{4}-(0[1-9]|1[0-2])$"
 # respostas prontas (VISAO_GERAL_CACHE_SEGUNDOS); a resposta é imutável (modelo frozen)
 _respostas: CacheComPrazo[VisaoGeralPayload] = CacheComPrazo(maximo=256)
-# ramos das seções em paralelo (cada um usa uma conexão do pool)
-_ramos = ThreadPoolExecutor(max_workers=8, thread_name_prefix="visao-geral")
 
 router = APIRouter(prefix="/api/telas", tags=["telas"])
 
@@ -113,31 +104,8 @@ type Ramo = Callable[[ContextoConsolidado], list[SecaoDoMes]]
 
 
 def _em_paralelo(ctx: ContextoConsolidado, ramos: Sequence[Ramo]) -> list[list[SecaoDoMes]]:
-    """Roda os ramos ao mesmo tempo e devolve os resultados na ordem.
-
-    O primeiro usa a conexão da requisição; cada um dos outros, uma conexão própria do
-    mesmo usuário (app.usuario_id da checagem que passou, o mesmo RLS), só leitura. O cache
-    por requisição (app/core/cache.py) vai junto: cada thread recebe uma cópia do contexto,
-    que aponta para o mesmo dicionário. Sem pool (testes), roda em sequência.
-    """
-    pool = ctx.sessao.pool
-    if pool is None or len(ramos) < 2:
-        return [ramo(ctx) for ramo in ramos]
-
-    def em_outra_conexao(ramo: Ramo) -> list[SecaoDoMes]:
-        with conexao_paralela(pool, ctx.usuario_id) as conn:
-            return ramo(replace(ctx, sessao=replace(ctx.sessao, conn=conn)))
-
-    futuros: list[Future[list[SecaoDoMes]]] = [
-        _ramos.submit(contextvars.copy_context().run, em_outra_conexao, ramo) for ramo in ramos[1:]
-    ]
-    try:
-        primeiro = ramos[0](ctx)
-    finally:
-        # espera todos, mesmo com erro: nenhuma conexão fica em uso depois da requisição
-        wait(futuros)
-    # result() relança o erro de um ramo
-    return [primeiro, *(f.result() for f in futuros)]
+    """As seções independentes ao mesmo tempo (app/telas/paralelo.py)."""
+    return em_paralelo(ctx, ramos)
 
 
 def _secoes(ctx: ContextoConsolidado, r: Recorte) -> tuple[list[Secao], date | None]:
@@ -187,43 +155,48 @@ def visao_geral(
         Query(pattern=FORMATO_MES, description="Mês da tela (AAAA-MM), um dos de /api/sessao."),
     ] = None,
 ) -> VisaoGeralPayload:
-    carga = ultima_carga(ctx.sessao.conn, ctx.cliente_id)
+    return responder(ctx, settings, mes)
+
+
+def responder(
+    ctx: ContextoConsolidado, settings: Settings, mes: str | None = None
+) -> VisaoGeralPayload:
+    """A resposta da tela: do cache ou montada (também pela pré-montagem, app/telas/preparo.py)."""
     hoje = date.today()
-    # Tudo de que a resposta depende. Os dados só mudam com uma carga nova (sem carga, a
-    # tela usa o dia de hoje); as empresas são as que a tela soma, que o RLS já recorta.
-    chave = (
-        ctx.cliente_id,
-        ctx.empresa_id,
-        ctx.empresas,
-        mes,
-        carga,
-        hoje,
-        settings.visao_geral_demo,
-    )
-    prazo = settings.visao_geral_cache_segundos
-    if prazo > 0 and (pronta := _respostas.obter(chave)) is not None:
-        return pronta
     with por_requisicao():
-        resposta = _montar(ctx, settings, carga, mes, hoje)
-    if prazo > 0:
-        _respostas.guardar(chave, resposta, prazo)
-    return resposta
+        inicio = preler(ctx.sessao.conn, ctx.cliente_id, com_meses=mes is not None)
+        # Tudo de que a resposta depende. Os dados só mudam com uma carga nova (sem carga, a
+        # tela usa o dia de hoje); as empresas são as que a tela soma, que o RLS já recorta.
+        chave = (
+            ctx.cliente_id,
+            ctx.empresa_id,
+            ctx.empresas,
+            mes,
+            inicio.carga,
+            hoje,
+            settings.visao_geral_demo,
+        )
+        return _respostas.obter_ou_montar(
+            chave,
+            lambda: _montar(ctx, settings, inicio, mes, hoje),
+            settings.visao_geral_cache_segundos,
+        )
 
 
 def _montar(
     ctx: ContextoConsolidado,
     settings: Settings,
-    carga: UltimaCarga | None,
+    inicio: Inicio,
     mes: str | None,
     hoje: date,
 ) -> VisaoGeralPayload:
-    conn = ctx.sessao.conn
+    carga = inicio.carga
     escolhido: date | None = None
     if settings.visao_geral_demo:
         secoes, ref = secoes_demo(), None
     else:
         if mes is not None:
-            escolhido = mes_escolhido(mes, meses_com_dados(conn, ctx.cliente_id, carga))
+            escolhido = mes_escolhido(mes, inicio.meses or [])
         r = recorte(escolhido, carga.data_snapshot if carga else hoje)
         secoes, ref = _secoes(ctx, r)
 
@@ -240,7 +213,7 @@ def _montar(
     return VisaoGeralPayload(
         tela="visao-geral",
         versao_contrato="1.0",
-        cliente=cliente(conn, ctx.cliente_id),
+        cliente=inicio.cliente,
         dados_ate=carga.data_snapshot if carga else None,
         atualizado_em=carga.fim if carga else None,
         periodos=periodos,
