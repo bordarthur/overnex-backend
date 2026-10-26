@@ -203,30 +203,30 @@ def _fontes_do_cliente(conn: Conexao, cliente_id: UUID) -> list[dict[str, Any]]:
     por requisição, para todas as seções."""
 
     def ler() -> list[dict[str, Any]]:
-        # to_jsonb(f): sem a migration 11 a coluna não existe e vale o padrão
-        return conn.execute(
-            """
-            select f.tabela_destino,
-                   coalesce(to_jsonb(f) -> 'colunas_modelo', '{}'::jsonb) as colunas_modelo,
-                   array(select c.column_name::text
-                           from information_schema.columns c
-                          where c.table_schema = 'mart'
-                            and c.table_name = f.tabela_destino
-                            and c.data_type = 'date') as datas,
-                   array(select c.column_name::text
-                           from information_schema.columns c
-                          where c.table_schema = 'mart'
-                            and c.table_name = f.tabela_destino) as existentes
-              from cfg.fonte_carga f
-             where f.cliente_id = %s
-               and f.tipo = 'tabela'
-               and to_regclass('mart.' || quote_ident(f.tabela_destino)) is not null
-             order by f.tabela_destino
-            """,
-            (cliente_id,),
-        ).fetchall()
+        return conn.execute(SQL_FONTES, (cliente_id,)).fetchall()
 
     return memo(("fontes", cliente_id), ler)
+
+
+# to_jsonb(f): sem a migration 11 a coluna não existe e vale o padrão
+SQL_FONTES = """
+    select f.tabela_destino,
+           coalesce(to_jsonb(f) -> 'colunas_modelo', '{}'::jsonb) as colunas_modelo,
+           array(select c.column_name::text
+                   from information_schema.columns c
+                  where c.table_schema = 'mart'
+                    and c.table_name = f.tabela_destino
+                    and c.data_type = 'date') as datas,
+           array(select c.column_name::text
+                   from information_schema.columns c
+                  where c.table_schema = 'mart'
+                    and c.table_name = f.tabela_destino) as existentes
+      from cfg.fonte_carga f
+     where f.cliente_id = %s
+       and f.tipo = 'tabela'
+       and to_regclass('mart.' || quote_ident(f.tabela_destino)) is not null
+     order by f.tabela_destino
+"""
 
 
 def de_todas(

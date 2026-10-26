@@ -158,7 +158,12 @@ def vg_bloqueada_para_ana(admin_conn: psycopg.Connection[tuple[Any, ...]]) -> It
 @pytest.mark.usefixtures("vg_bloqueada_para_ana")
 def test_visao_geral_tela_nao_liberada_403_e_some_da_sessao(client: TestClient) -> None:
     assert client.get(VISAO_GERAL, headers=auth(OID_A)).status_code == 403
-    assert client.get(SESSAO, headers=auth(OID_A)).json()["telas"] == ["FIN-01"]
+    assert client.get(SESSAO, headers=auth(OID_A)).json()["telas"] == [
+        "COM-01",
+        "COM-02",
+        "COM-03",
+        "FIN-01",
+    ]
 
 
 def test_visao_geral_sem_token_401(client: TestClient) -> None:
@@ -182,7 +187,7 @@ def test_sessao_da_ana(client: TestClient) -> None:
             {"id": EMPRESA_A2, "nome": "Alfa Comércio"},
             {"id": EMPRESA_A1, "nome": "Alfa Indústria"},
         ],
-        "telas": ["FIN-01", "VG-01"],
+        "telas": ["COM-01", "COM-02", "COM-03", "FIN-01", "VG-01"],
         "periodos": [{"id": "2026-10", "rotulo": "Outubro de 2026", "dadosAte": "2026-10-12"}],
     }
 

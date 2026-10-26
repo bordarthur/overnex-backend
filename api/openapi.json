@@ -408,6 +408,307 @@
         }
       }
     },
+    "/api/telas/vendas": {
+      "get": {
+        "tags": [
+          "telas"
+        ],
+        "summary": "Tela Vendas",
+        "operationId": "tela_vendas_api_telas_vendas_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "mes",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Mês da tela (AAAA-MM), um dos de /api/sessao.",
+              "title": "Mes"
+            },
+            "description": "Mês da tela (AAAA-MM), um dos de /api/sessao."
+          },
+          {
+            "name": "canal",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 100
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Canal: um `id` das opções do filtro na resposta. Sem ele, todos.",
+              "title": "Canal"
+            },
+            "description": "Canal: um `id` das opções do filtro na resposta. Sem ele, todos."
+          },
+          {
+            "name": "linha",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 100
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Linha de produto: um `id` das opções do filtro na resposta. Sem ele, todos.",
+              "title": "Linha"
+            },
+            "description": "Linha de produto: um `id` das opções do filtro na resposta. Sem ele, todos."
+          },
+          {
+            "name": "empresa",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Opcional: só esta empresa. Sem valor: todas as do vínculo.",
+              "title": "Empresa"
+            },
+            "description": "Opcional: só esta empresa. Sem valor: todas as do vínculo."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PainelPayload"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autenticado."
+          },
+          "403": {
+            "description": "Acesso negado."
+          },
+          "422": {
+            "description": "`mes` fora do formato AAAA-MM, mês sem dados ou filtro inválido."
+          }
+        }
+      }
+    },
+    "/api/telas/equipe-comercial": {
+      "get": {
+        "tags": [
+          "telas"
+        ],
+        "summary": "Tela Equipe",
+        "operationId": "tela_equipe_api_telas_equipe_comercial_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "mes",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Mês da tela (AAAA-MM), um dos de /api/sessao.",
+              "title": "Mes"
+            },
+            "description": "Mês da tela (AAAA-MM), um dos de /api/sessao."
+          },
+          {
+            "name": "canal",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 100
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Canal: um `id` das opções do filtro na resposta. Sem ele, todos.",
+              "title": "Canal"
+            },
+            "description": "Canal: um `id` das opções do filtro na resposta. Sem ele, todos."
+          },
+          {
+            "name": "supervisor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 100
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Supervisor: um `id` das opções do filtro na resposta. Sem ele, todos.",
+              "title": "Supervisor"
+            },
+            "description": "Supervisor: um `id` das opções do filtro na resposta. Sem ele, todos."
+          },
+          {
+            "name": "empresa",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Opcional: só esta empresa. Sem valor: todas as do vínculo.",
+              "title": "Empresa"
+            },
+            "description": "Opcional: só esta empresa. Sem valor: todas as do vínculo."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PainelPayload"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autenticado."
+          },
+          "403": {
+            "description": "Acesso negado."
+          },
+          "422": {
+            "description": "`mes` fora do formato AAAA-MM, mês sem dados ou filtro inválido."
+          }
+        }
+      }
+    },
+    "/api/telas/clientes": {
+      "get": {
+        "tags": [
+          "telas"
+        ],
+        "summary": "Tela Clientes",
+        "operationId": "tela_clientes_api_telas_clientes_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "mes",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Mês da tela (AAAA-MM), um dos de /api/sessao.",
+              "title": "Mes"
+            },
+            "description": "Mês da tela (AAAA-MM), um dos de /api/sessao."
+          },
+          {
+            "name": "empresa",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Opcional: só esta empresa. Sem valor: todas as do vínculo.",
+              "title": "Empresa"
+            },
+            "description": "Opcional: só esta empresa. Sem valor: todas as do vínculo."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PainelPayload"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autenticado."
+          },
+          "403": {
+            "description": "Acesso negado."
+          },
+          "422": {
+            "description": "`mes` fora do formato AAAA-MM, mês sem dados ou filtro inválido."
+          }
+        }
+      }
+    },
     "/api/telas/fin-01": {
       "get": {
         "tags": [
@@ -658,6 +959,988 @@
         ],
         "title": "Apoio"
       },
+      "Aviso": {
+        "properties": {
+          "tom": {
+            "type": "string",
+            "enum": [
+              "info",
+              "atencao"
+            ],
+            "title": "Tom"
+          },
+          "texto": {
+            "items": {
+              "$ref": "#/components/schemas/Trecho"
+            },
+            "type": "array",
+            "title": "Texto"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "tom",
+          "texto"
+        ],
+        "title": "Aviso"
+      },
+      "Barra": {
+        "properties": {
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "valor": {
+            "type": "number",
+            "title": "Valor"
+          },
+          "estilo": {
+            "type": "string",
+            "enum": [
+              "saudavel",
+              "atencao",
+              "critico",
+              "serie",
+              "serie-media",
+              "serie-clara",
+              "fantasma",
+              "projecao"
+            ],
+            "title": "Estilo"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "nome",
+          "valor",
+          "estilo"
+        ],
+        "title": "Barra"
+      },
+      "CartaoAndamentoMes": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "largura": {
+            "type": "integer",
+            "enum": [
+              4,
+              5,
+              6,
+              7,
+              8,
+              12
+            ],
+            "title": "Largura"
+          },
+          "titulo": {
+            "type": "string",
+            "title": "Titulo"
+          },
+          "subtitulo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subtitulo"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "saudavel",
+                  "atencao",
+                  "critico"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "legenda": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ItemLegenda"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Legenda"
+          },
+          "chamada": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Chamada"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "nota": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nota"
+          },
+          "explicacao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Explicacao"
+          },
+          "tipo": {
+            "type": "string",
+            "const": "andamento-mes",
+            "title": "Tipo"
+          },
+          "regua": {
+            "$ref": "#/components/schemas/Regua"
+          },
+          "estatisticas": {
+            "items": {
+              "$ref": "#/components/schemas/ItemValor"
+            },
+            "type": "array",
+            "title": "Estatisticas"
+          },
+          "visoes": {
+            "items": {
+              "$ref": "#/components/schemas/VisaoAndamento"
+            },
+            "type": "array",
+            "title": "Visoes"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "largura",
+          "titulo",
+          "tipo",
+          "regua",
+          "estatisticas",
+          "visoes"
+        ],
+        "title": "CartaoAndamentoMes",
+        "description": "Régua do mês, estatísticas e o acumulado dia a dia (uma visão por unidade)."
+      },
+      "CartaoContraMeta": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "largura": {
+            "type": "integer",
+            "enum": [
+              4,
+              5,
+              6,
+              7,
+              8,
+              12
+            ],
+            "title": "Largura"
+          },
+          "titulo": {
+            "type": "string",
+            "title": "Titulo"
+          },
+          "subtitulo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subtitulo"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "saudavel",
+                  "atencao",
+                  "critico"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "legenda": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ItemLegenda"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Legenda"
+          },
+          "chamada": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Chamada"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "nota": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nota"
+          },
+          "explicacao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Explicacao"
+          },
+          "tipo": {
+            "type": "string",
+            "const": "contra-meta",
+            "title": "Tipo"
+          },
+          "layout": {
+            "type": "string",
+            "enum": [
+              "blocos",
+              "ranking"
+            ],
+            "title": "Layout"
+          },
+          "rotuloRealizado": {
+            "type": "string",
+            "title": "Rotulorealizado"
+          },
+          "rotuloMeta": {
+            "type": "string",
+            "title": "Rotulometa"
+          },
+          "itens": {
+            "items": {
+              "$ref": "#/components/schemas/ItemContraMeta"
+            },
+            "type": "array",
+            "title": "Itens"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "largura",
+          "titulo",
+          "tipo",
+          "layout",
+          "rotuloRealizado",
+          "rotuloMeta",
+          "itens"
+        ],
+        "title": "CartaoContraMeta",
+        "description": "Barras contra a meta de cada item: blocos (canais) ou ranking (vendedores)."
+      },
+      "CartaoCurvaAbc": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "largura": {
+            "type": "integer",
+            "enum": [
+              4,
+              5,
+              6,
+              7,
+              8,
+              12
+            ],
+            "title": "Largura"
+          },
+          "titulo": {
+            "type": "string",
+            "title": "Titulo"
+          },
+          "subtitulo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subtitulo"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "saudavel",
+                  "atencao",
+                  "critico"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "legenda": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ItemLegenda"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Legenda"
+          },
+          "chamada": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Chamada"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "nota": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nota"
+          },
+          "explicacao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Explicacao"
+          },
+          "tipo": {
+            "type": "string",
+            "const": "curva-abc",
+            "title": "Tipo"
+          },
+          "classes": {
+            "items": {
+              "$ref": "#/components/schemas/ClasseAbc"
+            },
+            "type": "array",
+            "title": "Classes"
+          },
+          "grafico": {
+            "$ref": "#/components/schemas/GraficoLinhas"
+          },
+          "notaGrafico": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notagrafico"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "largura",
+          "titulo",
+          "tipo",
+          "classes",
+          "grafico"
+        ],
+        "title": "CartaoCurvaAbc"
+      },
+      "CartaoDestaques": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "largura": {
+            "type": "integer",
+            "enum": [
+              4,
+              5,
+              6,
+              7,
+              8,
+              12
+            ],
+            "title": "Largura"
+          },
+          "titulo": {
+            "type": "string",
+            "title": "Titulo"
+          },
+          "subtitulo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subtitulo"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "saudavel",
+                  "atencao",
+                  "critico"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "legenda": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ItemLegenda"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Legenda"
+          },
+          "chamada": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Chamada"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "nota": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nota"
+          },
+          "explicacao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Explicacao"
+          },
+          "tipo": {
+            "type": "string",
+            "const": "destaques",
+            "title": "Tipo"
+          },
+          "itens": {
+            "items": {
+              "$ref": "#/components/schemas/ItemDestaque"
+            },
+            "type": "array",
+            "title": "Itens"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "largura",
+          "titulo",
+          "tipo",
+          "itens"
+        ],
+        "title": "CartaoDestaques",
+        "description": "Cartões de destaque lado a lado (\"Mais vendas\", \"Precisa de apoio\")."
+      },
+      "CartaoFaixas": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "largura": {
+            "type": "integer",
+            "enum": [
+              4,
+              5,
+              6,
+              7,
+              8,
+              12
+            ],
+            "title": "Largura"
+          },
+          "titulo": {
+            "type": "string",
+            "title": "Titulo"
+          },
+          "subtitulo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subtitulo"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "saudavel",
+                  "atencao",
+                  "critico"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "legenda": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ItemLegenda"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Legenda"
+          },
+          "chamada": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Chamada"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "nota": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nota"
+          },
+          "explicacao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Explicacao"
+          },
+          "tipo": {
+            "type": "string",
+            "const": "faixas",
+            "title": "Tipo"
+          },
+          "series": {
+            "prefixItems": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "type": "array",
+            "maxItems": 2,
+            "minItems": 2,
+            "title": "Series"
+          },
+          "linhas": {
+            "items": {
+              "$ref": "#/components/schemas/LinhaFaixa"
+            },
+            "type": "array",
+            "title": "Linhas"
+          },
+          "escala": {
+            "$ref": "#/components/schemas/Escala"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "largura",
+          "titulo",
+          "tipo",
+          "series",
+          "linhas",
+          "escala"
+        ],
+        "title": "CartaoFaixas",
+        "description": "Pares de barras por faixa (participação nos atendimentos e na receita)."
+      },
+      "CartaoFatores": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "largura": {
+            "type": "integer",
+            "enum": [
+              4,
+              5,
+              6,
+              7,
+              8,
+              12
+            ],
+            "title": "Largura"
+          },
+          "titulo": {
+            "type": "string",
+            "title": "Titulo"
+          },
+          "subtitulo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subtitulo"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "saudavel",
+                  "atencao",
+                  "critico"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "legenda": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ItemLegenda"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Legenda"
+          },
+          "chamada": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Chamada"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "nota": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nota"
+          },
+          "explicacao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Explicacao"
+          },
+          "tipo": {
+            "type": "string",
+            "const": "fatores",
+            "title": "Tipo"
+          },
+          "total": {
+            "$ref": "#/components/schemas/ItemValor"
+          },
+          "fatores": {
+            "items": {
+              "$ref": "#/components/schemas/Fator"
+            },
+            "type": "array",
+            "title": "Fatores"
+          },
+          "conclusao": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Trecho"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conclusao"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "largura",
+          "titulo",
+          "tipo",
+          "total",
+          "fatores"
+        ],
+        "title": "CartaoFatores",
+        "description": "Decomposição de um total em fatores, com o fator que mais pesa marcado."
+      },
+      "CartaoGraficos": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "largura": {
+            "type": "integer",
+            "enum": [
+              4,
+              5,
+              6,
+              7,
+              8,
+              12
+            ],
+            "title": "Largura"
+          },
+          "titulo": {
+            "type": "string",
+            "title": "Titulo"
+          },
+          "subtitulo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subtitulo"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "saudavel",
+                  "atencao",
+                  "critico"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "legenda": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ItemLegenda"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Legenda"
+          },
+          "chamada": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Chamada"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "nota": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nota"
+          },
+          "explicacao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Explicacao"
+          },
+          "tipo": {
+            "type": "string",
+            "const": "graficos",
+            "title": "Tipo"
+          },
+          "graficos": {
+            "items": {
+              "$ref": "#/components/schemas/GraficoCartao"
+            },
+            "type": "array",
+            "title": "Graficos"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "largura",
+          "titulo",
+          "tipo",
+          "graficos"
+        ],
+        "title": "CartaoGraficos",
+        "description": "Um ou mais gráficos lado a lado."
+      },
       "CartaoInadimplencia": {
         "properties": {
           "tipo": {
@@ -711,6 +1994,524 @@
           "serie"
         ],
         "title": "CartaoInadimplencia"
+      },
+      "CartaoMatriz": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "largura": {
+            "type": "integer",
+            "enum": [
+              4,
+              5,
+              6,
+              7,
+              8,
+              12
+            ],
+            "title": "Largura"
+          },
+          "titulo": {
+            "type": "string",
+            "title": "Titulo"
+          },
+          "subtitulo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subtitulo"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "saudavel",
+                  "atencao",
+                  "critico"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "legenda": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ItemLegenda"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Legenda"
+          },
+          "chamada": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Chamada"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "nota": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nota"
+          },
+          "explicacao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Explicacao"
+          },
+          "tipo": {
+            "type": "string",
+            "const": "matriz",
+            "title": "Tipo"
+          },
+          "linhas": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Linhas"
+          },
+          "colunas": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Colunas"
+          },
+          "valores": {
+            "items": {
+              "items": {
+                "$ref": "#/components/schemas/CelulaMatriz"
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Valores"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "largura",
+          "titulo",
+          "tipo",
+          "linhas",
+          "colunas",
+          "valores"
+        ],
+        "title": "CartaoMatriz",
+        "description": "Matriz de contagens (curva de receita × curva de margem)."
+      },
+      "CartaoTabela": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "largura": {
+            "type": "integer",
+            "enum": [
+              4,
+              5,
+              6,
+              7,
+              8,
+              12
+            ],
+            "title": "Largura"
+          },
+          "titulo": {
+            "type": "string",
+            "title": "Titulo"
+          },
+          "subtitulo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subtitulo"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "saudavel",
+                  "atencao",
+                  "critico"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "legenda": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ItemLegenda"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Legenda"
+          },
+          "chamada": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Chamada"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "nota": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nota"
+          },
+          "explicacao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Explicacao"
+          },
+          "tipo": {
+            "type": "string",
+            "const": "tabela",
+            "title": "Tipo"
+          },
+          "variante": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "padrao",
+                  "compacta",
+                  "calor"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Variante"
+          },
+          "colunas": {
+            "items": {
+              "$ref": "#/components/schemas/ColunaTabela"
+            },
+            "type": "array",
+            "title": "Colunas"
+          },
+          "linhas": {
+            "items": {
+              "$ref": "#/components/schemas/LinhaTabela"
+            },
+            "type": "array",
+            "title": "Linhas"
+          },
+          "vazio": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vazio"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "largura",
+          "titulo",
+          "tipo",
+          "colunas",
+          "linhas"
+        ],
+        "title": "CartaoTabela"
+      },
+      "Celula": {
+        "properties": {
+          "valor": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Valor"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valor"
+          },
+          "sub": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sub"
+          },
+          "comSinal": {
+            "type": "boolean",
+            "title": "Comsinal",
+            "default": false
+          },
+          "seta": {
+            "type": "boolean",
+            "title": "Seta",
+            "default": false
+          },
+          "tom": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "saudavel",
+                  "atencao",
+                  "critico"
+                ]
+              },
+              {
+                "type": "string",
+                "const": "apagado"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tom"
+          },
+          "fundo": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "saudavel",
+                  "atencao",
+                  "critico"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fundo"
+          },
+          "pill": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "saudavel",
+                  "atencao",
+                  "critico"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pill"
+          },
+          "negrito": {
+            "type": "boolean",
+            "title": "Negrito",
+            "default": false
+          },
+          "etiqueta": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Etiqueta"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "Celula"
+      },
+      "CelulaMatriz": {
+        "properties": {
+          "valor": {
+            "type": "number",
+            "title": "Valor"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "saudavel",
+                  "atencao",
+                  "critico"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "valor"
+        ],
+        "title": "CelulaMatriz"
+      },
+      "Chamada": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "saudavel",
+              "atencao",
+              "critico"
+            ],
+            "title": "Status"
+          },
+          "texto": {
+            "items": {
+              "$ref": "#/components/schemas/Trecho"
+            },
+            "type": "array",
+            "title": "Texto"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status",
+          "texto"
+        ],
+        "title": "Chamada"
+      },
+      "ClasseAbc": {
+        "properties": {
+          "rotulo": {
+            "type": "string",
+            "title": "Rotulo"
+          },
+          "acao": {
+            "type": "string",
+            "title": "Acao"
+          },
+          "quantidade": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Valor"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Quantidade"
+          },
+          "textos": {
+            "items": {
+              "items": {
+                "$ref": "#/components/schemas/Trecho"
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Textos"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "saudavel",
+                  "atencao",
+                  "critico"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rotulo",
+          "acao",
+          "quantidade",
+          "textos"
+        ],
+        "title": "ClasseAbc"
       },
       "Cliente": {
         "properties": {
@@ -797,6 +2598,41 @@
           "tipo"
         ],
         "title": "Coluna"
+      },
+      "ColunaTabela": {
+        "properties": {
+          "rotulo": {
+            "type": "string",
+            "title": "Rotulo"
+          },
+          "alinhar": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "esquerda",
+                  "direita",
+                  "centro"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alinhar"
+          },
+          "ocultarNoCelular": {
+            "type": "boolean",
+            "title": "Ocultarnocelular",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rotulo"
+        ],
+        "title": "ColunaTabela"
       },
       "DadosPayload": {
         "properties": {
@@ -885,6 +2721,89 @@
         ],
         "title": "DadosPayload"
       },
+      "DiaDegrau": {
+        "properties": {
+          "rotulo": {
+            "type": "string",
+            "title": "Rotulo"
+          },
+          "titulo": {
+            "type": "string",
+            "title": "Titulo"
+          },
+          "util": {
+            "type": "boolean",
+            "title": "Util"
+          },
+          "eixo": {
+            "type": "boolean",
+            "title": "Eixo",
+            "default": false
+          },
+          "eixoCurto": {
+            "type": "boolean",
+            "title": "Eixocurto",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rotulo",
+          "titulo",
+          "util"
+        ],
+        "title": "DiaDegrau"
+      },
+      "EixoDispersao": {
+        "properties": {
+          "unidade": {
+            "type": "string",
+            "enum": [
+              "brl",
+              "pct",
+              "pp",
+              "dias",
+              "vezes",
+              "qtd"
+            ],
+            "title": "Unidade"
+          },
+          "casas": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Casas"
+          },
+          "sufixo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sufixo"
+          },
+          "rotulo": {
+            "type": "string",
+            "title": "Rotulo"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "unidade",
+          "rotulo"
+        ],
+        "title": "EixoDispersao"
+      },
       "Empresa": {
         "properties": {
           "id": {
@@ -904,6 +2823,50 @@
           "nome"
         ],
         "title": "Empresa"
+      },
+      "Escala": {
+        "properties": {
+          "unidade": {
+            "type": "string",
+            "enum": [
+              "brl",
+              "pct",
+              "pp",
+              "dias",
+              "vezes",
+              "qtd"
+            ],
+            "title": "Unidade"
+          },
+          "casas": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Casas"
+          },
+          "sufixo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sufixo"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "unidade"
+        ],
+        "title": "Escala"
       },
       "Faixa": {
         "properties": {
@@ -933,6 +2896,96 @@
           "status"
         ],
         "title": "Faixa"
+      },
+      "Falta": {
+        "properties": {
+          "de": {
+            "type": "number",
+            "title": "De"
+          },
+          "ate": {
+            "type": "number",
+            "title": "Ate"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "de",
+          "ate"
+        ],
+        "title": "Falta"
+      },
+      "Fator": {
+        "properties": {
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "operador": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operador"
+          },
+          "colunas": {
+            "items": {
+              "$ref": "#/components/schemas/ItemValor"
+            },
+            "type": "array",
+            "title": "Colunas"
+          },
+          "causa": {
+            "type": "boolean",
+            "title": "Causa",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "nome",
+          "colunas"
+        ],
+        "title": "Fator"
+      },
+      "FiltroPainel": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "rotulo": {
+            "type": "string",
+            "title": "Rotulo"
+          },
+          "opcoes": {
+            "items": {
+              "$ref": "#/components/schemas/OpcaoFiltro"
+            },
+            "type": "array",
+            "title": "Opcoes"
+          },
+          "padrao": {
+            "type": "string",
+            "title": "Padrao"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "rotulo",
+          "opcoes",
+          "padrao"
+        ],
+        "title": "FiltroPainel",
+        "description": "Filtro próprio da tela; o valor escolhido vem na consulta: ?{id}={opcao.id}."
       },
       "Gauge": {
         "properties": {
@@ -978,6 +3031,591 @@
           "faixas"
         ],
         "title": "Gauge"
+      },
+      "GraficoBarras": {
+        "properties": {
+          "unidade": {
+            "type": "string",
+            "enum": [
+              "brl",
+              "pct",
+              "pp",
+              "dias",
+              "vezes",
+              "qtd"
+            ],
+            "title": "Unidade"
+          },
+          "casas": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Casas"
+          },
+          "sufixo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sufixo"
+          },
+          "tipo": {
+            "type": "string",
+            "const": "barras",
+            "title": "Tipo"
+          },
+          "grupos": {
+            "items": {
+              "$ref": "#/components/schemas/GrupoBarras"
+            },
+            "type": "array",
+            "title": "Grupos"
+          },
+          "referencias": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ReferenciaBarras"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Referencias"
+          },
+          "rotulosNasBarras": {
+            "type": "boolean",
+            "title": "Rotulosnasbarras",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "unidade",
+          "tipo",
+          "grupos"
+        ],
+        "title": "GraficoBarras"
+      },
+      "GraficoCartao": {
+        "properties": {
+          "titulo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Titulo"
+          },
+          "nota": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nota"
+          },
+          "grafico": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/GraficoBarras"
+              },
+              {
+                "$ref": "#/components/schemas/GraficoCombo"
+              },
+              {
+                "$ref": "#/components/schemas/GraficoLinhas"
+              },
+              {
+                "$ref": "#/components/schemas/GraficoEmpilhado"
+              },
+              {
+                "$ref": "#/components/schemas/GraficoDispersao"
+              },
+              {
+                "$ref": "#/components/schemas/GraficoDegraus"
+              }
+            ],
+            "title": "Grafico",
+            "discriminator": {
+              "propertyName": "tipo",
+              "mapping": {
+                "barras": "#/components/schemas/GraficoBarras",
+                "combo": "#/components/schemas/GraficoCombo",
+                "degraus": "#/components/schemas/GraficoDegraus",
+                "dispersao": "#/components/schemas/GraficoDispersao",
+                "empilhado": "#/components/schemas/GraficoEmpilhado",
+                "linhas": "#/components/schemas/GraficoLinhas"
+              }
+            }
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "grafico"
+        ],
+        "title": "GraficoCartao"
+      },
+      "GraficoCombo": {
+        "properties": {
+          "unidade": {
+            "type": "string",
+            "enum": [
+              "brl",
+              "pct",
+              "pp",
+              "dias",
+              "vezes",
+              "qtd"
+            ],
+            "title": "Unidade"
+          },
+          "casas": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Casas"
+          },
+          "sufixo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sufixo"
+          },
+          "tipo": {
+            "type": "string",
+            "const": "combo",
+            "title": "Tipo"
+          },
+          "nomes": {
+            "$ref": "#/components/schemas/NomesCombo"
+          },
+          "pontos": {
+            "items": {
+              "$ref": "#/components/schemas/PontoCombo"
+            },
+            "type": "array",
+            "title": "Pontos"
+          },
+          "escalaLinha": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Escala"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "unidade",
+          "tipo",
+          "nomes",
+          "pontos"
+        ],
+        "title": "GraficoCombo",
+        "description": "Barras contra uma referência (traço sobre a barra) e uma linha percentual em cima."
+      },
+      "GraficoDegraus": {
+        "properties": {
+          "unidade": {
+            "type": "string",
+            "enum": [
+              "brl",
+              "pct",
+              "pp",
+              "dias",
+              "vezes",
+              "qtd"
+            ],
+            "title": "Unidade"
+          },
+          "casas": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Casas"
+          },
+          "sufixo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sufixo"
+          },
+          "tipo": {
+            "type": "string",
+            "const": "degraus",
+            "title": "Tipo"
+          },
+          "dias": {
+            "items": {
+              "$ref": "#/components/schemas/DiaDegrau"
+            },
+            "type": "array",
+            "title": "Dias"
+          },
+          "series": {
+            "items": {
+              "$ref": "#/components/schemas/SerieDegrau"
+            },
+            "type": "array",
+            "title": "Series"
+          },
+          "hoje": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Hoje"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "falta": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Falta"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "unidade",
+          "tipo",
+          "dias",
+          "series"
+        ],
+        "title": "GraficoDegraus",
+        "description": "Acumulado do mês dia a dia, em degraus: plano nos dias sem venda."
+      },
+      "GraficoDispersao": {
+        "properties": {
+          "tipo": {
+            "type": "string",
+            "const": "dispersao",
+            "title": "Tipo"
+          },
+          "eixoX": {
+            "$ref": "#/components/schemas/EixoDispersao"
+          },
+          "eixoY": {
+            "$ref": "#/components/schemas/EixoDispersao"
+          },
+          "corteX": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cortex"
+          },
+          "corteY": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cortey"
+          },
+          "quadrantes": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Quadrante"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quadrantes"
+          },
+          "pontos": {
+            "items": {
+              "$ref": "#/components/schemas/PontoDispersao"
+            },
+            "type": "array",
+            "title": "Pontos"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "tipo",
+          "eixoX",
+          "eixoY",
+          "pontos"
+        ],
+        "title": "GraficoDispersao"
+      },
+      "GraficoEmpilhado": {
+        "properties": {
+          "unidade": {
+            "type": "string",
+            "enum": [
+              "brl",
+              "pct",
+              "pp",
+              "dias",
+              "vezes",
+              "qtd"
+            ],
+            "title": "Unidade"
+          },
+          "casas": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Casas"
+          },
+          "sufixo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sufixo"
+          },
+          "tipo": {
+            "type": "string",
+            "const": "empilhado",
+            "title": "Tipo"
+          },
+          "rotulos": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Rotulos"
+          },
+          "series": {
+            "items": {
+              "$ref": "#/components/schemas/SerieEmpilhada"
+            },
+            "type": "array",
+            "title": "Series"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "unidade",
+          "tipo",
+          "rotulos",
+          "series"
+        ],
+        "title": "GraficoEmpilhado",
+        "description": "Barras empilhadas; as cores seguem a ordem das séries (até 7)."
+      },
+      "GraficoLinhas": {
+        "properties": {
+          "unidade": {
+            "type": "string",
+            "enum": [
+              "brl",
+              "pct",
+              "pp",
+              "dias",
+              "vezes",
+              "qtd"
+            ],
+            "title": "Unidade"
+          },
+          "casas": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Casas"
+          },
+          "sufixo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sufixo"
+          },
+          "tipo": {
+            "type": "string",
+            "const": "linhas",
+            "title": "Tipo"
+          },
+          "rotulos": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Rotulos"
+          },
+          "titulos": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Titulos"
+          },
+          "series": {
+            "items": {
+              "$ref": "#/components/schemas/SerieLinha"
+            },
+            "type": "array",
+            "title": "Series"
+          },
+          "referencia": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReferenciaLinha"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "marcadores": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Marcador"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Marcadores"
+          },
+          "piso": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Piso"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "unidade",
+          "tipo",
+          "rotulos",
+          "series"
+        ],
+        "title": "GraficoLinhas"
+      },
+      "GrupoBarras": {
+        "properties": {
+          "rotulo": {
+            "type": "string",
+            "title": "Rotulo"
+          },
+          "titulo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Titulo"
+          },
+          "barras": {
+            "items": {
+              "$ref": "#/components/schemas/Barra"
+            },
+            "type": "array",
+            "title": "Barras"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rotulo",
+          "barras"
+        ],
+        "title": "GrupoBarras"
       },
       "HTTPValidationError": {
         "properties": {
@@ -1043,6 +3681,25 @@
           "formato"
         ],
         "title": "Hero"
+      },
+      "Hoje": {
+        "properties": {
+          "indice": {
+            "type": "integer",
+            "title": "Indice"
+          },
+          "rotulo": {
+            "type": "string",
+            "title": "Rotulo"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "indice",
+          "rotulo"
+        ],
+        "title": "Hoje"
       },
       "Indicador": {
         "properties": {
@@ -1177,6 +3834,208 @@
         ],
         "title": "ItemCarteira"
       },
+      "ItemContraMeta": {
+        "properties": {
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "detalhe": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detalhe"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "saudavel",
+              "atencao",
+              "critico"
+            ],
+            "title": "Status"
+          },
+          "atingimento": {
+            "$ref": "#/components/schemas/Valor"
+          },
+          "realizado": {
+            "$ref": "#/components/schemas/Valor"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Valor"
+          },
+          "diferenca": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Valor"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "diferencaRuim": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Diferencaruim"
+          },
+          "detalhes": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detalhes"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "nome",
+          "status",
+          "atingimento",
+          "realizado",
+          "meta"
+        ],
+        "title": "ItemContraMeta"
+      },
+      "ItemDestaque": {
+        "properties": {
+          "categoria": {
+            "type": "string",
+            "title": "Categoria"
+          },
+          "titulo": {
+            "type": "string",
+            "title": "Titulo"
+          },
+          "texto": {
+            "type": "string",
+            "title": "Texto"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "saudavel",
+              "atencao",
+              "critico"
+            ],
+            "title": "Status"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "categoria",
+          "titulo",
+          "texto",
+          "status"
+        ],
+        "title": "ItemDestaque"
+      },
+      "ItemLegenda": {
+        "properties": {
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "marca": {
+            "type": "string",
+            "enum": [
+              "linha",
+              "linha-clara",
+              "pontilhada",
+              "media",
+              "minimo",
+              "quadrado-escuro",
+              "quadrado-claro"
+            ],
+            "title": "Marca"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "nome",
+          "marca"
+        ],
+        "title": "ItemLegenda"
+      },
+      "ItemValor": {
+        "properties": {
+          "rotulo": {
+            "type": "string",
+            "title": "Rotulo"
+          },
+          "valor": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Valor"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Valor"
+          },
+          "contexto": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contexto"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "saudavel",
+                  "atencao",
+                  "critico"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "comSinal": {
+            "type": "boolean",
+            "title": "Comsinal",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rotulo",
+          "valor"
+        ],
+        "title": "ItemValor"
+      },
       "Kpi": {
         "properties": {
           "rotulo": {
@@ -1215,6 +4074,318 @@
           "contexto"
         ],
         "title": "Kpi"
+      },
+      "LinhaFaixa": {
+        "properties": {
+          "rotulo": {
+            "type": "string",
+            "title": "Rotulo"
+          },
+          "valores": {
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "type": "array",
+            "maxItems": 2,
+            "minItems": 2,
+            "title": "Valores"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rotulo",
+          "valores"
+        ],
+        "title": "LinhaFaixa"
+      },
+      "LinhaTabela": {
+        "properties": {
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "saudavel",
+                  "atencao",
+                  "critico"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "celulas": {
+            "items": {
+              "$ref": "#/components/schemas/Celula"
+            },
+            "type": "array",
+            "title": "Celulas"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "celulas"
+        ],
+        "title": "LinhaTabela"
+      },
+      "MarcaRegua": {
+        "properties": {
+          "rotulo": {
+            "type": "string",
+            "title": "Rotulo"
+          },
+          "valor": {
+            "type": "number",
+            "title": "Valor"
+          },
+          "secundaria": {
+            "type": "boolean",
+            "title": "Secundaria",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rotulo",
+          "valor"
+        ],
+        "title": "MarcaRegua"
+      },
+      "Marcador": {
+        "properties": {
+          "serie": {
+            "type": "integer",
+            "title": "Serie"
+          },
+          "i": {
+            "type": "integer",
+            "title": "I"
+          },
+          "rotulo": {
+            "type": "string",
+            "title": "Rotulo"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "serie",
+          "i",
+          "rotulo"
+        ],
+        "title": "Marcador"
+      },
+      "NomesCombo": {
+        "properties": {
+          "valor": {
+            "type": "string",
+            "title": "Valor"
+          },
+          "referencia": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Referencia"
+          },
+          "linha": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Linha"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "valor"
+        ],
+        "title": "NomesCombo"
+      },
+      "OpcaoFiltro": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "rotulo": {
+            "type": "string",
+            "title": "Rotulo"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "rotulo"
+        ],
+        "title": "OpcaoFiltro"
+      },
+      "PainelPayload": {
+        "properties": {
+          "tela": {
+            "type": "string",
+            "enum": [
+              "vendas",
+              "equipe-comercial",
+              "clientes"
+            ],
+            "title": "Tela"
+          },
+          "versaoContrato": {
+            "type": "string",
+            "const": "1.0",
+            "title": "Versaocontrato"
+          },
+          "cliente": {
+            "$ref": "#/components/schemas/Cliente"
+          },
+          "dadosAte": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dadosate"
+          },
+          "atualizadoEm": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Atualizadoem"
+          },
+          "filtros": {
+            "items": {
+              "$ref": "#/components/schemas/FiltroPainel"
+            },
+            "type": "array",
+            "title": "Filtros"
+          },
+          "aviso": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Aviso"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "destaques": {
+            "items": {
+              "$ref": "#/components/schemas/ItemValor"
+            },
+            "type": "array",
+            "title": "Destaques"
+          },
+          "kpis": {
+            "items": {
+              "$ref": "#/components/schemas/Kpi"
+            },
+            "type": "array",
+            "title": "Kpis"
+          },
+          "apoios": {
+            "items": {
+              "$ref": "#/components/schemas/ItemValor"
+            },
+            "type": "array",
+            "title": "Apoios"
+          },
+          "cartoes": {
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/CartaoAndamentoMes"
+                },
+                {
+                  "$ref": "#/components/schemas/CartaoFatores"
+                },
+                {
+                  "$ref": "#/components/schemas/CartaoContraMeta"
+                },
+                {
+                  "$ref": "#/components/schemas/CartaoTabela"
+                },
+                {
+                  "$ref": "#/components/schemas/CartaoDestaques"
+                },
+                {
+                  "$ref": "#/components/schemas/CartaoGraficos"
+                },
+                {
+                  "$ref": "#/components/schemas/CartaoFaixas"
+                },
+                {
+                  "$ref": "#/components/schemas/CartaoCurvaAbc"
+                },
+                {
+                  "$ref": "#/components/schemas/CartaoMatriz"
+                }
+              ],
+              "discriminator": {
+                "propertyName": "tipo",
+                "mapping": {
+                  "andamento-mes": "#/components/schemas/CartaoAndamentoMes",
+                  "contra-meta": "#/components/schemas/CartaoContraMeta",
+                  "curva-abc": "#/components/schemas/CartaoCurvaAbc",
+                  "destaques": "#/components/schemas/CartaoDestaques",
+                  "faixas": "#/components/schemas/CartaoFaixas",
+                  "fatores": "#/components/schemas/CartaoFatores",
+                  "graficos": "#/components/schemas/CartaoGraficos",
+                  "matriz": "#/components/schemas/CartaoMatriz",
+                  "tabela": "#/components/schemas/CartaoTabela"
+                }
+              }
+            },
+            "type": "array",
+            "title": "Cartoes"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "tela",
+          "versaoContrato",
+          "cliente",
+          "dadosAte",
+          "atualizadoEm",
+          "filtros",
+          "destaques",
+          "kpis",
+          "apoios",
+          "cartoes"
+        ],
+        "title": "PainelPayload"
       },
       "PedidoDefinirSenha": {
         "properties": {
@@ -1384,6 +4555,229 @@
         ],
         "title": "Ponto"
       },
+      "PontoCombo": {
+        "properties": {
+          "rotulo": {
+            "type": "string",
+            "title": "Rotulo"
+          },
+          "titulo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Titulo"
+          },
+          "valor": {
+            "type": "number",
+            "title": "Valor"
+          },
+          "referencia": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Referencia"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "saudavel",
+                  "atencao",
+                  "critico"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "linha": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Linha"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rotulo",
+          "valor"
+        ],
+        "title": "PontoCombo"
+      },
+      "PontoDispersao": {
+        "properties": {
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "x": {
+            "type": "number",
+            "title": "X"
+          },
+          "y": {
+            "type": "number",
+            "title": "Y"
+          },
+          "tamanho": {
+            "type": "number",
+            "title": "Tamanho"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "saudavel",
+                  "atencao",
+                  "critico"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "rotular": {
+            "type": "boolean",
+            "title": "Rotular",
+            "default": false
+          },
+          "dica": {
+            "items": {
+              "$ref": "#/components/schemas/ItemValor"
+            },
+            "type": "array",
+            "title": "Dica"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "nome",
+          "x",
+          "y",
+          "tamanho",
+          "dica"
+        ],
+        "title": "PontoDispersao"
+      },
+      "Quadrante": {
+        "properties": {
+          "posicao": {
+            "type": "string",
+            "enum": [
+              "superior-esquerdo",
+              "superior-direito",
+              "inferior-esquerdo",
+              "inferior-direito"
+            ],
+            "title": "Posicao"
+          },
+          "rotulo": {
+            "type": "string",
+            "title": "Rotulo"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "posicao",
+          "rotulo"
+        ],
+        "title": "Quadrante"
+      },
+      "ReferenciaBarras": {
+        "properties": {
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "valor": {
+            "type": "number",
+            "title": "Valor"
+          },
+          "estilo": {
+            "type": "string",
+            "enum": [
+              "media",
+              "minimo"
+            ],
+            "title": "Estilo"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "nome",
+          "valor",
+          "estilo"
+        ],
+        "title": "ReferenciaBarras"
+      },
+      "ReferenciaLinha": {
+        "properties": {
+          "valor": {
+            "type": "number",
+            "title": "Valor"
+          },
+          "rotulo": {
+            "type": "string",
+            "title": "Rotulo"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "valor",
+          "rotulo"
+        ],
+        "title": "ReferenciaLinha"
+      },
+      "Regua": {
+        "properties": {
+          "trechos": {
+            "items": {
+              "$ref": "#/components/schemas/TrechoRegua"
+            },
+            "type": "array",
+            "title": "Trechos"
+          },
+          "marcas": {
+            "items": {
+              "$ref": "#/components/schemas/MarcaRegua"
+            },
+            "type": "array",
+            "title": "Marcas"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "trechos",
+          "marcas"
+        ],
+        "title": "Regua"
+      },
       "RespostaAuth": {
         "properties": {
           "accessToken": {
@@ -1547,6 +4941,90 @@
         ],
         "title": "Secao"
       },
+      "SerieDegrau": {
+        "properties": {
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "estilo": {
+            "type": "string",
+            "enum": [
+              "realizado",
+              "projecao",
+              "meta",
+              "supermeta"
+            ],
+            "title": "Estilo"
+          },
+          "valores": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Valores"
+          },
+          "rotuloFim": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rotulofim"
+          },
+          "rotuloFimCurto": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rotulofimcurto"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "nome",
+          "estilo",
+          "valores"
+        ],
+        "title": "SerieDegrau"
+      },
+      "SerieEmpilhada": {
+        "properties": {
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "valores": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Valores"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "nome",
+          "valores"
+        ],
+        "title": "SerieEmpilhada"
+      },
       "SerieInadimplencia": {
         "properties": {
           "rotulos": {
@@ -1576,6 +5054,61 @@
           "media"
         ],
         "title": "SerieInadimplencia"
+      },
+      "SerieLinha": {
+        "properties": {
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "valores": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Valores"
+          },
+          "estilo": {
+            "type": "string",
+            "enum": [
+              "principal",
+              "secundaria",
+              "pontilhada"
+            ],
+            "title": "Estilo"
+          },
+          "area": {
+            "type": "boolean",
+            "title": "Area",
+            "default": false
+          },
+          "rotuloFim": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rotulofim"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "nome",
+          "valores",
+          "estilo"
+        ],
+        "title": "SerieLinha"
       },
       "SessaoPayload": {
         "properties": {
@@ -1719,6 +5252,49 @@
           "texto"
         ],
         "title": "Trecho"
+      },
+      "TrechoRegua": {
+        "properties": {
+          "estilo": {
+            "type": "string",
+            "enum": [
+              "realizado",
+              "projecao",
+              "falta"
+            ],
+            "title": "Estilo"
+          },
+          "rotulo": {
+            "type": "string",
+            "title": "Rotulo"
+          },
+          "de": {
+            "type": "number",
+            "title": "De"
+          },
+          "ate": {
+            "type": "number",
+            "title": "Ate"
+          },
+          "valor": {
+            "$ref": "#/components/schemas/Valor"
+          },
+          "comSinal": {
+            "type": "boolean",
+            "title": "Comsinal",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "estilo",
+          "rotulo",
+          "de",
+          "ate",
+          "valor"
+        ],
+        "title": "TrechoRegua"
       },
       "Usuario": {
         "properties": {
@@ -1871,6 +5447,29 @@
           "unidade"
         ],
         "title": "Valor"
+      },
+      "VisaoAndamento": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "rotulo": {
+            "type": "string",
+            "title": "Rotulo"
+          },
+          "grafico": {
+            "$ref": "#/components/schemas/GraficoDegraus"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "rotulo",
+          "grafico"
+        ],
+        "title": "VisaoAndamento"
       },
       "VisaoGeralPayload": {
         "properties": {

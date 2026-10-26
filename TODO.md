@@ -1,6 +1,6 @@
 # TODO — Overnex backend
 
-Última atualização: 23/10/2026.
+Última atualização: 26/10/2026.
 
 ## A fazer
 
@@ -16,6 +16,34 @@ Feito em 23/10/2026 (código; nada aplicado em produção): `AUTH_PROVEDOR=supab
 - [ ] **Front:** tela de login, "esqueci a senha", página `/definir-senha` (lê `token_hash` e `type` da URL), access token só em memória, `renovar` ao abrir a página e antes de `expiraEm`, `sair`. Tratar 401 de qualquer rota chamando `renovar` uma vez.
 - [ ] **Limite de tentativas compartilhado** se a API tiver mais de uma instância: hoje cada processo conta as suas tentativas, em memória ([api/app/auth/limite.py](api/app/auth/limite.py)). Com várias réplicas, o limite efetivo se multiplica; trocar por algo compartilhado (Postgres ou Redis).
 - [ ] **Limites de taxa do Supabase Auth.** Todas as chamadas saem do IP da API, e os limites por IP do Supabase valem para todos os usuários somados: `/token` (login e renovação juntos) 150 a cada 5 min, `/verify` 30 e `/recover` 30 a cada 5 min. Com poucas dezenas de usuários há folga (cada sessão renova uma vez por hora); acompanhar os avisos "Limite do Supabase Auth atingido" no log da API e, se aparecerem, subir os limites em Authentication → Rate Limits ou decidir o `Sb-Forwarded-For` (ver "A decidir").
+
+### Migrar o Supabase para São Paulo (sa-east-1)
+
+Decidido em 26/10/2026. Roteiro em [supabase/MIGRACAO_SAO_PAULO.md](supabase/MIGRACAO_SAO_PAULO.md). Feito em 26/10/2026: projeto novo `sesculmqiwvtpparxflz` (sa-east-1, JWT ES256), `db push` das 16 migrations, cadastro refeito pelos scripts de `supabase/producao/` (no lugar da cópia: `pj_cortes_cadastro`, `pj_cortes_contas_dre`, `pj_cortes_usuario_dev`, `usuario_dev_supabase_auth` e a parte 1 do `pj_cortes_telas_comerciais`), usuário de dev recriado no Auth (id novo), Secrets do GitHub trocados e a primeira carga no projeto novo, API local apontada para ele (`api_site`, porta 6543) e login com e-mail e senha funcionando. O histórico de `seg.log_acesso` ficou no projeto antigo. Falta:
+
+- [ ] **Comparar as contagens de `cfg` e `seg`** com o projeto antigo (consulta no roteiro), para achar ajustes feitos à mão fora dos scripts.
+- [ ] **"Esqueci a senha"** no projeto novo (modelos de e-mail, SMTP e URLs do Auth).
+- [ ] **`jobs/carga/.env`** ainda aponta para o projeto antigo (só importa para rodar a carga à mão).
+- [ ] **Pausar o projeto antigo** (`ddpicszgihwekcvyevmd`) depois de girar a chave secret e a senha do `api_site` dele; apagar depois de algumas semanas.
+- [ ] **Docs com o projeto e a região novos:** `api/.env.example`, `api/README.md` (id do projeto no passo do Auth), `CLAUDE.md` (latência) e o roteiro.
+
+- [ ] **Trocar a senha do banco (`postgres`) do projeto novo** (Project Settings → Database → Reset database password), por uma longa e gerada: em 26/10/2026 ela apareceu numa mensagem de erro durante uma sessão do Claude.
+- [ ] **Girar a chave secret e a senha do `api_site` do projeto atual.** Em 26/10/2026 os valores do `api/.env` e do `jobs/carga/.env` apareceram na saída de uma ferramenta durante uma sessão do Claude. Com a migração, eles deixam de valer quando o projeto antigo for pausado; se a migração demorar, girar antes.
+- [ ] **Hospedar a API no Azure Brazil South**, junto do banco novo: é aí que o tempo das telas cai de verdade (cada ida ao banco de ~100 ms para poucos ms).
+
+### Painéis comerciais (Vendas, Equipe comercial, Clientes e atendimentos)
+
+Feito em 26/10/2026 (código; nada aplicado em produção): `GET /api/telas/vendas` (COM-01), `/equipe-comercial` (COM-02) e `/clientes` (COM-03) no contrato `PainelPayload` do front ([api/app/telas/paineis/](api/app/telas/paineis/), regras no topo de cada módulo). Testado só sem banco; o SQL novo foi conferido só com o `pglast`. Falta:
+
+- [ ] **Rampa dos vendedores novos na PJ.** Desde 26/10/2026 a API acha sozinha as colunas de vendedor, linha e quantidade das vendas da PJ (padrão dos painéis), e Vendas e Equipe já saem completas no projeto novo. Falta só a rampa (e o "novo" e o 3º destaque da Equipe), que precisa do faturado por vendedor no resumo mensal: (1) carga com o código novo em `main`; (2) parte 2 do [pj_cortes_telas_comerciais.sql](supabase/producao/pj_cortes_telas_comerciais.sql) (papéis em `colunas_modelo`; com a carga antiga, o resumo mensal das vendas para de ser gravado); (3) `diario.yml`. As telas COM-01 a 03 já estão no perfil "Desenvolvimento" do projeto novo.
+- [ ] **Canal do vendedor vem em código** (`I` e `R` em `d_vendedor_pj.Canal`): o filtro e o cartão de canais mostram "I" e "R", e só os vendedores "I" têm meta. Saber o que é cada código e, se for o caso, cadastrar um de-para (ex.: `cfg.parametro_cliente` `comercial.canais`).
+- [ ] **Conferir com o Power BI** os números das três telas (vendido, projeção, meta por canal e por vendedor, margem, vencido nas carteiras).
+- [ ] **Rodar os testes `db`** de [api/tests/test_paineis.py](api/tests/test_paineis.py) e os dois de `/api/sessao` em `test_visao_geral.py` (a lista de telas ganhou COM-01 a 03).
+- [ ] **Conferir com os dados reais:** se `en_codigovendedor` das vendas, `en_vendedor` das metas, `d_vendedor_pj` e `f_receitas_pj` usam o mesmo código (sem espaços ou zeros à esquerda diferentes); se a Agile usa os mesmos códigos de vendedor (o usuário avisa se não); se a soma das metas dos vendedores bate com a meta da empresa.
+- [ ] **Front:** trocar as fixtures pela API nas três telas e regenerar os tipos do `api/openapi.json`. Diferenças para as fixtures: as opções dos filtros vêm dos dados; sem supermeta, sem Mix, sem o aviso de Clientes; fatores com 2 fatores (clientes × venda por cliente); vários textos que interpretam ficam fora (conclusão dos fatores, notas de linhas, canais, dia da semana e itens, chamada do mapa e das faixas).
+- [ ] **Telas comerciais nos perfis de produção** (`cfg.perfil_tela`): COM-02 só com `ve_dado_nominal = true`.
+- [ ] **Explicações ("i") que não batem com a regra do back**, fora da resposta até o texto ou a regra mudar ([explicacoes.py](api/app/telas/paineis/explicacoes.py)): `fatores-meta` (o back usa clientes × venda por cliente, não três fatores), `destaques-mes` ("Precisa de apoio" é o menor atingimento, não quem está em queda há 3 meses; podem sair menos de quatro), `rampa` (a curva usa os 5 com melhor atingimento nos últimos 6 meses, não "quem começou bem"), `mapa-produtividade` (bolha = valor vendido, não volume), `report-equipe` (não é o mesmo report do BI: sem Mix) e `atendimentos-ticket` (cita outubro; a última barra só é projeção com o mês em aberto). Entraram com pequena diferença, a confirmar: `andamento-mes` (as faixas cinzas são os dias não úteis, e o gráfico vai dia a dia) e `atingimento-6-meses` (as cores usam 10 p.p. abaixo da referência, iguais ao farol padrão, mas não leem `farol.vendas_meta`).
+- [ ] **Explicações a escrever** para `linhas-produto`, `vendas-12-meses`, `participacao-linhas`, `dia-semana`, `itens-mais-vendem` e `itens-atendimento`.
 
 ### Conferir em produção
 
@@ -43,6 +71,8 @@ Feito em 23/10/2026 (código; nada aplicado em produção): `AUTH_PROVEDOR=supab
 - [ ] **'2 PJ Cortes'** só aparece no estoque (`en_filial` 2) e hoje aponta para a mesma empresa. Confirmar se é outra empresa.
 
 ### Antes de publicar a API
+
+- [ ] **Desempenho, próximo passo:** histórico dos meses fechados dos painéis (Clientes e Vendas) lido do resumo mensal, com a carga gravando também os itens por pedido; a consulta principal passaria a ler linha a linha só os meses que precisam. Estimativa: Clientes de ~1,2 s para ~0,4 s no servidor. Mexe na carga. Depois, hospedar a API no Azure Brazil South (cada ida ao banco de ~90 ms para poucos ms).
 
 - [ ] **Senha do role `api_site`** no Supabase (`alter role api_site with login password '…'`).
 - [ ] **Usuários e perfis de produção:** perfis em `cfg.perfil_acesso`, `cfg.perfil_tela` e `cfg.perfil_tabela`; os usuários entram pelo CLI de cadastro (`python -m app.cli.convidar_usuario`, ver [api/README.md](api/README.md#cadastro-de-usuários-pela-lann)), que grava `seg.usuario` e os vínculos. Sem isso, toda tela responde 403.
@@ -114,12 +144,32 @@ O front (`overnex-frontend`) já desenha a Visão geral a partir de um JSON fixo
 
 ## A decidir
 
+- [ ] **Desempenho, duas trocas com efeito colateral** (medição de 26/10/2026 no projeto novo): (1) cache das telas por mais tempo que 15 min (a resposta só muda com carga nova, mas um parâmetro mudado no banco demora mais para valer); (2) tirar o teste de conexão a cada empréstimo do pool (−80 ms por requisição e por ramo paralelo; uma conexão derrubada pelo pooler faria uma requisição falhar).
+
+- [ ] **Painéis comerciais, regras provisórias** (o usuário confirma ou corrige):
+  - "Mix" (meta e real) do report da equipe: o que é (hoje fora; a meta existe em `f_metas_comercial_pj.Mix`);
+  - faixas de farol de "Vencido na carteira" e "Prazo de recebimento" (hoje sem farol; o mockup usava R$ 60/100 mil e 29/33 dias);
+  - "5 melhores atuais" da curva de rampa: maior atingimento médio nos últimos 6 meses (o usuário avisa se mudar);
+  - "Mês anterior" no andamento do mês: o mês anterior inteiro;
+  - faixas de valor do pedido (padrão 500 / 2 mil / 5 mil / 10 mil, em `clientes.faixas_valor`) e a curva de margem (terços da margem %, ou `clientes.curva_margem`);
+  - clientes no fim do mês (cartão de fatores e farol de clientes da equipe): os de hoje × a curva de clientes do mês anterior;
+  - volume: `en_quantidade` na unidade do ERP, sem meta (a meta de volume está vazia);
+  - supermeta: sem fonte, fora até existir.
+
 - [ ] **Microsoft Entra ID.** O login agora é por e-mail e senha no Supabase Auth; a validação do Entra continua em [api/app/seguranca/auth.py](api/app/seguranca/auth.py) (`validar_token_entra`), desligada por configuração (`AUTH_PROVEDOR=entra` liga). Decidir se volta (por exemplo, para os consultores da LANN) e como: app registration da API (`ENTRA_TENANT_ID`, `ENTRA_AUDIENCE`), usuários dos clientes como convidados no tenant ou o app aceitando vários tenants (pede ajuste na validação do token), e se os dois provedores convivem (hoje é um ou outro; `seg.usuario.id_autenticacao` guarda o id de um só).
 - [ ] **IP do cliente para o Supabase Auth (`Sb-Forwarded-For`).** Com o header, o Supabase conta os limites por IP de cada usuário em vez de somar tudo no IP da API. Exige uma chave secreta na API (não aceita a publishable nem as legadas) e ligar a opção em Authentication → Rate Limits. Hoje a chave secreta fica só no CLI de cadastro, por decisão; ligar isso põe uma chave com poder de administrador no ambiente da API.
 - [ ] **Usuário com mais de um cliente** (consultor LANN). Hoje a etapa 2 da checagem nega quem tem mais de um vínculo ([api/app/seguranca/acesso.py](api/app/seguranca/acesso.py)), e o CLI de cadastro só cria usuário novo com um cliente. Decidir como o consultor escolhe o cliente (pelo `slug` na URL do front, num seletor depois do login…) e como o cadastro acrescenta um vínculo a quem já existe.
 
 ## Concluído
 
+- **26/10/2026 — Desempenho das telas no projeto de São Paulo:** (1) pré-montagem da Visão geral e dos painéis liberados depois de `/api/sessao` ([app/telas/preparo.py](api/app/telas/preparo.py)), sem gravar log de acesso, e o cache que espera a montagem em andamento em vez de montar de novo (`CacheComPrazo.obter_ou_montar`); (2) as leituras pequenas do começo de cada tela (última carga, cliente, fontes, feriados, parâmetros) e da fase inicial dos painéis (panorama, vendedores, metas, resumo por vendedor) numa ida ao banco só, por pipeline ([app/telas/preleitura.py](api/app/telas/preleitura.py), `em_uma_ida`); `/api/sessao` também numa ida só; (3) pool com 8 conexões abertas (`DB_POOL_MIN`). Medido contra o banco novo: `/api/sessao` de 0,58 para 0,36 s; tela já pré-montada ~0,3 s; sem cache, Vendas de 2,0–2,8 para 1,3–1,7 s, Visão geral de 2,1–2,2 para 1,4–1,5 s, Clientes de 2,4–2,5 para 1,6–1,8 s, Equipe 1,4–1,55 s (agora com a consulta principal). Testado sem banco (310 testes); os testes `db` não rodaram.
+- **26/10/2026 — Equipe comercial e cartões de Vendas sem depender do script:** os papéis `vendedor`, `linha` e `quantidade` dos painéis têm padrão com as colunas da PJ (`en_codigovendedor`, `it_grupo`, `en_quantidade`), usadas só se existirem na tabela.
+
+- **26/10/2026 — Explicação ("i") dos cartões dos painéis comerciais:** campo `explicacao` no cartão (`CartaoBase`), com textos fixos por cartão num lugar só ([explicacoes.py](api/app/telas/paineis/explicacoes.py)), copiados das fixtures do front. Entraram 8 dos 14; os outros 6 descrevem uma conta diferente da do back e esperam decisão (item em "A fazer"). Fixtures do demo recopiadas (já com os textos); `openapi.json` regenerado. Testado sem banco.
+
+- **26/10/2026 — Painéis comerciais na API (COM-01 a 03):** Vendas, Equipe comercial e Clientes e atendimentos no contrato `PainelPayload` do front, com filtros próprios (canal, linha, supervisor) tirados dos dados, cache de 15 min, demo com as fixtures do mockup e resposta vazia antes da primeira carga. A carga aceita os papéis opcionais `vendedor`, `linha` e `quantidade` e grava o faturado por vendedor no resumo mensal. Códigos no seed e no script de produção da PJ; `openapi.json` regenerado. Testes sem banco (regras, montagem das telas com leituras simuladas, rotas com sessão falsa); os testes `db` estão escritos e não rodaram.
+
+- **26/10/2026 — CLAUDE.md:** regras de trabalho (português, TODO, sem commit, o que foi testado), mapa do repositório, comandos, como a API e o banco funcionam e os cuidados (segredos, `.env` que pode apontar para produção, CLI do Supabase).
 - **13/10/2026 — Rodada 1, banco e API:** schemas `cfg`/`seg`/`mart`, roles `api_site` e `carga`, RLS em tudo, seed "Padrão LANN" e testes pgTAP. API FastAPI com login do Entra ID, checagem de acesso em 6 etapas, FIN-01 de exemplo, `/health` e Dockerfile.
 - **14/10/2026 — Rodada 2, carga e agendamento:** carga diária do Storage para o mart, com validação de data e troca em uma transação. Workflow `diario.yml`: snapshot às 9h e, se der certo, a carga.
 - **14/10/2026 — Rodada 3, tabelas de dados:** as 21 tabelas do bucket da Nilo Maia têm tabela no mart com as mesmas colunas (migration 5). A carga genérica (tipo `tabela`) preenche essas tabelas, e o front lê por `GET /api/dados/{tabela}`. O inventário do bucket (`python -m carga.inspecionar`) gera o SQL de tabelas novas.

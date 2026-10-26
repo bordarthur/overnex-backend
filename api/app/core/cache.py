@@ -14,6 +14,7 @@ import threading
 import time
 from collections import OrderedDict
 from collections.abc import Callable, Hashable, Iterator
+from concurrent.futures import Future
 from contextlib import contextmanager
 from contextvars import ContextVar
 from typing import Any
@@ -92,6 +93,38 @@ class CacheComPrazo[V]:
         self._relogio = relogio
         self._itens: OrderedDict[Hashable, tuple[float, V]] = OrderedDict()
         self._trava = threading.Lock()
+        # chave → resultado de quem está montando agora (ver obter_ou_montar)
+        self._montando: dict[Hashable, Future[V]] = {}
+
+    def obter_ou_montar(self, chave: Hashable, montar: Callable[[], V], segundos: float) -> V:
+        """O valor guardado; senão, monta e guarda. Se outra thread já está montando a mesma
+        chave (ex.: a pré-montagem da tela e o clique do usuário), espera por ela em vez de
+        montar de novo. Com `segundos` <= 0, só monta (cache desligado)."""
+        if segundos <= 0:
+            return montar()
+        with self._trava:
+            item = self._itens.get(chave)
+            if item is not None and self._relogio() < item[0]:
+                self._itens.move_to_end(chave)
+                return item[1]
+            andamento = self._montando.get(chave)
+            dono = andamento is None
+            if andamento is None:
+                andamento = self._montando[chave] = Future()
+        if not dono:
+            # o erro de quem montou (ex.: 422) vale para quem esperou
+            return andamento.result()
+        try:
+            valor = montar()
+        except BaseException as erro:
+            andamento.set_exception(erro)
+            raise
+        finally:
+            with self._trava:
+                self._montando.pop(chave, None)
+        self.guardar(chave, valor, segundos)
+        andamento.set_result(valor)
+        return valor
 
     def obter(self, chave: Hashable) -> V | None:
         with self._trava:

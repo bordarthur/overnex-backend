@@ -1,0 +1,1786 @@
+{
+  "tela": "equipe-comercial",
+  "versaoContrato": "1.0",
+  "cliente": {
+    "nome": "Cliente Demo",
+    "sigla": "CD",
+    "logoUrl": null
+  },
+  "dadosAte": "2026-10-12",
+  "atualizadoEm": "2026-10-13T12:02:00Z",
+  "filtros": [
+    {
+      "id": "canal",
+      "rotulo": "Canal",
+      "opcoes": [
+        {
+          "id": "todos",
+          "rotulo": "Todos"
+        },
+        {
+          "id": "varejo",
+          "rotulo": "Varejo"
+        },
+        {
+          "id": "atacado",
+          "rotulo": "Atacado"
+        },
+        {
+          "id": "televendas",
+          "rotulo": "Televendas"
+        }
+      ],
+      "padrao": "todos"
+    },
+    {
+      "id": "supervisor",
+      "rotulo": "Supervisor",
+      "opcoes": [
+        {
+          "id": "todos",
+          "rotulo": "Todos"
+        },
+        {
+          "id": "marcos",
+          "rotulo": "Marcos"
+        },
+        {
+          "id": "paula",
+          "rotulo": "Paula"
+        }
+      ],
+      "padrao": "todos"
+    }
+  ],
+  "destaques": [
+    {
+      "rotulo": "Vendedores no ritmo da meta",
+      "valor": "2 de 6",
+      "contexto": "Carla e Ana projetam acima de 100%",
+      "status": "atencao"
+    },
+    {
+      "rotulo": "Projeção da equipe",
+      "valor": {
+        "valor": 94.8,
+        "unidade": "pct",
+        "casas": 1
+      },
+      "contexto": "da meta de R$ 6,90 mi",
+      "status": "atencao"
+    },
+    {
+      "rotulo": "Novos acima da curva de rampa",
+      "valor": "2 de 2",
+      "contexto": "Elisa no 5º mês e Fábio no 3º",
+      "status": "saudavel"
+    }
+  ],
+  "kpis": [],
+  "apoios": [
+    {
+      "rotulo": "Margem média da equipe",
+      "valor": {
+        "valor": 33.9,
+        "unidade": "pct",
+        "casas": 1
+      }
+    },
+    {
+      "rotulo": "Clientes atendidos",
+      "valor": {
+        "valor": 486,
+        "unidade": "qtd",
+        "casas": 0
+      }
+    },
+    {
+      "rotulo": "Em queda há 3 meses ou mais",
+      "valor": {
+        "valor": 1,
+        "unidade": "qtd",
+        "casas": 0
+      }
+    },
+    {
+      "rotulo": "Vencido nas carteiras",
+      "valor": {
+        "valor": 528000,
+        "unidade": "brl"
+      }
+    }
+  ],
+  "cartoes": [
+    {
+      "id": "destaques-mes",
+      "tipo": "destaques",
+      "largura": 12,
+      "titulo": "Destaques do mês",
+      "subtitulo": "Para reconhecer quem entrega e apoiar quem está com dificuldade",
+      "itens": [
+        {
+          "categoria": "Mais vendas",
+          "titulo": "Ana Ribeiro",
+          "texto": "R$ 512 mil vendidos; projeção de 106% da meta",
+          "status": "saudavel"
+        },
+        {
+          "categoria": "Melhor margem",
+          "titulo": "Fábio Nunes",
+          "texto": "36,0% de margem bruta, 2,1 p.p. acima da média da equipe",
+          "status": "saudavel"
+        },
+        {
+          "categoria": "Melhor evolução",
+          "titulo": "Elisa Rocha",
+          "texto": "de 68% para 95% da meta em 3 meses, no 5º mês de casa",
+          "status": "saudavel"
+        },
+        {
+          "categoria": "Precisa de apoio",
+          "titulo": "Diego Alves",
+          "texto": "5 meses de queda: de 96% para 78%; 27 clientes em risco e R$ 168 mil vencidos na carteira",
+          "status": "critico"
+        }
+      ],
+      "explicacao": "Quatro cartões para reconhecer quem entrega e apoiar quem tem dificuldade: mais vendas, melhor margem, melhor evolução em 3 meses e quem está em queda há 3 meses ou mais."
+    },
+    {
+      "id": "ranking",
+      "tipo": "contra-meta",
+      "largura": 7,
+      "titulo": "Ranking por projeção",
+      "subtitulo": "Projeção de cada vendedor contra a própria meta. O traço é a meta dele.",
+      "layout": "ranking",
+      "rotuloRealizado": "projeção",
+      "rotuloMeta": "meta",
+      "itens": [
+        {
+          "nome": "Carla Mota",
+          "detalhe": "Atacado",
+          "status": "saudavel",
+          "atingimento": {
+            "valor": 109,
+            "unidade": "pct",
+            "casas": 0
+          },
+          "realizado": {
+            "valor": 1308000,
+            "unidade": "brl"
+          },
+          "meta": {
+            "valor": 1200000,
+            "unidade": "brl"
+          }
+        },
+        {
+          "nome": "Ana Ribeiro",
+          "detalhe": "Atacado",
+          "status": "saudavel",
+          "atingimento": {
+            "valor": 106,
+            "unidade": "pct",
+            "casas": 0
+          },
+          "realizado": {
+            "valor": 1536000,
+            "unidade": "brl"
+          },
+          "meta": {
+            "valor": 1450000,
+            "unidade": "brl"
+          }
+        },
+        {
+          "nome": "Elisa Rocha",
+          "detalhe": "Varejo · novo, 5º mês",
+          "status": "atencao",
+          "atingimento": {
+            "valor": 95,
+            "unidade": "pct",
+            "casas": 0
+          },
+          "realizado": {
+            "valor": 903000,
+            "unidade": "brl"
+          },
+          "meta": {
+            "valor": 950000,
+            "unidade": "brl"
+          }
+        },
+        {
+          "nome": "Bruno Lima",
+          "detalhe": "Varejo",
+          "status": "atencao",
+          "atingimento": {
+            "valor": 93,
+            "unidade": "pct",
+            "casas": 0
+          },
+          "realizado": {
+            "valor": 1206000,
+            "unidade": "brl"
+          },
+          "meta": {
+            "valor": 1300000,
+            "unidade": "brl"
+          }
+        },
+        {
+          "nome": "Fábio Nunes",
+          "detalhe": "Televendas · novo, 3º mês",
+          "status": "critico",
+          "atingimento": {
+            "valor": 82,
+            "unidade": "pct",
+            "casas": 0
+          },
+          "realizado": {
+            "valor": 693000,
+            "unidade": "brl"
+          },
+          "meta": {
+            "valor": 850000,
+            "unidade": "brl"
+          }
+        },
+        {
+          "nome": "Diego Alves",
+          "detalhe": "Varejo",
+          "status": "critico",
+          "atingimento": {
+            "valor": 78,
+            "unidade": "pct",
+            "casas": 0
+          },
+          "realizado": {
+            "valor": 894000,
+            "unidade": "brl"
+          },
+          "meta": {
+            "valor": 1150000,
+            "unidade": "brl"
+          }
+        }
+      ],
+      "explicacao": "Do maior para o menor atingimento. A barra é a projeção do mês e o traço é a meta de cada vendedor; por isso as metas aparecem em lugares diferentes."
+    },
+    {
+      "id": "rampa",
+      "tipo": "graficos",
+      "largura": 5,
+      "titulo": "Rampa dos vendedores novos",
+      "subtitulo": "Atingimento da meta por mês de casa, contra a curva esperada",
+      "nota": "A curva é calculada pelo histórico da própria empresa: a média dos 5 melhores vendedores atuais nos seus primeiros 6 meses. O início de cada vendedor é o primeiro mês com venda no DW. Se na empresa os novos vendem mais no começo, a curva mostra isso.",
+      "graficos": [
+        {
+          "grafico": {
+            "tipo": "linhas",
+            "unidade": "pct",
+            "casas": 0,
+            "piso": 30,
+            "rotulos": ["1º mês", "2º", "3º", "4º", "5º", "6º"],
+            "titulos": [
+              "1º mês de casa",
+              "2º mês de casa",
+              "3º mês de casa",
+              "4º mês de casa",
+              "5º mês de casa",
+              "6º mês de casa"
+            ],
+            "series": [
+              {
+                "nome": "Curva esperada",
+                "valores": [40, 55, 70, 80, 90, 100],
+                "estilo": "pontilhada",
+                "rotuloFim": "Curva"
+              },
+              {
+                "nome": "Elisa",
+                "valores": [55, 68, 80, 88, 95, null],
+                "estilo": "principal",
+                "rotuloFim": "Elisa"
+              },
+              {
+                "nome": "Fábio",
+                "valores": [48, 66, 82, null, null, null],
+                "estilo": "secundaria",
+                "rotuloFim": "Fábio"
+              }
+            ]
+          }
+        }
+      ],
+      "explicacao": "Compara o vendedor novo com a curva de quem começou bem na empresa, mês a mês de casa, em vez de compará-lo com a meta cheia."
+    },
+    {
+      "id": "mapa-produtividade",
+      "tipo": "graficos",
+      "largura": 12,
+      "titulo": "Mapa de produtividade",
+      "subtitulo": "Como cada vendedor vende: quantos clientes atende e quanto vende para cada um. O tamanho é o volume vendido; a cor, o atingimento da meta.",
+      "chamada": {
+        "status": "atencao",
+        "texto": [
+          {
+            "texto": "A "
+          },
+          {
+            "texto": "Elisa",
+            "destaque": true
+          },
+          {
+            "texto": " atende mais clientes que todos, mas com a menor compra por cliente: o espaço dela é aumentar o mix. A "
+          },
+          {
+            "texto": "Carla",
+            "destaque": true
+          },
+          {
+            "texto": " e a "
+          },
+          {
+            "texto": "Ana",
+            "destaque": true
+          },
+          {
+            "texto": " vendem muito para poucos clientes: bom resultado, mas risco de concentração se um grande sair."
+          }
+        ]
+      },
+      "graficos": [
+        {
+          "grafico": {
+            "tipo": "dispersao",
+            "eixoX": {
+              "rotulo": "Clientes atendidos no mês",
+              "unidade": "qtd"
+            },
+            "eixoY": {
+              "rotulo": "Venda por cliente",
+              "unidade": "brl"
+            },
+            "corteX": 82.5,
+            "corteY": 4048,
+            "quadrantes": [
+              {
+                "posicao": "superior-esquerdo",
+                "rotulo": "Poucos clientes, compra alta"
+              },
+              {
+                "posicao": "superior-direito",
+                "rotulo": "Muitos clientes, compra alta"
+              },
+              {
+                "posicao": "inferior-esquerdo",
+                "rotulo": "Poucos clientes, compra baixa"
+              },
+              {
+                "posicao": "inferior-direito",
+                "rotulo": "Muitos clientes, compra baixa"
+              }
+            ],
+            "pontos": [
+              {
+                "nome": "Carla",
+                "x": 62,
+                "y": 7032,
+                "tamanho": 436000,
+                "status": "saudavel",
+                "rotular": true,
+                "dica": [
+                  {
+                    "rotulo": "Vendedor",
+                    "valor": "Carla Mota"
+                  },
+                  {
+                    "rotulo": "Clientes atendidos",
+                    "valor": {
+                      "valor": 62,
+                      "unidade": "qtd",
+                      "casas": 0
+                    }
+                  },
+                  {
+                    "rotulo": "Venda por cliente",
+                    "valor": {
+                      "valor": 7032,
+                      "unidade": "brl",
+                      "compacto": false
+                    }
+                  },
+                  {
+                    "rotulo": "Vendido",
+                    "valor": {
+                      "valor": 436000,
+                      "unidade": "brl"
+                    }
+                  },
+                  {
+                    "rotulo": "Projeção",
+                    "valor": "109% da meta"
+                  }
+                ]
+              },
+              {
+                "nome": "Ana",
+                "x": 81,
+                "y": 6321,
+                "tamanho": 512000,
+                "status": "saudavel",
+                "rotular": true,
+                "dica": [
+                  {
+                    "rotulo": "Vendedor",
+                    "valor": "Ana Ribeiro"
+                  },
+                  {
+                    "rotulo": "Clientes atendidos",
+                    "valor": {
+                      "valor": 81,
+                      "unidade": "qtd",
+                      "casas": 0
+                    }
+                  },
+                  {
+                    "rotulo": "Venda por cliente",
+                    "valor": {
+                      "valor": 6321,
+                      "unidade": "brl",
+                      "compacto": false
+                    }
+                  },
+                  {
+                    "rotulo": "Vendido",
+                    "valor": {
+                      "valor": 512000,
+                      "unidade": "brl"
+                    }
+                  },
+                  {
+                    "rotulo": "Projeção",
+                    "valor": "106% da meta"
+                  }
+                ]
+              },
+              {
+                "nome": "Elisa",
+                "x": 98,
+                "y": 3071,
+                "tamanho": 301000,
+                "status": "atencao",
+                "rotular": true,
+                "dica": [
+                  {
+                    "rotulo": "Vendedor",
+                    "valor": "Elisa Rocha"
+                  },
+                  {
+                    "rotulo": "Clientes atendidos",
+                    "valor": {
+                      "valor": 98,
+                      "unidade": "qtd",
+                      "casas": 0
+                    }
+                  },
+                  {
+                    "rotulo": "Venda por cliente",
+                    "valor": {
+                      "valor": 3071,
+                      "unidade": "brl",
+                      "compacto": false
+                    }
+                  },
+                  {
+                    "rotulo": "Vendido",
+                    "valor": {
+                      "valor": 301000,
+                      "unidade": "brl"
+                    }
+                  },
+                  {
+                    "rotulo": "Projeção",
+                    "valor": "95% da meta"
+                  }
+                ]
+              },
+              {
+                "nome": "Bruno",
+                "x": 84,
+                "y": 4786,
+                "tamanho": 402000,
+                "status": "atencao",
+                "rotular": true,
+                "dica": [
+                  {
+                    "rotulo": "Vendedor",
+                    "valor": "Bruno Lima"
+                  },
+                  {
+                    "rotulo": "Clientes atendidos",
+                    "valor": {
+                      "valor": 84,
+                      "unidade": "qtd",
+                      "casas": 0
+                    }
+                  },
+                  {
+                    "rotulo": "Venda por cliente",
+                    "valor": {
+                      "valor": 4786,
+                      "unidade": "brl",
+                      "compacto": false
+                    }
+                  },
+                  {
+                    "rotulo": "Vendido",
+                    "valor": {
+                      "valor": 402000,
+                      "unidade": "brl"
+                    }
+                  },
+                  {
+                    "rotulo": "Projeção",
+                    "valor": "93% da meta"
+                  }
+                ]
+              },
+              {
+                "nome": "Fábio",
+                "x": 71,
+                "y": 3254,
+                "tamanho": 231000,
+                "status": "critico",
+                "rotular": true,
+                "dica": [
+                  {
+                    "rotulo": "Vendedor",
+                    "valor": "Fábio Nunes"
+                  },
+                  {
+                    "rotulo": "Clientes atendidos",
+                    "valor": {
+                      "valor": 71,
+                      "unidade": "qtd",
+                      "casas": 0
+                    }
+                  },
+                  {
+                    "rotulo": "Venda por cliente",
+                    "valor": {
+                      "valor": 3254,
+                      "unidade": "brl",
+                      "compacto": false
+                    }
+                  },
+                  {
+                    "rotulo": "Vendido",
+                    "valor": {
+                      "valor": 231000,
+                      "unidade": "brl"
+                    }
+                  },
+                  {
+                    "rotulo": "Projeção",
+                    "valor": "82% da meta"
+                  }
+                ]
+              },
+              {
+                "nome": "Diego",
+                "x": 90,
+                "y": 3311,
+                "tamanho": 298000,
+                "status": "critico",
+                "rotular": true,
+                "dica": [
+                  {
+                    "rotulo": "Vendedor",
+                    "valor": "Diego Alves"
+                  },
+                  {
+                    "rotulo": "Clientes atendidos",
+                    "valor": {
+                      "valor": 90,
+                      "unidade": "qtd",
+                      "casas": 0
+                    }
+                  },
+                  {
+                    "rotulo": "Venda por cliente",
+                    "valor": {
+                      "valor": 3311,
+                      "unidade": "brl",
+                      "compacto": false
+                    }
+                  },
+                  {
+                    "rotulo": "Vendido",
+                    "valor": {
+                      "valor": 298000,
+                      "unidade": "brl"
+                    }
+                  },
+                  {
+                    "rotulo": "Projeção",
+                    "valor": "78% da meta"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "explicacao": "Cada bolha é um vendedor. Para a direita, mais clientes atendidos; para cima, mais venda por cliente. O tamanho é o volume vendido e a cor, o atingimento da meta. As linhas são as medianas da equipe."
+    },
+    {
+      "id": "atingimento-6-meses",
+      "tipo": "tabela",
+      "variante": "calor",
+      "largura": 12,
+      "titulo": "Atingimento nos últimos 6 meses",
+      "subtitulo": "Percentual da meta em cada mês. Outubro é projeção. Novos são comparados com a curva de rampa.",
+      "colunas": [
+        {
+          "rotulo": "Vendedor",
+          "alinhar": "esquerda"
+        },
+        {
+          "rotulo": "mai",
+          "alinhar": "centro"
+        },
+        {
+          "rotulo": "jun",
+          "alinhar": "centro"
+        },
+        {
+          "rotulo": "jul",
+          "alinhar": "centro"
+        },
+        {
+          "rotulo": "ago",
+          "alinhar": "centro"
+        },
+        {
+          "rotulo": "set",
+          "alinhar": "centro"
+        },
+        {
+          "rotulo": "out*",
+          "alinhar": "centro"
+        },
+        {
+          "rotulo": "Em 3 meses",
+          "alinhar": "centro"
+        }
+      ],
+      "linhas": [
+        {
+          "celulas": [
+            {
+              "valor": "Carla Mota"
+            },
+            {
+              "valor": {
+                "valor": 104,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 108,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 99,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "fundo": "atencao"
+            },
+            {
+              "valor": {
+                "valor": 112,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 106,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 109,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 10,
+                "unidade": "pp",
+                "casas": 0
+              },
+              "comSinal": true,
+              "seta": true,
+              "negrito": true,
+              "tom": "saudavel"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Ana Ribeiro"
+            },
+            {
+              "valor": {
+                "valor": 101,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 97,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "fundo": "atencao"
+            },
+            {
+              "valor": {
+                "valor": 104,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 99,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "fundo": "atencao"
+            },
+            {
+              "valor": {
+                "valor": 103,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 106,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 2,
+                "unidade": "pp",
+                "casas": 0
+              },
+              "comSinal": true,
+              "seta": true,
+              "negrito": true,
+              "tom": "saudavel"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Elisa Rocha",
+              "etiqueta": "rampa"
+            },
+            {
+              "valor": "–",
+              "tom": "apagado"
+            },
+            {
+              "valor": {
+                "valor": 55,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "fundo": "saudavel",
+              "sub": "curva: 40%"
+            },
+            {
+              "valor": {
+                "valor": 68,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "fundo": "saudavel",
+              "sub": "curva: 55%"
+            },
+            {
+              "valor": {
+                "valor": 80,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "fundo": "saudavel",
+              "sub": "curva: 70%"
+            },
+            {
+              "valor": {
+                "valor": 88,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "fundo": "saudavel",
+              "sub": "curva: 80%"
+            },
+            {
+              "valor": {
+                "valor": 95,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "fundo": "saudavel",
+              "sub": "curva: 90%"
+            },
+            {
+              "valor": {
+                "valor": 27,
+                "unidade": "pp",
+                "casas": 0
+              },
+              "comSinal": true,
+              "seta": true,
+              "negrito": true,
+              "tom": "saudavel"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Bruno Lima"
+            },
+            {
+              "valor": {
+                "valor": 98,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "fundo": "atencao"
+            },
+            {
+              "valor": {
+                "valor": 95,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "fundo": "atencao"
+            },
+            {
+              "valor": {
+                "valor": 99,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "fundo": "atencao"
+            },
+            {
+              "valor": {
+                "valor": 92,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "fundo": "atencao"
+            },
+            {
+              "valor": {
+                "valor": 96,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "fundo": "atencao"
+            },
+            {
+              "valor": {
+                "valor": 93,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "fundo": "atencao"
+            },
+            {
+              "valor": {
+                "valor": -6,
+                "unidade": "pp",
+                "casas": 0
+              },
+              "comSinal": true,
+              "seta": true,
+              "negrito": true,
+              "tom": "critico"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Fábio Nunes",
+              "etiqueta": "rampa"
+            },
+            {
+              "valor": "–",
+              "tom": "apagado"
+            },
+            {
+              "valor": "–",
+              "tom": "apagado"
+            },
+            {
+              "valor": "–",
+              "tom": "apagado"
+            },
+            {
+              "valor": {
+                "valor": 48,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "fundo": "saudavel",
+              "sub": "curva: 40%"
+            },
+            {
+              "valor": {
+                "valor": 66,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "fundo": "saudavel",
+              "sub": "curva: 55%"
+            },
+            {
+              "valor": {
+                "valor": 82,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "fundo": "saudavel",
+              "sub": "curva: 70%"
+            },
+            {
+              "valor": {
+                "valor": 34,
+                "unidade": "pp",
+                "casas": 0
+              },
+              "comSinal": true,
+              "seta": true,
+              "negrito": true,
+              "tom": "saudavel",
+              "sub": "desde a entrada"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Diego Alves"
+            },
+            {
+              "valor": {
+                "valor": 96,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "fundo": "atencao"
+            },
+            {
+              "valor": {
+                "valor": 92,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "fundo": "atencao"
+            },
+            {
+              "valor": {
+                "valor": 88,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": 85,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": 81,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": 78,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": -10,
+                "unidade": "pp",
+                "casas": 0
+              },
+              "comSinal": true,
+              "seta": true,
+              "negrito": true,
+              "tom": "critico"
+            }
+          ]
+        }
+      ],
+      "explicacao": "Percentual da meta em cada mês. Azul, amarelo e vermelho seguem o farol. Vendedores novos são comparados com a curva de rampa, não com a meta cheia."
+    },
+    {
+      "id": "report-equipe",
+      "tipo": "tabela",
+      "variante": "compacta",
+      "largura": 12,
+      "titulo": "Report da equipe",
+      "subtitulo": "O mesmo report do BI, com farol em cada coluna que tem meta",
+      "nota": "Os códigos de vendedor sem nome e sem meta (1001 a 1006, 12, 13, 16, 33, 38, 40, 47 e 48 no BI atual) ficam fora da tabela e aparecem na Confiabilidade dos dados.",
+      "colunas": [
+        {
+          "rotulo": "Vendedor",
+          "alinhar": "esquerda"
+        },
+        {
+          "rotulo": "Canal",
+          "alinhar": "esquerda"
+        },
+        {
+          "rotulo": "Meta do mês"
+        },
+        {
+          "rotulo": "Vendido"
+        },
+        {
+          "rotulo": "Média diária meta"
+        },
+        {
+          "rotulo": "Média diária real"
+        },
+        {
+          "rotulo": "Projeção"
+        },
+        {
+          "rotulo": "%"
+        },
+        {
+          "rotulo": "Necessário por dia"
+        },
+        {
+          "rotulo": "Mix meta"
+        },
+        {
+          "rotulo": "Mix real"
+        },
+        {
+          "rotulo": "Clientes meta"
+        },
+        {
+          "rotulo": "Clientes atendidos"
+        },
+        {
+          "rotulo": "Margem"
+        },
+        {
+          "rotulo": "Vencido na carteira"
+        },
+        {
+          "rotulo": "Prazo de recebimento"
+        }
+      ],
+      "linhas": [
+        {
+          "celulas": [
+            {
+              "valor": "Carla Mota"
+            },
+            {
+              "valor": "Atacado",
+              "tom": "apagado"
+            },
+            {
+              "valor": {
+                "valor": 1200000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 436000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 57143,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 62286,
+                "unidade": "brl"
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 1308000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 109,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "fundo": "saudavel",
+              "negrito": true
+            },
+            {
+              "valor": {
+                "valor": 54571,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 1.9,
+                "unidade": "qtd",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 1.7,
+                "unidade": "qtd",
+                "casas": 1
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": 140,
+                "unidade": "qtd",
+                "casas": 0
+              }
+            },
+            {
+              "valor": {
+                "valor": 62,
+                "unidade": "qtd",
+                "casas": 0
+              },
+              "fundo": "atencao"
+            },
+            {
+              "valor": {
+                "valor": 31.8,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 34000,
+                "unidade": "brl"
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 26,
+                "unidade": "dias"
+              },
+              "fundo": "saudavel"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Ana Ribeiro"
+            },
+            {
+              "valor": "Atacado",
+              "tom": "apagado"
+            },
+            {
+              "valor": {
+                "valor": 1450000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 512000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 69048,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 73143,
+                "unidade": "brl"
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 1536000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 106,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "fundo": "saudavel",
+              "negrito": true
+            },
+            {
+              "valor": {
+                "valor": 67000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 2.1,
+                "unidade": "qtd",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 2.3,
+                "unidade": "qtd",
+                "casas": 1
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 170,
+                "unidade": "qtd",
+                "casas": 0
+              }
+            },
+            {
+              "valor": {
+                "valor": 81,
+                "unidade": "qtd",
+                "casas": 0
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 33.9,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 52000,
+                "unidade": "brl"
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 28,
+                "unidade": "dias"
+              },
+              "fundo": "saudavel"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Elisa Rocha"
+            },
+            {
+              "valor": "Varejo",
+              "tom": "apagado"
+            },
+            {
+              "valor": {
+                "valor": 950000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 301000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 45238,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 43000,
+                "unidade": "brl"
+              },
+              "fundo": "atencao"
+            },
+            {
+              "valor": {
+                "valor": 903000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 95,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "fundo": "atencao",
+              "negrito": true
+            },
+            {
+              "valor": {
+                "valor": 46357,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 2,
+                "unidade": "qtd",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 1.9,
+                "unidade": "qtd",
+                "casas": 1
+              },
+              "fundo": "atencao"
+            },
+            {
+              "valor": {
+                "valor": 250,
+                "unidade": "qtd",
+                "casas": 0
+              }
+            },
+            {
+              "valor": {
+                "valor": 98,
+                "unidade": "qtd",
+                "casas": 0
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": 35.2,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 64000,
+                "unidade": "brl"
+              },
+              "fundo": "atencao"
+            },
+            {
+              "valor": {
+                "valor": 30,
+                "unidade": "dias"
+              },
+              "fundo": "atencao"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Bruno Lima"
+            },
+            {
+              "valor": "Varejo",
+              "tom": "apagado"
+            },
+            {
+              "valor": {
+                "valor": 1300000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 402000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 61905,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 57429,
+                "unidade": "brl"
+              },
+              "fundo": "atencao"
+            },
+            {
+              "valor": {
+                "valor": 1206000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 93,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "fundo": "atencao",
+              "negrito": true
+            },
+            {
+              "valor": {
+                "valor": 64143,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 2.2,
+                "unidade": "qtd",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 2,
+                "unidade": "qtd",
+                "casas": 1
+              },
+              "fundo": "atencao"
+            },
+            {
+              "valor": {
+                "valor": 220,
+                "unidade": "qtd",
+                "casas": 0
+              }
+            },
+            {
+              "valor": {
+                "valor": 84,
+                "unidade": "qtd",
+                "casas": 0
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": 34.1,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 98000,
+                "unidade": "brl"
+              },
+              "fundo": "atencao"
+            },
+            {
+              "valor": {
+                "valor": 33,
+                "unidade": "dias"
+              },
+              "fundo": "atencao"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Fábio Nunes"
+            },
+            {
+              "valor": "Televendas",
+              "tom": "apagado"
+            },
+            {
+              "valor": {
+                "valor": 850000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 231000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 40476,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 33000,
+                "unidade": "brl"
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": 693000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 82,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "fundo": "critico",
+              "negrito": true
+            },
+            {
+              "valor": {
+                "valor": 44214,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 1.8,
+                "unidade": "qtd",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 1.9,
+                "unidade": "qtd",
+                "casas": 1
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 150,
+                "unidade": "qtd",
+                "casas": 0
+              }
+            },
+            {
+              "valor": {
+                "valor": 71,
+                "unidade": "qtd",
+                "casas": 0
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 36,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 112000,
+                "unidade": "brl"
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": 35,
+                "unidade": "dias"
+              },
+              "fundo": "critico"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Diego Alves"
+            },
+            {
+              "valor": "Varejo",
+              "tom": "apagado"
+            },
+            {
+              "valor": {
+                "valor": 1150000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 298000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 54762,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 42571,
+                "unidade": "brl"
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": 894000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 78,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "fundo": "critico",
+              "negrito": true
+            },
+            {
+              "valor": {
+                "valor": 60857,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 2,
+                "unidade": "qtd",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 1.6,
+                "unidade": "qtd",
+                "casas": 1
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": 190,
+                "unidade": "qtd",
+                "casas": 0
+              }
+            },
+            {
+              "valor": {
+                "valor": 90,
+                "unidade": "qtd",
+                "casas": 0
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 32.4,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 168000,
+                "unidade": "brl"
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": 38,
+                "unidade": "dias"
+              },
+              "fundo": "critico"
+            }
+          ]
+        }
+      ],
+      "explicacao": "O mesmo report do BI. Cada coluna com meta ganha a cor do farol: azul no ritmo, amarelo perto, vermelho abaixo."
+    }
+  ]
+}

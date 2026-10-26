@@ -33,10 +33,10 @@ def _feriados_do_cliente(conn: Conexao, cliente_id: UUID) -> set[date]:
     """Todos os feriados do cliente (cfg.feriado é pequena); vazio sem a migration 9."""
     if not existe(conn, "cfg.feriado"):
         return set()
-    return {
-        r["data"]
-        for r in conn.execute("select data from cfg.feriado where cliente_id = %s", (cliente_id,))
-    }
+    return {r["data"] for r in conn.execute(SQL_FERIADOS, (cliente_id,))}
+
+
+SQL_FERIADOS = "select data from cfg.feriado where cliente_id = %s"
 
 
 def dias_uteis(inicio: date, fim: date, feriados: set[date]) -> int:
