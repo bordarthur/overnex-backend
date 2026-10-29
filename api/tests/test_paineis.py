@@ -1,4 +1,5 @@
-"""GET /api/telas/vendas, /equipe-comercial e /clientes contra o banco local.
+"""GET /api/telas/vendas, /equipe-comercial, /clientes, /resultado e /receber-pagar contra o
+banco local.
 
 Dados no formato da PJ Cortes (colunas_modelo com vendedor, linha e quantidade) no cliente
 Beta (Bruno; última carga em 11/10/2026).
@@ -18,6 +19,8 @@ pytestmark = pytest.mark.db
 VENDAS = "/api/telas/vendas"
 EQUIPE = "/api/telas/equipe-comercial"
 CLIENTES = "/api/telas/clientes"
+RESULTADO = "/api/telas/resultado"
+RECEBER_PAGAR = "/api/telas/receber-pagar"
 SESSAO = "/api/sessao"
 
 CAMINHOS = [
@@ -142,15 +145,15 @@ def paineis_do_bruno(admin_conn: psycopg.Connection[tuple[Any, ...]]) -> Iterato
 
 def test_sessao_lista_as_telas_comerciais(client: TestClient) -> None:
     telas = client.get(SESSAO, headers=auth(OID_B)).json()["telas"]
-    assert {"COM-01", "COM-02", "COM-03"} <= set(telas)
+    assert {"COM-01", "COM-02", "COM-03", "FIN-02", "FIN-03"} <= set(telas)
 
 
-@pytest.mark.parametrize("rota", [VENDAS, EQUIPE, CLIENTES])
+@pytest.mark.parametrize("rota", [VENDAS, EQUIPE, CLIENTES, RESULTADO, RECEBER_PAGAR])
 def test_sem_token_401(client: TestClient, rota: str) -> None:
     assert client.get(rota).status_code == 401
 
 
-@pytest.mark.parametrize("rota", [VENDAS, EQUIPE, CLIENTES])
+@pytest.mark.parametrize("rota", [VENDAS, EQUIPE, CLIENTES, RESULTADO, RECEBER_PAGAR])
 def test_cliente_sem_vendas_vem_sem_cartoes(client: TestClient, rota: str) -> None:
     r = client.get(rota, headers=auth(OID_A))
     assert r.status_code == 200
@@ -329,3 +332,37 @@ def test_clientes_e_atendimentos(client: TestClient) -> None:
 @pytest.mark.usefixtures("paineis_do_bruno")
 def test_dados_do_bruno_nao_vazam_para_a_ana(client: TestClient) -> None:
     assert client.get(VENDAS, headers=auth(OID_A)).json()["cartoes"] == []
+
+
+def test_resultado_sem_lancamentos_vem_vazio(client: TestClient) -> None:
+    r = client.get(RESULTADO, headers=auth(OID_B), params={"comparar": "mes-anterior"})
+    assert r.status_code == 200
+    corpo = r.json()
+    for campo in ("filtros", "destaques", "kpis", "apoios", "cartoes"):
+        assert corpo[campo] == []
+    assert client.get(RESULTADO, headers=auth(OID_B), params={"visao": "ano"}).status_code == 422
+
+
+@pytest.mark.usefixtures("paineis_do_bruno")
+def test_receber_pagar(client: TestClient) -> None:
+    r = client.get(RECEBER_PAGAR, headers=auth(OID_B))
+
+    assert r.status_code == 200
+    corpo = r.json()
+    vendedor = next(f for f in corpo["filtros"] if f["id"] == "vendedor")
+    assert [o["rotulo"] for o in vendedor["opcoes"]] == ["Todos", "Ana Ribeiro", "Bruno Lima"]
+    assert corpo["kpis"][0]["rotulo"] == "A receber em 30 dias"
+    lados = next(c for c in corpo["cartoes"] if c["id"] == "contas-receber-pagar")["lados"]
+    # o título de 800 da V2 venceu em 30/09: em 11/10 está vencido (D+2 em 02/10)
+    assert lados[0]["total"] == "em aberto: R$ 800"
+    assert lados[0]["kpis"][0]["valor"]["valor"] == 800
+
+    # o título da Ana Ribeiro (V1) foi pago
+    corpo = client.get(
+        RECEBER_PAGAR, headers=auth(OID_B), params={"vendedor": "ana-ribeiro"}
+    ).json()
+    assert all(c["id"] != "contas-receber-pagar" for c in corpo["cartoes"])
+    assert (
+        client.get(RECEBER_PAGAR, headers=auth(OID_B), params={"vendedor": "ninguem"}).status_code
+        == 422
+    )

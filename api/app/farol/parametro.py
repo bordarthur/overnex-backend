@@ -135,6 +135,13 @@ PADROES: dict[str, Farol] = {
         maximo=Decimal("2.1"),
         meta=Decimal(0),
     ),
+    # Resultado (painel): margem de segurança, em % da receita líquida (abaixo de 0, prejuízo)
+    "margem_seguranca": Farol(
+        faixa=Faixa(atencao=Decimal(10), critico=Decimal(0)),
+        minimo=Decimal(-20),
+        maximo=Decimal(50),
+        meta=Decimal(20),
+    ),
     # Financeiro: vencido sobre a carteira, em p.p. acima da média de 12 meses (RELATIVO)
     "inadimplencia": Farol(
         faixa=Faixa(atencao=Decimal(0), critico=Decimal(2), maior_melhor=False),

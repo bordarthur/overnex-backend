@@ -145,6 +145,14 @@ class CacheComPrazo[V]:
             while len(self._itens) > self._maximo:
                 self._itens.popitem(last=False)
 
+    def apagar_se(self, condicao: Callable[[Hashable], bool]) -> int:
+        """Apaga os valores cuja chave atende à condição; devolve quantos."""
+        with self._trava:
+            chaves = [c for c in self._itens if condicao(c)]
+            for c in chaves:
+                del self._itens[c]
+            return len(chaves)
+
     def limpar(self) -> None:
         with self._trava:
             self._itens.clear()

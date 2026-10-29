@@ -493,6 +493,25 @@ class Conteudo:
     aviso: Aviso | None = None
 
 
+def em_fileiras(cartoes: list[Cartao]) -> list[Cartao]:
+    """Cartões na grade de 12: dois seguidos que somam 12 dividem a fileira; o que ficou sem
+    par (porque o outro não saiu) ocupa a linha inteira."""
+    saida: list[Cartao] = []
+    i = 0
+    while i < len(cartoes):
+        c = cartoes[i]
+        par = cartoes[i + 1] if i + 1 < len(cartoes) else None
+        if c.largura == 12:
+            saida.append(c)
+        elif par is not None and par.largura != 12 and c.largura + par.largura == 12:
+            saida += [c, par]
+            i += 1
+        else:
+            saida.append(c.model_copy(update={"largura": 12}))
+        i += 1
+    return saida
+
+
 def mediana(valores: list[Decimal]) -> Decimal:
     s = sorted(valores)
     m = len(s) // 2

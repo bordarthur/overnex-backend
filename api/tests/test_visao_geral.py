@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 
 from app.core.config import Settings, get_settings
 from tests.conftest import (
+    CLIENTE_A,
     EMPRESA_A1,
     EMPRESA_A2,
     EMPRESA_B1,
@@ -22,7 +23,9 @@ from tests.conftest import (
 pytestmark = pytest.mark.db
 
 VISAO_GERAL = "/api/telas/visao-geral"
+PREFERENCIA = "/api/telas/visao-geral/preferencias/linhas-custo"
 SESSAO = "/api/sessao"
+PERIODOS = [{"id": "mes", "rotulo": "Mês"}, {"id": "ano", "rotulo": "Acumulado"}]
 
 
 @pytest.fixture
@@ -57,10 +60,8 @@ def test_visao_geral_moldura_do_proprio_cliente(
     assert corpo["cliente"] == {"nome": nome, "sigla": sigla, "logoUrl": None}
     assert corpo["dadosAte"] == dados_ate
     assert corpo["atualizadoEm"].startswith("2026-10-12T")
-    assert corpo["periodos"] == [
-        {"id": "mes", "rotulo": "Outubro de 2026"},
-        {"id": "ano", "rotulo": "Acumulado de 2026"},
-    ]
+    assert corpo["periodos"] == PERIODOS
+    assert corpo["nota"].startswith("Cada cartão tem a própria chave Mês/Acumulado.")
     # sem regra de indicador ainda
     assert corpo["secoes"] == []
 
@@ -163,6 +164,8 @@ def test_visao_geral_tela_nao_liberada_403_e_some_da_sessao(client: TestClient) 
         "COM-02",
         "COM-03",
         "FIN-01",
+        "FIN-02",
+        "FIN-03",
     ]
 
 
@@ -187,7 +190,7 @@ def test_sessao_da_ana(client: TestClient) -> None:
             {"id": EMPRESA_A2, "nome": "Alfa Comércio"},
             {"id": EMPRESA_A1, "nome": "Alfa Indústria"},
         ],
-        "telas": ["COM-01", "COM-02", "COM-03", "FIN-01", "VG-01"],
+        "telas": ["COM-01", "COM-02", "COM-03", "FIN-01", "FIN-02", "FIN-03", "VG-01"],
         "periodos": [{"id": "2026-10", "rotulo": "Outubro de 2026", "dadosAte": "2026-10-12"}],
     }
 
@@ -333,6 +336,25 @@ def test_feriado_do_cliente_entra_nos_dias_uteis(
 def test_secao_custos_com_cmv_por_ramo(
     client: TestClient, admin_conn: psycopg.Connection[tuple[Any, ...]]
 ) -> None:
+    _custo_por_ramo(admin_conn)
+    secoes = {s["id"]: s for s in client.get(VISAO_GERAL, headers=auth(OID_B)).json()["secoes"]}
+
+    custos = secoes["custos"]
+    kpis = {k["rotulo"]: k for k in custos["kpis"]}
+    # 1650 / 2000
+    assert kpis["CMV do mês"]["valor"]["valor"] == 82.5
+    assert kpis["Lucro bruto até 15/09"]["valor"]["valor"] == 350
+    # total de agosto: 800 / 999
+    assert kpis["CMV do mês"]["contexto"].endswith("do mês anterior (80,1%)")
+    [mercearia] = [i for i in custos["indicadores"] if i["id"] == "cmv-mercearia"]
+    assert mercearia["nome"] == "CMV de mercearia"
+    assert mercearia["periodos"]["mes"]["valor"]["valor"] == 85  # 850 / 1000
+    assert mercearia["periodos"]["mes"]["status"] == "critico"  # +5 p.p.
+    assert mercearia["tendencia"]["rotulos"] == ["ago-26", "set-26"]
+
+
+def _custo_por_ramo(admin_conn: psycopg.Connection[tuple[Any, ...]]) -> None:
+    """Custo nas vendas de setembro do Bruno (vendas_do_bruno) e agosto no histórico."""
     # setembro: MERCEARIA 600+400 com custo 850; CONSTRUTORA 1000 com custo 800
     admin_conn.execute(
         """
@@ -354,26 +376,12 @@ def test_secao_custos_com_cmv_por_ramo(
         """,
         {"c": CLIENTE_B, "t": "f_vendas_nilo_maia", "ago": "2026-08-01", "snap": "2026-10-11"},
     )
-    secoes = {s["id"]: s for s in client.get(VISAO_GERAL, headers=auth(OID_B)).json()["secoes"]}
-
-    custos = secoes["custos"]
-    kpis = {k["rotulo"]: k for k in custos["kpis"]}
-    # 1650 / 2000
-    assert kpis["CMV do mês"]["valor"]["valor"] == 82.5
-    assert kpis["Lucro bruto até 15/09"]["valor"]["valor"] == 350
-    # total de agosto: 800 / 999
-    assert kpis["CMV do mês"]["contexto"].endswith("do mês anterior (80,1%)")
-    [mercearia] = [i for i in custos["indicadores"] if i["id"] == "cmv-mercearia"]
-    assert mercearia["nome"] == "CMV de mercearia"
-    assert mercearia["periodos"]["mes"]["valor"]["valor"] == 85  # 850 / 1000
-    assert mercearia["periodos"]["mes"]["status"] == "critico"  # +5 p.p.
-    assert mercearia["tendencia"]["rotulos"] == ["ago-26", "set-26"]
 
 
 @pytest.mark.usefixtures("vendas_do_bruno")
-def test_periodos_com_o_mes_dos_numeros(client: TestClient) -> None:
+def test_periodos_com_rotulos_curtos(client: TestClient) -> None:
     corpo = client.get(VISAO_GERAL, headers=auth(OID_B)).json()
-    assert corpo["periodos"][0] == {"id": "mes", "rotulo": "Setembro de 2026"}
+    assert corpo["periodos"] == PERIODOS
 
 
 @pytest.mark.usefixtures("vendas_do_bruno")
@@ -390,10 +398,7 @@ def test_sessao_lista_os_meses_com_venda_do_mais_recente(client: TestClient) -> 
 def test_visao_geral_de_mes_fechado(client: TestClient) -> None:
     corpo = client.get(VISAO_GERAL, params={"mes": "2026-08"}, headers=auth(OID_B)).json()
 
-    assert corpo["periodos"] == [
-        {"id": "mes", "rotulo": "Agosto de 2026"},
-        {"id": "ano", "rotulo": "Acumulado de 2026"},
-    ]
+    assert corpo["periodos"] == PERIODOS
     # dadosAte continua o da última carga
     assert corpo["dadosAte"] == "2026-10-11"
     [vendas] = corpo["secoes"]
@@ -587,4 +592,180 @@ def test_vendas_com_colunas_da_pj_e_duas_tabelas(client: TestClient) -> None:
     custos = secoes["custos"]
     assert custos["resumo"] == "Dados de setembro de 2026, por grupo de produto."
     nomes = {i["nome"] for i in custos["indicadores"]}
-    assert nomes <= {"CMV de bovinos", "CMV de suinos", "CMV dos demais grupos"}
+    assert all(n in {"CMV de bovinos", "CMV de suinos"} or n.startswith("Outros (") for n in nomes)
+    assert custos["seletor"]["valor"] == "auto"
+
+
+# --- Financeiro: próximos dias e contas a pagar lançadas ---------------------------------
+
+CAMINHOS_TITULOS = [
+    "dataflow/dbo_f_receitas_teste_vg/dbo_f_receitas_teste_vg.parquet",
+    "dataflow/dbo_f_despesas_teste_vg/dbo_f_despesas_teste_vg.parquet",
+]
+
+
+@pytest.fixture
+def titulos_do_bruno(admin_conn: psycopg.Connection[tuple[Any, ...]]) -> Iterator[None]:
+    # Bruno: última carga em 11/10/2026 ("hoje"). Janelas até 18/10, 26/10 e 10/11.
+    admin_conn.execute(
+        """
+        insert into cfg.fonte_carga
+            (cliente_id, tipo, caminho_bucket, ativo, tabela_destino, contem_dado_nominal)
+        values (%(c)s, 'tabela', %(r)s, false, 'f_receitas_pj', true),
+               (%(c)s, 'tabela', %(p)s, false, 'f_despesas_pj', true)
+        """,
+        {"c": CLIENTE_B, "r": CAMINHOS_TITULOS[0], "p": CAMINHOS_TITULOS[1]},
+    )
+    # a receber: 1.000 vence em 15/10 (7 dias) e 2.000 em 05/11 (30 dias)
+    admin_conn.execute(
+        """
+        insert into mart.f_receitas_pj
+            (_linha, _cliente_id, "en_dataemissao", "en_datavencimento", "en_datapagamento",
+             "en_valor")
+        values (1, %(c)s, '2026-10-01', '2026-10-15', null, 1000),
+               (2, %(c)s, '2026-10-01', '2026-11-05', null, 2000)
+        """,
+        {"c": CLIENTE_B},
+    )
+    # a pagar: 300 vence em 20/10 (15 dias); pago em setembro: 600 (a média paga)
+    admin_conn.execute(
+        """
+        insert into mart.f_despesas_pj
+            (_linha, _cliente_id, "en_datemi", "en_datven", "en_datpag", "en_valor")
+        values (1, %(c)s, '2026-10-01', '2026-10-20', null, 300),
+               (2, %(c)s, '2026-09-01', '2026-09-10', '2026-09-10', 600)
+        """,
+        {"c": CLIENTE_B},
+    )
+    yield
+    for tabela in ("f_receitas_pj", "f_despesas_pj"):
+        admin_conn.execute(
+            f"delete from mart.{tabela} where _cliente_id = %s",  # noqa: S608
+            (CLIENTE_B,),
+        )
+    admin_conn.execute(
+        "delete from cfg.fonte_carga where cliente_id = %s and caminho_bucket = any(%s)",
+        (CLIENTE_B, CAMINHOS_TITULOS),
+    )
+
+
+@pytest.mark.usefixtures("titulos_do_bruno")
+def test_financeiro_com_proximos_dias_e_pagar_lancado(client: TestClient) -> None:
+    secoes = {s["id"]: s for s in client.get(VISAO_GERAL, headers=auth(OID_B)).json()["secoes"]}
+
+    financeiro = secoes["financeiro"]
+    # os prazos médios ficam no painel Receber e pagar
+    assert financeiro["indicadores"] == []
+    # sem série de inadimplência (os títulos são de outubro): só os dois cartões novos
+    assert [c["tipo"] for c in financeiro["cartoes"]] == ["proximos-dias", "pagar-lancado"]
+
+    proximos, lancado = financeiro["cartoes"]
+    assert [m["id"] for m in proximos["modos"]] == ["lancado", "com-falta"]
+    sete, quinze, trinta = proximos["janelas"]
+    assert [j["ate"] for j in proximos["janelas"]] == ["até 18/10", "até 26/10", "até 10/11"]
+    # 7 dias: nada a pagar; falta 600 × 7/30 = 140
+    assert (sete["receber"]["valor"], sete["pagar"]["valor"]) == (1000, 0)
+    assert sete["falta"]["valor"] == 140
+    assert sete["fim"]["com-falta"]["valor"]["valor"] == 860
+    # 15 dias: 300 lançados = 600 × 15/30, nada falta
+    assert (quinze["pagar"]["valor"], quinze["falta"]["valor"]) == (300, 0)
+    assert quinze["fim"]["lancado"]["valor"]["valor"] == 700
+    # 30 dias: falta 600 − 300
+    assert (trinta["receber"]["valor"], trinta["falta"]["valor"]) == (3000, 300)
+    assert trinta["fim"]["com-falta"]["valor"]["valor"] == 2400
+    assert [m["status"] for m in proximos["modos"]] == ["saudavel", "saudavel"]
+
+    # 300 de 600: 50%, o limite de atenção
+    assert lancado["percentual"]["valor"] == 50
+    assert lancado["status"] == "atencao"
+    assert lancado["nota"] == "Em setembro, a empresa pagou R$ 600."
+    assert [p["rotulo"] for p in lancado["pagos"]] == ["set-26"]
+    assert lancado["proximos"]["falta"]["valor"]["valor"] == 300
+    # o KPI usa a mesma conta
+    kpis = {k["rotulo"]: k for k in financeiro["kpis"]}
+    assert kpis["A pagar, 30 dias"]["contexto"] == "só o que está lançado: 50% da média paga"
+
+
+# --- Custos: seletor "Linhas de custo" e PUT da escolha ----------------------------------
+
+
+@pytest.fixture
+def limpar_preferencias(admin_conn: psycopg.Connection[tuple[Any, ...]]) -> Iterator[None]:
+    yield
+    admin_conn.execute("delete from cfg.parametro_cliente where chave like 'preferencia.%'")
+    admin_conn.execute(
+        "delete from seg.log_alteracao where tabela = 'cfg.parametro_cliente'"
+        " and registro_id like '%preferencia.%'"
+    )
+
+
+def _custos(client: TestClient) -> dict[str, Any]:
+    secoes = client.get(VISAO_GERAL, headers=auth(OID_B)).json()["secoes"]
+    custos: dict[str, Any] = next(s for s in secoes if s["id"] == "custos")
+    return custos
+
+
+@pytest.mark.usefixtures("vendas_do_bruno", "limpar_preferencias")
+def test_custos_com_a_escolha_salva(
+    client: TestClient, admin_conn: psycopg.Connection[tuple[Any, ...]]
+) -> None:
+    _custo_por_ramo(admin_conn)
+    custos = _custos(client)
+    # automático: MERCEARIA (850) não chega a 80% de 1.650; entra CONSTRUTORA (sem
+    # histórico, sem velocímetro)
+    assert custos["seletor"]["valor"] == "auto"
+    assert [i["id"] for i in custos["indicadores"]] == ["cmv-mercearia"]
+
+    admin_conn.execute(
+        "insert into cfg.parametro_cliente (cliente_id, chave, valor, vigente_de)"
+        " values (%s, 'preferencia.linhas-custo', to_jsonb('1'::text), '2026-01-01')",
+        (CLIENTE_B,),
+    )
+    custos = _custos(client)
+    assert custos["seletor"]["valor"] == "1"
+    # CONSTRUTORA vai para Outros, que sem histórico também não tem velocímetro
+    assert [i["id"] for i in custos["indicadores"]] == ["cmv-mercearia"]
+
+
+@pytest.mark.usefixtures("limpar_preferencias")
+def test_gestor_grava_a_escolha_do_cliente(
+    client: TestClient, admin_conn: psycopg.Connection[tuple[Any, ...]]
+) -> None:
+    assert client.put(PREFERENCIA, json={"valor": "2"}, headers=auth(OID_A)).status_code == 204
+    # de novo no mesmo dia: troca a escolha de hoje
+    assert client.put(PREFERENCIA, json={"valor": "auto"}, headers=auth(OID_A)).status_code == 204
+
+    linhas = admin_conn.execute(
+        "select cliente_id::text, valor from cfg.parametro_cliente"
+        " where chave = 'preferencia.linhas-custo'"
+    ).fetchall()
+    assert linhas == [(CLIENTE_A, "auto")]
+    log = admin_conn.execute(
+        "select usuario_id::text, operacao, antes, depois from seg.log_alteracao"
+        " where tabela = 'cfg.parametro_cliente' order by id"
+    ).fetchall()
+    assert log == [
+        (USUARIO_A, "insert", None, {"valor": "2"}),
+        (USUARIO_A, "update", {"valor": "2"}, {"valor": "auto"}),
+    ]
+
+
+@pytest.mark.usefixtures("limpar_preferencias")
+def test_leitor_nao_grava_a_escolha(
+    client: TestClient, admin_conn: psycopg.Connection[tuple[Any, ...]]
+) -> None:
+    r = client.put(PREFERENCIA, json={"valor": "2"}, headers=auth(OID_B))
+    assert r.status_code == 403
+    assert r.json() == {"detail": "Você não pode mudar esta escolha."}
+    contagem = admin_conn.execute(
+        "select count(*) from cfg.parametro_cliente where chave like 'preferencia.%'"
+    ).fetchone()
+    assert contagem == (0,)
+
+
+def test_escolha_invalida_ou_desconhecida(client: TestClient) -> None:
+    r = client.put(PREFERENCIA, json={"valor": "9"}, headers=auth(OID_A))
+    assert (r.status_code, r.json()) == (422, {"detail": "Opção inválida."})
+    r = client.put(f"{VISAO_GERAL}/preferencias/cores", json={"valor": "1"}, headers=auth(OID_A))
+    assert (r.status_code, r.json()) == (404, {"detail": "Preferência não encontrada."})
+    assert client.put(PREFERENCIA, json={"valor": "1"}).status_code == 401

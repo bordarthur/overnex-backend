@@ -7,7 +7,8 @@ grant usage on schema extensions to api_site, carga;
 
 select plan(19);
 
--- preparo padrão aplicado às tabelas das migrations 5 (21, Nilo Maia) e 12 (25, PJ Cortes)
+-- preparo padrão aplicado às tabelas das migrations 5 (21, Nilo Maia), 12 (25, PJ Cortes)
+-- e 18 (lançamentos agrupados da PJ)
 select is(
     (select count(*)::int
        from pg_class c join pg_namespace n on n.oid = c.relnamespace
@@ -15,7 +16,7 @@ select is(
         and c.relrowsecurity and c.relforcerowsecurity
         and exists (select 1 from pg_attribute a
                      where a.attrelid = c.oid and a.attname = '_linha')),
-    46, 'as 46 tabelas de dados têm RLS ligado e forçado');
+    47, 'as 47 tabelas de dados têm RLS ligado e forçado');
 select has_column('mart', 'f_vendas_nilo_maia', 'en_VALTOT', 'nome da coluna preservado (maiúsculas)');
 select col_type_is('mart', 'f_vendas_nilo_maia', 'en_VALTOT', 'numeric', 'double vira numeric');
 select col_type_is('mart', 'f_balanco_nilo_maia', '_data_snapshot', 'date', 'date continua date');

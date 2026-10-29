@@ -64,6 +64,39 @@ EXPLICACOES: Mapping[TelaPainel, Mapping[str, str]] = {
             "custo."
         ),
     },
+    "resultado": {
+        "ponto-equilibrio": (
+            "É quanto a empresa precisa vender para pagar todos os custos. Sai da conta despesas "
+            "fixas ÷ margem de contribuição. A folga mostra quanto as vendas podem cair antes de "
+            "dar prejuízo."
+        ),
+        # o cartão só sai contra o orçado (ver resultado.py)
+        "ponte-ebitda": (
+            "Começa no EBITDA orçado e soma ou subtrai o efeito de cada grupo de contas até "
+            "chegar no realizado. Barra azul ajudou; vermelha atrapalhou."
+        ),
+        "dre-cascata": (
+            "Mostra o caminho de cada real vendido: da receita bruta, tira deduções, custos e "
+            "despesas até sobrar o lucro."
+        ),
+        "dre-gerencial": (
+            "A DRE pelo plano de contas, com orçado e diferença. Clique numa linha para abrir o "
+            "nível seguinte. A chave “Só desvios” esconde o que está dentro do orçado e deixa só "
+            "as linhas em atenção ou críticas. Análise vertical sobre a receita bruta."
+        ),
+        "tabela-financeira": (
+            "Os principais indicadores dos últimos 12 meses lado a lado. Cada célula é comparada "
+            "com a média do próprio indicador: azul está melhor que a média, vermelho está pior. "
+            "Serve para ver tendência, não para ler número a número."
+        ),
+    },
+    "receber-pagar": {
+        "inadimplencia-safra": (
+            "Para cada mês de vencimento, mostra quanto ainda estava em aberto um tempo fixo "
+            "depois. Assim um mês recente não parece pior só porque ainda não deu tempo de os "
+            "clientes pagarem."
+        ),
+    },
 }
 
 

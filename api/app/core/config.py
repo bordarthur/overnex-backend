@@ -49,6 +49,8 @@ class Settings(BaseSettings):
     auth_fake: bool = False
     # Visão geral com as seções fictícias de app/telas/visao_geral/demo.json (só dev).
     visao_geral_demo: bool = False
+    # Cartões "a decidir" dos painéis (ver telas/paineis/router.py), para revisão (só dev).
+    paineis_a_decidir: bool = False
     # Prazo da resposta pronta da Visão geral em memória (0 desliga; ver telas/visao_geral).
     visao_geral_cache_segundos: int = 900
 
@@ -67,6 +69,8 @@ class Settings(BaseSettings):
             raise ValueError("AUTH_FAKE só é permitido com AMBIENTE=dev.")
         if self.visao_geral_demo and not dev:
             raise ValueError("VISAO_GERAL_DEMO só é permitido com AMBIENTE=dev.")
+        if self.paineis_a_decidir and not dev:
+            raise ValueError("PAINEIS_A_DECIDIR só é permitido com AMBIENTE=dev.")
         if not self.cookie_seguro and not dev:
             raise ValueError("COOKIE_SEGURO=false só é permitido com AMBIENTE=dev.")
         if self.auth_provedor is ProvedorAuth.SUPABASE and not self.supabase_configurado:

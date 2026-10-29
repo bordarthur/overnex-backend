@@ -1,5 +1,5 @@
-"""Contrato dos painéis por cartões (Vendas, Equipe comercial, Clientes e atendimentos),
-espelho de src/contracts/painel.ts do overnex-frontend.
+"""Contrato dos painéis por cartões (Vendas, Equipe comercial, Clientes e atendimentos,
+Resultado e Receber e pagar), espelho de src/contracts/painel.ts do overnex-frontend.
 
 Como na Visão geral, o front só desenha: todo número, status, texto, rótulo, média,
 projeção e diferença vem pronto. Mudou aqui, mude lá (ou gere os tipos do front a partir
@@ -20,7 +20,7 @@ from app.telas.contrato import Valor as Numero
 from app.telas.moldura import Cliente, ModeloCamel
 from app.telas.visao_geral.contrato import Kpi, Trecho, Unidade, Valor
 
-TelaPainel = Literal["vendas", "equipe-comercial", "clientes"]
+TelaPainel = Literal["vendas", "equipe-comercial", "clientes", "resultado", "receber-pagar"]
 
 # número a formatar pela unidade, ou texto já pronto ("2 de 6")
 Exibicao = Valor | str
@@ -169,8 +169,29 @@ class GraficoEmpilhado(Escala):
     """Barras empilhadas; as cores seguem a ordem das séries (até 7)."""
 
     tipo: Literal["empilhado"]
+    # atraso: da faixa de 1 a 15 dias (mais clara) até mais de 90 (crítico)
+    paleta: Literal["series", "atraso"] | None = None
     rotulos: list[str]
     series: list[SerieEmpilhada]
+
+
+class PassoCascata(ModeloCamel):
+    rotulo: str
+    # início e fim da barra, já somados: o front não soma nada
+    de: Numero
+    ate: Numero
+    valor: Numero
+    # total: barra cheia; positivo ajudou; negativo atrapalhou
+    estilo: Literal["total", "positivo", "negativo"]
+
+
+class GraficoCascata(Escala):
+    """Cascata: da receita ao lucro, do orçado ao realizado."""
+
+    tipo: Literal["cascata"]
+    passos: list[PassoCascata]
+    # início da escala, para mostrar diferenças pequenas (ex.: ponte do EBITDA)
+    piso: Numero | None = None
 
 
 class EixoDispersao(Escala):
@@ -252,7 +273,8 @@ Grafico = Annotated[
     | GraficoLinhas
     | GraficoEmpilhado
     | GraficoDispersao
-    | GraficoDegraus,
+    | GraficoDegraus
+    | GraficoCascata,
     Field(discriminator="tipo"),
 ]
 
@@ -365,6 +387,12 @@ class CartaoContraMeta(CartaoBase):
     itens: list[ItemContraMeta]
 
 
+class PillComRotulo(ModeloCamel):
+    status: Status
+    # texto da pílula ("Alta", "Média", "Baixa")
+    rotulo: str
+
+
 class Celula(ModeloCamel):
     valor: Exibicao | None = None
     # segunda linha, menor
@@ -376,7 +404,8 @@ class Celula(ModeloCamel):
     tom: Status | Literal["apagado"] | None = None
     # fundo de farol
     fundo: Status | None = None
-    pill: Status | None = None
+    # pílula de status; com rótulo, o texto é o da API
+    pill: Status | PillComRotulo | None = None
     negrito: bool = False
     # etiqueta pequena depois do texto ("rampa")
     etiqueta: str | None = None
@@ -427,6 +456,8 @@ class CartaoGraficos(CartaoBase):
     """Um ou mais gráficos lado a lado."""
 
     tipo: Literal["graficos"]
+    # gráficos por linha quando há mais de um (padrão do front: 2)
+    colunas: Literal[2, 3] | None = None
     graficos: list[GraficoCartao]
 
 
@@ -476,6 +507,175 @@ class CartaoMatriz(CartaoBase):
     valores: list[list[CelulaMatriz]]
 
 
+class TendenciaDre(ModeloCamel):
+    # últimos 6 meses, na escala do cartão
+    realizado: list[Numero]
+    comparacao: list[Numero]
+
+
+class LinhaDre(ModeloCamel):
+    id: str
+    # código da conta no plano ("100.01"); subtotais não têm
+    codigo: str | None = None
+    nome: str
+    # 0 = subtotal (Receita líquida, Lucro bruto…); 1 a 3 = níveis do plano de contas
+    nivel: Literal[0, 1, 2, 3]
+    # id da linha de cima na árvore
+    pai: str | None = None
+    # a última linha (Lucro líquido final), em destaque
+    final: bool = False
+    realizado: Numero
+    # CMV: sobre a receita bruta menos as devoluções
+    percentual_receita_bruta: Numero
+    comparacao: Numero
+    diferenca: Numero
+    diferenca_percentual: Numero | None
+    # cor do texto da diferença (melhor ou pior que a comparação)
+    tom_diferenca: Status | None = None
+    # |diferença %| ≥ 3: fundo de farol na diferença
+    destacar_diferenca: bool = False
+    status: Status
+    # esta linha ou alguma abaixo dela fora de "saudavel" (o que fica com "Só desvios")
+    com_desvio: bool
+    tendencia: TendenciaDre
+
+
+class CartaoDre(CartaoBase):
+    """DRE em árvore: abre por nível, filtra os desvios e mostra a tendência de cada conta."""
+
+    tipo: Literal["dre"]
+    # cabeçalho da primeira coluna ("Conta (R$ mil)") e da comparação ("Orçado", "Agosto")
+    rotulo_conta: str
+    rotulo_comparacao: str
+    escala: Escala
+    nivel_inicial: Literal[1, 2, 3]
+    # níveis que a chave oferece
+    niveis: list[Literal[1, 2, 3]]
+    # na ordem de exibição, com os subtotais
+    linhas: list[LinhaDre]
+    rodape: list[str] | None = None
+
+
+class ParteBarra(ModeloCamel):
+    rotulo: str
+    # proporções da barra somam 1
+    proporcao: Numero
+    estilo: Literal["serie-clara", "saudavel", "atencao", "critico"]
+
+
+class EscalaPartes(ModeloCamel):
+    inicio: str
+    fim: str
+
+
+class CartaoBarraPartes(CartaoBase):
+    """Uma barra dividida em partes (ponto de equilíbrio e folga), com a escala e um texto."""
+
+    tipo: Literal["barra-partes"]
+    partes: list[ParteBarra]
+    escala: EscalaPartes
+    texto: list[Trecho] | None = None
+
+
+class ItemDesvio(ModeloCamel):
+    nome: str
+    detalhe: str | None = None
+    valor: Numero
+
+
+class GrupoDesvios(ModeloCamel):
+    titulo: str
+    status: Status
+    itens: list[ItemDesvio]
+
+
+class CartaoDesvios(CartaoBase):
+    """Contas que mais pioram e mais melhoram o resultado contra a comparação."""
+
+    tipo: Literal["desvios"]
+    escala: Escala
+    grupos: list[GrupoDesvios]
+
+
+class LinhaJanela(ModeloCamel):
+    rotulo: str
+    valor: Valor
+    tom: Status | None = None
+    com_sinal: bool = False
+    # total: com linha em cima; saldo: com o fundo do status da janela
+    tipo: Literal["total", "saldo"] | None = None
+
+
+class Janela(ModeloCamel):
+    titulo: str
+    status: Status | None = None
+    linhas: list[LinhaJanela]
+
+
+class AlertaJanelas(ModeloCamel):
+    etiqueta: str
+    texto: list[Trecho]
+    rodape: str | None = None
+
+
+class CartaoJanelas(CartaoBase):
+    """Janelas de dias lado a lado (próximos 7, 15 e 30 dias), com um alerta opcional."""
+
+    tipo: Literal["janelas"]
+    janelas: list[Janela]
+    alerta: AlertaJanelas | None = None
+
+
+class FaixaIdade(ModeloCamel):
+    rotulo: str
+    valor: Valor
+    # em % do total do lado
+    participacao: Numero
+    status: Status | None = None
+
+
+class ItemMaior(ModeloCamel):
+    nome: str
+    valor: Valor
+    # em % do total do lado
+    participacao: Numero
+    etiqueta: str | None = None
+
+
+class LadoConta(ModeloCamel):
+    titulo: str
+    # "em aberto: R$ 7,13 mi"
+    total: str
+    # etiqueta de qualidade do dado ao lado do total
+    alerta: str | None = None
+    kpis: list[Kpi]
+    idade: list[FaixaIdade]
+    observacao: list[Trecho] | None = None
+    maiores: list[ItemMaior]
+
+
+class CartaoDoisLados(CartaoBase):
+    """Os dois lados de uma visão (contas a receber × contas a pagar)."""
+
+    tipo: Literal["dois-lados"]
+    lados: list[LadoConta]
+
+
+class BarraHorizontal(ModeloCamel):
+    rotulo: str
+    sub: str | None = None
+    valor: Numero
+    status: Status | None = None
+
+
+class CartaoBarrasHorizontais(CartaoBase):
+    """Lista de barras horizontais (a pagar por semana); a maior ocupa a largura toda."""
+
+    tipo: Literal["barras-horizontais"]
+    escala: Escala
+    itens: list[BarraHorizontal]
+
+
 Cartao = Annotated[
     CartaoAndamentoMes
     | CartaoFatores
@@ -485,7 +685,13 @@ Cartao = Annotated[
     | CartaoGraficos
     | CartaoFaixas
     | CartaoCurvaAbc
-    | CartaoMatriz,
+    | CartaoMatriz
+    | CartaoDre
+    | CartaoBarraPartes
+    | CartaoDesvios
+    | CartaoJanelas
+    | CartaoDoisLados
+    | CartaoBarrasHorizontais,
     Field(discriminator="tipo"),
 ]
 

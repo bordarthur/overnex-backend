@@ -14,8 +14,8 @@
 
 begin;
 
--- 1. perfil "Desenvolvimento": Visão geral, FIN-01, painéis comerciais (COM-01 a 03) e
---    todas as tabelas do cliente
+-- 1. perfil "Desenvolvimento": Visão geral, FIN-01, painéis comerciais (COM-01 a 03),
+--    painéis financeiros (FIN-02 e FIN-03) e todas as tabelas do cliente
 insert into cfg.perfil_acesso (cliente_id, nome)
 select c.id, 'Desenvolvimento'
   from cfg.cliente c
@@ -26,7 +26,8 @@ insert into cfg.perfil_tela (perfil_id, codigo_tela, ve_dado_nominal)
 select p.id, t.codigo, true
   from cfg.perfil_acesso p
   join cfg.cliente c on c.id = p.cliente_id and c.slug = 'pj-cortes'
- cross join (values ('VG-01'), ('FIN-01'), ('COM-01'), ('COM-02'), ('COM-03')) t (codigo)
+ cross join (values ('VG-01'), ('FIN-01'), ('COM-01'), ('COM-02'), ('COM-03'), ('FIN-02'), ('FIN-03'))
+       t (codigo)
  where p.nome = 'Desenvolvimento'
 on conflict do nothing;
 

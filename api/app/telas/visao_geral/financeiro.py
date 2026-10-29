@@ -16,15 +16,24 @@ antigo ainda em aberto e a série de 12 meses dependem do arquivo inteiro.
   úteis até a data; entre os dois, em compensação (fora dos dois cartões, dentro da
   carteira). Vale para a receber e a pagar. As faixas de atraso contam os dias corridos
   desde o vencimento;
-- cartões: a receber a vencer e vencido, a pagar nos próximos 30 dias (com quanto isso é
-  da média paga por mês nos 6 meses fechados anteriores) e a pagar vencido;
+- cartões do topo: a receber a vencer e vencido, a pagar nos próximos 30 dias (com quanto
+  isso é da média paga por mês nos 6 meses fechados anteriores) e a pagar vencido;
+- próximos 7, 15 e 30 dias (JANELAS): a receber e a pagar lançado a vencer na janela
+  (vencimento de hoje até hoje + N dias; o que está em compensação fica fora, como no
+  "a vencer"); o que falta lançar = máx(0, média paga × N/30 − a pagar da janela); o fim
+  é a receber − a pagar (só o lançado) e isso menos o que falta (com o que falta lançar).
+  Fim ≥ 0 é saudável, < 0 atenção; o status de cada modo é o pior das janelas. Sem saldo
+  em conta: o fim é a sobra ou a falta da janela, não o caixa;
+- contas a pagar lançadas: o lançado nos próximos 30 dias ÷ a média paga por mês, em %
+  (a mesma conta do cartão "A pagar, 30 dias"), com farol.pagar_lancado (padrão: abaixo
+  de 50 crítico, de 50 a 80 atenção, a partir de 80 saudável), e o pago em cada um dos 6
+  meses fechados;
 - inadimplência: vencido ÷ carteira em aberto hoje, por faixa de atraso, e a mesma conta
   no fim de cada um dos 12 meses fechados anteriores; farol contra a média dessa série
-  (farol.inadimplencia, em p.p.);
-- prazo médio de recebimento e de pagamento: dias entre emissão e pagamento, ponderados
-  pelo valor, dos títulos pagos em cada mês, contra a média dos 6 meses anteriores.
+  (farol.inadimplencia, em p.p.).
 
-Saldo em conta, cobertura de caixa e ciclo de caixa ficam de fora: não há fonte.
+Sem velocímetros: os prazos médios de recebimento e de pagamento ficam no painel Receber e
+pagar. Saldo em conta, cobertura de caixa e ciclo de caixa ficam de fora: não há fonte.
 """
 
 from collections.abc import Mapping
@@ -39,18 +48,28 @@ from app.farol.parametro import Farol, deslocado, farol
 from app.seguranca.acesso import ContextoConsolidado
 from app.telas.calendario import feriados, mais_dias_uteis, ultimo_dia_do_mes
 from app.telas.contrato import Status
-from app.telas.visao_geral.contra_referencia import Mensal, Razao, rotulo_eixo
+from app.telas.moldura import MESES
+from app.telas.visao_geral.contra_referencia import Mensal, rotulo_eixo
 from app.telas.visao_geral.contrato import (
     CartaoInadimplencia,
-    Indicador,
+    CartaoPagarLancado,
+    CartaoProximosDias,
+    CartaoSecao,
+    FimJanela,
     ItemCarteira,
+    JanelaProximosDias,
     Kpi,
+    LegendaProximosDias,
+    ModoProximosDias,
+    PagoNoMes,
+    ProximosLancado,
     Secao,
     SerieInadimplencia,
     Trecho,
     Valor,
+    ValorRotulado,
 )
-from app.telas.visao_geral.relativo import MESES_REFERENCIA, Medidor, Serie, indicador_relativo
+from app.telas.visao_geral.relativo import MESES_REFERENCIA
 from app.telas.visao_geral.texto import moeda, numero
 from app.telas.visao_geral.vendas import (
     SecaoDoMes,
@@ -76,33 +95,14 @@ COLUNAS_PAGAR: Mapping[str, str] = {
 }
 MESES_SERIE = 12
 DIAS_A_PAGAR = 30
+# janelas do cartão de próximos dias, em dias corridos a partir de hoje
+JANELAS = (7, 15, DIAS_A_PAGAR)
 # D+2: dias úteis de compensação depois do vencimento
 DIAS_COMPENSACAO = 2
 
-
-def _dias(v: Decimal) -> str:
-    return f"{numero(v)} dias"
-
-
-PRAZO_RECEBIMENTO = Medidor(
-    id="prazo-recebimento",
-    nome="Prazo médio de recebimento",
-    unidade="dias",
-    unidade_delta="dias",
-    casas=0,
-    texto=_dias,
-    contexto="dos títulos recebidos no mês",
-)
-PRAZO_PAGAMENTO = Medidor(
-    id="prazo-pagamento",
-    nome="Prazo médio de pagamento",
-    unidade="dias",
-    unidade_delta="dias",
-    casas=0,
-    texto=_dias,
-    contexto="dos títulos pagos no mês",
-)
-PRAZO = Razao("dias_valor", "valor")
+MODO_LANCADO = "lancado"
+MODO_COM_FALTA = "com-falta"
+PIOR: Mapping[Status, int] = {"saudavel": 0, "atencao": 1, "critico": 2}
 
 
 @dataclass(frozen=True)
@@ -111,14 +111,19 @@ class Carteira:
 
     # vencimento a partir da data
     a_vencer: Decimal
-    # a vencer nos próximos DIAS_A_PAGAR dias (parte de a_vencer)
-    proximos_dias: Decimal
+    # dias da janela (JANELAS) → a vencer de hoje até hoje + dias (parte de a_vencer)
+    proximos: Mapping[int, Decimal]
     ate_30: Decimal
     ate_60: Decimal
     ate_90: Decimal
     mais_90: Decimal
     # já passou do vencimento, mas ainda dentro dos 2 dias úteis do D+2
     compensando: Decimal = Decimal(0)
+
+    @property
+    def proximos_dias(self) -> Decimal:
+        """A vencer nos próximos DIAS_A_PAGAR dias."""
+        return self.proximos.get(DIAS_A_PAGAR, Decimal(0))
 
     @property
     def vencido(self) -> Decimal:
@@ -166,13 +171,25 @@ def _titulos(tabelas: list[TabelaDoCliente], ctx: ContextoConsolidado) -> sql.Co
     ).format(linhas=de_todas(tabelas, campos, filtro_empresa(ctx)))
 
 
+def _proximos() -> sql.Composable:
+    """O a vencer de cada janela (JANELAS), na ordem, num array."""
+    return sql.SQL("array[{}]").format(
+        sql.SQL(", ").join(
+            sql.SQL("coalesce(sum(valor) filter (where atraso between {} and 0), 0)").format(
+                sql.Literal(-dias)
+            )
+            for dias in JANELAS
+        )
+    )
+
+
 @dataclass(frozen=True)
 class Leitura:
     """As três contas de uma tabela de títulos, de uma leitura só."""
 
     carteira: Carteira
     serie: list[PontoSerie]
-    # por mês de pagamento: valor pago e dias até o pagamento × valor
+    # por mês de pagamento: valor pago
     pagos: Mensal
 
 
@@ -187,12 +204,10 @@ def _ler(
 ) -> Leitura:
     """Lê os títulos uma vez (CTE materializada) e calcula, na mesma consulta:
     - carteira: em aberto em `hoje`; vencido = vencimento até `limite`
-      (ultimo_vencimento_vencido);
+      (ultimo_vencimento_vencido); a vencer em cada janela de JANELAS;
     - série: vencido e em aberto em cada dia de `limites_serie` (dia →
       ultimo_vencimento_vencido); vazio, sem série;
-    - pagos: por mês de pagamento, de `de` até `hoje`, o valor pago e os dias até o
-      pagamento × valor (para o prazo). Pagamento antes da emissão (adiantamento) conta 0
-      dias.
+    - pagos: por mês de pagamento, de `de` até `hoje`, o valor pago.
     """
     linhas = conn.execute(
         sql.SQL(
@@ -211,8 +226,7 @@ def _ler(
             select 'carteira' as parte,
                    null::date as dia,
                    coalesce(sum(valor) filter (where atraso <= 0), 0) as a_vencer,
-                   coalesce(sum(valor) filter (where atraso between -%(dias_a_pagar)s::int and 0),
-                            0) as proximos_dias,
+                   {proximos} as proximos,
                    coalesce(sum(valor) filter (where atraso > 0 and not vencido), 0)
                        as compensando,
                    coalesce(sum(valor) filter (where vencido and atraso <= 30), 0) as ate_30,
@@ -223,14 +237,13 @@ def _ler(
                    coalesce(sum(valor) filter (where vencido and atraso > 90), 0) as mais_90,
                    null::numeric as vencido,
                    null::numeric as aberto,
-                   null::numeric as dias_valor,
                    null::numeric as pago
               from a
             union all
             select 'serie', fim.dia, null, null, null, null, null, null, null,
                    coalesce(sum(t.valor) filter (where t.vencimento <= fim.limite), 0),
                    coalesce(sum(t.valor), 0),
-                   null, null
+                   null
               from fim
               left join t
                 on t.emissao <= fim.dia and (t.pagamento is null or t.pagamento > fim.dia)
@@ -238,19 +251,17 @@ def _ler(
             union all
             select 'pagos', date_trunc('month', pagamento)::date,
                    null, null, null, null, null, null, null, null, null,
-                   sum(greatest(pagamento - emissao, 0) * valor),
                    sum(valor)
               from t
              where pagamento >= %(de)s and pagamento <= %(hoje)s
              group by 2
             """
-        ).format(titulos=_titulos(tabelas, ctx)),
+        ).format(titulos=_titulos(tabelas, ctx), proximos=_proximos()),
         {
             "cliente": ctx.cliente_id,
             "empresas": list(ctx.empresas),
             "hoje": hoje,
             "limite": limite,
-            "dias_a_pagar": DIAS_A_PAGAR,
             "dias": list(limites_serie),
             "limites": list(limites_serie.values()),
             "de": de,
@@ -263,7 +274,7 @@ def _ler(
         if r["parte"] == "carteira":
             carteira = Carteira(
                 a_vencer=r["a_vencer"],
-                proximos_dias=r["proximos_dias"],
+                proximos=dict(zip(JANELAS, r["proximos"], strict=True)),
                 ate_30=r["ate_30"],
                 ate_60=r["ate_60"],
                 ate_90=r["ate_90"],
@@ -273,16 +284,21 @@ def _ler(
         elif r["parte"] == "serie":
             serie.append(PontoSerie(dia=r["dia"], vencido=r["vencido"], aberto=r["aberto"]))
         else:
-            pagos[r["dia"]] = {"valor": r["pago"], "dias_valor": r["dias_valor"]}
+            pagos[r["dia"]] = {"valor": r["pago"]}
     if carteira is None:  # agregado sem group by sempre devolve uma linha
         raise LookupError("carteira sem linha")
     return Leitura(carteira=carteira, serie=sorted(serie, key=lambda p: p.dia), pagos=pagos)
 
 
+def meses_pagos(pagos: Mensal, hoje: date) -> list[date]:
+    """Os até 6 meses fechados anteriores ao de `hoje` com pagamento, do mais antigo."""
+    aberto = date(hoje.year, hoje.month, 1)
+    return [m for m in sorted(pagos) if m < aberto][-MESES_REFERENCIA:]
+
+
 def media_paga(pagos: Mensal, hoje: date) -> Decimal | None:
     """Média paga por mês nos até 6 meses fechados anteriores ao de `hoje` com pagamento."""
-    aberto = date(hoje.year, hoje.month, 1)
-    meses = [m for m in sorted(pagos) if m < aberto][-MESES_REFERENCIA:]
+    meses = meses_pagos(pagos, hoje)
     if not meses:
         return None
     return sum((pagos[m]["valor"] for m in meses), Decimal(0)) / len(meses)
@@ -317,6 +333,8 @@ def cartao_inadimplencia(
     ]
     return CartaoInadimplencia(
         tipo="inadimplencia",
+        titulo="Inadimplência corrente",
+        subtitulo="Quanto da carteira a receber já venceu, e há quanto tempo",
         status=deslocado(base, media).status(pct),
         percentual=Valor(valor=pct, unidade="pct", casas=1),
         texto=[
@@ -344,6 +362,154 @@ def cartao_inadimplencia(
             rotulos=[rotulo_eixo(dia) for dia, _ in pontos],
             valores=[v for _, v in pontos],
             media=media,
+        ),
+    )
+
+
+def _brl(valor: Decimal) -> Valor:
+    return Valor(valor=valor, unidade="brl")
+
+
+def falta_lancar(media: Decimal, dias: int, pagar: Decimal) -> Decimal:
+    """O que falta lançar a pagar para a janela chegar à média paga, proporcional aos dias."""
+    return max(Decimal(0), media * dias / DIAS_A_PAGAR - pagar)
+
+
+def _fim(valor: Decimal) -> FimJanela:
+    if valor >= 0:
+        return FimJanela(valor=_brl(valor), status="saudavel", texto="entra mais do que sai")
+    return FimJanela(valor=_brl(valor), status="atencao", texto="sai mais do que entra")
+
+
+def _pior(janelas: list[JanelaProximosDias], modo: str) -> Status | None:
+    status = [s for j in janelas if (s := j.fim[modo].status) is not None]
+    return max(status, key=lambda s: PIOR[s], default=None)
+
+
+def cartao_proximos_dias(
+    hoje: date, receber: Carteira, pagar: Carteira, media: Decimal | None
+) -> CartaoProximosDias:
+    """O que vence a receber menos o que vence a pagar em 7, 15 e 30 dias. Sem média paga
+    (nenhum pagamento nos meses fechados), só o modo "Só o lançado"."""
+    if media is not None and media <= 0:
+        media = None
+    janelas: list[JanelaProximosDias] = []
+    for dias in JANELAS:
+        a_receber = receber.proximos.get(dias, Decimal(0))
+        a_pagar = pagar.proximos.get(dias, Decimal(0))
+        falta = falta_lancar(media, dias, a_pagar) if media is not None else Decimal(0)
+        fim = {MODO_LANCADO: _fim(a_receber - a_pagar)}
+        if media is not None:
+            fim[MODO_COM_FALTA] = _fim(a_receber - a_pagar - falta)
+        janelas.append(
+            JanelaProximosDias(
+                titulo=f"{dias} dias",
+                ate=f"até {hoje + timedelta(days=dias):%d/%m}",
+                receber=_brl(a_receber),
+                pagar=_brl(a_pagar),
+                falta=_brl(falta),
+                fim=fim,
+            )
+        )
+    modos = [
+        ModoProximosDias(
+            id=MODO_LANCADO,
+            rotulo="Só o lançado",
+            com_falta=False,
+            status=_pior(janelas, MODO_LANCADO),
+        )
+    ]
+    if media is not None:
+        modos.append(
+            ModoProximosDias(
+                id=MODO_COM_FALTA,
+                rotulo="Com o que falta lançar",
+                com_falta=True,
+                status=_pior(janelas, MODO_COM_FALTA),
+            )
+        )
+        nota = (
+            "Só o lançado considera as contas a pagar que já estão no sistema; com o que falta "
+            f"lançar completa cada janela até a média paga por mês ({moeda(media)}, "
+            "proporcional aos dias), porque essas contas também vão vencer."
+        )
+    else:
+        nota = (
+            "Só o lançado considera as contas a pagar que já estão no sistema. Sem pagamentos "
+            "nos meses fechados, não há média paga para estimar o que falta lançar."
+        )
+    return CartaoProximosDias(
+        tipo="proximos-dias",
+        titulo="Próximos 7, 15 e 30 dias",
+        subtitulo=(
+            "O que vence a receber, menos o que vence a pagar: quanto sobra ou falta em cada janela"
+        ),
+        explicacao=(
+            "Cada linha mostra o que vence a receber na janela. Embaixo, o que vence a pagar "
+            "volta do fim dessa barra. O traço marca quanto sobra ou falta. O saldo em conta "
+            "ainda não entra: o sistema não tem essa fonte."
+        ),
+        nota=nota,
+        modos=modos,
+        legenda=LegendaProximosDias(
+            saldo=None,
+            receber="A receber",
+            pagar="A pagar",
+            falta="Falta lançar, pela média paga",
+        ),
+        saldo=None,
+        minimo=None,
+        janelas=janelas,
+    )
+
+
+def _mes_por_extenso(mes: date, com_ano: bool) -> str:
+    nome = MESES[mes.month - 1].lower()
+    return f"{nome} de {mes.year}" if com_ano else nome
+
+
+def cartao_pagar_lancado(
+    hoje: date, pagar: Carteira, pagos: Mensal, f: Farol
+) -> CartaoPagarLancado | None:
+    """O lançado a pagar nos próximos 30 dias contra a média paga por mês nos 6 meses
+    fechados; None sem pagamento nesses meses."""
+    meses = meses_pagos(pagos, hoje)
+    media = media_paga(pagos, hoje)
+    if media is None or media <= 0:
+        return None
+    lancado = pagar.proximos_dias
+    pct = lancado / media * 100
+    primeiro, ultimo = meses[0], meses[-1]
+    if len(meses) == 1:
+        nota = f"Em {_mes_por_extenso(ultimo, False)}, a empresa pagou {moeda(media)}."
+    else:
+        com_ano = primeiro.year != ultimo.year
+        nota = (
+            f"De {_mes_por_extenso(primeiro, com_ano)} a {_mes_por_extenso(ultimo, com_ano)}, "
+            f"a empresa pagou em média {moeda(media)} por mês."
+        )
+    return CartaoPagarLancado(
+        tipo="pagar-lancado",
+        titulo="Contas a pagar lançadas",
+        subtitulo=(
+            f"O que já está lançado para os próximos {DIAS_A_PAGAR} dias, contra o que a "
+            "empresa paga por mês"
+        ),
+        explicacao=(
+            "As barras cinza são o que a empresa pagou em cada mês. A barra da direita é o "
+            f"que já está lançado para vencer nos próximos {DIAS_A_PAGAR} dias; o hachurado "
+            "é o que ainda falta para chegar à média paga."
+        ),
+        status=f.status(pct),
+        percentual=Valor(valor=pct, unidade="pct", casas=0),
+        texto=f"da média paga por mês já está lançada para os próximos {DIAS_A_PAGAR} dias.",
+        nota=nota,
+        pagos=[PagoNoMes(rotulo=rotulo_eixo(m), valor=_brl(pagos[m]["valor"])) for m in meses],
+        media=ValorRotulado(valor=_brl(media), rotulo=f"média paga {moeda(media)}"),
+        proximos=ProximosLancado(
+            rotulo=f"próximos {DIAS_A_PAGAR} dias",
+            lancado=ValorRotulado(valor=_brl(lancado), rotulo="lançado"),
+            falta=ValorRotulado(valor=_brl(max(Decimal(0), media - lancado)), rotulo="falta"),
         ),
     )
 
@@ -398,14 +564,6 @@ def kpis_financeiro(
     return kpis
 
 
-def _prazo(m: Medidor, pagos: Mensal, hoje: date, base: Farol) -> Indicador | None:
-    """Prazo médio do mês mais recente com pagamento, até o mês de `hoje`."""
-    meses = [x for x in pagos if x <= hoje and PRAZO.tem(pagos, x)]
-    if not meses:
-        return None
-    return indicador_relativo(m, max(meses), Serie(pagos, PRAZO), None, base)
-
-
 def secao_financeiro(ctx: ContextoConsolidado, hoje: date) -> SecaoDoMes | None:
     """Seção Financeiro; None sem tabela de títulos ou sem nada em aberto nem pago."""
     conn = ctx.sessao.conn
@@ -419,11 +577,10 @@ def secao_financeiro(ctx: ContextoConsolidado, hoje: date) -> SecaoDoMes | None:
     feriados_periodo = feriados(conn, ctx.cliente_id, mes_menos(de, 1), hoje)
     limite = ultimo_vencimento_vencido(hoje, feriados_periodo)
 
-    cartoes: list[CartaoInadimplencia] = []
-    indicadores: list[Indicador] = []
     receber: Carteira | None = None
     pagar: Carteira | None = None
     pagos_pagar: Mensal = {}
+    inadimplencia: CartaoInadimplencia | None = None
     if a_receber:
         fins = [ultimo_dia_do_mes(mes_menos(aberto, n)) for n in range(MESES_SERIE, 0, -1)]
         leitura = _ler(
@@ -436,38 +593,33 @@ def secao_financeiro(ctx: ContextoConsolidado, hoje: date) -> SecaoDoMes | None:
             de,
         )
         receber = leitura.carteira
-        cartao = cartao_inadimplencia(
+        inadimplencia = cartao_inadimplencia(
             hoje, receber, leitura.serie, farol(conn, ctx.cliente_id, "inadimplencia", hoje)
         )
-        if cartao is not None:
-            cartoes.append(cartao)
-        ind = _prazo(
-            PRAZO_RECEBIMENTO,
-            leitura.pagos,
-            hoje,
-            farol(conn, ctx.cliente_id, "prazo_recebimento", hoje),
-        )
-        if ind is not None:
-            indicadores.append(ind)
     if a_pagar:
         # sem série: o gráfico de inadimplência é só do a receber
         leitura = _ler(conn, ctx, a_pagar, hoje, limite, {}, de)
         pagar = leitura.carteira
         pagos_pagar = leitura.pagos
-        ind = _prazo(
-            PRAZO_PAGAMENTO, pagos_pagar, hoje, farol(conn, ctx.cliente_id, "prazo_pagamento", hoje)
-        )
-        if ind is not None:
-            indicadores.append(ind)
+
+    media = media_paga(pagos_pagar, hoje)
+    f_pagar = farol(conn, ctx.cliente_id, "pagar_lancado", hoje)
+    cartoes: list[CartaoSecao] = []
+    if receber is not None and pagar is not None and (receber.total or pagar.total):
+        cartoes.append(cartao_proximos_dias(hoje, receber, pagar, media))
+    if pagar is not None and (lancado := cartao_pagar_lancado(hoje, pagar, pagos_pagar, f_pagar)):
+        cartoes.append(lancado)
+    if inadimplencia is not None:
+        cartoes.append(inadimplencia)
 
     kpis = kpis_financeiro(
         receber,
         pagar,
-        media_paga(pagos_pagar, hoje),
-        cartoes[0].status if cartoes else None,
-        farol(conn, ctx.cliente_id, "pagar_lancado", hoje),
+        media,
+        inadimplencia.status if inadimplencia else None,
+        f_pagar,
     )
-    if not kpis and not indicadores:
+    if not kpis and not cartoes:
         return None
     secao = Secao(
         id="financeiro",
@@ -476,6 +628,6 @@ def secao_financeiro(ctx: ContextoConsolidado, hoje: date) -> SecaoDoMes | None:
         resumo=f"Posição em {hoje:%d/%m/%Y}, com os títulos lançados no sistema.",
         kpis=kpis,
         cartoes=cartoes,
-        indicadores=indicadores,
+        indicadores=[],
     )
     return SecaoDoMes(secao=secao, mes=aberto)

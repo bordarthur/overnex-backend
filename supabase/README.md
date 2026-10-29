@@ -45,6 +45,9 @@ Nada fica em `public`, e esses schemas não são expostos pelo PostgREST (`confi
 14. `..._conta_dre.sql` — `cfg.conta_dre`: de-para da conta do ERP do cliente (ex.: `en_codigoplanocliente` do Winthor) para o Id_Descritivo do plano gerencial, para as despesas do contas a pagar entrarem na DRE da seção Resultado. `fora_da_dre` = motivo de a conta não entrar. Conteúdo por cliente em `producao/<cliente>_contas_dre.sql`.
 15. `..._usuario_id_autenticacao.sql` — login com e-mail e senha no Supabase Auth: `seg.usuario.object_id_entra` vira `id_autenticacao` (o `sub` do token, `auth.users.id`; continua `uuid not null unique`, sem FK para `auth.users`), entra `seg.usuario.nome` (cadastrado pela LANN, usado em `/api/sessao`), `seg.log_acesso.object_id_entra` vira `id_autenticacao` e `seg.resolver_usuario` passa a procurar pelo id do provedor. Os scripts de `producao/` que criam usuário já usam o nome novo: rode-os só depois desta migration.
 16. `..._contexto_acesso.sql` — `seg.contexto_acesso(id_autenticacao, codigo_tela)`: numa chamada, define `app.usuario_id` e devolve os fatos da checagem de acesso (vínculos com cliente ativo, perfis que liberam a tela, empresas). SECURITY INVOKER: roda como `api_site`, sob o RLS. A API passa a depender dela: aplique antes de subir a API com o código de 23/10/2026 (tarde).
+17. `..._plano_conta.sql` — `cfg.plano_conta`: o plano de contas gerencial padrão da LANN, global (sem cliente; `api_site` lê tudo, ninguém da API altera). Por conta: nomes dos níveis, `fator` (+1 soma no resultado, −1 subtrai), `caixa` (FCO, FCI, FCF) e `competencia` (CO = só DRE, CA = só caixa, CO/CA = os dois). A DRE da API usa CO e CO/CA. Conteúdo em `producao/plano_contas_padrao.sql`. A API funciona sem ela (regra antiga: toda conta dos grupos da DRE).
+18. `..._lancamentos_agrupados_pj.sql` — `mart.f_lancamentos_agrupados_pj` (Empresa, Data, Id_Descritivo, Valor no sinal do resultado), que recebe a view `dbo.f_Lancamentos_Agrupados_PJ` do Azure ([jobs/snapshot/azure/](../jobs/snapshot/azure/)). Com a fonte cadastrada e carregada, a DRE da API vem dela. Mesmo padrão da migration 12.
+19. `..._preferencia_cliente.sql` — o `api_site` passa a inserir em `cfg.parametro_cliente` e a trocar o `valor`, só nas chaves `preferencia.*` e só do próprio cliente: as escolhas salvas da Visão geral (`PUT /api/telas/visao-geral/preferencias/{id}`; a primeira é `preferencia.linhas-custo`). Farol e os outros parâmetros continuam só da LANN. A API funciona sem ela, mas a gravação responde 500 até ela entrar.
 
 ### Storage
 
@@ -55,6 +58,7 @@ O `config.toml` declara o bucket privado `overnex-bucket`, criado no `supabase s
 - `api_site` só enxerga linhas a partir de `current_setting('app.usuario_id', true)`, que a API define a cada transação. Sem ele, nenhuma linha.
   - lê `cfg` e `mart.lancamento` / `mart.carga_fonte` do próprio cliente/empresas; `mart.carga` não;
   - em `seg`, lê só os próprios registros e só insere nos logs;
+  - em `cfg.parametro_cliente`, grava só as escolhas (`preferencia.*`) do próprio cliente (migration 19);
   - tem grant de escrita nos cadastros, mas ainda não há política de escrita, então o RLS nega (vem com o admin).
 - `carga` escreve em `mart.lancamento`, `mart.carga` e `mart.carga_fonte`; lê só `cfg.fonte_carga`, `cfg.mapa_empresa` e `cfg.empresa`; cria tabela temporária; nenhum acesso a `seg`.
 
@@ -71,7 +75,9 @@ A migration 3 confere que o dono das funções (`postgres`) tem BYPASSRLS, como 
 
 ## Scripts de produção (`producao/`)
 
-Cadastros de produção por cliente, para rodar à mão no SQL Editor. Não são migrations e não rodam no `db reset`.
+Cadastros de produção por cliente, para rodar à mão no SQL Editor. Não são migrations e não rodam no `db reset` (menos o plano de contas padrão, que também entra no seed local, pelo `config.toml`).
+
+- `plano_contas_padrao.sql` — as 636 contas do plano de contas padrão da LANN em `cfg.plano_conta` (gerado da aba Plano_Contas de "Plano de Contas Padrão.xlsx", em LANN Equipe 1 → 3. Ferramentas de apoio → 6. Bases Padrão LANN → 1. Tabelas Padrão; o id `110.03;14` vira `110.03.14`). Depois da migration 17; pode rodar de novo (troca o plano inteiro). Mudou o plano no Excel: gere de novo e rode.
 
 - `nilo_maia_tabelas.sql` — fontes das 21 tabelas de dados da Nilo Maia. A de lançamentos passa a ser do tipo `tabela`; as outras entram inativas.
 - `nilo_maia_janela.sql` — janela de 3 meses nas 12 tabelas de movimento (depois da migration 6). Não ativa fontes.
@@ -80,6 +86,8 @@ Cadastros de produção por cliente, para rodar à mão no SQL Editor. Não são
 - `pj_cortes_vendas_13_meses.sql` — janela de 13 meses em `f_vendas_pj` e as colunas da devolução da Agile (`colunas_modelo`). Só se o cadastro da PJ rodou antes de 22/10/2026.
 - `pj_cortes_contas_dre.sql` — de-para das 238 contas do Winthor da PJ para o plano gerencial (gerado dos arquivos `Codigo_Sistema_x_Id_Descritivo` e `Plano_de_Conta` do Power BI), com as exclusões conhecidas da DRE do Power BI em `fora_da_dre`. Depois da migration 14; pode rodar de novo (troca todas as contas da PJ).
 - `pj_cortes_telas_comerciais.sql` — painéis comerciais da PJ: `COM-01`, `COM-02` e `COM-03` no perfil "Desenvolvimento" (parte 1, pode rodar a qualquer hora) e os papéis `vendedor`, `linha` e `quantidade` nas duas tabelas de vendas (parte 2: só depois de a carga com o código dos painéis estar em `main`; ela passa a gravar o faturado por vendedor, para a rampa). A API acha essas colunas sem o script. Pode rodar de novo.
+- `pj_cortes_telas_financeiras.sql` — painéis financeiros da PJ: `FIN-02` (Resultado) e `FIN-03` (Receber e pagar, com dado nominal) no perfil "Desenvolvimento". Depois da API com as duas telas publicada; pode rodar de novo.
+- `pj_cortes_lancamentos_agrupados.sql` — fonte `f_lancamentos_agrupados_pj` da PJ (sem janela, sem coluna de empresa). Depois da migration 18 e da view no Azure entrar em `TABELAS`; pode rodar de novo.
 - `pj_cortes_usuario_dev.sql` — perfil "Desenvolvimento" da PJ Cortes; o usuário de desenvolvimento sai da Nilo Maia e entra na PJ. Depois da migration 15.
 - `usuario_dev_supabase_auth.sql` — troca o `id_autenticacao` provisório do usuário de desenvolvimento pelo id dele no Supabase Auth (lê `auth.users` pelo e-mail). Antes, crie o usuário em Authentication → Users. Depois, o token fake antigo para de valer: o front que usa `VITE_AUTH_FAKE_OBJECT_ID` precisa do id novo (o script mostra).
 - `nilo_maia_remover_tabelas.sql` — remove as tabelas `*_nilo_maia` do mart, com as fontes, o histórico de carga, o resumo mensal e as permissões delas. Mantém cliente, empresas e usuários.
@@ -92,7 +100,9 @@ Cadastros de produção por cliente, para rodar à mão no SQL Editor. Não são
 | `02_sem_usuario` | sem `app.usuario_id` (ou vazio), nenhuma linha |
 | `03_role_carga` | `carga` não lê `seg`, não escreve em `cfg`, escreve no `mart` e cria tabela temporária |
 | `04_integridade` | `cfg.mapa_empresa` (e os outros vínculos) recusam empresa de outro cliente; `mart.carga_fonte` `ok` exige `data_snapshot` |
-| `05_tabelas_de_dados` | as 46 tabelas de dados (Nilo Maia e PJ Cortes) têm RLS; nomes e tipos preservados; isolamento por cliente e por empresa; linhas sem empresa visíveis ao cliente inteiro; `carga` escreve, `api_site` só lê |
+| `05_tabelas_de_dados` | as 47 tabelas de dados (Nilo Maia e PJ Cortes) têm RLS; nomes e tipos preservados; isolamento por cliente e por empresa; linhas sem empresa visíveis ao cliente inteiro; `carga` escreve, `api_site` só lê |
 | `09_conta_dre` | cada cliente lê só o próprio de-para de contas; `api_site` não cadastra; conta sem Id_Descritivo precisa do motivo |
 | `10_usuario_id_autenticacao` | `seg.usuario` com `id_autenticacao` (not null, único, sem FK) e `nome`; `seg.resolver_usuario` acha o usuário pelo id do provedor |
+| `12_plano_conta` | `cfg.plano_conta` global: qualquer usuário (e sem usuário) lê; `api_site` não altera; id só com números e pontos, fator ±1, competência CO, CA ou CO/CA |
 | `11_contexto_acesso` | `seg.contexto_acesso` define `app.usuario_id` e devolve vínculos, perfis da tela e empresas do usuário (na ordem por nome); desconhecido: listas vazias |
+| `13_preferencia_cliente` | `api_site` grava e troca só as escolhas (`preferencia.*`) do próprio cliente em `cfg.parametro_cliente`; não grava farol nem escolha de outro cliente, não troca a chave e não apaga |

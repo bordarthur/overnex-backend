@@ -1,0 +1,1412 @@
+{
+  "tela": "receber-pagar",
+  "versaoContrato": "1.0",
+  "cliente": {
+    "nome": "Cliente Demo",
+    "sigla": "CD",
+    "logoUrl": null
+  },
+  "dadosAte": "2026-10-12",
+  "atualizadoEm": "2026-10-13T12:02:00Z",
+  "filtros": [
+    {
+      "id": "vendedor",
+      "rotulo": "Vendedor",
+      "opcoes": [
+        {
+          "id": "todos",
+          "rotulo": "Todos"
+        },
+        {
+          "id": "ana",
+          "rotulo": "Ana"
+        },
+        {
+          "id": "bruno",
+          "rotulo": "Bruno"
+        },
+        {
+          "id": "carla",
+          "rotulo": "Carla"
+        },
+        {
+          "id": "diego",
+          "rotulo": "Diego"
+        },
+        {
+          "id": "elisa",
+          "rotulo": "Elisa"
+        },
+        {
+          "id": "fabio",
+          "rotulo": "Fábio"
+        }
+      ],
+      "padrao": "todos"
+    },
+    {
+      "id": "atraso",
+      "rotulo": "Atraso",
+      "opcoes": [
+        {
+          "id": "todos",
+          "rotulo": "Todos"
+        },
+        {
+          "id": "ate-30",
+          "rotulo": "Até 30 dias"
+        },
+        {
+          "id": "31-90",
+          "rotulo": "31 a 90 dias"
+        },
+        {
+          "id": "mais-90",
+          "rotulo": "Mais de 90 dias"
+        }
+      ],
+      "padrao": "todos"
+    }
+  ],
+  "destaques": [],
+  "kpis": [
+    {
+      "rotulo": "Saldo em caixa hoje",
+      "valor": {
+        "valor": 1420000,
+        "unidade": "brl"
+      },
+      "contexto": "todas as contas"
+    },
+    {
+      "rotulo": "A receber em 30 dias",
+      "valor": {
+        "valor": 5260000,
+        "unidade": "brl"
+      },
+      "contexto": "títulos emitidos"
+    },
+    {
+      "rotulo": "A pagar em 30 dias",
+      "valor": {
+        "valor": 3660000,
+        "unidade": "brl"
+      },
+      "contexto": "só o que está lançado",
+      "status": "atencao"
+    },
+    {
+      "rotulo": "Saldo em 30 dias",
+      "valor": {
+        "valor": 3020000,
+        "unidade": "brl"
+      },
+      "contexto": "otimista: faltam saídas lançadas",
+      "status": "saudavel"
+    },
+    {
+      "rotulo": "Inadimplência",
+      "valor": {
+        "valor": 7.4,
+        "unidade": "pct",
+        "casas": 1
+      },
+      "contexto": "média de 12 meses: 5,8%",
+      "status": "atencao"
+    }
+  ],
+  "apoios": [],
+  "cartoes": [
+    {
+      "id": "proximos-dias",
+      "tipo": "janelas",
+      "largura": 12,
+      "titulo": "Próximos dias: entra, sai e quanto sobra",
+      "subtitulo": "O saldo de hoje mais o que vence a receber, menos o que vence a pagar em cada janela",
+      "janelas": [
+        {
+          "titulo": "Próximos 7 dias",
+          "status": "saudavel",
+          "linhas": [
+            {
+              "rotulo": "A receber",
+              "valor": {
+                "valor": 1234640,
+                "unidade": "brl"
+              }
+            },
+            {
+              "rotulo": "A pagar",
+              "valor": {
+                "valor": -530000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "rotulo": "Sobra no período",
+              "valor": {
+                "valor": 704640,
+                "unidade": "brl"
+              },
+              "comSinal": true,
+              "tipo": "total"
+            },
+            {
+              "rotulo": "Saldo no fim",
+              "valor": {
+                "valor": 2124640,
+                "unidade": "brl"
+              },
+              "tipo": "saldo"
+            }
+          ]
+        },
+        {
+          "titulo": "Próximos 15 dias",
+          "status": "saudavel",
+          "linhas": [
+            {
+              "rotulo": "A receber",
+              "valor": {
+                "valor": 2676680,
+                "unidade": "brl"
+              }
+            },
+            {
+              "rotulo": "A pagar",
+              "valor": {
+                "valor": -1010000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "rotulo": "Sobra no período",
+              "valor": {
+                "valor": 1666680,
+                "unidade": "brl"
+              },
+              "comSinal": true,
+              "tipo": "total"
+            },
+            {
+              "rotulo": "Saldo no fim",
+              "valor": {
+                "valor": 3086680,
+                "unidade": "brl"
+              },
+              "tipo": "saldo"
+            }
+          ]
+        },
+        {
+          "titulo": "Próximos 30 dias",
+          "status": "saudavel",
+          "linhas": [
+            {
+              "rotulo": "A receber",
+              "valor": {
+                "valor": 5256492,
+                "unidade": "brl"
+              }
+            },
+            {
+              "rotulo": "A pagar",
+              "valor": {
+                "valor": -3660000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "rotulo": "Sobra no período",
+              "valor": {
+                "valor": 1596492,
+                "unidade": "brl"
+              },
+              "comSinal": true,
+              "tipo": "total"
+            },
+            {
+              "rotulo": "Saldo no fim",
+              "valor": {
+                "valor": 3016492,
+                "unidade": "brl"
+              },
+              "tipo": "saldo"
+            }
+          ]
+        }
+      ],
+      "alerta": {
+        "etiqueta": "Dado incompleto",
+        "texto": [
+          {
+            "texto": "O a pagar só tem o que está lançado no sistema: "
+          },
+          {
+            "texto": "58% da média paga",
+            "destaque": true
+          },
+          {
+            "texto": " nos últimos 6 meses. Folha, impostos e despesas fixas ainda não aparecem, então a sobra está maior do que será."
+          }
+        ],
+        "rodape": "Alerta de qualidade do dado."
+      }
+    },
+    {
+      "id": "contas-receber-pagar",
+      "tipo": "dois-lados",
+      "largura": 12,
+      "titulo": "Contas a receber e a pagar",
+      "subtitulo": "O que está em aberto hoje, por idade, e os maiores saldos",
+      "lados": [
+        {
+          "titulo": "Contas a receber",
+          "total": "em aberto: R$ 7,13 mi",
+          "kpis": [
+            {
+              "rotulo": "Vencido",
+              "valor": {
+                "valor": 528000,
+                "unidade": "brl"
+              },
+              "contexto": "7,4% da carteira",
+              "status": "atencao"
+            },
+            {
+              "rotulo": "Prazo médio",
+              "valor": {
+                "valor": 31,
+                "unidade": "dias"
+              },
+              "contexto": "média de 12 meses: 28",
+              "status": "atencao"
+            },
+            {
+              "rotulo": "Clientes em atraso",
+              "valor": {
+                "valor": 64,
+                "unidade": "qtd"
+              },
+              "contexto": "4,5% da base ativa",
+              "status": "atencao"
+            }
+          ],
+          "idade": [
+            {
+              "rotulo": "A vencer",
+              "valor": {
+                "valor": 6602000,
+                "unidade": "brl"
+              },
+              "participacao": 92.6,
+              "status": "saudavel"
+            },
+            {
+              "rotulo": "1 a 30 dias",
+              "valor": {
+                "valor": 320000,
+                "unidade": "brl"
+              },
+              "participacao": 4.5,
+              "status": "atencao"
+            },
+            {
+              "rotulo": "31 a 60",
+              "valor": {
+                "valor": 98000,
+                "unidade": "brl"
+              },
+              "participacao": 1.4,
+              "status": "critico"
+            },
+            {
+              "rotulo": "61 a 90",
+              "valor": {
+                "valor": 52000,
+                "unidade": "brl"
+              },
+              "participacao": 0.7,
+              "status": "critico"
+            },
+            {
+              "rotulo": "Mais de 90",
+              "valor": {
+                "valor": 58000,
+                "unidade": "brl"
+              },
+              "participacao": 0.8,
+              "status": "critico"
+            }
+          ],
+          "observacao": [
+            {
+              "texto": "Provisão para perdas (PDD): "
+            },
+            {
+              "texto": "R$ 31 mil",
+              "destaque": true
+            },
+            {
+              "texto": ", 0,44% da carteira. Regra a definir."
+            }
+          ],
+          "maiores": [
+            {
+              "nome": "Atacadão Nordeste",
+              "valor": {
+                "valor": 286000,
+                "unidade": "brl"
+              },
+              "participacao": 4
+            },
+            {
+              "nome": "Mercantil Aurora",
+              "valor": {
+                "valor": 142000,
+                "unidade": "brl"
+              },
+              "participacao": 2,
+              "etiqueta": "vencido"
+            },
+            {
+              "nome": "Churrascaria Gaúcha",
+              "valor": {
+                "valor": 131000,
+                "unidade": "brl"
+              },
+              "participacao": 1.8
+            },
+            {
+              "nome": "Distribuidora Vale Verde",
+              "valor": {
+                "valor": 124000,
+                "unidade": "brl"
+              },
+              "participacao": 1.7,
+              "etiqueta": "vencido"
+            },
+            {
+              "nome": "Atacadão Norte",
+              "valor": {
+                "valor": 118000,
+                "unidade": "brl"
+              },
+              "participacao": 1.7
+            },
+            {
+              "nome": "Rede Bom Preço Sul",
+              "valor": {
+                "valor": 96000,
+                "unidade": "brl"
+              },
+              "participacao": 1.3,
+              "etiqueta": "vencido"
+            }
+          ]
+        },
+        {
+          "titulo": "Contas a pagar",
+          "total": "em aberto: R$ 4,92 mi",
+          "alerta": "lançado: 58% da média paga",
+          "kpis": [
+            {
+              "rotulo": "Vencido",
+              "valor": {
+                "valor": 46000,
+                "unidade": "brl"
+              },
+              "contexto": "0,9% do total"
+            },
+            {
+              "rotulo": "Prazo médio",
+              "valor": {
+                "valor": 24,
+                "unidade": "dias"
+              },
+              "contexto": "média de 12 meses: 26",
+              "status": "atencao"
+            },
+            {
+              "rotulo": "Vence em 7 dias",
+              "valor": {
+                "valor": 530000,
+                "unidade": "brl"
+              },
+              "contexto": "só o que está lançado",
+              "status": "atencao"
+            }
+          ],
+          "idade": [
+            {
+              "rotulo": "A vencer",
+              "valor": {
+                "valor": 4874000,
+                "unidade": "brl"
+              },
+              "participacao": 99.1,
+              "status": "saudavel"
+            },
+            {
+              "rotulo": "1 a 30 dias",
+              "valor": {
+                "valor": 40000,
+                "unidade": "brl"
+              },
+              "participacao": 0.8,
+              "status": "atencao"
+            },
+            {
+              "rotulo": "31 a 60",
+              "valor": {
+                "valor": 4000,
+                "unidade": "brl"
+              },
+              "participacao": 0.1,
+              "status": "critico"
+            },
+            {
+              "rotulo": "61 a 90",
+              "valor": {
+                "valor": 2000,
+                "unidade": "brl"
+              },
+              "participacao": 0,
+              "status": "critico"
+            },
+            {
+              "rotulo": "Mais de 90",
+              "valor": {
+                "valor": 0,
+                "unidade": "brl"
+              },
+              "participacao": 0,
+              "status": "critico"
+            }
+          ],
+          "maiores": [
+            {
+              "nome": "Frigorífico Boi Bom",
+              "valor": {
+                "valor": 1060000,
+                "unidade": "brl"
+              },
+              "participacao": 21.5
+            },
+            {
+              "nome": "Avícola Sertão",
+              "valor": {
+                "valor": 720000,
+                "unidade": "brl"
+              },
+              "participacao": 14.6
+            },
+            {
+              "nome": "Frigorífico Norte",
+              "valor": {
+                "valor": 540000,
+                "unidade": "brl"
+              },
+              "participacao": 11,
+              "etiqueta": "vencido"
+            },
+            {
+              "nome": "Laticínios Serra",
+              "valor": {
+                "valor": 310000,
+                "unidade": "brl"
+              },
+              "participacao": 6.3
+            },
+            {
+              "nome": "Pescados do Mar",
+              "valor": {
+                "valor": 270000,
+                "unidade": "brl"
+              },
+              "participacao": 5.5
+            },
+            {
+              "nome": "Embutidos Real",
+              "valor": {
+                "valor": 220000,
+                "unidade": "brl"
+              },
+              "participacao": 4.5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "quem-cobrar",
+      "tipo": "tabela",
+      "largura": 7,
+      "titulo": "Quem cobrar hoje",
+      "subtitulo": "Maiores vencidos. A chance de receber vem do histórico de pagamento de cada cliente.",
+      "colunas": [
+        {
+          "rotulo": "Cliente"
+        },
+        {
+          "rotulo": "Vencido"
+        },
+        {
+          "rotulo": "Atraso"
+        },
+        {
+          "rotulo": "Chance",
+          "alinhar": "esquerda"
+        },
+        {
+          "rotulo": "Vendedor",
+          "alinhar": "esquerda",
+          "ocultarNoCelular": true
+        }
+      ],
+      "linhas": [
+        {
+          "celulas": [
+            {
+              "valor": "Mercantil Aurora",
+              "sub": "parou de comprar"
+            },
+            {
+              "valor": {
+                "valor": 58200,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 12,
+                "unidade": "dias"
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "pill": {
+                "status": "atencao",
+                "rotulo": "Média"
+              }
+            },
+            {
+              "valor": "Diego"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Distribuidora Vale Verde"
+            },
+            {
+              "valor": {
+                "valor": 41700,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 19,
+                "unidade": "dias"
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "pill": {
+                "status": "saudavel",
+                "rotulo": "Alta"
+              }
+            },
+            {
+              "valor": "Bruno"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Rede Bom Preço Sul",
+              "sub": "parou de comprar"
+            },
+            {
+              "valor": {
+                "valor": 36400,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 27,
+                "unidade": "dias"
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "pill": {
+                "status": "atencao",
+                "rotulo": "Média"
+              }
+            },
+            {
+              "valor": "Fábio"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Atacadão Nordeste"
+            },
+            {
+              "valor": {
+                "valor": 33900,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 8,
+                "unidade": "dias"
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "pill": {
+                "status": "saudavel",
+                "rotulo": "Alta"
+              }
+            },
+            {
+              "valor": "Ana"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Supermercado Primavera",
+              "sub": "parou de comprar"
+            },
+            {
+              "valor": {
+                "valor": 28100,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 44,
+                "unidade": "dias"
+              },
+              "fundo": "atencao"
+            },
+            {
+              "pill": {
+                "status": "critico",
+                "rotulo": "Baixa"
+              }
+            },
+            {
+              "valor": "Bruno"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Restaurante Mar Aberto"
+            },
+            {
+              "valor": {
+                "valor": 21400,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 35,
+                "unidade": "dias"
+              },
+              "fundo": "atencao"
+            },
+            {
+              "pill": {
+                "status": "atencao",
+                "rotulo": "Média"
+              }
+            },
+            {
+              "valor": "Fábio"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Padaria Trigo Fino"
+            },
+            {
+              "valor": {
+                "valor": 12600,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 63,
+                "unidade": "dias"
+              },
+              "fundo": "critico"
+            },
+            {
+              "pill": {
+                "status": "critico",
+                "rotulo": "Baixa"
+              }
+            },
+            {
+              "valor": "Elisa"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Mercado São Jorge"
+            },
+            {
+              "valor": {
+                "valor": 9800,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 97,
+                "unidade": "dias"
+              },
+              "fundo": "critico"
+            },
+            {
+              "pill": {
+                "status": "critico",
+                "rotulo": "Baixa"
+              }
+            },
+            {
+              "valor": "Diego"
+            }
+          ]
+        }
+      ],
+      "vazio": "Nenhum título vencido com esses filtros."
+    },
+    {
+      "id": "pagar-semana",
+      "tipo": "barras-horizontais",
+      "largura": 5,
+      "titulo": "A pagar por semana",
+      "subtitulo": "Próximas 4 semanas, só o que está lançado",
+      "escala": {
+        "unidade": "brl"
+      },
+      "itens": [
+        {
+          "rotulo": "Semana 1",
+          "sub": "13/10 a 19/10",
+          "valor": 530000,
+          "status": "saudavel"
+        },
+        {
+          "rotulo": "Semana 2",
+          "sub": "20/10 a 26/10",
+          "valor": 400000,
+          "status": "saudavel"
+        },
+        {
+          "rotulo": "Semana 3",
+          "sub": "27/10 a 02/11",
+          "valor": 560000,
+          "status": "saudavel"
+        },
+        {
+          "rotulo": "Semana 4",
+          "sub": "03/11 a 09/11",
+          "valor": 2010000,
+          "status": "critico"
+        }
+      ],
+      "chamada": {
+        "status": "critico",
+        "texto": [
+          {
+            "texto": "Semana 4 (03/11 a 09/11): R$ 2,01 mi a pagar",
+            "destaque": true
+          },
+          {
+            "texto": ", a maior das quatro. É mais do que o saldo de hoje."
+          }
+        ]
+      }
+    },
+    {
+      "id": "inadimplencia-safra",
+      "tipo": "tabela",
+      "variante": "calor",
+      "largura": 7,
+      "titulo": "Inadimplência por mês de vencimento",
+      "subtitulo": "Percentual que ainda estava em aberto 15, 30, 60 e 90 dias depois do vencimento. Compara meses na mesma idade.",
+      "explicacao": "Para cada mês de vencimento, mostra quanto ainda estava em aberto um tempo fixo depois. Assim um mês recente não parece pior só porque ainda não deu tempo de os clientes pagarem.",
+      "nota": "Títulos de setembro estavam 12,6% em aberto 15 dias depois do vencimento; os de abril, 9,8%. A piora é real, não efeito de os meses recentes serem mais novos.",
+      "colunas": [
+        {
+          "rotulo": "Mês de vencimento"
+        },
+        {
+          "rotulo": "15 dias depois",
+          "alinhar": "centro"
+        },
+        {
+          "rotulo": "30 dias",
+          "alinhar": "centro"
+        },
+        {
+          "rotulo": "60 dias",
+          "alinhar": "centro"
+        },
+        {
+          "rotulo": "90 dias",
+          "alinhar": "centro"
+        }
+      ],
+      "linhas": [
+        {
+          "celulas": [
+            {
+              "valor": "abr-26"
+            },
+            {
+              "valor": {
+                "valor": 9.8,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 5.2,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 3.1,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 2.4,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "saudavel"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "mai-26"
+            },
+            {
+              "valor": {
+                "valor": 10.4,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "atencao"
+            },
+            {
+              "valor": {
+                "valor": 5.6,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "atencao"
+            },
+            {
+              "valor": {
+                "valor": 3.5,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 2.7,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "atencao"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "jun-26"
+            },
+            {
+              "valor": {
+                "valor": 11.2,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "atencao"
+            },
+            {
+              "valor": {
+                "valor": 6.1,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "atencao"
+            },
+            {
+              "valor": {
+                "valor": 3.9,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "atencao"
+            },
+            {
+              "valor": {
+                "valor": 3,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "critico"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "jul-26"
+            },
+            {
+              "valor": {
+                "valor": 11.6,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": 6.5,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": 4.2,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": "ainda não",
+              "tom": "apagado"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "ago-26"
+            },
+            {
+              "valor": {
+                "valor": 12.1,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": 6.9,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": "ainda não",
+              "tom": "apagado"
+            },
+            {
+              "valor": "ainda não",
+              "tom": "apagado"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "set-26"
+            },
+            {
+              "valor": {
+                "valor": 12.6,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": "ainda não",
+              "tom": "apagado"
+            },
+            {
+              "valor": "ainda não",
+              "tom": "apagado"
+            },
+            {
+              "valor": "ainda não",
+              "tom": "apagado"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "inadimplencia-12-meses",
+      "tipo": "graficos",
+      "largura": 5,
+      "titulo": "Inadimplência em 12 meses",
+      "subtitulo": "Vencido sobre a carteira no último dia de cada mês, recalculado pelos títulos",
+      "graficos": [
+        {
+          "grafico": {
+            "tipo": "linhas",
+            "unidade": "pct",
+            "casas": 0,
+            "rotulos": ["out", "nov", "dez", "jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set"],
+            "titulos": [
+              "out-25",
+              "nov-25",
+              "dez-25",
+              "jan-26",
+              "fev-26",
+              "mar-26",
+              "abr-26",
+              "mai-26",
+              "jun-26",
+              "jul-26",
+              "ago-26",
+              "set-26"
+            ],
+            "piso": 0,
+            "series": [
+              {
+                "nome": "Vencido sobre a carteira",
+                "valores": [5, 5.1, 5.3, 5.2, 5.1, 5.4, 5.6, 6, 6.4, 6.9, 7.1, 7.4],
+                "estilo": "principal"
+              }
+            ],
+            "referencia": {
+              "valor": 5.9,
+              "rotulo": "média de 12 meses 5,9%"
+            },
+            "marcadores": [
+              {
+                "serie": 0,
+                "i": 11,
+                "rotulo": "7,4%"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "idade-vencidos",
+      "tipo": "graficos",
+      "largura": 12,
+      "titulo": "Idade dos vencidos mês a mês",
+      "subtitulo": "Vencido no fim de cada mês por faixa de atraso",
+      "graficos": [
+        {
+          "grafico": {
+            "tipo": "empilhado",
+            "unidade": "brl",
+            "paleta": "atraso",
+            "rotulos": ["out", "nov", "dez", "jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set"],
+            "series": [
+              {
+                "nome": "1 a 15 dias",
+                "valores": [
+                  155000, 157000, 161000, 156000, 152000, 159000, 163000, 170000, 176000, 187000, 191000,
+                  195000
+                ]
+              },
+              {
+                "nome": "16 a 30",
+                "valores": [
+                  86000, 88000, 91000, 89000, 87000, 93000, 96000, 101000, 106000, 113000, 117000, 121000
+                ]
+              },
+              {
+                "nome": "31 a 60",
+                "valores": [
+                  52000, 55000, 58000, 59000, 59000, 65000, 69000, 75000, 81000, 89000, 94000, 100000
+                ]
+              },
+              {
+                "nome": "61 a 90",
+                "valores": [
+                  28000, 29000, 31000, 31000, 31000, 34000, 36000, 39000, 43000, 47000, 50000, 53000
+                ]
+              },
+              {
+                "nome": "Mais de 90",
+                "valores": [
+                  24000, 26000, 29000, 30000, 30000, 34000, 37000, 41000, 45000, 50000, 54000, 58000
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "prazos",
+      "tipo": "graficos",
+      "largura": 7,
+      "titulo": "Prazos de recebimento e de pagamento",
+      "subtitulo": "Prazo médio, em dias, nos últimos 12 meses. Quanto maior a distância, mais tempo o dinheiro fica preso.",
+      "nota": "O ciclo de caixa completo (com o prazo de estoque) entra quando houver o custo do estoque.",
+      "graficos": [
+        {
+          "grafico": {
+            "tipo": "linhas",
+            "unidade": "dias",
+            "rotulos": ["out", "nov", "dez", "jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set"],
+            "titulos": [
+              "out-25",
+              "nov-25",
+              "dez-25",
+              "jan-26",
+              "fev-26",
+              "mar-26",
+              "abr-26",
+              "mai-26",
+              "jun-26",
+              "jul-26",
+              "ago-26",
+              "set-26"
+            ],
+            "series": [
+              {
+                "nome": "Pagamento",
+                "valores": [25, 24, 25, 25, 24, 24, 25, 24, 24, 24, 24, 24],
+                "estilo": "secundaria",
+                "rotuloFim": "Pagamento, 24 d"
+              },
+              {
+                "nome": "Recebimento",
+                "valores": [26, 26, 27, 26, 26, 26, 27, 28, 29, 30, 30, 31],
+                "estilo": "principal",
+                "rotuloFim": "Recebimento, 31 d"
+              }
+            ],
+            "marcadores": [
+              {
+                "serie": 1,
+                "i": 5,
+                "rotulo": "26 dias"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "limite-credito",
+      "tipo": "tabela",
+      "largura": 5,
+      "titulo": "Clientes acima do limite de crédito",
+      "subtitulo": "Em aberto contra o limite cadastrado no ERP",
+      "nota": "Cliente sem limite cadastrado fica fora da lista.",
+      "colunas": [
+        {
+          "rotulo": "Cliente"
+        },
+        {
+          "rotulo": "Limite"
+        },
+        {
+          "rotulo": "Em aberto"
+        },
+        {
+          "rotulo": "Excesso"
+        }
+      ],
+      "linhas": [
+        {
+          "celulas": [
+            {
+              "valor": "Mercantil Aurora",
+              "sub": "título vencido"
+            },
+            {
+              "valor": {
+                "valor": 60000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 142000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 82000,
+                "unidade": "brl"
+              },
+              "tom": "critico",
+              "negrito": true
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Rede Bom Preço Sul",
+              "sub": "título vencido"
+            },
+            {
+              "valor": {
+                "valor": 50000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 96000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 46000,
+                "unidade": "brl"
+              },
+              "tom": "critico",
+              "negrito": true
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Atacadão Nordeste"
+            },
+            {
+              "valor": {
+                "valor": 80000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 118000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 38000,
+                "unidade": "brl"
+              },
+              "tom": "critico",
+              "negrito": true
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Comercial Serra Azul"
+            },
+            {
+              "valor": {
+                "valor": 40000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 68000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 28000,
+                "unidade": "brl"
+              },
+              "tom": "critico",
+              "negrito": true
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Supermercado Primavera",
+              "sub": "título vencido"
+            },
+            {
+              "valor": {
+                "valor": 45000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 65000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 20000,
+                "unidade": "brl"
+              },
+              "tom": "critico",
+              "negrito": true
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

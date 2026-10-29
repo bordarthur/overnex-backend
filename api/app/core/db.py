@@ -94,6 +94,18 @@ def get_sessao(
             _gravar_logs_e_confirmar(conn, sessao.logs)
 
 
+def confirmar_agora(sessao: Sessao) -> None:
+    """Grava os logs pendentes e faz o commit já, antes da resposta.
+
+    O get_sessao só confirma depois que a resposta sai (o FastAPI roda o fim das
+    dependências com yield depois de mandar a resposta). Quem grava algo que o front lê
+    logo depois de receber a resposta chama isto antes de responder. O resto da requisição
+    segue em outra transação, sem app.usuario_id.
+    """
+    _gravar_logs_e_confirmar(sessao.conn, sessao.logs)
+    sessao.logs.clear()
+
+
 @contextmanager
 def conexao_paralela(pool: Pool, usuario_id: UUID) -> Iterator[Conexao]:
     """Outra conexão para o mesmo usuário (consultas da mesma tela em paralelo).

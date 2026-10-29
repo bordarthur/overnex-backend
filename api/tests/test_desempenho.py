@@ -197,3 +197,11 @@ def test_preparar_monta_cada_tela_sem_gravar_e_segue_depois_de_negado_ou_erro(
     assert montadas == ["COM-03"]
     # toda conexão termina desfeita: nada gravado (nem o log de acesso)
     assert pool.desfeitas == 3
+
+
+def test_premontagem_inclui_os_paineis_financeiros() -> None:
+    telas = {t.codigo: t for t in preparo.TELAS}
+    assert telas["FIN-02"].nominal is False
+    # Receber e pagar mostra clientes, fornecedores e vendedores
+    assert telas["FIN-03"].nominal is True
+    assert next(iter(telas)) == "VG-01"
