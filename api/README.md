@@ -117,8 +117,10 @@ app/
   telas/moldura.py     base camelCase, cliente e última carga (sessão e Visão geral)
   telas/fin_01.py      GET /api/telas/fin-01 (exemplo, sem regra de negócio)
   telas/visao_geral/   GET /api/telas/visao-geral (VG-01): contrato do front e rota
-  telas/paineis/       GET /api/telas/vendas|equipe-comercial|clientes (COM-01 a 03): contrato
-                       PainelPayload, uma tela por módulo, demo/ com as fixtures do front
+                       e PUT .../preferencias/{id} (escolhas salvas do cliente)
+  telas/paineis/       GET /api/telas/vendas|equipe-comercial|clientes (COM-01 a 03) e
+                       resultado|receber-pagar (FIN-02 e 03): contrato PainelPayload, uma
+                       tela por módulo, demo/ com as fixtures do front
   telas/paralelo.py    consultas da mesma tela em paralelo, cada uma numa conexão
   dados/router.py      GET /api/dados/{tabela}: linhas das tabelas de dados do mart
   farol/               status(valor, faixa), função pura
@@ -139,10 +141,11 @@ scripts/export_openapi.py
 Respondem em camelCase, no formato de `src/contracts/visaoGeral.ts` do front. Campo opcional sem valor sai do JSON (como `campo?:` no TypeScript); campo obrigatório que aceita nulo vai como `null` (`logoUrl`, `delta`, `modulo`).
 
 - **`GET /api/sessao`** — etapas 1 a 3 da checagem (sem tela). Devolve `usuario` (nome e e-mail de `seg.usuario`, cadastrados pela LANN; `nome` pode vir `null`), `cliente` (com `slug`, para o front montar a URL), `papel`, `empresas` do vínculo (filtro "Empresa"), `telas` liberadas (códigos, para o menu) e `periodos` com dados: os meses com faturado no resumo mensal das tabelas `f_vendas_*` e o mês do último snapshot, do mais recente para o mais antigo (até 24). O primeiro é o padrão da Visão geral. As consultas vão numa ida ao banco só, e a sessão agenda a **pré-montagem**, em segundo plano, da Visão geral e dos painéis liberados ao usuário, no mês padrão e sem filtro ([app/telas/preparo.py](app/telas/preparo.py)): a primeira tela que o front abre já está pronta, ou espera a montagem em andamento em vez de começar outra. A pré-montagem faz a mesma checagem de acesso da rota, mas não grava em `seg.log_acesso` (o usuário ainda não abriu a tela); roda uma vez por usuário a cada metade do prazo do cache e não roda com o cache desligado.
-- **`GET /api/telas/visao-geral?mes=<AAAA-MM opcional>&empresa=<uuid opcional>`** — tela `VG-01`. Sem `empresa`, vale para todas as empresas do vínculo (etapa 5 exige ao menos uma). `mes` precisa ser um dos `periodos` de `/api/sessao` (senão 422, "Mês sem dados."); sem ele, cada seção usa o seu mês mais recente. A resposta pronta fica em memória por `VISAO_GERAL_CACHE_SEGUNDOS` (padrão 15 min), com chave no cliente, nas empresas, no mês e na última carga; o acesso é conferido e registrado a cada requisição. Duas requisições da mesma chave ao mesmo tempo montam a resposta uma vez só (a segunda espera a primeira). Ao montar, última carga, cliente, fontes, feriados e parâmetros vêm numa ida ao banco ([app/telas/preleitura.py](app/telas/preleitura.py)), e as seções rodam em três ramos paralelos (Vendas e Custos, Resultado, Financeiro), cada um com uma conexão própria do mesmo usuário: o tempo é o do ramo mais lento. O pool mantém 8 conexões abertas (`DB_POOL_MIN=8`; abrir uma nova custa ~0,4 s) e vai até 20. `dadosAte` é a `data_snapshot` e `atualizadoEm` é o `fim` (com fuso) da última fonte `ok` do cliente; os dois vêm `null` se nunca houve carga. As `secoes` vêm vazias até as regras dos indicadores existirem (ou da demo, com `VISAO_GERAL_DEMO=1`).
+- **`GET /api/telas/visao-geral?mes=<AAAA-MM opcional>&empresa=<uuid opcional>`** — tela `VG-01`. Sem `empresa`, vale para todas as empresas do vínculo (etapa 5 exige ao menos uma). `mes` precisa ser um dos `periodos` de `/api/sessao` (senão 422, "Mês sem dados."); sem ele, cada seção usa o seu mês mais recente. A resposta pronta fica em memória por `VISAO_GERAL_CACHE_SEGUNDOS` (padrão 15 min), com chave no cliente, nas empresas, no mês, na última carga e nas escolhas salvas do cliente; o acesso é conferido e registrado a cada requisição. Duas requisições da mesma chave ao mesmo tempo montam a resposta uma vez só (a segunda espera a primeira). Ao montar, última carga, cliente, fontes, feriados e parâmetros vêm numa ida ao banco ([app/telas/preleitura.py](app/telas/preleitura.py)), e as seções rodam em três ramos paralelos (Vendas e Custos, Resultado, Financeiro), cada um com uma conexão própria do mesmo usuário: o tempo é o do ramo mais lento. O pool mantém 8 conexões abertas (`DB_POOL_MIN=8`; abrir uma nova custa ~0,4 s) e vai até 20. `dadosAte` é a `data_snapshot` e `atualizadoEm` é o `fim` (com fuso) da última fonte `ok` do cliente; os dois vêm `null` se nunca houve carga. As `secoes` vêm vazias até as regras dos indicadores existirem (ou da demo, com `VISAO_GERAL_DEMO=1`).
+- **`PUT /api/telas/visao-geral/preferencias/{id}`**, corpo `{"valor": "3"}`: grava a escolha de um seletor da Visão geral para o cliente inteiro (hoje só `linhas-custo`, o seletor "Linhas de custo" da seção Custos: `auto` ou de `1` a `7`). Responde 204 sem corpo; 404 `Preferência não encontrada.` para id desconhecido; 422 `Opção inválida.` para valor fora das opções; 403 `Você não pode mudar esta escolha.` para papel fora de `gestor` e `admin` (provisório); 403 genérico sem acesso à `VG-01`. A escolha vai em `cfg.parametro_cliente` (chave `preferencia.<id>`, `vigente_de` = dia da escolha; a mais recente vale) e a troca em `seg.log_alteracao` (migration 19). A rota faz o commit antes de responder (o `get_sessao` só confirma depois que a resposta sai) e apaga as respostas prontas da Visão geral do cliente, em todos os meses e empresas: o front pede a tela de novo logo depois do 204. As escolhas também entram na chave do cache da tela.
 - `logoUrl` só sai quando `cfg.cliente.logo_url` é um caminho do próprio domínio (`/…`); fora disso vem `null`, porque a CSP do front recusa imagem de fora.
 
-### Painéis comerciais: Vendas, Equipe comercial, Clientes e atendimentos
+### Painéis: Vendas, Equipe comercial, Clientes e atendimentos, Resultado, Receber e pagar
 
 Contrato `PainelPayload` (espelho de `src/contracts/painel.ts` do front), em [app/telas/paineis/contrato.py](app/telas/paineis/contrato.py). Mesmo padrão da Visão geral: `empresa` e `mes` opcionais, 403 genérico, 422 "Mês sem dados." e resposta pronta em memória por `VISAO_GERAL_CACHE_SEGUNDOS` (chave com os filtros também).
 
@@ -151,13 +154,16 @@ Contrato `PainelPayload` (espelho de `src/contracts/painel.ts` do front), em [ap
 | `GET /api/telas/vendas` | `COM-01` | `canal`, `linha` |
 | `GET /api/telas/equipe-comercial` | `COM-02` (exige perfil com `ve_dado_nominal`: mostra nomes de vendedores) | `canal`, `supervisor` |
 | `GET /api/telas/clientes` | `COM-03` | nenhum |
+| `GET /api/telas/resultado` | `FIN-02` | `visao` (`mes`, `ano`, `projecao`), `cenario` (só com mais de um no orçamento); e `comparar` (`orcado` ou `mes-anterior`), que vem do chip global do front e não aparece em `filtros` |
+| `GET /api/telas/receber-pagar` | `FIN-03` (exige `ve_dado_nominal`: mostra clientes, fornecedores e vendedores) | `vendedor` (se os títulos a receber têm vendedor), `atraso` (`ate-30`, `31-90`, `mais-90`; só "Quem cobrar") |
 
 - As opções de cada filtro saem dos dados (cadastro dos vendedores, linhas das vendas) e vêm em `filtros`, com `padrao` (`todos`/`todas`); opção fora da lista → 422 "Filtro inválido.".
-- Antes da primeira carga do cliente: 200 com `dadosAte` e `atualizadoEm` nulos e tudo vazio.
+- Antes da primeira carga do cliente: 200 com `dadosAte` e `atualizadoEm` nulos e tudo vazio. O mesmo no Resultado sem `f_lancamentos_*` e no Receber e pagar sem `f_receitas_*` nem `f_despesas_*`. Nesses casos, filtro da tela vindo na consulta → 422; `comparar` vale sempre.
+- Cartões "A decidir" do mockup (no Resultado: ponte do EBITDA, maiores desvios, nível 3 da DRE e tabela financeira) só saem com `PAINEIS_A_DECIDIR=1` (só dev), também no demo.
 - Cartão sem fonte de dados não sai (ex.: sem meta de clientes, sem o cartão de fatores; sem o papel `vendedor` nas vendas, sem canais nem Equipe).
-- As regras (provisórias) estão no topo de cada módulo: [vendas.py](app/telas/paineis/vendas.py), [equipe.py](app/telas/paineis/equipe.py), [clientes.py](app/telas/paineis/clientes.py) e [base.py](app/telas/paineis/base.py) (fontes, papéis e o mês).
+- As regras (provisórias) estão no topo de cada módulo: [vendas.py](app/telas/paineis/vendas.py), [equipe.py](app/telas/paineis/equipe.py), [clientes.py](app/telas/paineis/clientes.py), [resultado.py](app/telas/paineis/resultado.py), [receber_pagar.py](app/telas/paineis/receber_pagar.py) e [base.py](app/telas/paineis/base.py) (fontes, papéis e o mês).
 - `explicacao` de cada cartão (o botão "i" do front): texto fixo por cartão em [explicacoes.py](app/telas/paineis/explicacoes.py); cartão sem texto sai sem a chave.
-- Com `VISAO_GERAL_DEMO=1` (só dev), as três rotas devolvem as fixtures do mockup (`app/telas/paineis/demo/`), com o cliente do usuário e os filtros conferidos contra os da fixture.
+- Com `VISAO_GERAL_DEMO=1` (só dev), as rotas devolvem as fixtures do mockup (`app/telas/paineis/demo/`), com o cliente do usuário e os filtros conferidos contra os da fixture.
 
 ### Login com e-mail e senha: `/api/auth/*`
 

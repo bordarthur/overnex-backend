@@ -264,6 +264,7 @@ def montar(
     escolhido: date | None,
     carga: UltimaCarga,
     pedidos: Mapping[str, str | None],
+    a_decidir: bool = False,
 ) -> Conteudo:
     # nenhum filtro próprio: qualquer um é inválido
     for valor in pedidos.values():

@@ -90,6 +90,12 @@ Variáveis vazias valem o mesmo que não definidas. Por isso, o workflow já rep
 
 O nome da pasta no bucket sai do texto **como você escreveu** em `TABELAS`: tira acentos, passa para minúsculas e troca o que não for letra ou número por `_`. Assim, `dbo.Vendas` vira `dbo_vendas` e `Vendas` vira `vendas`. Escolha um formato e mantenha, para a mesma tabela não acabar em duas pastas.
 
+### Views do Azure (`azure/`)
+
+Algumas fontes são views criadas no Azure SQL, que o snapshot lê como qualquer tabela (`SELECT *`). O SQL delas fica em [azure/](azure/) e é criado à mão no banco (SSMS ou Query editor do portal); depois, a view entra em `TABELAS`.
+
+- [f_lancamentos_agrupados_pj.sql](azure/f_lancamentos_agrupados_pj.sql) — `dbo.f_Lancamentos_Agrupados_PJ`: a DRE da PJ Cortes por conta (Empresa, Data, Id_Descritivo, Valor), a mesma regra do Power BI. Depende de `d_De_Para_PJ_Cortes` e `d_Plano_Contas` no mesmo banco.
+
 ## 4. Como rodar localmente
 
 ```bash

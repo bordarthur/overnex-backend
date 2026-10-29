@@ -1,0 +1,3943 @@
+{
+  "tela": "resultado",
+  "versaoContrato": "1.0",
+  "cliente": {
+    "nome": "Cliente Demo",
+    "sigla": "CD",
+    "logoUrl": null
+  },
+  "dadosAte": "2026-10-12",
+  "atualizadoEm": "2026-10-13T12:02:00Z",
+  "filtros": [
+    {
+      "id": "visao",
+      "rotulo": "Visão",
+      "opcoes": [
+        {
+          "id": "mes",
+          "rotulo": "Setembro (fechado)"
+        },
+        {
+          "id": "ano",
+          "rotulo": "Acumulado de 2026"
+        },
+        {
+          "id": "projecao",
+          "rotulo": "Projeção de outubro"
+        }
+      ],
+      "padrao": "mes"
+    },
+    {
+      "id": "cenario",
+      "rotulo": "Orçamento",
+      "opcoes": [
+        {
+          "id": "base",
+          "rotulo": "Base"
+        },
+        {
+          "id": "meta",
+          "rotulo": "Meta"
+        }
+      ],
+      "padrao": "base"
+    }
+  ],
+  "destaques": [
+    {
+      "rotulo": "Receita líquida",
+      "valor": {
+        "valor": 6840000,
+        "unidade": "brl"
+      },
+      "contexto": "2,2% acima do orçado",
+      "status": "saudavel"
+    },
+    {
+      "rotulo": "EBITDA",
+      "valor": {
+        "valor": 613000,
+        "unidade": "brl"
+      },
+      "contexto": "8,8% da receita bruta; orçado 9,8%",
+      "status": "atencao"
+    },
+    {
+      "rotulo": "Lucro líquido",
+      "valor": {
+        "valor": 421000,
+        "unidade": "brl"
+      },
+      "contexto": "6,1% da receita bruta; orçado 7,0%",
+      "status": "atencao"
+    }
+  ],
+  "kpis": [],
+  "apoios": [
+    {
+      "rotulo": "Margem bruta",
+      "valor": {
+        "valor": 32.3,
+        "unidade": "pct",
+        "casas": 1
+      }
+    },
+    {
+      "rotulo": "Margem de contribuição",
+      "valor": {
+        "valor": 28.5,
+        "unidade": "pct",
+        "casas": 1
+      }
+    },
+    {
+      "rotulo": "Ponto de equilíbrio",
+      "valor": {
+        "valor": 4720000,
+        "unidade": "brl"
+      }
+    },
+    {
+      "rotulo": "Margem de segurança",
+      "valor": {
+        "valor": 31,
+        "unidade": "pct",
+        "casas": 0
+      }
+    },
+    {
+      "rotulo": "Maior ofensor",
+      "valor": "Custo de bovinos −R$ 182 mil",
+      "status": "critico"
+    },
+    {
+      "rotulo": "Maior favorável",
+      "valor": "Receita de bovinos +R$ 110 mil",
+      "status": "saudavel"
+    }
+  ],
+  "cartoes": [
+    {
+      "id": "resultado-12-meses",
+      "tipo": "graficos",
+      "largura": 12,
+      "colunas": 3,
+      "titulo": "Resultado mês a mês contra o orçado",
+      "subtitulo": "Últimos 12 meses. O traço sobre cada barra é o orçado; barra vermelha é mês pior que o orçado; a linha de cima é o percentual da receita bruta.",
+      "graficos": [
+        {
+          "titulo": "Receita bruta",
+          "grafico": {
+            "tipo": "combo",
+            "unidade": "brl",
+            "nomes": {
+              "valor": "Realizado",
+              "referencia": "Orçado"
+            },
+            "pontos": [
+              {
+                "rotulo": "out",
+                "titulo": "out-25",
+                "valor": 6640000,
+                "referencia": 6550000
+              },
+              {
+                "rotulo": "nov",
+                "titulo": "nov-25",
+                "valor": 6710000,
+                "referencia": 6600000
+              },
+              {
+                "rotulo": "dez",
+                "titulo": "dez-25",
+                "valor": 7020000,
+                "referencia": 6900000
+              },
+              {
+                "rotulo": "jan",
+                "titulo": "jan-26",
+                "valor": 6380000,
+                "referencia": 6400000
+              },
+              {
+                "rotulo": "fev",
+                "titulo": "fev-26",
+                "valor": 6510000,
+                "referencia": 6450000
+              },
+              {
+                "rotulo": "mar",
+                "titulo": "mar-26",
+                "valor": 6800000,
+                "referencia": 6700000
+              },
+              {
+                "rotulo": "abr",
+                "titulo": "abr-26",
+                "valor": 6860000,
+                "referencia": 6750000
+              },
+              {
+                "rotulo": "mai",
+                "titulo": "mai-26",
+                "valor": 6750000,
+                "referencia": 6680000
+              },
+              {
+                "rotulo": "jun",
+                "titulo": "jun-26",
+                "valor": 6660000,
+                "referencia": 6800000,
+                "status": "critico"
+              },
+              {
+                "rotulo": "jul",
+                "titulo": "jul-26",
+                "valor": 7110000,
+                "referencia": 6900000
+              },
+              {
+                "rotulo": "ago",
+                "titulo": "ago-26",
+                "valor": 6690000,
+                "referencia": 6900000,
+                "status": "critico"
+              },
+              {
+                "rotulo": "set",
+                "titulo": "set-26",
+                "valor": 6950000,
+                "referencia": 6800000
+              }
+            ]
+          }
+        },
+        {
+          "titulo": "Margem de contribuição",
+          "grafico": {
+            "tipo": "combo",
+            "unidade": "brl",
+            "nomes": {
+              "valor": "Realizado",
+              "referencia": "Orçado",
+              "linha": "% da receita bruta"
+            },
+            "escalaLinha": {
+              "unidade": "pct",
+              "casas": 1
+            },
+            "pontos": [
+              {
+                "rotulo": "out",
+                "titulo": "out-25",
+                "valor": 2000560,
+                "referencia": 1971900,
+                "linha": 30.1
+              },
+              {
+                "rotulo": "nov",
+                "titulo": "nov-25",
+                "valor": 1991000,
+                "referencia": 1976800,
+                "linha": 29.7
+              },
+              {
+                "rotulo": "dez",
+                "titulo": "dez-25",
+                "valor": 2145180,
+                "referencia": 2056200,
+                "linha": 30.6
+              },
+              {
+                "rotulo": "jan",
+                "titulo": "jan-26",
+                "valor": 1886960,
+                "referencia": 1947200,
+                "status": "critico",
+                "linha": 29.6
+              },
+              {
+                "rotulo": "fev",
+                "titulo": "fev-26",
+                "valor": 1934960,
+                "referencia": 1952100,
+                "linha": 29.7
+              },
+              {
+                "rotulo": "mar",
+                "titulo": "mar-26",
+                "valor": 2016800,
+                "referencia": 1996600,
+                "linha": 29.7
+              },
+              {
+                "rotulo": "abr",
+                "titulo": "abr-26",
+                "valor": 2046580,
+                "referencia": 2011500,
+                "linha": 29.8
+              },
+              {
+                "rotulo": "mai",
+                "titulo": "mai-26",
+                "valor": 2058750,
+                "referencia": 2004640,
+                "linha": 30.5
+              },
+              {
+                "rotulo": "jun",
+                "titulo": "jun-26",
+                "valor": 2019340,
+                "referencia": 2026400,
+                "linha": 30.3
+              },
+              {
+                "rotulo": "jul",
+                "titulo": "jul-26",
+                "valor": 2045450,
+                "referencia": 2036200,
+                "linha": 28.8
+              },
+              {
+                "rotulo": "ago",
+                "titulo": "ago-26",
+                "valor": 1975480,
+                "referencia": 2043200,
+                "status": "critico",
+                "linha": 29.5
+              },
+              {
+                "rotulo": "set",
+                "titulo": "set-26",
+                "valor": 1988550,
+                "referencia": 2033400,
+                "status": "critico",
+                "linha": 28.6
+              }
+            ]
+          }
+        },
+        {
+          "titulo": "Despesas fixas",
+          "grafico": {
+            "tipo": "combo",
+            "unidade": "brl",
+            "nomes": {
+              "valor": "Realizado",
+              "referencia": "Orçado",
+              "linha": "% da receita bruta"
+            },
+            "escalaLinha": {
+              "unidade": "pct",
+              "casas": 1
+            },
+            "pontos": [
+              {
+                "rotulo": "out",
+                "titulo": "out-25",
+                "valor": 1310000,
+                "referencia": 1330000,
+                "linha": 19.7
+              },
+              {
+                "rotulo": "nov",
+                "titulo": "nov-25",
+                "valor": 1320000,
+                "referencia": 1330000,
+                "linha": 19.7
+              },
+              {
+                "rotulo": "dez",
+                "titulo": "dez-25",
+                "valor": 1380000,
+                "referencia": 1380000,
+                "linha": 19.7
+              },
+              {
+                "rotulo": "jan",
+                "titulo": "jan-26",
+                "valor": 1300000,
+                "referencia": 1320000,
+                "linha": 20.4
+              },
+              {
+                "rotulo": "fev",
+                "titulo": "fev-26",
+                "valor": 1310000,
+                "referencia": 1320000,
+                "linha": 20.1
+              },
+              {
+                "rotulo": "mar",
+                "titulo": "mar-26",
+                "valor": 1330000,
+                "referencia": 1340000,
+                "linha": 19.6
+              },
+              {
+                "rotulo": "abr",
+                "titulo": "abr-26",
+                "valor": 1340000,
+                "referencia": 1350000,
+                "linha": 19.5
+              },
+              {
+                "rotulo": "mai",
+                "titulo": "mai-26",
+                "valor": 1350000,
+                "referencia": 1350000,
+                "linha": 20
+              },
+              {
+                "rotulo": "jun",
+                "titulo": "jun-26",
+                "valor": 1360000,
+                "referencia": 1360000,
+                "linha": 20.4
+              },
+              {
+                "rotulo": "jul",
+                "titulo": "jul-26",
+                "valor": 1370000,
+                "referencia": 1360000,
+                "linha": 19.3
+              },
+              {
+                "rotulo": "ago",
+                "titulo": "ago-26",
+                "valor": 1360000,
+                "referencia": 1367000,
+                "linha": 20.3
+              },
+              {
+                "rotulo": "set",
+                "titulo": "set-26",
+                "valor": 1370000,
+                "referencia": 1367000,
+                "linha": 19.7
+              }
+            ]
+          }
+        },
+        {
+          "titulo": "EBITDA",
+          "grafico": {
+            "tipo": "combo",
+            "unidade": "brl",
+            "nomes": {
+              "valor": "Realizado",
+              "referencia": "Orçado",
+              "linha": "% da receita bruta"
+            },
+            "escalaLinha": {
+              "unidade": "pct",
+              "casas": 1
+            },
+            "pontos": [
+              {
+                "rotulo": "out",
+                "titulo": "out-25",
+                "valor": 690560,
+                "referencia": 641900,
+                "linha": 10.4
+              },
+              {
+                "rotulo": "nov",
+                "titulo": "nov-25",
+                "valor": 671000,
+                "referencia": 646800,
+                "linha": 10
+              },
+              {
+                "rotulo": "dez",
+                "titulo": "dez-25",
+                "valor": 765180,
+                "referencia": 676200,
+                "linha": 10.9
+              },
+              {
+                "rotulo": "jan",
+                "titulo": "jan-26",
+                "valor": 586960,
+                "referencia": 627200,
+                "status": "critico",
+                "linha": 9.2
+              },
+              {
+                "rotulo": "fev",
+                "titulo": "fev-26",
+                "valor": 624960,
+                "referencia": 632100,
+                "linha": 9.6
+              },
+              {
+                "rotulo": "mar",
+                "titulo": "mar-26",
+                "valor": 686800,
+                "referencia": 656600,
+                "linha": 10.1
+              },
+              {
+                "rotulo": "abr",
+                "titulo": "abr-26",
+                "valor": 706580,
+                "referencia": 661500,
+                "linha": 10.3
+              },
+              {
+                "rotulo": "mai",
+                "titulo": "mai-26",
+                "valor": 708750,
+                "referencia": 654640,
+                "linha": 10.5
+              },
+              {
+                "rotulo": "jun",
+                "titulo": "jun-26",
+                "valor": 659340,
+                "referencia": 666400,
+                "linha": 9.9
+              },
+              {
+                "rotulo": "jul",
+                "titulo": "jul-26",
+                "valor": 675450,
+                "referencia": 676200,
+                "linha": 9.5
+              },
+              {
+                "rotulo": "ago",
+                "titulo": "ago-26",
+                "valor": 615480,
+                "referencia": 676200,
+                "status": "critico",
+                "linha": 9.2
+              },
+              {
+                "rotulo": "set",
+                "titulo": "set-26",
+                "valor": 618550,
+                "referencia": 666400,
+                "status": "critico",
+                "linha": 8.9
+              }
+            ]
+          }
+        },
+        {
+          "titulo": "Lucro líquido",
+          "grafico": {
+            "tipo": "combo",
+            "unidade": "brl",
+            "nomes": {
+              "valor": "Realizado",
+              "referencia": "Orçado",
+              "linha": "% da receita bruta"
+            },
+            "escalaLinha": {
+              "unidade": "pct",
+              "casas": 1
+            },
+            "pontos": [
+              {
+                "rotulo": "out",
+                "titulo": "out-25",
+                "valor": 494953,
+                "referencia": 455246,
+                "linha": 7.5
+              },
+              {
+                "rotulo": "nov",
+                "titulo": "nov-25",
+                "valor": 476544,
+                "referencia": 459245,
+                "linha": 7.1
+              },
+              {
+                "rotulo": "dez",
+                "titulo": "dez-25",
+                "valor": 551763,
+                "referencia": 483235,
+                "linha": 7.9
+              },
+              {
+                "rotulo": "jan",
+                "titulo": "jan-26",
+                "valor": 411231,
+                "referencia": 443251,
+                "status": "critico",
+                "linha": 6.4
+              },
+              {
+                "rotulo": "fev",
+                "titulo": "fev-26",
+                "valor": 440607,
+                "referencia": 447250,
+                "linha": 6.8
+              },
+              {
+                "rotulo": "mar",
+                "titulo": "mar-26",
+                "valor": 490253,
+                "referencia": 467242,
+                "linha": 7.2
+              },
+              {
+                "rotulo": "abr",
+                "titulo": "abr-26",
+                "valor": 504761,
+                "referencia": 471240,
+                "linha": 7.4
+              },
+              {
+                "rotulo": "mai",
+                "titulo": "mai-26",
+                "valor": 505716,
+                "referencia": 465642,
+                "linha": 7.5
+              },
+              {
+                "rotulo": "jun",
+                "titulo": "jun-26",
+                "valor": 463765,
+                "referencia": 475238,
+                "status": "critico",
+                "linha": 7
+              },
+              {
+                "rotulo": "jul",
+                "titulo": "jul-26",
+                "valor": 474463,
+                "referencia": 483235,
+                "linha": 6.7
+              },
+              {
+                "rotulo": "ago",
+                "titulo": "ago-26",
+                "valor": 424712,
+                "referencia": 483235,
+                "status": "critico",
+                "linha": 6.3
+              },
+              {
+                "rotulo": "set",
+                "titulo": "set-26",
+                "valor": 425585,
+                "referencia": 475238,
+                "status": "critico",
+                "linha": 6.1
+              }
+            ]
+          }
+        }
+      ],
+      "nota": "Leitura rápida: a receita veio acima do orçado em 9 dos 12 meses, mas a margem de contribuição caiu de 31% para 29% desde maio. As despesas fixas estão no orçado. O EBITDA e o lucro só ficam abaixo do orçado por causa da margem."
+    },
+    {
+      "id": "dre-cascata",
+      "tipo": "graficos",
+      "largura": 7,
+      "titulo": "DRE em cascata: da receita ao lucro",
+      "subtitulo": "Setembro. Para onde vai cada real vendido",
+      "explicacao": "Mostra o caminho de cada real vendido: da receita bruta, tira deduções, custos e despesas até sobrar o lucro.",
+      "graficos": [
+        {
+          "grafico": {
+            "tipo": "cascata",
+            "unidade": "brl",
+            "passos": [
+              {
+                "rotulo": "Receita",
+                "de": 0,
+                "ate": 6950000,
+                "valor": 6950000,
+                "estilo": "total"
+              },
+              {
+                "rotulo": "Deduções",
+                "de": 6950000,
+                "ate": 6838000,
+                "valor": -112000,
+                "estilo": "negativo"
+              },
+              {
+                "rotulo": "Custos",
+                "de": 6838000,
+                "ate": 2248000,
+                "valor": -4590000,
+                "estilo": "negativo"
+              },
+              {
+                "rotulo": "Variáveis",
+                "de": 2248000,
+                "ate": 1983000,
+                "valor": -265000,
+                "estilo": "negativo"
+              },
+              {
+                "rotulo": "Fixas",
+                "de": 1983000,
+                "ate": 613000,
+                "valor": -1370000,
+                "estilo": "negativo"
+              },
+              {
+                "rotulo": "EBITDA",
+                "de": 0,
+                "ate": 613000,
+                "valor": 613000,
+                "estilo": "total"
+              },
+              {
+                "rotulo": "D&A",
+                "de": 613000,
+                "ate": 574000,
+                "valor": -39000,
+                "estilo": "negativo"
+              },
+              {
+                "rotulo": "Financeiro",
+                "de": 574000,
+                "ate": 516000,
+                "valor": -58000,
+                "estilo": "negativo"
+              },
+              {
+                "rotulo": "IR/CSLL",
+                "de": 516000,
+                "ate": 421000,
+                "valor": -95000,
+                "estilo": "negativo"
+              },
+              {
+                "rotulo": "Lucro",
+                "de": 0,
+                "ate": 421000,
+                "valor": 421000,
+                "estilo": "total"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "ponto-equilibrio",
+      "tipo": "barra-partes",
+      "largura": 5,
+      "titulo": "Ponto de equilíbrio",
+      "subtitulo": "Quanto a empresa precisa vender para pagar todas as contas",
+      "explicacao": "É quanto a empresa precisa vender para pagar todos os custos. Sai da conta despesas fixas ÷ margem de contribuição. A folga mostra quanto as vendas podem cair antes de dar prejuízo.",
+      "partes": [
+        {
+          "rotulo": "Equilíbrio R$ 4,72 mi",
+          "proporcao": 0.69,
+          "estilo": "serie-clara"
+        },
+        {
+          "rotulo": "Folga 31%",
+          "proporcao": 0.31,
+          "estilo": "saudavel"
+        }
+      ],
+      "escala": {
+        "inicio": "0",
+        "fim": "Receita líquida de setembro: R$ 6,84 mi"
+      },
+      "texto": [
+        {
+          "texto": "Com margem de contribuição de 29%, cada R$ 100 vendidos deixam R$ 29 para pagar as despesas fixas de R$ 1,37 mi. A empresa empata em R$ 4,72 mi e pode perder até "
+        },
+        {
+          "texto": "31% das vendas",
+          "destaque": true
+        },
+        {
+          "texto": " antes de dar prejuízo. Em maio, essa folga era de 34%."
+        }
+      ]
+    },
+    {
+      "id": "ponte-ebitda",
+      "tipo": "graficos",
+      "largura": 7,
+      "titulo": "Ponte do EBITDA: do orçado ao realizado",
+      "subtitulo": "O que explica os R$ 53 mil a menos em setembro",
+      "explicacao": "Começa no EBITDA orçado e soma ou subtrai o efeito de cada grupo de contas até chegar no realizado. Barra azul ajudou; vermelha atrapalhou.",
+      "nota": "Escala a partir de R$ 480 mil para mostrar as diferenças.",
+      "graficos": [
+        {
+          "grafico": {
+            "tipo": "cascata",
+            "unidade": "brl",
+            "piso": 480000,
+            "passos": [
+              {
+                "rotulo": "Orçado",
+                "de": 480000,
+                "ate": 666000,
+                "valor": 666000,
+                "estilo": "total"
+              },
+              {
+                "rotulo": "Receita",
+                "de": 666000,
+                "ate": 711000,
+                "valor": 45000,
+                "estilo": "positivo"
+              },
+              {
+                "rotulo": "Custo da mercadoria",
+                "de": 711000,
+                "ate": 627200,
+                "valor": -83800,
+                "estilo": "negativo"
+              },
+              {
+                "rotulo": "Despesas variáveis",
+                "de": 627200,
+                "ate": 615200,
+                "valor": -12000,
+                "estilo": "negativo"
+              },
+              {
+                "rotulo": "Folha",
+                "de": 615200,
+                "ate": 591200,
+                "valor": -24000,
+                "estilo": "negativo"
+              },
+              {
+                "rotulo": "Outras fixas",
+                "de": 591200,
+                "ate": 613000,
+                "valor": 21800,
+                "estilo": "positivo"
+              },
+              {
+                "rotulo": "Realizado",
+                "de": 480000,
+                "ate": 613000,
+                "valor": 613000,
+                "estilo": "total"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "maiores-desvios",
+      "tipo": "desvios",
+      "largura": 5,
+      "titulo": "Maiores desvios contra o orçado",
+      "subtitulo": "Contas de nível 3 que mais mexeram no resultado de setembro",
+      "escala": {
+        "unidade": "brl"
+      },
+      "grupos": [
+        {
+          "titulo": "Pioram o resultado",
+          "status": "critico",
+          "itens": [
+            {
+              "nome": "Custo bovinos",
+              "detalhe": "Custos",
+              "valor": -182000
+            },
+            {
+              "nome": "Peixes",
+              "detalhe": "Receita bruta",
+              "valor": -30000
+            },
+            {
+              "nome": "Aves",
+              "detalhe": "Receita bruta",
+              "valor": -20000
+            },
+            {
+              "nome": "Custo suínos",
+              "detalhe": "Custos",
+              "valor": -15000
+            }
+          ]
+        },
+        {
+          "titulo": "Melhoram o resultado",
+          "status": "saudavel",
+          "itens": [
+            {
+              "nome": "Bovinos",
+              "detalhe": "Receita bruta",
+              "valor": 110000
+            },
+            {
+              "nome": "Outras receitas operacionais",
+              "detalhe": "Receita bruta",
+              "valor": 40000
+            },
+            {
+              "nome": "Embutidos / industrializados",
+              "detalhe": "Receita bruta",
+              "valor": 20000
+            },
+            {
+              "nome": "Suínos",
+              "detalhe": "Receita bruta",
+              "valor": 20000
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dre-gerencial",
+      "tipo": "dre",
+      "largura": 12,
+      "titulo": "DRE gerencial de setembro, pelo plano de contas",
+      "subtitulo": "Clique numa linha para abrir o nível seguinte. Só aparecem as contas com movimento ou orçamento nesta empresa.",
+      "explicacao": "A DRE pelo plano de contas, com orçado e diferença. Clique numa linha para abrir o nível seguinte. A chave “Só desvios” esconde o que está dentro do orçado e deixa só as linhas em atenção ou críticas. Análise vertical sobre a receita bruta.",
+      "rotuloConta": "Conta (R$ mil)",
+      "rotuloComparacao": "Orçado",
+      "escala": {
+        "unidade": "qtd",
+        "casas": 0
+      },
+      "nivelInicial": 2,
+      "niveis": [1, 2, 3],
+      "linhas": [
+        {
+          "id": "100",
+          "codigo": "100.00",
+          "nome": "Receita bruta",
+          "nivel": 1,
+          "realizado": 6950,
+          "percentualReceitaBruta": 100,
+          "comparacao": 6800,
+          "diferenca": 150,
+          "diferencaPercentual": 2.2,
+          "tomDiferenca": "saudavel",
+          "status": "saudavel",
+          "comDesvio": true,
+          "tendencia": {
+            "realizado": [7359.3, 7933.3, 7542.5, 6755.4, 7035.2, 6950],
+            "comparacao": [6756.6, 6877.3, 6884.8, 6768, 6698.1, 6800]
+          }
+        },
+        {
+          "id": "100.01",
+          "codigo": "100.01",
+          "nome": "Venda de produtos",
+          "nivel": 2,
+          "pai": "100",
+          "realizado": 6812,
+          "percentualReceitaBruta": 98,
+          "comparacao": 6710,
+          "diferenca": 102,
+          "diferencaPercentual": 1.5,
+          "tomDiferenca": "saudavel",
+          "status": "saudavel",
+          "comDesvio": true,
+          "tendencia": {
+            "realizado": [6607.6, 6199.1, 5944, 6725.8, 7087.1, 6812],
+            "comparacao": [6780.5, 6659.6, 6612.6, 6708.2, 6806.5, 6710]
+          }
+        },
+        {
+          "id": "100.01.21",
+          "codigo": "100.01.21",
+          "nome": "Bovinos",
+          "nivel": 3,
+          "pai": "100.01",
+          "realizado": 2290,
+          "percentualReceitaBruta": 32.9,
+          "comparacao": 2180,
+          "diferenca": 110,
+          "diferencaPercentual": 5,
+          "tomDiferenca": "saudavel",
+          "destacarDiferenca": true,
+          "status": "saudavel",
+          "comDesvio": false,
+          "tendencia": {
+            "realizado": [2467.5, 2630.4, 2438.4, 2221.6, 2366, 2290],
+            "comparacao": [2187.4, 2151.3, 2157.2, 2196.5, 2211.6, 2180]
+          }
+        },
+        {
+          "id": "100.01.01",
+          "codigo": "100.01.01",
+          "nome": "Aves",
+          "nivel": 3,
+          "pai": "100.01",
+          "realizado": 1450,
+          "percentualReceitaBruta": 20.9,
+          "comparacao": 1470,
+          "diferenca": -20,
+          "diferencaPercentual": -1.4,
+          "tomDiferenca": "critico",
+          "status": "atencao",
+          "comDesvio": true,
+          "tendencia": {
+            "realizado": [1499.1, 1531.8, 1379.8, 1386.3, 1536.6, 1450],
+            "comparacao": [1462.4, 1448, 1465.9, 1489.8, 1484.7, 1470]
+          }
+        },
+        {
+          "id": "100.01.05",
+          "codigo": "100.01.05",
+          "nome": "Embutidos / industrializados",
+          "nivel": 3,
+          "pai": "100.01",
+          "realizado": 900,
+          "percentualReceitaBruta": 12.9,
+          "comparacao": 880,
+          "diferenca": 20,
+          "diferencaPercentual": 2.3,
+          "tomDiferenca": "saudavel",
+          "status": "saudavel",
+          "comDesvio": false,
+          "tendencia": {
+            "realizado": [748.4, 823.1, 908.9, 852.7, 822, 900],
+            "comparacao": [880.2, 892.8, 886.7, 870.8, 868.4, 880]
+          }
+        },
+        {
+          "id": "100.01.23",
+          "codigo": "100.01.23",
+          "nome": "Suínos",
+          "nivel": 3,
+          "pai": "100.01",
+          "realizado": 820,
+          "percentualReceitaBruta": 11.8,
+          "comparacao": 800,
+          "diferenca": 20,
+          "diferencaPercentual": 2.5,
+          "tomDiferenca": "saudavel",
+          "status": "saudavel",
+          "comDesvio": false,
+          "tendencia": {
+            "realizado": [795.1, 741.2, 717.1, 814.2, 850.4, 820],
+            "comparacao": [788.9, 792.5, 807.1, 811.2, 798.9, 800]
+          }
+        },
+        {
+          "id": "100.01.12",
+          "codigo": "100.01.12",
+          "nome": "Peixes",
+          "nivel": 3,
+          "pai": "100.01",
+          "realizado": 610,
+          "percentualReceitaBruta": 8.8,
+          "comparacao": 640,
+          "diferenca": -30,
+          "diferencaPercentual": -4.7,
+          "tomDiferenca": "critico",
+          "destacarDiferenca": true,
+          "status": "critico",
+          "comDesvio": true,
+          "tendencia": {
+            "realizado": [708.8, 673.6, 605, 630.4, 664.9, 610],
+            "comparacao": [646.6, 648.5, 637.9, 630.4, 637, 640]
+          }
+        },
+        {
+          "id": "100.01.08",
+          "codigo": "100.01.08",
+          "nome": "Laticínios",
+          "nivel": 3,
+          "pai": "100.01",
+          "realizado": 560,
+          "percentualReceitaBruta": 8.1,
+          "comparacao": 570,
+          "diferenca": -10,
+          "diferencaPercentual": -1.8,
+          "tomDiferenca": "critico",
+          "status": "atencao",
+          "comDesvio": true,
+          "tendencia": {
+            "realizado": [540.8, 523.8, 487.4, 539.1, 587.5, 560],
+            "comparacao": [577.3, 567.7, 561.5, 567.7, 577.3, 570]
+          }
+        },
+        {
+          "id": "100.01.11",
+          "codigo": "100.01.11",
+          "nome": "Outros",
+          "nivel": 3,
+          "pai": "100.01",
+          "realizado": 182,
+          "percentualReceitaBruta": 2.6,
+          "comparacao": 170,
+          "diferenca": 12,
+          "diferencaPercentual": 7.1,
+          "tomDiferenca": "saudavel",
+          "destacarDiferenca": true,
+          "status": "saudavel",
+          "comDesvio": false,
+          "tendencia": {
+            "realizado": [164.9, 179.9, 166.7, 163.4, 185.6, 182],
+            "comparacao": [170.2, 172.5, 171.2, 168.1, 167.8, 170]
+          }
+        },
+        {
+          "id": "100.02",
+          "codigo": "100.02",
+          "nome": "Venda de serviços",
+          "nivel": 2,
+          "pai": "100",
+          "realizado": 98,
+          "percentualReceitaBruta": 1.4,
+          "comparacao": 90,
+          "diferenca": 8,
+          "diferencaPercentual": 8.9,
+          "tomDiferenca": "saudavel",
+          "destacarDiferenca": true,
+          "status": "saudavel",
+          "comDesvio": false,
+          "tendencia": {
+            "realizado": [111.4, 99.6, 101.9, 108.7, 100.2, 98],
+            "comparacao": [90.1, 88.7, 89.2, 90.9, 91.2, 90]
+          }
+        },
+        {
+          "id": "100.02.03",
+          "codigo": "100.02.03",
+          "nome": "Fretes retorno",
+          "nivel": 3,
+          "pai": "100.02",
+          "realizado": 98,
+          "percentualReceitaBruta": 1.4,
+          "comparacao": 90,
+          "diferenca": 8,
+          "diferencaPercentual": 8.9,
+          "tomDiferenca": "saudavel",
+          "destacarDiferenca": true,
+          "status": "saudavel",
+          "comDesvio": false,
+          "tendencia": {
+            "realizado": [99.2, 104.6, 95.2, 92.2, 102.3, 98],
+            "comparacao": [89.8, 88.7, 89.4, 91, 91.1, 90]
+          }
+        },
+        {
+          "id": "100.03",
+          "codigo": "100.03",
+          "nome": "Outras receitas",
+          "nivel": 2,
+          "pai": "100",
+          "realizado": 40,
+          "percentualReceitaBruta": 0.6,
+          "comparacao": 0,
+          "diferenca": 40,
+          "diferencaPercentual": null,
+          "tomDiferenca": "saudavel",
+          "status": "saudavel",
+          "comDesvio": false,
+          "tendencia": {
+            "realizado": [38.8, 37.6, 41.8, 41.9, 37.7, 40],
+            "comparacao": [0, 0, 0, 0, 0, 0]
+          }
+        },
+        {
+          "id": "100.03.01",
+          "codigo": "100.03.01",
+          "nome": "Outras receitas operacionais",
+          "nivel": 3,
+          "pai": "100.03",
+          "realizado": 40,
+          "percentualReceitaBruta": 0.6,
+          "comparacao": 0,
+          "diferenca": 40,
+          "diferencaPercentual": null,
+          "tomDiferenca": "saudavel",
+          "status": "saudavel",
+          "comDesvio": false,
+          "tendencia": {
+            "realizado": [46.4, 41.5, 40.5, 43.8, 42.2, 40],
+            "comparacao": [0, 0, 0, 0, 0, 0]
+          }
+        },
+        {
+          "id": "110",
+          "codigo": "110.00",
+          "nome": "Deduções da receita",
+          "nivel": 1,
+          "realizado": -112,
+          "percentualReceitaBruta": 1.6,
+          "comparacao": -110,
+          "diferenca": -2,
+          "diferencaPercentual": -1.8,
+          "tomDiferenca": "critico",
+          "status": "saudavel",
+          "comDesvio": true,
+          "tendencia": {
+            "realizado": [-105.2, -116.8, -117.5, -105.8, -108.1, -112],
+            "comparacao": [-111.1, -109.1, -108.4, -110, -111.6, -110]
+          }
+        },
+        {
+          "id": "110.01",
+          "codigo": "110.01",
+          "nome": "Descontos",
+          "nivel": 2,
+          "pai": "110",
+          "realizado": -31,
+          "percentualReceitaBruta": 0.4,
+          "comparacao": -30,
+          "diferenca": -1,
+          "diferencaPercentual": -3.3,
+          "tomDiferenca": "critico",
+          "destacarDiferenca": true,
+          "status": "atencao",
+          "comDesvio": true,
+          "tendencia": {
+            "realizado": [-32, -33.4, -35, -31.7, -29.6, -31],
+            "comparacao": [-30.4, -30, -29.6, -29.8, -30.3, -30]
+          }
+        },
+        {
+          "id": "110.01.01",
+          "codigo": "110.01.01",
+          "nome": "Descontos concedidos",
+          "nivel": 3,
+          "pai": "110.01",
+          "realizado": -31,
+          "percentualReceitaBruta": 0.4,
+          "comparacao": -30,
+          "diferenca": -1,
+          "diferencaPercentual": -3.3,
+          "tomDiferenca": "critico",
+          "destacarDiferenca": true,
+          "status": "atencao",
+          "comDesvio": true,
+          "tendencia": {
+            "realizado": [-26.2, -27.5, -31.2, -30.3, -28.2, -31],
+            "comparacao": [-30.1, -29.6, -29.7, -30.2, -30.4, -30]
+          }
+        },
+        {
+          "id": "110.02",
+          "codigo": "110.02",
+          "nome": "Devoluções de venda",
+          "nivel": 2,
+          "pai": "110",
+          "realizado": -58,
+          "percentualReceitaBruta": 0.8,
+          "comparacao": -55,
+          "diferenca": -3,
+          "diferencaPercentual": -5.5,
+          "tomDiferenca": "critico",
+          "destacarDiferenca": true,
+          "status": "atencao",
+          "comDesvio": true,
+          "tendencia": {
+            "realizado": [-55.3, -61.4, -59.8, -54.2, -57.2, -58],
+            "comparacao": [-55.4, -54.4, -54.3, -55.2, -55.8, -55]
+          }
+        },
+        {
+          "id": "110.02.01",
+          "codigo": "110.02.01",
+          "nome": "Devoluções de vendas",
+          "nivel": 3,
+          "pai": "110.02",
+          "realizado": -58,
+          "percentualReceitaBruta": 0.8,
+          "comparacao": -55,
+          "diferenca": -3,
+          "diferencaPercentual": -5.5,
+          "tomDiferenca": "critico",
+          "destacarDiferenca": true,
+          "status": "atencao",
+          "comDesvio": true,
+          "tendencia": {
+            "realizado": [-67.8, -61.5, -57.8, -62.4, -62.3, -58],
+            "comparacao": [-55.8, -55.5, -54.5, -54.2, -55.1, -55]
+          }
+        },
+        {
+          "id": "110.03",
+          "codigo": "110.03",
+          "nome": "Impostos sobre a venda",
+          "nivel": 2,
+          "pai": "110",
+          "realizado": -23,
+          "percentualReceitaBruta": 0.3,
+          "comparacao": -25,
+          "diferenca": 2,
+          "diferencaPercentual": 8,
+          "tomDiferenca": "saudavel",
+          "destacarDiferenca": true,
+          "status": "saudavel",
+          "comDesvio": false,
+          "tendencia": {
+            "realizado": [-21.1, -22.6, -20.8, -20.8, -23.7, -23],
+            "comparacao": [-24.9, -24.6, -24.9, -25.3, -25.3, -25]
+          }
+        },
+        {
+          "id": "110.03.07",
+          "codigo": "110.03.07",
+          "nome": "Impostos sobre venda",
+          "nivel": 3,
+          "pai": "110.03",
+          "realizado": -23,
+          "percentualReceitaBruta": 0.3,
+          "comparacao": -25,
+          "diferenca": 2,
+          "diferencaPercentual": 8,
+          "tomDiferenca": "saudavel",
+          "destacarDiferenca": true,
+          "status": "saudavel",
+          "comDesvio": false,
+          "tendencia": {
+            "realizado": [-21.8, -24.2, -23.9, -21.6, -22.4, -23],
+            "comparacao": [-24.8, -24.6, -25, -25.4, -25.2, -25]
+          }
+        },
+        {
+          "id": "sub-receita-liquida",
+          "nome": "Receita líquida",
+          "nivel": 0,
+          "realizado": 6838,
+          "percentualReceitaBruta": 98.4,
+          "comparacao": 6690,
+          "diferenca": 148,
+          "diferencaPercentual": 2.2,
+          "tomDiferenca": "saudavel",
+          "status": "saudavel",
+          "comDesvio": true,
+          "tendencia": {
+            "realizado": [7927, 7585.5, 6791.4, 7028.8, 7452.9, 6838],
+            "comparacao": [6697.8, 6788.5, 6734.8, 6615.5, 6605.3, 6690]
+          }
+        },
+        {
+          "id": "120",
+          "codigo": "120.00",
+          "nome": "Custos",
+          "nivel": 1,
+          "realizado": -4590,
+          "percentualReceitaBruta": 66,
+          "comparacao": -4409,
+          "diferenca": -181,
+          "diferencaPercentual": -4.1,
+          "tomDiferenca": "critico",
+          "destacarDiferenca": true,
+          "status": "atencao",
+          "comDesvio": true,
+          "tendencia": {
+            "realizado": [-3811.7, -4299.4, -4614.2, -4252.6, -4238.2, -4590],
+            "comparacao": [-4352.6, -4427.2, -4475.1, -4426.2, -4352.1, -4409]
+          }
+        },
+        {
+          "id": "120.01",
+          "codigo": "120.01",
+          "nome": "CMV",
+          "nivel": 2,
+          "pai": "120",
+          "realizado": -4550,
+          "percentualReceitaBruta": 66,
+          "comparacao": -4372,
+          "diferenca": -178,
+          "diferencaPercentual": -4.1,
+          "tomDiferenca": "critico",
+          "destacarDiferenca": true,
+          "status": "atencao",
+          "comDesvio": true,
+          "tendencia": {
+            "realizado": [-4191.9, -3872.6, -4260.8, -4685.5, -4393.3, -4550],
+            "comparacao": [-4432.1, -4362.8, -4307, -4346.4, -4423.4, -4372]
+          }
+        },
+        {
+          "id": "120.01.07",
+          "codigo": "120.01.07",
+          "nome": "Custo bovinos",
+          "nivel": 3,
+          "pai": "120.01",
+          "realizado": -1670,
+          "percentualReceitaBruta": 24.2,
+          "comparacao": -1488,
+          "diferenca": -182,
+          "diferencaPercentual": -12.2,
+          "tomDiferenca": "critico",
+          "destacarDiferenca": true,
+          "status": "critico",
+          "comDesvio": true,
+          "tendencia": {
+            "realizado": [-1939.6, -1845.9, -1656.7, -1723.7, -1820.3, -1670],
+            "comparacao": [-1490.7, -1510.1, -1497.1, -1470.8, -1469.7, -1488]
+          }
+        },
+        {
+          "id": "120.01.02",
+          "codigo": "120.01.02",
+          "nome": "Custo aves",
+          "nivel": 3,
+          "pai": "120.01",
+          "realizado": -950,
+          "percentualReceitaBruta": 13.8,
+          "comparacao": -960,
+          "diferenca": 10,
+          "diferencaPercentual": 1,
+          "tomDiferenca": "saudavel",
+          "status": "saudavel",
+          "comDesvio": false,
+          "tendencia": {
+            "realizado": [-997.1, -897.4, -916.4, -1011.3, -967.8, -950],
+            "comparacao": [-963.4, -947.4, -949.9, -967.2, -974, -960]
+          }
+        },
+        {
+          "id": "120.01.14",
+          "codigo": "120.01.14",
+          "nome": "Custo embutidos e industrializados",
+          "nivel": 3,
+          "pai": "120.01",
+          "realizado": -540,
+          "percentualReceitaBruta": 7.8,
+          "comparacao": -530,
+          "diferenca": -10,
+          "diferencaPercentual": -1.9,
+          "tomDiferenca": "critico",
+          "status": "saudavel",
+          "comDesvio": false,
+          "tendencia": {
+            "realizado": [-513, -517.3, -572.9, -554.2, -503.4, -540],
+            "comparacao": [-536.1, -536.6, -527.4, -522.1, -528.3, -530]
+          }
+        },
+        {
+          "id": "120.01.44",
+          "codigo": "120.01.44",
+          "nome": "Custo suínos",
+          "nivel": 3,
+          "pai": "120.01",
+          "realizado": -560,
+          "percentualReceitaBruta": 8.1,
+          "comparacao": -545,
+          "diferenca": -15,
+          "diferencaPercentual": -2.8,
+          "tomDiferenca": "critico",
+          "status": "saudavel",
+          "comDesvio": false,
+          "tendencia": {
+            "realizado": [-577.1, -522.8, -552.5, -599.1, -557.4, -560],
+            "comparacao": [-545, -537.1, -540.8, -550.6, -552.2, -545]
+          }
+        },
+        {
+          "id": "120.01.31",
+          "codigo": "120.01.31",
+          "nome": "Custo peixes",
+          "nivel": 3,
+          "pai": "120.01",
+          "realizado": -372,
+          "percentualReceitaBruta": 5.4,
+          "comparacao": -390,
+          "diferenca": 18,
+          "diferencaPercentual": 4.6,
+          "tomDiferenca": "saudavel",
+          "destacarDiferenca": true,
+          "status": "saudavel",
+          "comDesvio": false,
+          "tendencia": {
+            "realizado": [-412, -427.1, -385, -364, -394.6, -372],
+            "comparacao": [-384.3, -387.1, -394.2, -395.1, -388.6, -390]
+          }
+        },
+        {
+          "id": "120.01.22",
+          "codigo": "120.01.22",
+          "nome": "Custo laticínios",
+          "nivel": 3,
+          "pai": "120.01",
+          "realizado": -355,
+          "percentualReceitaBruta": 5.2,
+          "comparacao": -362,
+          "diferenca": 7,
+          "diferencaPercentual": 1.9,
+          "tomDiferenca": "saudavel",
+          "status": "saudavel",
+          "comDesvio": false,
+          "tendencia": {
+            "realizado": [-415.3, -381.4, -352, -377.5, -384.3, -355],
+            "comparacao": [-366, -359.5, -356.7, -361.7, -367.1, -362]
+          }
+        },
+        {
+          "id": "120.01.27",
+          "codigo": "120.01.27",
+          "nome": "Custo outros",
+          "nivel": 3,
+          "pai": "120.01",
+          "realizado": -103,
+          "percentualReceitaBruta": 1.5,
+          "comparacao": -97,
+          "diferenca": -6,
+          "diferencaPercentual": -6.2,
+          "tomDiferenca": "critico",
+          "destacarDiferenca": true,
+          "status": "atencao",
+          "comDesvio": true,
+          "tendencia": {
+            "realizado": [-94.4, -101.5, -93.4, -93, -105.9, -103],
+            "comparacao": [-96.4, -98.1, -98.2, -96.6, -95.5, -97]
+          }
+        },
+        {
+          "id": "120.04",
+          "codigo": "120.04",
+          "nome": "Custo com transportes de compra",
+          "nivel": 2,
+          "pai": "120",
+          "realizado": -28,
+          "percentualReceitaBruta": 0.4,
+          "comparacao": -25,
+          "diferenca": -3,
+          "diferencaPercentual": -12,
+          "tomDiferenca": "critico",
+          "destacarDiferenca": true,
+          "status": "critico",
+          "comDesvio": true,
+          "tendencia": {
+            "realizado": [-24.3, -27.6, -26.7, -24.9, -27.6, -28],
+            "comparacao": [-24.7, -24.7, -25.1, -25.4, -25.1, -25]
+          }
+        },
+        {
+          "id": "120.04.04",
+          "codigo": "120.04.04",
+          "nome": "Frete sobre compras",
+          "nivel": 3,
+          "pai": "120.04",
+          "realizado": -28,
+          "percentualReceitaBruta": 0.4,
+          "comparacao": -25,
+          "diferenca": -3,
+          "diferencaPercentual": -12,
+          "tomDiferenca": "critico",
+          "destacarDiferenca": true,
+          "status": "critico",
+          "comDesvio": true,
+          "tendencia": {
+            "realizado": [-29.9, -28.6, -31, -30.4, -26.9, -28],
+            "comparacao": [-24.8, -25.2, -25.3, -24.9, -24.6, -25]
+          }
+        },
+        {
+          "id": "120.05",
+          "codigo": "120.05",
+          "nome": "Outros custos",
+          "nivel": 2,
+          "pai": "120",
+          "realizado": -12,
+          "percentualReceitaBruta": 0.2,
+          "comparacao": -12,
+          "diferenca": 0,
+          "diferencaPercentual": 0,
+          "status": "saudavel",
+          "comDesvio": false,
+          "tendencia": {
+            "realizado": [-13.6, -13.6, -12.1, -12, -13, -12],
+            "comparacao": [-11.8, -12, -12.2, -12.1, -11.9, -12]
+          }
+        },
+        {
+          "id": "120.05.01",
+          "codigo": "120.05.01",
+          "nome": "Energia elétrica, custo indireto",
+          "nivel": 3,
+          "pai": "120.05",
+          "realizado": -12,
+          "percentualReceitaBruta": 0.2,
+          "comparacao": -12,
+          "diferenca": 0,
+          "diferencaPercentual": 0,
+          "status": "saudavel",
+          "comDesvio": false,
+          "tendencia": {
+            "realizado": [-11.2, -12, -12.8, -11.8, -11.2, -12],
+            "comparacao": [-12.2, -12, -11.8, -11.9, -12.1, -12]
+          }
+        },
+        {
+          "id": "sub-lucro-bruto",
+          "nome": "Lucro bruto",
+          "nivel": 0,
+          "realizado": 2248,
+          "percentualReceitaBruta": 32.3,
+          "comparacao": 2281,
+          "diferenca": -33,
+          "diferencaPercentual": -1.4,
+          "tomDiferenca": "critico",
+          "status": "critico",
+          "comDesvio": true,
+          "tendencia": {
+            "realizado": [1891.6, 2170.7, 2218.3, 2028.5, 2131.2, 2248],
+            "comparacao": [2249.2, 2260.3, 2301.7, 2312.8, 2277.3, 2281]
+          }
+        },
+        {
+          "id": "130",
+          "codigo": "130.00",
+          "nome": "Despesas variáveis",
+          "nivel": 1,
+          "realizado": -265,
+          "percentualReceitaBruta": 3.8,
+          "comparacao": -248,
+          "diferenca": -17,
+          "diferencaPercentual": -6.9,
+          "tomDiferenca": "critico",
+          "destacarDiferenca": true,
+          "status": "atencao",
+          "comDesvio": true,
+          "tendencia": {
+            "realizado": [-273.8, -283, -299.4, -274.1, -252.2, -265],
+            "comparacao": [-251.6, -248, -244.4, -246, -250.5, -248]
+          }
+        },
+        {
+          "id": "130.01",
+          "codigo": "130.01",
+          "nome": "Despesa com vendas",
+          "nivel": 2,
+          "pai": "130",
+          "realizado": -139,
+          "percentualReceitaBruta": 2,
+          "comparacao": -136,
+          "diferenca": -3,
+          "diferencaPercentual": -2.2,
+          "tomDiferenca": "critico",
+          "status": "saudavel",
+          "comDesvio": false,
+          "tendencia": {
+            "realizado": [-148.4, -159.3, -149.5, -134.9, -142.2, -139],
+            "comparacao": [-138, -136.6, -134.3, -134.5, -136.9, -136]
+          }
+        },
+        {
+          "id": "130.01.01",
+          "codigo": "130.01.01",
+          "nome": "Comissões vendedores",
+          "nivel": 3,
+          "pai": "130.01",
+          "realizado": -139,
+          "percentualReceitaBruta": 2,
+          "comparacao": -136,
+          "diferenca": -3,
+          "diferencaPercentual": -2.2,
+          "tomDiferenca": "critico",
+          "status": "saudavel",
+          "comDesvio": false,
+          "tendencia": {
+            "realizado": [-129.5, -142.2, -147.7, -133.5, -131.7, -139],
+            "comparacao": [-138, -136.6, -134.3, -134.5, -136.9, -136]
+          }
+        },
+        {
+          "id": "130.02",
+          "codigo": "130.02",
+          "nome": "Despesas financeiras sobre a venda",
+          "nivel": 2,
+          "pai": "130",
+          "realizado": -38,
+          "percentualReceitaBruta": 0.5,
+          "comparacao": -32,
+          "diferenca": -6,
+          "diferencaPercentual": -18.7,
+          "tomDiferenca": "critico",
+          "destacarDiferenca": true,
+          "status": "critico",
+          "comDesvio": true,
+          "tendencia": {
+            "realizado": [-39.3, -40.1, -36.1, -36.4, -40.3, -38],
+            "comparacao": [-32.4, -31.8, -31.5, -31.9, -32.4, -32]
+          }
+        },
+        {
+          "id": "130.02.02",
+          "codigo": "130.02.02",
+          "nome": "Juro de antecipação",
+          "nivel": 3,
+          "pai": "130.02",
+          "realizado": -14,
+          "percentualReceitaBruta": 0.2,
+          "comparacao": -8,
+          "diferenca": -6,
+          "diferencaPercentual": -75,
+          "tomDiferenca": "critico",
+          "destacarDiferenca": true,
+          "status": "critico",
+          "comDesvio": true,
+          "tendencia": {
+            "realizado": [-15, -14.3, -15.5, -15.2, -13.5, -14],
+            "comparacao": [-8.1, -8.1, -8, -7.9, -7.9, -8]
+          }
+        },
+        {
+          "id": "130.02.04",
+          "codigo": "130.02.04",
+          "nome": "Taxas sobre vendas, crédito",
+          "nivel": 3,
+          "pai": "130.02",
+          "realizado": -24,
+          "percentualReceitaBruta": 0.3,
+          "comparacao": -24,
+          "diferenca": 0,
+          "diferencaPercentual": 0,
+          "status": "saudavel",
+          "comDesvio": false,
+          "tendencia": {
+            "realizado": [-20.5, -23.5, -23.3, -21.4, -23.2, -24],
+            "comparacao": [-24.3, -23.9, -23.6, -23.9, -24.3, -24]
+          }
+        },
+        {
+          "id": "130.03",
+          "codigo": "130.03",
+          "nome": "Despesas com transporte de venda",
+          "nivel": 2,
+          "pai": "130",
+          "realizado": -80,
+          "percentualReceitaBruta": 1.2,
+          "comparacao": -74,
+          "diferenca": -6,
+          "diferencaPercentual": -8.1,
+          "tomDiferenca": "critico",
+          "destacarDiferenca": true,
+          "status": "critico",
+          "comDesvio": true,
+          "tendencia": {
+            "realizado": [-77.6, -73.1, -69.7, -78.7, -83.4, -80],
+            "comparacao": [-74.2, -73, -73.3, -74.6, -75.1, -74]
+          }
+        },
+        {
+          "id": "130.03.01",
+          "codigo": "130.03.01",
+          "nome": "Combustível sobre vendas",
+          "nivel": 3,
+          "pai": "130.03",
+          "realizado": -52,
+          "percentualReceitaBruta": 0.7,
+          "comparacao": -48,
+          "diferenca": -4,
+          "diferencaPercentual": -8.3,
+          "tomDiferenca": "critico",
+          "destacarDiferenca": true,
+          "status": "critico",
+          "comDesvio": true,
+          "tendencia": {
+            "realizado": [-58.1, -59.5, -53.4, -51.2, -55.6, -52],
+            "comparacao": [-47.3, -47.7, -48.6, -48.6, -47.8, -48]
+          }
+        },
+        {
+          "id": "130.03.04",
+          "codigo": "130.03.04",
+          "nome": "Frete sobre vendas",
+          "nivel": 3,
+          "pai": "130.03",
+          "realizado": -28,
+          "percentualReceitaBruta": 0.4,
+          "comparacao": -26,
+          "diferenca": -2,
+          "diferencaPercentual": -7.7,
+          "tomDiferenca": "critico",
+          "destacarDiferenca": true,
+          "status": "critico",
+          "comDesvio": true,
+          "tendencia": {
+            "realizado": [-30.6, -28.3, -30.4, -30.8, -27.4, -28],
+            "comparacao": [-26.1, -26.4, -26.1, -25.6, -25.8, -26]
+          }
+        },
+        {
+          "id": "130.04",
+          "codigo": "130.04",
+          "nome": "Marketing variável",
+          "nivel": 2,
+          "pai": "130",
+          "realizado": -8,
+          "percentualReceitaBruta": 0.1,
+          "comparacao": -6,
+          "diferenca": -2,
+          "diferencaPercentual": -33.3,
+          "tomDiferenca": "critico",
+          "destacarDiferenca": true,
+          "status": "critico",
+          "comDesvio": true,
+          "tendencia": {
+            "realizado": [-9.1, -8.1, -8.3, -8.9, -8.2, -8],
+            "comparacao": [-6, -5.9, -6, -6.1, -6, -6]
+          }
+        },
+        {
+          "id": "130.04.01",
+          "codigo": "130.04.01",
+          "nome": "Campanhas digitais",
+          "nivel": 3,
+          "pai": "130.04",
+          "realizado": -8,
+          "percentualReceitaBruta": 0.1,
+          "comparacao": -6,
+          "diferenca": -2,
+          "diferencaPercentual": -33.3,
+          "tomDiferenca": "critico",
+          "destacarDiferenca": true,
+          "status": "critico",
+          "comDesvio": true,
+          "tendencia": {
+            "realizado": [-7.5, -7.8, -8.5, -8.1, -7.4, -8],
+            "comparacao": [-6, -5.9, -5.9, -6, -6.1, -6]
+          }
+        },
+        {
+          "id": "sub-margem-de-contribuicao",
+          "nome": "Margem de contribuição",
+          "nivel": 0,
+          "realizado": 1983,
+          "percentualReceitaBruta": 28.5,
+          "comparacao": 2033,
+          "diferenca": -50,
+          "diferencaPercentual": -2.5,
+          "tomDiferenca": "critico",
+          "status": "critico",
+          "comDesvio": true,
+          "tendencia": {
+            "realizado": [2000.2, 2117.4, 1931.2, 1862, 2066, 1983],
+            "comparacao": [2003.3, 2018.4, 2054.9, 2059.3, 2025.1, 2033]
+          }
+        },
+        {
+          "id": "140",
+          "codigo": "140.00",
+          "nome": "Despesas fixas",
+          "nivel": 1,
+          "realizado": -1370,
+          "percentualReceitaBruta": 19.7,
+          "comparacao": -1367,
+          "diferenca": -3,
+          "diferencaPercentual": -0.2,
+          "tomDiferenca": "critico",
+          "status": "saudavel",
+          "comDesvio": true,
+          "tendencia": {
+            "realizado": [-1297.9, -1316.5, -1455.8, -1401.3, -1276.1, -1370],
+            "comparacao": [-1346.5, -1360.9, -1384.2, -1382.3, -1358, -1367]
+          }
+        },
+        {
+          "id": "140.01",
+          "codigo": "140.01",
+          "nome": "Despesas com pessoal",
+          "nivel": 2,
+          "pai": "140",
+          "realizado": -820,
+          "percentualReceitaBruta": 11.8,
+          "comparacao": -796,
+          "diferenca": -24,
+          "diferencaPercentual": -3,
+          "tomDiferenca": "critico",
+          "destacarDiferenca": true,
+          "status": "saudavel",
+          "comDesvio": true,
+          "tendencia": {
+            "realizado": [-691.7, -726.7, -824.2, -801.1, -746.6, -820],
+            "comparacao": [-807.9, -798.9, -785.6, -787.6, -801.9, -796]
+          }
+        },
+        {
+          "id": "140.01.01",
+          "codigo": "140.01.01",
+          "nome": "Salários",
+          "nivel": 3,
+          "pai": "140.01",
+          "realizado": -560,
+          "percentualReceitaBruta": 8.1,
+          "comparacao": -548,
+          "diferenca": -12,
+          "diferencaPercentual": -2.2,
+          "tomDiferenca": "critico",
+          "status": "saudavel",
+          "comDesvio": false,
+          "tendencia": {
+            "realizado": [-535.6, -488.1, -501.8, -571, -564.8, -560],
+            "comparacao": [-554.5, -554.6, -545, -539.8, -546.6, -548]
+          }
+        },
+        {
+          "id": "140.01.04",
+          "codigo": "140.01.04",
+          "nome": "INSS",
+          "nivel": 3,
+          "pai": "140.01",
+          "realizado": -118,
+          "percentualReceitaBruta": 1.7,
+          "comparacao": -115,
+          "diferenca": -3,
+          "diferencaPercentual": -2.6,
+          "tomDiferenca": "critico",
+          "status": "saudavel",
+          "comDesvio": false,
+          "tendencia": {
+            "realizado": [-98.9, -113.4, -117, -106.9, -111.2, -118],
+            "comparacao": [-115.2, -113.4, -113.9, -116, -116.6, -115]
+          }
+        },
+        {
+          "id": "140.01.05",
+          "codigo": "140.01.05",
+          "nome": "FGTS",
+          "nivel": 3,
+          "pai": "140.01",
+          "realizado": -45,
+          "percentualReceitaBruta": 0.6,
+          "comparacao": -44,
+          "diferenca": -1,
+          "diferencaPercentual": -2.3,
+          "tomDiferenca": "critico",
+          "status": "saudavel",
+          "comDesvio": false,
+          "tendencia": {
+            "realizado": [-49.2, -51.7, -47.1, -43.8, -47.2, -45],
+            "comparacao": [-43.6, -43.4, -44, -44.6, -44.3, -44]
+          }
+        },
+        {
+          "id": "140.01.16",
+          "codigo": "140.01.16",
+          "nome": "Plano de saúde",
+          "nivel": 3,
+          "pai": "140.01",
+          "realizado": -52,
+          "percentualReceitaBruta": 0.7,
+          "comparacao": -50,
+          "diferenca": -2,
+          "diferencaPercentual": -4,
+          "tomDiferenca": "critico",
+          "destacarDiferenca": true,
+          "status": "atencao",
+          "comDesvio": true,
+          "tendencia": {
+            "realizado": [-48.6, -50.8, -46.4, -47.6, -54.1, -52],
+            "comparacao": [-50.6, -50.6, -49.7, -49.3, -49.9, -50]
+          }
+        },
+        {
+          "id": "140.01.22",
+          "codigo": "140.01.22",
+          "nome": "Pró-labore",
+          "nivel": 3,
+          "pai": "140.01",
+          "realizado": -45,
+          "percentualReceitaBruta": 0.6,
+          "comparacao": -39,
+          "diferenca": -6,
+          "diferencaPercentual": -15.4,
+          "tomDiferenca": "critico",
+          "destacarDiferenca": true,
+          "status": "critico",
+          "comDesvio": true,
+          "tendencia": {
+            "realizado": [-42.7, -38.9, -40.8, -46.1, -44.9, -45],
+            "comparacao": [-39.5, -39.4, -38.7, -38.4, -39, -39]
+          }
+        },
+        {
+          "id": "140.02",
+          "codigo": "140.02",
+          "nome": "Despesas administrativas",
+          "nivel": 2,
+          "pai": "140",
+          "realizado": -260,
+          "percentualReceitaBruta": 3.7,
+          "comparacao": -278,
+          "diferenca": 18,
+          "diferencaPercentual": 6.5,
+          "tomDiferenca": "saudavel",
+          "destacarDiferenca": true,
+          "status": "saudavel",
+          "comDesvio": false,
+          "tendencia": {
+            "realizado": [-269, -289.5, -290.3, -257.9, -253.7, -260],
+            "comparacao": [-281.1, -276.2, -273.9, -277.7, -281.9, -278]
+          }
+        },
+        {
+          "id": "140.02.01",
+          "codigo": "140.02.01",
+          "nome": "Aluguel e condomínio",
+          "nivel": 3,
+          "pai": "140.02",
+          "realizado": -120,
+          "percentualReceitaBruta": 1.7,
+          "comparacao": -120,
+          "diferenca": 0,
+          "diferencaPercentual": 0,
+          "status": "saudavel",
+          "comDesvio": false,
+          "tendencia": {
+            "realizado": [-130.9, -138, -126.1, -116.7, -125.5, -120],
+            "comparacao": [-118.8, -121, -121.7, -119.9, -118.2, -120]
+          }
+        },
+        {
+          "id": "140.02.02",
+          "codigo": "140.02.02",
+          "nome": "Energia",
+          "nivel": 3,
+          "pai": "140.02",
+          "realizado": -46,
+          "percentualReceitaBruta": 0.7,
+          "comparacao": -52,
+          "diferenca": 6,
+          "diferencaPercentual": 11.5,
+          "tomDiferenca": "saudavel",
+          "destacarDiferenca": true,
+          "status": "saudavel",
+          "comDesvio": false,
+          "tendencia": {
+            "realizado": [-48.5, -47.7, -43.1, -45, -49.2, -46],
+            "comparacao": [-52, -52.7, -52.4, -51.5, -51.3, -52]
+          }
+        },
+        {
+          "id": "140.02.09",
+          "codigo": "140.02.09",
+          "nome": "Mensalidades sistemas ERP",
+          "nivel": 3,
+          "pai": "140.02",
+          "realizado": -28,
+          "percentualReceitaBruta": 0.4,
+          "comparacao": -28,
+          "diferenca": 0,
+          "diferencaPercentual": 0,
+          "status": "saudavel",
+          "comDesvio": false,
+          "tendencia": {
+            "realizado": [-27.2, -25.5, -24.4, -27.6, -29.1, -28],
+            "comparacao": [-27.6, -28, -28.4, -28.3, -27.7, -28]
+          }
+        },
+        {
+          "id": "140.02.04",
+          "codigo": "140.02.04",
+          "nome": "Telefone e internet",
+          "nivel": 3,
+          "pai": "140.02",
+          "realizado": -14,
+          "percentualReceitaBruta": 0.2,
+          "comparacao": -15,
+          "diferenca": 1,
+          "diferencaPercentual": 6.7,
+          "tomDiferenca": "saudavel",
+          "destacarDiferenca": true,
+          "status": "saudavel",
+          "comDesvio": false,
+          "tendencia": {
+            "realizado": [-15.7, -14.2, -14.8, -15.5, -14, -14],
+            "comparacao": [-15.2, -15.1, -14.8, -14.8, -15.1, -15]
+          }
+        },
+        {
+          "id": "140.02.17",
+          "codigo": "140.02.17",
+          "nome": "Outras despesas administrativas",
+          "nivel": 3,
+          "pai": "140.02",
+          "realizado": -52,
+          "percentualReceitaBruta": 0.7,
+          "comparacao": -63,
+          "diferenca": 11,
+          "diferencaPercentual": 17.5,
+          "tomDiferenca": "saudavel",
+          "destacarDiferenca": true,
+          "status": "saudavel",
+          "comDesvio": false,
+          "tendencia": {
+            "realizado": [-49.3, -54.8, -54, -48.7, -50.9, -52],
+            "comparacao": [-63, -63.9, -63.4, -62.3, -62.2, -63]
+          }
+        },
+        {
+          "id": "140.03",
+          "codigo": "140.03",
+          "nome": "Despesas comerciais",
+          "nivel": 2,
+          "pai": "140",
+          "realizado": -95,
+          "percentualReceitaBruta": 1.4,
+          "comparacao": -105,
+          "diferenca": 10,
+          "diferencaPercentual": 9.5,
+          "tomDiferenca": "saudavel",
+          "destacarDiferenca": true,
+          "status": "saudavel",
+          "comDesvio": true,
+          "tendencia": {
+            "realizado": [-93.7, -101.6, -94.6, -88.5, -97.1, -95],
+            "comparacao": [-105.2, -103.6, -104, -105.9, -106.5, -105]
+          }
+        },
+        {
+          "id": "140.03.03",
+          "codigo": "140.03.03",
+          "nome": "Viagens e hospedagem",
+          "nivel": 3,
+          "pai": "140.03",
+          "realizado": -38,
+          "percentualReceitaBruta": 0.5,
+          "comparacao": -45,
+          "diferenca": 7,
+          "diferencaPercentual": 15.6,
+          "tomDiferenca": "saudavel",
+          "destacarDiferenca": true,
+          "status": "saudavel",
+          "comDesvio": false,
+          "tendencia": {
+            "realizado": [-40.6, -43.5, -40.8, -36.9, -38.9, -38],
+            "comparacao": [-44.4, -45.2, -45.7, -45.1, -44.4, -45]
+          }
+        },
+        {
+          "id": "140.03.04",
+          "codigo": "140.03.04",
+          "nome": "Verba ações comercial",
+          "nivel": 3,
+          "pai": "140.03",
+          "realizado": -35,
+          "percentualReceitaBruta": 0.5,
+          "comparacao": -40,
+          "diferenca": 5,
+          "diferencaPercentual": 12.5,
+          "tomDiferenca": "saudavel",
+          "destacarDiferenca": true,
+          "status": "saudavel",
+          "comDesvio": false,
+          "tendencia": {
+            "realizado": [-36.2, -36.9, -33.3, -33.5, -37.1, -35],
+            "comparacao": [-39.8, -40.5, -40.4, -39.7, -39.4, -40]
+          }
+        },
+        {
+          "id": "140.03.05",
+          "codigo": "140.03.05",
+          "nome": "Serviço de cobrança",
+          "nivel": 3,
+          "pai": "140.03",
+          "realizado": -22,
+          "percentualReceitaBruta": 0.3,
+          "comparacao": -20,
+          "diferenca": -2,
+          "diferencaPercentual": -10,
+          "tomDiferenca": "critico",
+          "destacarDiferenca": true,
+          "status": "critico",
+          "comDesvio": true,
+          "tendencia": {
+            "realizado": [-21.3, -20.1, -19.2, -21.6, -22.9, -22],
+            "comparacao": [-20.1, -20.3, -20, -19.7, -19.8, -20]
+          }
+        },
+        {
+          "id": "140.04",
+          "codigo": "140.04",
+          "nome": "Publicidade e marketing",
+          "nivel": 2,
+          "pai": "140",
+          "realizado": -45,
+          "percentualReceitaBruta": 0.6,
+          "comparacao": -50,
+          "diferenca": 5,
+          "diferencaPercentual": 10,
+          "tomDiferenca": "saudavel",
+          "destacarDiferenca": true,
+          "status": "saudavel",
+          "comDesvio": false,
+          "tendencia": {
+            "realizado": [-42.8, -43.3, -39.6, -42, -47.1, -45],
+            "comparacao": [-49.6, -49.3, -50, -50.7, -50.4, -50]
+          }
+        },
+        {
+          "id": "140.04.04",
+          "codigo": "140.04.04",
+          "nome": "Publicidade e propaganda",
+          "nivel": 3,
+          "pai": "140.04",
+          "realizado": -45,
+          "percentualReceitaBruta": 0.6,
+          "comparacao": -50,
+          "diferenca": 5,
+          "diferencaPercentual": 10,
+          "tomDiferenca": "saudavel",
+          "destacarDiferenca": true,
+          "status": "saudavel",
+          "comDesvio": false,
+          "tendencia": {
+            "realizado": [-37.4, -41.1, -45.4, -42.7, -41.1, -45],
+            "comparacao": [-49.3, -49.6, -50.5, -50.7, -49.9, -50]
+          }
+        },
+        {
+          "id": "140.05",
+          "codigo": "140.05",
+          "nome": "Despesa com veículos",
+          "nivel": 2,
+          "pai": "140",
+          "realizado": -88,
+          "percentualReceitaBruta": 1.3,
+          "comparacao": -78,
+          "diferenca": -10,
+          "diferencaPercentual": -12.8,
+          "tomDiferenca": "critico",
+          "destacarDiferenca": true,
+          "status": "critico",
+          "comDesvio": true,
+          "tendencia": {
+            "realizado": [-102.8, -92.9, -87.8, -95.1, -94.3, -88],
+            "comparacao": [-76.9, -77.4, -78.8, -79.1, -77.8, -78]
+          }
+        },
+        {
+          "id": "140.05.05",
+          "codigo": "140.05.05",
+          "nome": "Manutenção de veículos",
+          "nivel": 3,
+          "pai": "140.05",
+          "realizado": -36,
+          "percentualReceitaBruta": 0.5,
+          "comparacao": -28,
+          "diferenca": -8,
+          "diferencaPercentual": -28.6,
+          "tomDiferenca": "critico",
+          "destacarDiferenca": true,
+          "status": "critico",
+          "comDesvio": true,
+          "tendencia": {
+            "realizado": [-36, -33.5, -36.6, -38.3, -34.8, -36],
+            "comparacao": [-27.9, -27.6, -27.9, -28.4, -28.3, -28]
+          }
+        },
+        {
+          "id": "140.05.02",
+          "codigo": "140.05.02",
+          "nome": "Combustível e lubrificantes",
+          "nivel": 3,
+          "pai": "140.05",
+          "realizado": -30,
+          "percentualReceitaBruta": 0.4,
+          "comparacao": -28,
+          "diferenca": -2,
+          "diferencaPercentual": -7.1,
+          "tomDiferenca": "critico",
+          "destacarDiferenca": true,
+          "status": "atencao",
+          "comDesvio": true,
+          "tendencia": {
+            "realizado": [-30.3, -32, -29.2, -28.2, -31.3, -30],
+            "comparacao": [-28.4, -28.2, -27.7, -27.6, -28.1, -28]
+          }
+        },
+        {
+          "id": "140.05.08",
+          "codigo": "140.05.08",
+          "nome": "Seguro veicular",
+          "nivel": 3,
+          "pai": "140.05",
+          "realizado": -22,
+          "percentualReceitaBruta": 0.3,
+          "comparacao": -22,
+          "diferenca": 0,
+          "diferencaPercentual": 0,
+          "status": "saudavel",
+          "comDesvio": false,
+          "tendencia": {
+            "realizado": [-21.8, -23.5, -21.8, -20.5, -22.6, -22],
+            "comparacao": [-21.8, -22.2, -22.3, -22, -21.7, -22]
+          }
+        },
+        {
+          "id": "140.06",
+          "codigo": "140.06",
+          "nome": "Serviços de terceiros",
+          "nivel": 2,
+          "pai": "140",
+          "realizado": -62,
+          "percentualReceitaBruta": 0.9,
+          "comparacao": -60,
+          "diferenca": -2,
+          "diferencaPercentual": -3.3,
+          "tomDiferenca": "critico",
+          "destacarDiferenca": true,
+          "status": "atencao",
+          "comDesvio": true,
+          "tendencia": {
+            "realizado": [-63.5, -57.8, -61.6, -66.3, -61.3, -62],
+            "comparacao": [-59.2, -60.1, -60.9, -60.4, -59.3, -60]
+          }
+        },
+        {
+          "id": "140.06.03",
+          "codigo": "140.06.03",
+          "nome": "Assessoria financeira",
+          "nivel": 3,
+          "pai": "140.06",
+          "realizado": -24,
+          "percentualReceitaBruta": 0.3,
+          "comparacao": -24,
+          "diferenca": 0,
+          "diferencaPercentual": 0,
+          "status": "saudavel",
+          "comDesvio": false,
+          "tendencia": {
+            "realizado": [-24.8, -26.7, -26.8, -23.8, -23.4, -24],
+            "comparacao": [-24.1, -24.4, -24, -23.7, -23.8, -24]
+          }
+        },
+        {
+          "id": "140.06.01",
+          "codigo": "140.06.01",
+          "nome": "Assessoria jurídica",
+          "nivel": 3,
+          "pai": "140.06",
+          "realizado": -20,
+          "percentualReceitaBruta": 0.3,
+          "comparacao": -18,
+          "diferenca": -2,
+          "diferencaPercentual": -11.1,
+          "tomDiferenca": "critico",
+          "destacarDiferenca": true,
+          "status": "critico",
+          "comDesvio": true,
+          "tendencia": {
+            "realizado": [-20.1, -18.6, -20.3, -21.3, -19.4, -20],
+            "comparacao": [-17.8, -18.1, -18.3, -18.1, -17.8, -18]
+          }
+        },
+        {
+          "id": "140.06.02",
+          "codigo": "140.06.02",
+          "nome": "Assessoria contábil",
+          "nivel": 3,
+          "pai": "140.06",
+          "realizado": -18,
+          "percentualReceitaBruta": 0.3,
+          "comparacao": -18,
+          "diferenca": 0,
+          "diferencaPercentual": 0,
+          "status": "saudavel",
+          "comDesvio": false,
+          "tendencia": {
+            "realizado": [-15.2, -16, -18.1, -17.6, -16.4, -18],
+            "comparacao": [-17.9, -18.2, -18.2, -17.9, -17.7, -18]
+          }
+        },
+        {
+          "id": "sub-ebitda",
+          "nome": "EBITDA",
+          "nivel": 0,
+          "realizado": 613,
+          "percentualReceitaBruta": 8.8,
+          "comparacao": 666,
+          "diferenca": -53,
+          "diferencaPercentual": -8,
+          "tomDiferenca": "critico",
+          "destacarDiferenca": true,
+          "status": "atencao",
+          "comDesvio": true,
+          "tendencia": {
+            "realizado": [587, 583.7, 535.9, 579.2, 643.5, 613],
+            "comparacao": [671.5, 659.4, 657, 667.8, 675.9, 666]
+          }
+        },
+        {
+          "id": "150",
+          "codigo": "150.00",
+          "nome": "Depreciação e amortização",
+          "nivel": 1,
+          "realizado": -39,
+          "percentualReceitaBruta": 0.6,
+          "comparacao": -39,
+          "diferenca": 0,
+          "diferencaPercentual": 0,
+          "status": "saudavel",
+          "comDesvio": false,
+          "tendencia": {
+            "realizado": [-34, -33.6, -38.4, -39.3, -36, -39],
+            "comparacao": [-39.6, -39.3, -38.6, -38.5, -39.1, -39]
+          }
+        },
+        {
+          "id": "150.01",
+          "codigo": "150.01",
+          "nome": "Depreciação e amortização",
+          "nivel": 2,
+          "pai": "150",
+          "realizado": -39,
+          "percentualReceitaBruta": 0.6,
+          "comparacao": -39,
+          "diferenca": 0,
+          "diferencaPercentual": 0,
+          "status": "saudavel",
+          "comDesvio": false,
+          "tendencia": {
+            "realizado": [-44.8, -43.8, -39, -39.5, -42.4, -39],
+            "comparacao": [-39.5, -39.4, -38.7, -38.5, -39, -39]
+          }
+        },
+        {
+          "id": "150.01.01",
+          "codigo": "150.01.01",
+          "nome": "Depreciação e amortização",
+          "nivel": 3,
+          "pai": "150.01",
+          "realizado": -39,
+          "percentualReceitaBruta": 0.6,
+          "comparacao": -39,
+          "diferenca": 0,
+          "diferencaPercentual": 0,
+          "status": "saudavel",
+          "comDesvio": false,
+          "tendencia": {
+            "realizado": [-41.6, -44.7, -42, -37.9, -39.8, -39],
+            "comparacao": [-39.2, -39.6, -39.2, -38.5, -38.6, -39]
+          }
+        },
+        {
+          "id": "160",
+          "codigo": "160.00",
+          "nome": "Receitas financeiras",
+          "nivel": 1,
+          "realizado": 12,
+          "percentualReceitaBruta": 0.2,
+          "comparacao": 10,
+          "diferenca": 2,
+          "diferencaPercentual": 20,
+          "tomDiferenca": "saudavel",
+          "destacarDiferenca": true,
+          "status": "saudavel",
+          "comDesvio": false,
+          "tendencia": {
+            "realizado": [13.2, 12.1, 12.9, 13.3, 11.8, 12],
+            "comparacao": [9.9, 9.9, 10.1, 10.1, 10, 10]
+          }
+        },
+        {
+          "id": "160.01",
+          "codigo": "160.01",
+          "nome": "Receitas financeiras",
+          "nivel": 2,
+          "pai": "160",
+          "realizado": 12,
+          "percentualReceitaBruta": 0.2,
+          "comparacao": 10,
+          "diferenca": 2,
+          "diferencaPercentual": 20,
+          "tomDiferenca": "saudavel",
+          "destacarDiferenca": true,
+          "status": "saudavel",
+          "comDesvio": false,
+          "tendencia": {
+            "realizado": [11.5, 11.4, 12.6, 12.5, 11.2, 12],
+            "comparacao": [10.1, 10.1, 10, 9.9, 9.9, 10]
+          }
+        },
+        {
+          "id": "160.01.03",
+          "codigo": "160.01.03",
+          "nome": "Rendimento de aplicação",
+          "nivel": 3,
+          "pai": "160.01",
+          "realizado": 12,
+          "percentualReceitaBruta": 0.2,
+          "comparacao": 10,
+          "diferenca": 2,
+          "diferencaPercentual": 20,
+          "tomDiferenca": "saudavel",
+          "destacarDiferenca": true,
+          "status": "saudavel",
+          "comDesvio": false,
+          "tendencia": {
+            "realizado": [12.3, 12.7, 11.5, 11.4, 12.6, 12],
+            "comparacao": [10.1, 10, 9.9, 9.9, 10.1, 10]
+          }
+        },
+        {
+          "id": "170",
+          "codigo": "170.00",
+          "nome": "Despesas financeiras",
+          "nivel": 1,
+          "realizado": -70,
+          "percentualReceitaBruta": 1,
+          "comparacao": -52,
+          "diferenca": -18,
+          "diferencaPercentual": -34.6,
+          "tomDiferenca": "critico",
+          "destacarDiferenca": true,
+          "status": "critico",
+          "comDesvio": true,
+          "tendencia": {
+            "realizado": [-71.9, -65.3, -69.3, -74.9, -69.4, -70],
+            "comparacao": [-52.5, -52.7, -51.9, -51.2, -51.7, -52]
+          }
+        },
+        {
+          "id": "170.01",
+          "codigo": "170.01",
+          "nome": "Despesas financeiras",
+          "nivel": 2,
+          "pai": "170",
+          "realizado": -70,
+          "percentualReceitaBruta": 1,
+          "comparacao": -52,
+          "diferenca": -18,
+          "diferencaPercentual": -34.6,
+          "tomDiferenca": "critico",
+          "destacarDiferenca": true,
+          "status": "critico",
+          "comDesvio": true,
+          "tendencia": {
+            "realizado": [-81.4, -72.9, -70.5, -76.4, -74.2, -70],
+            "comparacao": [-52.6, -52.7, -51.8, -51.2, -51.8, -52]
+          }
+        },
+        {
+          "id": "170.01.05",
+          "codigo": "170.01.05",
+          "nome": "Juros de empréstimos e financiamentos",
+          "nivel": 3,
+          "pai": "170.01",
+          "realizado": -52,
+          "percentualReceitaBruta": 0.7,
+          "comparacao": -45,
+          "diferenca": -7,
+          "diferencaPercentual": -15.6,
+          "tomDiferenca": "critico",
+          "destacarDiferenca": true,
+          "status": "critico",
+          "comDesvio": true,
+          "tendencia": {
+            "realizado": [-50.7, -55.5, -52.4, -48.4, -52.6, -52],
+            "comparacao": [-45.5, -44.7, -44.3, -44.9, -45.6, -45]
+          }
+        },
+        {
+          "id": "170.01.02",
+          "codigo": "170.01.02",
+          "nome": "Taxas bancárias",
+          "nivel": 3,
+          "pai": "170.01",
+          "realizado": -11,
+          "percentualReceitaBruta": 0.2,
+          "comparacao": -7,
+          "diferenca": -4,
+          "diferencaPercentual": -57.1,
+          "tomDiferenca": "critico",
+          "destacarDiferenca": true,
+          "status": "critico",
+          "comDesvio": true,
+          "tendencia": {
+            "realizado": [-11.2, -10.2, -11, -11.8, -10.8, -11],
+            "comparacao": [-7, -7.1, -7, -6.9, -6.9, -7]
+          }
+        },
+        {
+          "id": "170.01.07",
+          "codigo": "170.01.07",
+          "nome": "Juros e multas de mora",
+          "nivel": 3,
+          "pai": "170.01",
+          "realizado": -7,
+          "percentualReceitaBruta": 0.1,
+          "comparacao": 0,
+          "diferenca": -7,
+          "diferencaPercentual": null,
+          "tomDiferenca": "critico",
+          "status": "atencao",
+          "comDesvio": true,
+          "tendencia": {
+            "realizado": [-8.2, -7.5, -7, -7.5, -7.5, -7],
+            "comparacao": [0, 0, 0, 0, 0, 0]
+          }
+        },
+        {
+          "id": "sub-resultado-antes-dos-impostos",
+          "nome": "Resultado antes dos impostos",
+          "nivel": 0,
+          "realizado": 516,
+          "percentualReceitaBruta": 7.4,
+          "comparacao": 585,
+          "diferenca": -69,
+          "diferencaPercentual": -11.8,
+          "tomDiferenca": "critico",
+          "destacarDiferenca": true,
+          "status": "atencao",
+          "comDesvio": true,
+          "tendencia": {
+            "realizado": [538.7, 485.2, 501.2, 550.6, 521.9, 516],
+            "comparacao": [592.8, 591, 580.4, 576.6, 585.1, 585]
+          }
+        },
+        {
+          "id": "200",
+          "codigo": "200.00",
+          "nome": "Impostos sobre o resultado",
+          "nivel": 1,
+          "realizado": -95,
+          "percentualReceitaBruta": 1.4,
+          "comparacao": -110,
+          "diferenca": 15,
+          "diferencaPercentual": 13.6,
+          "tomDiferenca": "saudavel",
+          "destacarDiferenca": true,
+          "status": "saudavel",
+          "comDesvio": false,
+          "tendencia": {
+            "realizado": [-89.6, -99.5, -99.3, -89.4, -92.2, -95],
+            "comparacao": [-109.9, -111.6, -110.9, -108.9, -108.5, -110]
+          }
+        },
+        {
+          "id": "200.01",
+          "codigo": "200.01",
+          "nome": "IRPJ e CSLL",
+          "nivel": 2,
+          "pai": "200",
+          "realizado": -95,
+          "percentualReceitaBruta": 1.4,
+          "comparacao": -110,
+          "diferenca": 15,
+          "diferencaPercentual": 13.6,
+          "tomDiferenca": "saudavel",
+          "destacarDiferenca": true,
+          "status": "saudavel",
+          "comDesvio": false,
+          "tendencia": {
+            "realizado": [-102.4, -109.1, -101.2, -92.2, -98.2, -95],
+            "comparacao": [-111.4, -111.2, -109.2, -108.4, -109.9, -110]
+          }
+        },
+        {
+          "id": "200.01.01",
+          "codigo": "200.01.01",
+          "nome": "IRPJ e CSLL",
+          "nivel": 3,
+          "pai": "200.01",
+          "realizado": -95,
+          "percentualReceitaBruta": 1.4,
+          "comparacao": -110,
+          "diferenca": 15,
+          "diferencaPercentual": 13.6,
+          "tomDiferenca": "saudavel",
+          "destacarDiferenca": true,
+          "status": "saudavel",
+          "comDesvio": false,
+          "tendencia": {
+            "realizado": [-101, -97, -88.5, -94.7, -101.6, -95],
+            "comparacao": [-109.7, -108.4, -109.4, -111.3, -111.3, -110]
+          }
+        },
+        {
+          "id": "sub-lucro-liquido",
+          "nome": "Lucro líquido",
+          "nivel": 0,
+          "realizado": 421,
+          "percentualReceitaBruta": 6.1,
+          "comparacao": 475,
+          "diferenca": -54,
+          "diferencaPercentual": -11.4,
+          "tomDiferenca": "critico",
+          "destacarDiferenca": true,
+          "status": "atencao",
+          "comDesvio": true,
+          "tendencia": {
+            "realizado": [354.1, 406.3, 415.6, 380, 398.9, 421],
+            "comparacao": [481.6, 479.3, 470.7, 468.4, 475.7, 475]
+          }
+        },
+        {
+          "id": "210",
+          "codigo": "210.00",
+          "nome": "Participações dos sócios",
+          "nivel": 1,
+          "realizado": -60,
+          "percentualReceitaBruta": 0.9,
+          "comparacao": -60,
+          "diferenca": 0,
+          "diferencaPercentual": 0,
+          "status": "saudavel",
+          "comDesvio": false,
+          "tendencia": {
+            "realizado": [-49.9, -56.6, -60.2, -55.3, -55.6, -60],
+            "comparacao": [-60.3, -59.3, -59.3, -60.4, -60.9, -60]
+          }
+        },
+        {
+          "id": "210.01",
+          "codigo": "210.01",
+          "nome": "Participações dos sócios",
+          "nivel": 2,
+          "pai": "210",
+          "realizado": -60,
+          "percentualReceitaBruta": 0.9,
+          "comparacao": -60,
+          "diferenca": 0,
+          "diferencaPercentual": 0,
+          "status": "saudavel",
+          "comDesvio": false,
+          "tendencia": {
+            "realizado": [-50.3, -53.8, -60.5, -58, -54.6, -60],
+            "comparacao": [-60.8, -60.6, -59.5, -59.1, -60, -60]
+          }
+        },
+        {
+          "id": "210.01.01",
+          "codigo": "210.01.01",
+          "nome": "Retirada de sócio",
+          "nivel": 3,
+          "pai": "210.01",
+          "realizado": -60,
+          "percentualReceitaBruta": 0.9,
+          "comparacao": -60,
+          "diferenca": 0,
+          "diferencaPercentual": 0,
+          "status": "saudavel",
+          "comDesvio": false,
+          "tendencia": {
+            "realizado": [-49.8, -55.7, -60.5, -56.1, -55.1, -60],
+            "comparacao": [-60.4, -59.3, -59.2, -60.2, -60.9, -60]
+          }
+        },
+        {
+          "id": "sub-lucro-liquido-final",
+          "nome": "Lucro líquido final",
+          "nivel": 0,
+          "final": true,
+          "realizado": 361,
+          "percentualReceitaBruta": 5.2,
+          "comparacao": 415,
+          "diferenca": -54,
+          "diferencaPercentual": -13,
+          "tomDiferenca": "critico",
+          "destacarDiferenca": true,
+          "status": "atencao",
+          "comDesvio": true,
+          "tendencia": {
+            "realizado": [308.1, 353, 350.7, 322.7, 348.6, 361],
+            "comparacao": [414.2, 408.8, 412.5, 419.8, 420.1, 415]
+          }
+        }
+      ],
+      "rodape": [
+        "Sem movimento nesta empresa, por isso fora da tabela: 180 Despesas não operacionais, 190 Receitas não operacionais.",
+        "Comparação: orçado (filtro “Comparar com”)."
+      ]
+    },
+    {
+      "id": "tabela-financeira",
+      "tipo": "tabela",
+      "variante": "compacta",
+      "largura": 12,
+      "titulo": "Tabela financeira mês a mês",
+      "subtitulo": "Principais indicadores dos últimos 12 meses. Azul: melhor que a média do período; vermelho: pior.",
+      "explicacao": "Os principais indicadores dos últimos 12 meses lado a lado. Cada célula é comparada com a média do próprio indicador: azul está melhor que a média, vermelho está pior. Serve para ver tendência, não para ler número a número.",
+      "colunas": [
+        {
+          "rotulo": "Indicador"
+        },
+        {
+          "rotulo": "out"
+        },
+        {
+          "rotulo": "nov"
+        },
+        {
+          "rotulo": "dez"
+        },
+        {
+          "rotulo": "jan"
+        },
+        {
+          "rotulo": "fev"
+        },
+        {
+          "rotulo": "mar"
+        },
+        {
+          "rotulo": "abr"
+        },
+        {
+          "rotulo": "mai"
+        },
+        {
+          "rotulo": "jun"
+        },
+        {
+          "rotulo": "jul"
+        },
+        {
+          "rotulo": "ago"
+        },
+        {
+          "rotulo": "set"
+        },
+        {
+          "rotulo": "Média"
+        }
+      ],
+      "linhas": [
+        {
+          "celulas": [
+            {
+              "valor": "Receita bruta"
+            },
+            {
+              "valor": {
+                "valor": 6640000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 6710000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 7020000,
+                "unidade": "brl"
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 6380000,
+                "unidade": "brl"
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": 6510000,
+                "unidade": "brl"
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": 6800000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 6860000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 6750000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 6660000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 7110000,
+                "unidade": "brl"
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 6690000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 6950000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 6756666.67,
+                "unidade": "brl"
+              },
+              "tom": "apagado"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Margem bruta"
+            },
+            {
+              "valor": {
+                "valor": 34,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 33.6,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 34.5,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 33.5,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 33.6,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 33.6,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 33.7,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 34.4,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 34.2,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 32.7,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 33.4,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 32.5,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": 33.6,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "tom": "apagado"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Margem de contribuição"
+            },
+            {
+              "valor": {
+                "valor": 30.1,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 29.7,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 30.6,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 29.6,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 29.7,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 29.7,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 29.8,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 30.5,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 30.3,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 28.8,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": 29.5,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 28.6,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": 29.7,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "tom": "apagado"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Despesas fixas sobre a receita"
+            },
+            {
+              "valor": {
+                "valor": 19.7,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 19.7,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 19.7,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 20.4,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 20.1,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 19.6,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 19.5,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 20,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 20.4,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 19.3,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 20.3,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 19.7,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 19.9,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "tom": "apagado"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Margem EBITDA"
+            },
+            {
+              "valor": {
+                "valor": 10.4,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 10,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 10.9,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 9.2,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": 9.6,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 10.1,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 10.3,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 10.5,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 9.9,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 9.5,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": 9.2,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": 8.9,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": 9.9,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "tom": "apagado"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Margem líquida"
+            },
+            {
+              "valor": {
+                "valor": 7.5,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 7.1,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 7.9,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 6.4,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": 6.8,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": 7.2,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 7.4,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 7.5,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 7,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 6.7,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": 6.3,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": 6.1,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": 7,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "tom": "apagado"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Prazo médio de recebimento"
+            },
+            {
+              "valor": {
+                "valor": 26,
+                "unidade": "dias",
+                "casas": 0
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 26,
+                "unidade": "dias",
+                "casas": 0
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 27,
+                "unidade": "dias",
+                "casas": 0
+              }
+            },
+            {
+              "valor": {
+                "valor": 26,
+                "unidade": "dias",
+                "casas": 0
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 26,
+                "unidade": "dias",
+                "casas": 0
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 26,
+                "unidade": "dias",
+                "casas": 0
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 27,
+                "unidade": "dias",
+                "casas": 0
+              }
+            },
+            {
+              "valor": {
+                "valor": 28,
+                "unidade": "dias",
+                "casas": 0
+              }
+            },
+            {
+              "valor": {
+                "valor": 29,
+                "unidade": "dias",
+                "casas": 0
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": 30,
+                "unidade": "dias",
+                "casas": 0
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": 30,
+                "unidade": "dias",
+                "casas": 0
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": 31,
+                "unidade": "dias",
+                "casas": 0
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": 27.7,
+                "unidade": "dias",
+                "casas": 1
+              },
+              "tom": "apagado"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Prazo médio de pagamento"
+            },
+            {
+              "valor": {
+                "valor": 25,
+                "unidade": "dias",
+                "casas": 0
+              }
+            },
+            {
+              "valor": {
+                "valor": 24,
+                "unidade": "dias",
+                "casas": 0
+              }
+            },
+            {
+              "valor": {
+                "valor": 25,
+                "unidade": "dias",
+                "casas": 0
+              }
+            },
+            {
+              "valor": {
+                "valor": 25,
+                "unidade": "dias",
+                "casas": 0
+              }
+            },
+            {
+              "valor": {
+                "valor": 24,
+                "unidade": "dias",
+                "casas": 0
+              }
+            },
+            {
+              "valor": {
+                "valor": 24,
+                "unidade": "dias",
+                "casas": 0
+              }
+            },
+            {
+              "valor": {
+                "valor": 25,
+                "unidade": "dias",
+                "casas": 0
+              }
+            },
+            {
+              "valor": {
+                "valor": 24,
+                "unidade": "dias",
+                "casas": 0
+              }
+            },
+            {
+              "valor": {
+                "valor": 24,
+                "unidade": "dias",
+                "casas": 0
+              }
+            },
+            {
+              "valor": {
+                "valor": 24,
+                "unidade": "dias",
+                "casas": 0
+              }
+            },
+            {
+              "valor": {
+                "valor": 24,
+                "unidade": "dias",
+                "casas": 0
+              }
+            },
+            {
+              "valor": {
+                "valor": 24,
+                "unidade": "dias",
+                "casas": 0
+              }
+            },
+            {
+              "valor": {
+                "valor": 24.3,
+                "unidade": "dias",
+                "casas": 1
+              },
+              "tom": "apagado"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Ciclo de caixa"
+            },
+            {
+              "valor": {
+                "valor": 16,
+                "unidade": "dias",
+                "casas": 0
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 17,
+                "unidade": "dias",
+                "casas": 0
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 17,
+                "unidade": "dias",
+                "casas": 0
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 16,
+                "unidade": "dias",
+                "casas": 0
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 17,
+                "unidade": "dias",
+                "casas": 0
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 17,
+                "unidade": "dias",
+                "casas": 0
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 17,
+                "unidade": "dias",
+                "casas": 0
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 19,
+                "unidade": "dias",
+                "casas": 0
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": 20,
+                "unidade": "dias",
+                "casas": 0
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": 21,
+                "unidade": "dias",
+                "casas": 0
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": 21,
+                "unidade": "dias",
+                "casas": 0
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": 22,
+                "unidade": "dias",
+                "casas": 0
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": 18.3,
+                "unidade": "dias",
+                "casas": 1
+              },
+              "tom": "apagado"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Inadimplência"
+            },
+            {
+              "valor": {
+                "valor": 5,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 5.1,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 5.3,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 5.2,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 5.1,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 5.4,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 5.6,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 6,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "valor": {
+                "valor": 6.4,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": 6.9,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": 7.1,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": 7.4,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": 5.9,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "tom": "apagado"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Dívida líquida / EBITDA"
+            },
+            {
+              "valor": {
+                "valor": 0.95,
+                "unidade": "vezes",
+                "casas": 2
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": 0.92,
+                "unidade": "vezes",
+                "casas": 2
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": 0.9,
+                "unidade": "vezes",
+                "casas": 2
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": 0.88,
+                "unidade": "vezes",
+                "casas": 2
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": 0.85,
+                "unidade": "vezes",
+                "casas": 2
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": 0.82,
+                "unidade": "vezes",
+                "casas": 2
+              },
+              "fundo": "critico"
+            },
+            {
+              "valor": {
+                "valor": 0.8,
+                "unidade": "vezes",
+                "casas": 2
+              }
+            },
+            {
+              "valor": {
+                "valor": 0.77,
+                "unidade": "vezes",
+                "casas": 2
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 0.72,
+                "unidade": "vezes",
+                "casas": 2
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 0.69,
+                "unidade": "vezes",
+                "casas": 2
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 0.64,
+                "unidade": "vezes",
+                "casas": 2
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 0.61,
+                "unidade": "vezes",
+                "casas": 2
+              },
+              "fundo": "saudavel"
+            },
+            {
+              "valor": {
+                "valor": 0.7958333333333334,
+                "unidade": "vezes",
+                "casas": 2
+              },
+              "tom": "apagado"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

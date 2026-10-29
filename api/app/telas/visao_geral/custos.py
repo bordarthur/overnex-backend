@@ -10,7 +10,10 @@ custos.abertura em cfg.parametro_cliente (padrão: ramo do cliente).
   orçado por ramo;
 - farol: limites em p.p. acima da referência (farol.cmv em cfg.parametro_cliente; padrão
   do mockup: +0,3 atenção, +1,5 crítico, escala de −4 a +6);
-- velocímetros: os RAMOS_EM_DESTAQUE ramos com mais faturado no mês e "demais ramos";
+- velocímetros: as N linhas (ramos) de maior custo no mês e um "Outros (K linhas)" com o
+  resto somado (inclusive o ramo vazio). N vem do seletor "Linhas de custo", salvo para o
+  cliente (preferencias.py): de 1 a 7 ou, no automático, o menor número de linhas que soma
+  80% do custo do mês, no máximo 7;
 - cartões: CMV do mês, margem bruta, lucro bruto e efeito no lucro do mês (diferença de
   CMV contra a referência, aplicada ao faturado projetado em dias úteis).
 
@@ -21,6 +24,7 @@ referência vem da própria tabela de vendas ou, fora da janela dela, também do
 
 import logging
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
@@ -47,6 +51,14 @@ from app.telas.visao_geral.contrato import (
     Tendencia,
     Valor,
 )
+from app.telas.visao_geral.preferencias import (
+    LINHAS_CUSTO,
+    LINHAS_CUSTO_AUTO,
+    LINHAS_CUSTO_MAXIMO,
+    LINHAS_CUSTO_PARTICIPACAO,
+    PREFERENCIAS,
+)
+from app.telas.visao_geral.preferencias import valor as preferencia
 from app.telas.visao_geral.projecao import projetar_faturado
 from app.telas.visao_geral.texto import moeda, numero
 from app.telas.visao_geral.vendas import (
@@ -59,7 +71,6 @@ from app.telas.visao_geral.vendas import (
 
 logger = logging.getLogger(__name__)
 
-RAMOS_EM_DESTAQUE = 3
 MESES_REFERENCIA = 6
 MESES_TENDENCIA = 6
 INDICADOR = "cmv"
@@ -71,7 +82,7 @@ SEM_RAMO = "(vazio)"
 class Abertura(BaseModel):
     """Nome da abertura nos textos (custos.abertura em cfg.parametro_cliente)."""
 
-    # "CMV sem ramo", "por ramo do cliente", "CMV dos demais ramos"
+    # "CMV sem ramo", "por ramo do cliente", "Outros (5 ramos)"
     nome: str = "ramo"
     descricao: str = "ramo do cliente"
     plural: str = "ramos"
@@ -192,6 +203,35 @@ def _id(ramo: str) -> str:
 
 def _nome(ramo: str, a: Abertura) -> str:
     return f"CMV sem {a.nome}" if ramo == SEM_RAMO else f"CMV de {ramo.lower()}"
+
+
+def linhas_em_destaque(custos: Mapping[str, Decimal], escolha: str) -> list[str]:
+    """As linhas com velocímetro próprio, da de maior custo no mês para a menor.
+
+    `escolha`: "1" a "7", ou "auto" (o menor número de linhas que soma
+    LINHAS_CUSTO_PARTICIPACAO% do custo do mês, no máximo LINHAS_CUSTO_MAXIMO). O ramo vazio
+    e as linhas sem custo positivo nunca têm velocímetro próprio (vão para Outros), mas o
+    custo delas conta no total do automático.
+    """
+    ordenadas = sorted(
+        (r for r, c in custos.items() if r != SEM_RAMO and c > 0), key=lambda r: (-custos[r], r)
+    )
+    if escolha != LINHAS_CUSTO_AUTO:
+        return ordenadas[: int(escolha)]
+    alvo = sum(custos.values(), Decimal(0)) * LINHAS_CUSTO_PARTICIPACAO / 100
+    destaque: list[str] = []
+    acumulado = Decimal(0)
+    for r in ordenadas[:LINHAS_CUSTO_MAXIMO]:
+        if acumulado >= alvo:
+            break
+        destaque.append(r)
+        acumulado += custos[r]
+    return destaque
+
+
+def nome_outros(quantas: int, a: Abertura) -> str:
+    """ "Outros (11 linhas)" / "Outros (1 grupo)"."""
+    return f"Outros ({quantas} {a.nome if quantas == 1 else a.plural})"
 
 
 def _ramos_do_mes(
@@ -350,14 +390,20 @@ def secao_custos(ctx: ContextoConsolidado, base: BaseVendas) -> SecaoDoMes | Non
         for ramo, medidas in do_mes.items():
             historico.setdefault(ramo, {})[v.mes] = medidas
 
-    destaque = sorted(do_mes, key=lambda r: do_mes[r]["faturado"], reverse=True)
-    destaque = [r for r in destaque if r != SEM_RAMO][:RAMOS_EM_DESTAQUE]
-    demais = _somar([m for r, m in historico.items() if r not in destaque])
-
+    escolha = preferencia(conn, ctx.cliente_id, LINHAS_CUSTO)
+    destaque = linhas_em_destaque({r: m["custo"] for r, m in do_mes.items()}, escolha)
     indicadores = [indicador_cmv(_id(r), _nome(r, a), v.mes, historico[r], f) for r in destaque]
-    if demais:
+    resto = [r for r in do_mes if r not in destaque]
+    if resto:
+        ids = {_id(r) for r in destaque}
         indicadores.append(
-            indicador_cmv("cmv-demais", f"CMV dos demais {a.plural}", v.mes, demais, f)
+            indicador_cmv(
+                "cmv-outros" if "cmv-outros" not in ids else "cmv-outros-resto",
+                nome_outros(len(resto), a),
+                v.mes,
+                _somar([m for r, m in historico.items() if r not in destaque]),
+                f,
+            )
         )
 
     nome_mes = MESES[v.mes.month - 1].lower()
@@ -375,6 +421,7 @@ def secao_custos(ctx: ContextoConsolidado, base: BaseVendas) -> SecaoDoMes | Non
             projetar_faturado(v.faturado, v.ultimo_dia, base.feriados),
             f,
         ),
+        seletor=PREFERENCIAS[LINHAS_CUSTO].seletor(escolha),
         cartoes=[],
         indicadores=[i for i in indicadores if i is not None],
     )

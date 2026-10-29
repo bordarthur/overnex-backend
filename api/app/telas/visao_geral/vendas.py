@@ -355,6 +355,30 @@ def _metas(conn: Conexao, ctx: ContextoConsolidado, de: date, ate: date) -> dict
     }
 
 
+type Consulta = tuple[sql.Composed, dict[str, Any]]
+
+
+def consulta_resumo_mensal(
+    ctx: ContextoConsolidado, tabelas: list[TabelaDoCliente], de: date, ate: date
+) -> Consulta:
+    """Totais por mês e medida de mart.resumo_mensal (linhas: mes, medida, valor)."""
+    return sql.SQL(
+        """
+        select mes, medida, sum(valor) as valor
+          from mart.resumo_mensal
+         where cliente_id = %(cliente)s and tabela = any(%(tabelas)s) and {filtro}
+           and mes between %(de)s and %(ate)s
+         group by mes, medida
+        """
+    ).format(filtro=filtro_empresa(ctx, "empresa_id")), {
+        "cliente": ctx.cliente_id,
+        "empresas": list(ctx.empresas),
+        "tabelas": [t.tabela for t in tabelas],
+        "de": de,
+        "ate": ate,
+    }
+
+
 def resumo_mensal(
     conn: Conexao, ctx: ContextoConsolidado, tabelas: list[TabelaDoCliente], de: date, ate: date
 ) -> Mensal:
@@ -362,24 +386,7 @@ def resumo_mensal(
     if not existe(conn, "mart.resumo_mensal"):
         return {}
     mensal: Mensal = {}
-    for r in conn.execute(
-        sql.SQL(
-            """
-            select mes, medida, sum(valor) as valor
-              from mart.resumo_mensal
-             where cliente_id = %(cliente)s and tabela = any(%(tabelas)s) and {filtro}
-               and mes between %(de)s and %(ate)s
-             group by mes, medida
-            """
-        ).format(filtro=filtro_empresa(ctx, "empresa_id")),
-        {
-            "cliente": ctx.cliente_id,
-            "empresas": list(ctx.empresas),
-            "tabelas": [t.tabela for t in tabelas],
-            "de": de,
-            "ate": ate,
-        },
-    ):
+    for r in conn.execute(*consulta_resumo_mensal(ctx, tabelas, de, ate)):
         mensal.setdefault(r["mes"], {})[r["medida"]] = r["valor"]
     return mensal
 

@@ -31,9 +31,9 @@ insert into cfg.empresa (id, cliente_id, nome) values
 
 insert into cfg.painel (cliente_id, versao, status, config_json) values
     ('c1000000-0000-4000-8000-00000000000a', 1, 'publicado',
-     '{"telas": ["VG-01", "FIN-01", "COM-01", "COM-02", "COM-03"]}'),
+     '{"telas": ["VG-01", "FIN-01", "COM-01", "COM-02", "COM-03", "FIN-02", "FIN-03"]}'),
     ('c1000000-0000-4000-8000-00000000000b', 1, 'publicado',
-     '{"telas": ["VG-01", "FIN-01", "COM-01", "COM-02", "COM-03"]}');
+     '{"telas": ["VG-01", "FIN-01", "COM-01", "COM-02", "COM-03", "FIN-02", "FIN-03"]}');
 
 insert into cfg.perfil_acesso (id, cliente_id, nome) values
     ('f1000000-0000-4000-8000-00000000000a', 'c1000000-0000-4000-8000-00000000000a', 'Financeiro'),
@@ -51,7 +51,13 @@ insert into cfg.perfil_tela (perfil_id, codigo_tela, ve_dado_nominal) values
     ('f1000000-0000-4000-8000-00000000000a', 'COM-02', true),
     ('f1000000-0000-4000-8000-00000000000b', 'COM-02', true),
     ('f1000000-0000-4000-8000-00000000000a', 'COM-03', false),
-    ('f1000000-0000-4000-8000-00000000000b', 'COM-03', false);
+    ('f1000000-0000-4000-8000-00000000000b', 'COM-03', false),
+    -- painéis financeiros: Resultado e Receber e pagar (mostra clientes, fornecedores e
+    -- vendedores: exige ve_dado_nominal)
+    ('f1000000-0000-4000-8000-00000000000a', 'FIN-02', false),
+    ('f1000000-0000-4000-8000-00000000000b', 'FIN-02', false),
+    ('f1000000-0000-4000-8000-00000000000a', 'FIN-03', true),
+    ('f1000000-0000-4000-8000-00000000000b', 'FIN-03', true);
 
 insert into cfg.parametro (empresa_id, chave, valor, vigente_de) values
     ('e1000000-0000-4000-8000-0000000000a1', 'meta_margem', '0.18', '2025-01-01'),

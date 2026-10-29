@@ -1,10 +1,11 @@
 """O começo de toda tela, numa ida ao banco só.
 
 Depois da checagem de acesso (que define app.usuario_id na transação), toda tela precisa
-da última carga, do cliente, das fontes, dos feriados e dos parâmetros do cliente: cinco
-consultas pequenas, que custavam cinco idas e voltas (~100 ms cada). Aqui elas vão juntas
-(app.core.db.em_uma_ida), e fontes, feriados e parâmetros ficam no cache da requisição
-(app.core.cache.memo) com as mesmas chaves que as seções usam: ninguém lê de novo.
+da última carga, do cliente, das fontes, dos feriados, dos parâmetros do cliente e do plano
+de contas: consultas pequenas, que custavam uma ida e volta cada (~100 ms). Aqui elas vão
+juntas (app.core.db.em_uma_ida), e fontes, feriados, parâmetros e plano ficam no cache da
+requisição (app.core.cache.memo) com as mesmas chaves que as seções usam: ninguém lê de
+novo.
 
 Chamar dentro de `por_requisicao()`.
 """
@@ -28,6 +29,7 @@ from app.telas.moldura import (
     cliente_da_linha,
     meses_disponiveis,
 )
+from app.telas.plano import SQL_PLANO, plano_das_linhas
 from app.telas.visao_geral.vendas import SQL_FONTES
 
 
@@ -56,7 +58,12 @@ def preler(conn: Conexao, cliente_id: UUID, *, com_meses: bool = False) -> Inici
         consultas["parametros"] = (SQL_PARAMETROS, p)
     if com_meses and existe(conn, "mart.resumo_mensal"):
         consultas["meses"] = (SQL_MESES, p)
+    if existe(conn, "cfg.plano_conta"):
+        consultas["plano"] = (SQL_PLANO, None)
     linhas = em_uma_ida(conn, consultas)
+    if "plano" in linhas:
+        plano = plano_das_linhas(linhas["plano"])
+        memo(("plano",), lambda: plano)
 
     fontes = linhas["fontes"]
     memo(("fontes", cliente_id), lambda: fontes)

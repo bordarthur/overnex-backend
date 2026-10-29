@@ -346,6 +346,7 @@ def montar(
     escolhido: date | None,
     carga: UltimaCarga,
     pedidos: Mapping[str, str | None],
+    a_decidir: bool = False,
 ) -> Conteudo:
     conn = ctx.sessao.conn
     f = fontes(conn, ctx)

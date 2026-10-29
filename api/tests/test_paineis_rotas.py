@@ -77,8 +77,10 @@ def estado(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
         mes: date | None,
         carga: UltimaCarga,
         filtros: Mapping[str, str | None],
+        a_decidir: bool,
     ) -> Conteudo:
         e["chamadas"].append((ctx.codigo_tela, ctx.empresas, mes, dict(filtros)))
+        e["a_decidir"] = a_decidir
         canal = opcoes("canal", "Canal", ["Varejo", "Atacado"])
         escolher(canal, filtros.get("canal"))
         return Conteudo(
@@ -107,7 +109,9 @@ def client(estado: dict[str, Any]) -> Iterator[TestClient]:
     return TestClient(app)
 
 
-@pytest.mark.parametrize("tela", ["vendas", "equipe-comercial", "clientes"])
+@pytest.mark.parametrize(
+    "tela", ["vendas", "equipe-comercial", "clientes", "resultado", "receber-pagar"]
+)
 def test_painel_200_com_a_moldura(client: TestClient, estado: dict[str, Any], tela: str) -> None:
     r = client.get(f"/api/telas/{tela}")
 
@@ -154,9 +158,10 @@ def test_mes_fora_da_lista_ou_do_formato_422(client: TestClient, mes: str) -> No
         assert r.json() == {"detail": "Mês sem dados."}
 
 
-def test_tela_fora_do_perfil_403(client: TestClient, estado: dict[str, Any]) -> None:
+@pytest.mark.parametrize("tela", ["vendas", "resultado", "receber-pagar"])
+def test_tela_fora_do_perfil_403(client: TestClient, estado: dict[str, Any], tela: str) -> None:
     estado["perfis"] = {}
-    r = client.get("/api/telas/vendas")
+    r = client.get(f"/api/telas/{tela}")
     assert r.status_code == 403
     assert r.json() == {"detail": "Acesso negado."}
     assert estado["chamadas"] == []
@@ -165,14 +170,52 @@ def test_tela_fora_do_perfil_403(client: TestClient, estado: dict[str, Any]) -> 
 def test_equipe_exige_dado_nominal(client: TestClient, estado: dict[str, Any]) -> None:
     estado["perfis"] = {str(CLIENTE): False}
     assert client.get("/api/telas/equipe-comercial").status_code == 403
-    # as outras duas não mostram nomes de pessoas
+    # Receber e pagar mostra clientes, fornecedores e vendedores
+    assert client.get("/api/telas/receber-pagar").status_code == 403
+    # as outras não mostram nomes de pessoas
     assert client.get("/api/telas/vendas").status_code == 200
     assert client.get("/api/telas/clientes").status_code == 200
+    assert client.get("/api/telas/resultado").status_code == 200
 
 
-def test_empresa_fora_do_vinculo_403(client: TestClient) -> None:
-    r = client.get("/api/telas/vendas", params={"empresa": str(UUID(int=9))})
+@pytest.mark.parametrize("tela", ["vendas", "resultado", "receber-pagar"])
+def test_empresa_fora_do_vinculo_403(client: TestClient, tela: str) -> None:
+    r = client.get(f"/api/telas/{tela}", params={"empresa": str(UUID(int=9))})
     assert r.status_code == 403
+
+
+def test_filtros_do_resultado_e_do_receber_pagar(
+    client: TestClient, estado: dict[str, Any]
+) -> None:
+    client.get(
+        "/api/telas/resultado",
+        params={"visao": "ano", "cenario": "meta", "comparar": "mes-anterior"},
+    )
+    # o padrão de `comparar` vira ausente (mesma chave da pré-montagem)
+    client.get("/api/telas/resultado", params={"comparar": "orcado"})
+    client.get("/api/telas/receber-pagar", params={"vendedor": "ana", "atraso": "ate-30"})
+
+    assert [c[3] for c in estado["chamadas"]] == [
+        {"visao": "ano", "cenario": "meta", "comparar": "mes-anterior"},
+        {"visao": None, "cenario": None, "comparar": None},
+        {"vendedor": "ana", "atraso": "ate-30"},
+    ]
+    assert estado["a_decidir"] is False
+
+
+def test_comparar_desconhecido_422_ate_sem_carga(
+    client: TestClient, estado: dict[str, Any]
+) -> None:
+    r = client.get("/api/telas/resultado", params={"comparar": "ano-anterior"})
+    assert r.status_code == 422
+    assert r.json() == {"detail": "Filtro inválido."}
+
+    estado["carga"] = None
+    # `comparar` vem do chip global: vale mesmo sem nada a mostrar
+    r = client.get("/api/telas/resultado", params={"comparar": "mes-anterior"})
+    assert r.status_code == 200
+    assert r.json()["cartoes"] == []
+    assert client.get("/api/telas/resultado", params={"visao": "ano"}).status_code == 422
 
 
 def test_antes_da_primeira_carga_vem_vazio(client: TestClient, estado: dict[str, Any]) -> None:
@@ -207,6 +250,21 @@ def test_demo_devolve_o_mockup_e_confere_os_filtros(
     # o aviso da fixture cita um módulo que ainda não existe
     assert "aviso" not in client.get("/api/telas/clientes").json()
 
+    # cartões a decidir e o nível 3 da DRE ficam de fora sem PAINEIS_A_DECIDIR
+    corpo = client.get("/api/telas/resultado", params={"comparar": "mes-anterior"}).json()
+    ids = [c["id"] for c in corpo["cartoes"]]
+    assert "ponte-ebitda" not in ids
+    assert "tabela-financeira" not in ids
+    dre = next(c for c in corpo["cartoes"] if c["id"] == "dre-gerencial")
+    assert dre["niveis"] == [1, 2]
+    assert all(linha["nivel"] != 3 for linha in dre["linhas"])
+    assert client.get("/api/telas/receber-pagar", params={"atraso": "x"}).status_code == 422
+
+    com_a_decidir = demo.model_copy(update={"paineis_a_decidir": True})
+    app.dependency_overrides[get_settings] = lambda: com_a_decidir
+    ids = [c["id"] for c in client.get("/api/telas/resultado").json()["cartoes"]]
+    assert {"ponte-ebitda", "maiores-desvios", "tabela-financeira"} <= set(ids)
+
 
 def test_resposta_fica_no_cache_com_a_chave_dos_filtros(
     client: TestClient, estado: dict[str, Any]
@@ -230,6 +288,8 @@ def test_openapi_tem_as_rotas_e_os_filtros(client: TestClient) -> None:
         ("/api/telas/vendas", {"mes", "empresa", "canal", "linha"}),
         ("/api/telas/equipe-comercial", {"mes", "empresa", "canal", "supervisor"}),
         ("/api/telas/clientes", {"mes", "empresa"}),
+        ("/api/telas/resultado", {"mes", "empresa", "visao", "cenario", "comparar"}),
+        ("/api/telas/receber-pagar", {"mes", "empresa", "vendedor", "atraso"}),
     ):
         parametros = esquema["paths"][caminho]["get"]["parameters"]
         assert {p["name"] for p in parametros} == filtros
