@@ -1,6 +1,6 @@
 # TODO — Overnex backend
 
-Última atualização: 28/10/2026.
+Última atualização: 30/10/2026.
 
 ## A fazer
 
@@ -62,6 +62,16 @@ Feito em 28/10/2026 (código; nada aplicado em produção): `GET /api/telas/resu
   Com a tabela carregada, a API usa só ela no realizado (Visão geral e painel); sem ela, a regra antiga. Na view, a conferir com quem a escreveu: a conta 301001 pode entrar duas vezes (regra geral e "Fretes e Retorno"; o `'301001'` da exclusão está comentado) e a 301002 também, se o Id_LANN dela for 160.01.04.
 - [ ] **Fluxo de caixa pelo plano** (competência CA e CO/CA, classe FCO/FCI/FCF): o plano já está na API (`Plano.no_caixa`), mas nenhuma tela calcula fluxo de caixa ainda (a tela Caixa ficou fora). Decidir a tela e a fonte do realizado (`f_pagas_pj` e `f_recebidas_pj` pelo de-para, ou os lançamentos por data de caixa).
 - [ ] **Front:** espelhar o contrato em `src/contracts/painel.ts` (o rascunho do front já bate; diferenças no resumo entregue em 28/10/2026), mandar `comparar` na consulta do Resultado e trocar as fixtures pela API. A "leitura rápida" vem em `chamada`, não em `nota`; "parou de comprar" e "título vencido" vêm em `etiqueta`, não em `sub`.
+
+### Painel Pessoas (PES-01)
+
+Feito em 30/10/2026 (código; nada aplicado em produção): `GET /api/telas/pessoas` no contrato `PainelPayload`, com o que o mockup trouxe de novo (`casasMil` em `Valor` e `Escala`, `rotulosNasBarras` e `totais` no empilhado, `visoes` no cartão de gráficos e os cartões `numero-grafico` e `lista-detalhe`). Fonte: `f_folha_*` (PJ: `f_folha_pj_cortes`) e o faturado do `mart.resumo_mensal`. Regras no topo de [pessoas.py](api/app/telas/paineis/pessoas.py). Testado só sem banco; o SQL novo foi conferido só com o `pglast`, e o painel inteiro rodou sobre o Parquet da folha da PJ (jan/2024 a set/2026) sem erro. Falta:
+
+- [ ] **Rodar [pj_cortes_tela_pessoas.sql](supabase/producao/pj_cortes_tela_pessoas.sql)**: a parte 1 (tira a janela de 3 meses da folha) a qualquer hora, seguida da carga; a parte 2 (PES-01 no perfil "Desenvolvimento") depois da API publicada. Sem a parte 1, o painel sai com 3 meses (turnover de 2 meses, sem tempo de casa). Não há migration nova.
+- [ ] **Perfis de diretoria e RH da PJ**: criar e liberar PES-01 só neles. O 403 de quem não é diretoria nem RH vem do cadastro (`cfg.perfil_tela`), não de regra na API.
+- [ ] **Rodar os testes `db`** novos de [api/tests/test_paineis.py](api/tests/test_paineis.py) (Pessoas do Bruno, 403 da Ana, vazio antes da carga).
+- [ ] **Nome da pessoa na folha**: 37 das 288 saídas de jan/2024 a set/2026 têm uma admissão no mesmo mês com nome quase igual (mesmo primeiro nome, sobrenome escrito diferente): parecem a mesma pessoa e inflam admissões, desligamentos e turnover. Acento, caixa e espaços a API já ignora. O certo é a view do DW trazer matrícula ou CPF (a API passaria a usar essa coluna como chave da pessoa).
+- [ ] **Front:** espelhar o contrato (já está em `src/contracts/painel.ts`), trocar a fixture pela API e conferir as diferenças da fixture (resumo entregue em 30/10/2026).
 
 ### Visão geral no mockup M2.1.2 (seletor de custos e cartões do Financeiro)
 
@@ -205,6 +215,17 @@ O front (`overnex-frontend`) já desenha a Visão geral a partir de um JSON fixo
   - farol das linhas da DRE (o do mockup: receita 100%/97%; custo pelo peso na receita líquida, 1%/5%; subtotais −0,2/−1,2 p.p.) e da margem de segurança (`farol.margem_seguranca`: abaixo de 10%, atenção; abaixo de 0, crítico);
   - sinal dos grupos: o painel soma cada grupo com o sinal; a Visão geral, em valor absoluto. Só diferem quando um grupo fecha o mês do outro lado (ex.: estorno maior que a despesa);
   - Receber e pagar exige perfil com dado nominal (mostra clientes, fornecedores e vendedores), como a Equipe. Se for melhor abrir para todos e esconder só os nomes, muda na rota.
+- [ ] **Painel Pessoas, regras provisórias** (o usuário confirma ou corrige):
+  - **desligamento** conta no primeiro mês em que o nome não está mais na folha (o mês depois do último), para o último mês da folha também ter turnover. Se for no último mês do nome, o mês mais recente fica sem desligamentos até a folha seguinte;
+  - quem some e volta (uns 40 nomes na PJ) não é desligamento nem admissão; o primeiro mês da folha não tem admissões nem desligamentos;
+  - **salário** = lançamento SALÁRIO; **ajuda de custo** = ALIMENTAÇÃO e TRANSPORTE (TRANSPORTE vem zerado na PJ); FGTS, INSS, 13º, férias, plano de saúde e premiação só no total ("folha com encargos" e "custo mensal"). Salário médio do cargo: só de quem tem SALÁRIO maior que zero;
+  - **folha sobre o faturamento** contra a média dos meses anteriores da janela (farol `folha_receita` em p.p.), no lugar do orçado do mockup: o orçamento não separa a folha;
+  - farol do turnover (`farol.turnover`): até 15% em 12 meses, saudável; até 30%, atenção (proporcional em períodos menores). Setor com média de menos de 3 pessoas fica fora do turnover por setor e da chave de setores. Na PJ o turnover dá 104% em 12 meses (Logística 129%): quase tudo crítico;
+  - tempo de casa com menos de 1 ano: até 20%, saudável; até 35%, atenção. A faixa em que o começo da folha cai vira "Mais de ..." (na PJ, "Mais de 2 anos": a folha começa em jan/2024);
+  - faturamento por colaborador e por pessoa do Comercial: alta, saudável; queda de até 5%, atenção. A variação é contra o primeiro mês da janela (como no mockup: "em 12 meses" é de outubro a setembro);
+  - cargos: os 12 de maior custo no mês (o resto numa nota), agrupados pela grafia (acento e caixa); "MOTORISTA DE CAMINHAO" e "MOTORISTA CAMINHÃO" continuam separados. Cargo com 1 pessoa mostra o salário dela;
+  - **produtividade por setor**: só o Comercial (faturado ÷ pessoas do setor). Fora por falta de fonte: entregas por pessoa (Logística), toneladas expedidas (Expedição), títulos processados (Financeiro). A despesa administrativa sobre a receita (Administrativo) tem fonte (DRE), mas falta dizer quais contas entram;
+  - aviso: o texto pedido ("Salário por nome só aparece para o perfil de RH") cita o salário por nome, que fica para outra versão. Quando o mês escolhido (ou o da carga) não tem folha, o aviso diz de que mês são os números.
 - [ ] **Cartões "A decidir" do Resultado** (só com `PAINEIS_A_DECIDIR=1`, em dev): ponte do EBITDA (só contra o orçado: o texto do "i" fala em orçado), maiores desvios de nível 3, nível 3 da DRE e tabela financeira (sem ciclo de caixa e dívida líquida). Atenção no nível 3: o orçado da receita fica nas contas 100.01.xx, e o faturado entra numa conta só ("Faturado das vendas", sem Id_Descritivo), então os desvios de receita se cruzam; o mesmo no CMV. Aprovados, sair de `A_DECIDIR` em [router.py](api/app/telas/paineis/router.py).
 - [ ] **Aposentar o FIN-01?** Ficou por ora: é a única tela no caminho `exigir_tela` (empresa obrigatória) e lê `mart.lancamento`, coberto pelos testes da carga (`tipo = 'lancamento'`). Aposentar junto com esse tipo de fonte, se ele não for mais usado.
 - [ ] **Microsoft Entra ID.** O login agora é por e-mail e senha no Supabase Auth; a validação do Entra continua em [api/app/seguranca/auth.py](api/app/seguranca/auth.py) (`validar_token_entra`), desligada por configuração (`AUTH_PROVEDOR=entra` liga). Decidir se volta (por exemplo, para os consultores da LANN) e como: app registration da API (`ENTRA_TENANT_ID`, `ENTRA_AUDIENCE`), usuários dos clientes como convidados no tenant ou o app aceitando vários tenants (pede ajuste na validação do token), e se os dois provedores convivem (hoje é um ou outro; `seg.usuario.id_autenticacao` guarda o id de um só).
@@ -213,6 +234,7 @@ O front (`overnex-frontend`) já desenha a Visão geral a partir de um JSON fixo
 
 ## Concluído
 
+- **30/10/2026 — Painel Pessoas na API (PES-01):** `GET /api/telas/pessoas` com os 10 cartões do mockup (o que mudou na equipe, faturamento por colaborador, colaboradores por setor e cada setor mês a mês, cargos e salários sem nomes, folha por setor, admissões e turnover com uma visão por setor, turnover por setor, tempo de casa e produtividade, esta só do Comercial), 4 KPIs e o aviso de painel restrito; folha e faturado numa ida ao banco, os nomes viram md5 no próprio banco. Contrato com `casasMil`, `rotulosNasBarras`/`totais`, `visoes`, `numero-grafico` e `lista-detalhe`, demo com a fixture do front, `farol.turnover`, script de produção e `openapi.json` regenerado. Testado sem banco (447 testes); testes `db` escritos, sem rodar; SQL só com o `pglast`.
 - **28/10/2026 — Visão geral no mockup M2.1.2:** contrato espelhado de `src/contracts/visaoGeral.ts` ([contrato.py](api/app/telas/visao_geral/contrato.py)) e `demo.json` trocado pela fixture nova; períodos "Mês" e "Acumulado" e a `nota` do topo; na Custos, o seletor "Linhas de custo" no lugar dos 3 ramos e "demais", com a escolha salva por cliente (`PUT /api/telas/visao-geral/preferencias/{id}`: 204, 404, 422, 403 por papel; commit antes do 204, cache da tela do cliente apagado e as escolhas na chave do cache; troca registrada em `seg.log_alteracao`; [migration 19](supabase/migrations/20261028000019_preferencia_cliente.sql)); no Financeiro, os cartões "Próximos 7, 15 e 30 dias" e "Contas a pagar lançadas" (a leitura dos títulos soma as três janelas na mesma consulta) e a inadimplência com título e subtítulo, sem os velocímetros de prazo. Testado sem banco (os testes de CI da API passam); testes `db` e pgTAP escritos, sem rodar; SQL novo só com o `pglast`; `openapi.json` regenerado.
 - **28/10/2026 — DRE pelos lançamentos agrupados do cliente:** view da PJ adaptada do Fabric para o Azure SQL ([jobs/snapshot/azure/](jobs/snapshot/azure/), conferida só com o parser T-SQL do `sqlglot`), migration 18 (`mart.f_lancamentos_agrupados_pj`), script da fonte e a API lendo `f_lancamentos_agrupados_*` no realizado da DRE quando o cliente tem a tabela com linhas (vazia, a regra antiga; o orçado continua de `f_orcamento_*`; o plano de contas continua filtrando CO e CO/CA). Testado sem banco (391 testes); SQL do Supabase só com o `pglast`.
 

@@ -1,5 +1,5 @@
-"""GET /api/telas/vendas, /equipe-comercial, /clientes, /resultado e /receber-pagar contra o
-banco local.
+"""GET /api/telas/vendas, /equipe-comercial, /clientes, /resultado, /receber-pagar e /pessoas
+contra o banco local.
 
 Dados no formato da PJ Cortes (colunas_modelo com vendedor, linha e quantidade) no cliente
 Beta (Bruno; última carga em 11/10/2026).
@@ -21,6 +21,7 @@ EQUIPE = "/api/telas/equipe-comercial"
 CLIENTES = "/api/telas/clientes"
 RESULTADO = "/api/telas/resultado"
 RECEBER_PAGAR = "/api/telas/receber-pagar"
+PESSOAS = "/api/telas/pessoas"
 SESSAO = "/api/sessao"
 
 CAMINHOS = [
@@ -148,7 +149,7 @@ def test_sessao_lista_as_telas_comerciais(client: TestClient) -> None:
     assert {"COM-01", "COM-02", "COM-03", "FIN-02", "FIN-03"} <= set(telas)
 
 
-@pytest.mark.parametrize("rota", [VENDAS, EQUIPE, CLIENTES, RESULTADO, RECEBER_PAGAR])
+@pytest.mark.parametrize("rota", [VENDAS, EQUIPE, CLIENTES, RESULTADO, RECEBER_PAGAR, PESSOAS])
 def test_sem_token_401(client: TestClient, rota: str) -> None:
     assert client.get(rota).status_code == 401
 
@@ -366,3 +367,91 @@ def test_receber_pagar(client: TestClient) -> None:
         client.get(RECEBER_PAGAR, headers=auth(OID_B), params={"vendedor": "ninguem"}).status_code
         == 422
     )
+
+
+# ---------- Pessoas (PES-01) ----------
+
+FOLHA = "dataflow/dbo_f_folha_teste_paineis/dbo_f_folha_teste_paineis.parquet"
+
+
+@pytest.fixture
+def folha_do_bruno(admin_conn: psycopg.Connection[tuple[Any, ...]]) -> Iterator[None]:
+    """Folha de agosto e setembro no formato da PJ Cortes; PES-01 só no perfil do Bruno (o
+    da Ana, "Financeiro", não libera: o painel é da diretoria e do RH)."""
+    admin_conn.execute(
+        """
+        insert into cfg.fonte_carga
+            (cliente_id, tipo, caminho_bucket, ativo, tabela_destino, contem_dado_nominal)
+        values (%s, 'tabela', %s, false, 'f_folha_pj_cortes', true)
+        """,
+        (CLIENTE_B, FOLHA),
+    )
+    # agosto: CARLOS (Logística) e DIANA (Comercial); setembro: DIANA e EDU (entra)
+    admin_conn.execute(
+        """
+        insert into mart.f_folha_pj_cortes
+            (_linha, _cliente_id, "NOME", "CARGO", "SETOR", "Data", "Lancamento", "Valor")
+        values (1, %(c)s, 'CARLOS SOUZA', 'MOTORISTA', 'Logística', '2026-08-01', 'SALÁRIO', 2000),
+               (2, %(c)s, 'CARLOS SOUZA', 'MOTORISTA', 'Logística', '2026-08-01', 'INSS', 500),
+               (3, %(c)s, 'DIANA  LIMA', 'VENDEDOR', 'Comercial', '2026-08-01', 'SALÁRIO', 3000),
+               (4, %(c)s, 'Diana Lima', 'VENDEDOR', 'COMERCIAL', '2026-09-01', 'SALÁRIO', 3000),
+               (5, %(c)s, 'Diana Lima', 'VENDEDOR', 'COMERCIAL', '2026-09-01', 'ALIMENTAÇÃO',
+                400),
+               (6, %(c)s, 'EDU RAMOS', 'MOTORISTA', 'LOGISTICA', '2026-09-01', 'SALÁRIO', 2200)
+        """,
+        {"c": CLIENTE_B},
+    )
+    admin_conn.execute(
+        "insert into cfg.perfil_tela (perfil_id, codigo_tela, ve_dado_nominal) "
+        "values ('f1000000-0000-4000-8000-00000000000b', 'PES-01', false)"
+    )
+    yield
+    admin_conn.execute(
+        "delete from cfg.perfil_tela "
+        "where perfil_id = 'f1000000-0000-4000-8000-00000000000b' and codigo_tela = 'PES-01'"
+    )
+    admin_conn.execute("delete from mart.f_folha_pj_cortes where _cliente_id = %s", (CLIENTE_B,))
+    admin_conn.execute(
+        "delete from cfg.fonte_carga where cliente_id = %s and caminho_bucket = %s",
+        (CLIENTE_B, FOLHA),
+    )
+
+
+@pytest.mark.usefixtures("paineis_do_bruno", "folha_do_bruno")
+def test_pessoas(client: TestClient) -> None:
+    r = client.get(PESSOAS, headers=auth(OID_B))
+
+    assert r.status_code == 200
+    corpo = r.json()
+    assert corpo["tela"] == "pessoas"
+    assert corpo["filtros"] == []
+    kpis = {k["rotulo"]: k for k in corpo["kpis"]}
+    # "DIANA  LIMA" e "Diana Lima" são a mesma pessoa
+    assert kpis["Colaboradores"]["valor"]["valor"] == 2
+    assert kpis["Folha com encargos"]["valor"]["valor"] == 5600
+    # faturado de setembro (3.000) ÷ 2 pessoas
+    assert kpis["Faturamento por colaborador"]["valor"]["valor"] == 1500
+    folha = next(c for c in corpo["cartoes"] if c["id"] == "folha-por-setor")
+    assert [i["rotulo"] for i in folha["itens"]] == ["Comercial", "Logística"]
+    # sem folha em outubro (o mês da carga): os números são de setembro
+    assert corpo["aviso"]["texto"][1]["texto"].endswith("os números são de setembro de 2026.")
+    # nenhum nome sai na resposta
+    for nome in ("CARLOS", "DIANA", "Diana", "EDU"):
+        assert nome not in r.text
+
+
+@pytest.mark.usefixtures("folha_do_bruno")
+def test_pessoas_fora_do_perfil_403(client: TestClient) -> None:
+    r = client.get(PESSOAS, headers=auth(OID_A))
+    assert r.status_code == 403
+    assert r.json() == {"detail": "Acesso negado."}
+    assert "PES-01" not in client.get(SESSAO, headers=auth(OID_A)).json()["telas"]
+    assert "PES-01" in client.get(SESSAO, headers=auth(OID_B)).json()["telas"]
+
+
+@pytest.mark.usefixtures("folha_do_bruno", "bruno_sem_carga")
+def test_pessoas_antes_da_primeira_carga_vem_vazio(client: TestClient) -> None:
+    corpo = client.get(PESSOAS, headers=auth(OID_B)).json()
+    assert (corpo["dadosAte"], corpo["atualizadoEm"]) == (None, None)
+    for campo in ("filtros", "destaques", "kpis", "apoios", "cartoes"):
+        assert corpo[campo] == []

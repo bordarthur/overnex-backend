@@ -1,5 +1,5 @@
 """Contrato dos painéis por cartões (Vendas, Equipe comercial, Clientes e atendimentos,
-Resultado e Receber e pagar), espelho de src/contracts/painel.ts do overnex-frontend.
+Resultado, Receber e pagar e Pessoas), espelho de src/contracts/painel.ts do overnex-frontend.
 
 Como na Visão geral, o front só desenha: todo número, status, texto, rótulo, média,
 projeção e diferença vem pronto. Mudou aqui, mude lá (ou gere os tipos do front a partir
@@ -20,7 +20,9 @@ from app.telas.contrato import Valor as Numero
 from app.telas.moldura import Cliente, ModeloCamel
 from app.telas.visao_geral.contrato import Kpi, Trecho, Unidade, Valor
 
-TelaPainel = Literal["vendas", "equipe-comercial", "clientes", "resultado", "receber-pagar"]
+TelaPainel = Literal[
+    "vendas", "equipe-comercial", "clientes", "resultado", "receber-pagar", "pessoas"
+]
 
 # número a formatar pela unidade, ou texto já pronto ("2 de 6")
 Exibicao = Valor | str
@@ -61,6 +63,8 @@ class Aviso(ModeloCamel):
 class Escala(ModeloCamel):
     unidade: Unidade
     casas: int | None = None
+    # reais em milhares com casas, na dica (R$ 54,7 mil)
+    casas_mil: int | None = None
     # depois do número: "t", "clientes"
     sufixo: str | None = None
 
@@ -173,6 +177,10 @@ class GraficoEmpilhado(Escala):
     paleta: Literal["series", "atraso"] | None = None
     rotulos: list[str]
     series: list[SerieEmpilhada]
+    # valor escrito dentro de cada parte (quando cabe)
+    rotulos_nas_barras: bool = False
+    # total escrito em cima de cada pilha, um por rótulo, já somado
+    totais: list[Numero] | None = None
 
 
 class PassoCascata(ModeloCamel):
@@ -452,13 +460,26 @@ class GraficoCartao(ModeloCamel):
     grafico: Grafico
 
 
+class VisaoGraficos(ModeloCamel):
+    id: str
+    rotulo: str
+    graficos: list[GraficoCartao]
+    # embaixo dos gráficos
+    nota: list[Trecho] | None = None
+
+
 class CartaoGraficos(CartaoBase):
-    """Um ou mais gráficos lado a lado."""
+    """Um ou mais gráficos lado a lado. Com `visoes`, o cartão ganha uma chave (Todos,
+    Logística...) e desenha só os gráficos da visão escolhida; aí `graficos` vem vazio."""
 
     tipo: Literal["graficos"]
     # gráficos por linha quando há mais de um (padrão do front: 2)
     colunas: Literal[2, 3] | None = None
     graficos: list[GraficoCartao]
+    # nome da chave, para leitor de tela ("Setor")
+    rotulo_visoes: str | None = None
+    # a primeira é a padrão
+    visoes: list[VisaoGraficos] | None = None
 
 
 class LinhaFaixa(ModeloCamel):
@@ -676,6 +697,52 @@ class CartaoBarrasHorizontais(CartaoBase):
     itens: list[BarraHorizontal]
 
 
+class VariacaoNumero(ModeloCamel):
+    # "▲ 3% em 12 meses": a seta segue o sinal do valor; o tom diz se é bom ou ruim
+    valor: Valor
+    texto: str
+    tom: Status
+
+
+class NumeroDestaque(ModeloCamel):
+    valor: Valor
+    texto: list[Trecho]
+    variacao: VariacaoNumero | None = None
+    nota: str | None = None
+
+
+class CartaoNumeroGrafico(CartaoBase):
+    """Um número grande com o texto que o explica, ao lado de um gráfico (faturamento por
+    colaborador)."""
+
+    tipo: Literal["numero-grafico"]
+    numero: NumeroDestaque
+    grafico: Grafico
+
+
+class DetalheLista(ModeloCamel):
+    titulo: str
+    grafico: GraficoLinhas
+
+
+class ItemListaDetalhe(ModeloCamel):
+    id: str
+    # uma a menos que as colunas: a última é a tendência
+    celulas: list[Celula]
+    # realizado cheio, comparação tracejada (mesmo formato da tendência da DRE)
+    tendencia: TendenciaDre
+    detalhe: DetalheLista
+
+
+class CartaoListaDetalhe(CartaoBase):
+    """Lista em que cada linha abre o próprio gráfico ao lado (produtividade por setor). A
+    primeira linha começa escolhida."""
+
+    tipo: Literal["lista-detalhe"]
+    colunas: list[ColunaTabela]
+    itens: list[ItemListaDetalhe]
+
+
 Cartao = Annotated[
     CartaoAndamentoMes
     | CartaoFatores
@@ -691,7 +758,9 @@ Cartao = Annotated[
     | CartaoDesvios
     | CartaoJanelas
     | CartaoDoisLados
-    | CartaoBarrasHorizontais,
+    | CartaoBarrasHorizontais
+    | CartaoNumeroGrafico
+    | CartaoListaDetalhe,
     Field(discriminator="tipo"),
 ]
 

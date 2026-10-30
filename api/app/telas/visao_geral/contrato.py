@@ -23,6 +23,8 @@ class Valor(ModeloCamel):
     casas: int | None = None
     # brl compacto (padrão do front: true): R$ 6,54 mi / R$ 360 mil; brl cheio: R$ 2.995
     compacto: bool | None = None
+    # brl compacto em milhares com casas (R$ 54,7 mil); sem ele, milhares saem inteiros
+    casas_mil: int | None = None
     # sufixo, por exemplo para qtd: "clientes", "linhas"
     sufixo: str | None = None
 
