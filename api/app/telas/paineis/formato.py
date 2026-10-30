@@ -54,6 +54,18 @@ def nome_mes(mes: date) -> str:
     return MESES[mes.month - 1].lower()
 
 
+def mes_ano(mes: date) -> str:
+    """outubro de 2025"""
+    return f"{nome_mes(mes)} de {mes.year}"
+
+
+def moeda_mil(v: Decimal) -> str:
+    """Como `casasMil: 1` no front: R$ 54,7 mil; fora dos milhares, como `moeda`."""
+    if Decimal(1000) <= abs(v) < Decimal(1_000_000):
+        return f"R$ {numero(abs(v) / Decimal(1000), 1)} mil"
+    return moeda(v)
+
+
 def lista(nomes: Sequence[str]) -> str:
     """ "Ana", "Ana e Bruno", "Ana, Bruno e Carla"."""
     if len(nomes) <= 1:

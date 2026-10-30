@@ -1,0 +1,4015 @@
+{
+  "tela": "pessoas",
+  "versaoContrato": "1.0",
+  "cliente": {
+    "nome": "Cliente Demo",
+    "sigla": "CD",
+    "logoUrl": null
+  },
+  "dadosAte": "2026-10-12",
+  "atualizadoEm": "2026-10-13T12:02:00Z",
+  "filtros": [],
+  "aviso": {
+    "tom": "info",
+    "texto": [
+      {
+        "texto": "Painel restrito: só perfis de diretoria e RH enxergam. Salário por nome só aparece para o perfil de RH."
+      }
+    ]
+  },
+  "destaques": [],
+  "kpis": [
+    {
+      "rotulo": "Colaboradores",
+      "valor": {
+        "valor": 127,
+        "unidade": "qtd"
+      },
+      "contexto": "eram 125 há 12 meses"
+    },
+    {
+      "rotulo": "Folha com encargos",
+      "valor": {
+        "valor": 820000,
+        "unidade": "brl"
+      },
+      "contexto": "12,0% da receita; orçado 11,9%",
+      "status": "atencao"
+    },
+    {
+      "rotulo": "Faturamento por colaborador",
+      "valor": {
+        "valor": 54724,
+        "unidade": "brl",
+        "casasMil": 1
+      },
+      "contexto": "por mês; R$ 53,1 mil em outubro de 2025",
+      "status": "saudavel"
+    },
+    {
+      "rotulo": "Custo médio por pessoa",
+      "valor": {
+        "valor": 6457,
+        "unidade": "brl",
+        "casasMil": 1
+      },
+      "contexto": "salário, encargos e ajuda de custo"
+    }
+  ],
+  "apoios": [],
+  "cartoes": [
+    {
+      "id": "mudou-na-equipe",
+      "tipo": "destaques",
+      "largura": 12,
+      "titulo": "O que mudou na equipe",
+      "subtitulo": "Os quatro fatos do mês, para ler em 10 segundos",
+      "itens": [
+        {
+          "categoria": "Saídas",
+          "titulo": "Logística perdeu 7 pessoas em junho",
+          "texto": "O pico do ano. Em 12 meses foram 26 saídas no setor.",
+          "status": "critico"
+        },
+        {
+          "categoria": "Rotatividade",
+          "titulo": "29% em 12 meses",
+          "texto": "Quase 1 em cada 3 vagas foi reposta no ano.",
+          "status": "critico"
+        },
+        {
+          "categoria": "Tempo de casa",
+          "titulo": "31% com menos de 1 ano",
+          "texto": "Muita gente nova: treinamento e integração pesam.",
+          "status": "atencao"
+        },
+        {
+          "categoria": "Produtividade",
+          "titulo": "R$ 54,7 mil por pessoa",
+          "texto": "Cada colaborador gera 3% a mais que em outubro de 2025.",
+          "status": "saudavel"
+        }
+      ]
+    },
+    {
+      "id": "faturamento-por-colaborador",
+      "tipo": "numero-grafico",
+      "largura": 12,
+      "titulo": "Faturamento por colaborador",
+      "subtitulo": "Quanto de faturamento cada pessoa da equipe gera por mês",
+      "numero": {
+        "valor": {
+          "valor": 54724,
+          "unidade": "brl",
+          "casasMil": 1
+        },
+        "texto": [
+          {
+            "texto": "é quanto "
+          },
+          {
+            "texto": "cada colaborador",
+            "destaque": true
+          },
+          {
+            "texto": " gera de faturamento por mês."
+          }
+        ],
+        "variacao": {
+          "valor": {
+            "valor": 3,
+            "unidade": "pct",
+            "casas": 0
+          },
+          "texto": "em 12 meses",
+          "tom": "saudavel"
+        },
+        "nota": "Em outubro de 2025 eram R$ 53,1 mil. A média do período é R$ 53,3 mil."
+      },
+      "grafico": {
+        "tipo": "linhas",
+        "unidade": "brl",
+        "casasMil": 1,
+        "rotulos": ["out", "nov", "dez", "jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set"],
+        "titulos": [
+          "out-25",
+          "nov-25",
+          "dez-25",
+          "jan-26",
+          "fev-26",
+          "mar-26",
+          "abr-26",
+          "mai-26",
+          "jun-26",
+          "jul-26",
+          "ago-26",
+          "set-26"
+        ],
+        "series": [
+          {
+            "nome": "Por colaborador",
+            "valores": [53120, 54113, 55276, 49844, 50465, 54400, 53594, 51136, 53710, 55984, 52677, 54724],
+            "estilo": "principal",
+            "area": true
+          }
+        ],
+        "referencia": {
+          "valor": 53254,
+          "rotulo": "média R$ 53,3 mil"
+        },
+        "marcadores": [
+          {
+            "serie": 0,
+            "i": 11,
+            "rotulo": "R$ 54,7 mil"
+          }
+        ]
+      }
+    },
+    {
+      "id": "colaboradores-por-setor",
+      "tipo": "graficos",
+      "largura": 12,
+      "titulo": "Colaboradores por setor",
+      "subtitulo": "Total no topo de cada barra",
+      "graficos": [
+        {
+          "grafico": {
+            "tipo": "empilhado",
+            "unidade": "qtd",
+            "rotulos": ["out", "nov", "dez", "jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set"],
+            "rotulosNasBarras": true,
+            "totais": [125, 124, 127, 128, 129, 125, 128, 132, 124, 127, 127, 127],
+            "series": [
+              {
+                "nome": "Logística",
+                "valores": [67, 66, 69, 68, 70, 70, 74, 78, 73, 74, 73, 73]
+              },
+              {
+                "nome": "Comercial",
+                "valores": [31, 32, 32, 32, 30, 28, 29, 29, 27, 28, 29, 29]
+              },
+              {
+                "nome": "Administrativo",
+                "valores": [6, 5, 6, 9, 9, 9, 12, 12, 11, 12, 12, 12]
+              },
+              {
+                "nome": "Expedição",
+                "valores": [10, 10, 10, 10, 11, 11, 10, 10, 10, 10, 10, 10]
+              },
+              {
+                "nome": "Estoque",
+                "valores": [6, 6, 6, 4, 4, 4, 0, 0, 0, 0, 0, 0]
+              },
+              {
+                "nome": "Financeiro",
+                "valores": [5, 5, 4, 5, 5, 3, 3, 3, 3, 3, 3, 3]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "setor-mes-a-mes",
+      "tipo": "graficos",
+      "largura": 12,
+      "colunas": 3,
+      "titulo": "Cada setor, mês a mês",
+      "subtitulo": "Escala própria em cada gráfico, para mostrar a variação",
+      "graficos": [
+        {
+          "titulo": "Logística",
+          "grafico": {
+            "tipo": "barras",
+            "unidade": "qtd",
+            "rotulosNasBarras": true,
+            "grupos": [
+              {
+                "rotulo": "O",
+                "titulo": "out-25",
+                "barras": [
+                  {
+                    "nome": "Logística",
+                    "valor": 67,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "N",
+                "titulo": "nov-25",
+                "barras": [
+                  {
+                    "nome": "Logística",
+                    "valor": 66,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "D",
+                "titulo": "dez-25",
+                "barras": [
+                  {
+                    "nome": "Logística",
+                    "valor": 69,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "J",
+                "titulo": "jan-26",
+                "barras": [
+                  {
+                    "nome": "Logística",
+                    "valor": 68,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "F",
+                "titulo": "fev-26",
+                "barras": [
+                  {
+                    "nome": "Logística",
+                    "valor": 70,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "M",
+                "titulo": "mar-26",
+                "barras": [
+                  {
+                    "nome": "Logística",
+                    "valor": 70,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "A",
+                "titulo": "abr-26",
+                "barras": [
+                  {
+                    "nome": "Logística",
+                    "valor": 74,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "M",
+                "titulo": "mai-26",
+                "barras": [
+                  {
+                    "nome": "Logística",
+                    "valor": 78,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "J",
+                "titulo": "jun-26",
+                "barras": [
+                  {
+                    "nome": "Logística",
+                    "valor": 73,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "J",
+                "titulo": "jul-26",
+                "barras": [
+                  {
+                    "nome": "Logística",
+                    "valor": 74,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "A",
+                "titulo": "ago-26",
+                "barras": [
+                  {
+                    "nome": "Logística",
+                    "valor": 73,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "S",
+                "titulo": "set-26",
+                "barras": [
+                  {
+                    "nome": "Logística",
+                    "valor": 73,
+                    "estilo": "serie"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "titulo": "Comercial",
+          "grafico": {
+            "tipo": "barras",
+            "unidade": "qtd",
+            "rotulosNasBarras": true,
+            "grupos": [
+              {
+                "rotulo": "O",
+                "titulo": "out-25",
+                "barras": [
+                  {
+                    "nome": "Comercial",
+                    "valor": 31,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "N",
+                "titulo": "nov-25",
+                "barras": [
+                  {
+                    "nome": "Comercial",
+                    "valor": 32,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "D",
+                "titulo": "dez-25",
+                "barras": [
+                  {
+                    "nome": "Comercial",
+                    "valor": 32,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "J",
+                "titulo": "jan-26",
+                "barras": [
+                  {
+                    "nome": "Comercial",
+                    "valor": 32,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "F",
+                "titulo": "fev-26",
+                "barras": [
+                  {
+                    "nome": "Comercial",
+                    "valor": 30,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "M",
+                "titulo": "mar-26",
+                "barras": [
+                  {
+                    "nome": "Comercial",
+                    "valor": 28,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "A",
+                "titulo": "abr-26",
+                "barras": [
+                  {
+                    "nome": "Comercial",
+                    "valor": 29,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "M",
+                "titulo": "mai-26",
+                "barras": [
+                  {
+                    "nome": "Comercial",
+                    "valor": 29,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "J",
+                "titulo": "jun-26",
+                "barras": [
+                  {
+                    "nome": "Comercial",
+                    "valor": 27,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "J",
+                "titulo": "jul-26",
+                "barras": [
+                  {
+                    "nome": "Comercial",
+                    "valor": 28,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "A",
+                "titulo": "ago-26",
+                "barras": [
+                  {
+                    "nome": "Comercial",
+                    "valor": 29,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "S",
+                "titulo": "set-26",
+                "barras": [
+                  {
+                    "nome": "Comercial",
+                    "valor": 29,
+                    "estilo": "serie"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "titulo": "Administrativo",
+          "grafico": {
+            "tipo": "barras",
+            "unidade": "qtd",
+            "rotulosNasBarras": true,
+            "grupos": [
+              {
+                "rotulo": "O",
+                "titulo": "out-25",
+                "barras": [
+                  {
+                    "nome": "Administrativo",
+                    "valor": 6,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "N",
+                "titulo": "nov-25",
+                "barras": [
+                  {
+                    "nome": "Administrativo",
+                    "valor": 5,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "D",
+                "titulo": "dez-25",
+                "barras": [
+                  {
+                    "nome": "Administrativo",
+                    "valor": 6,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "J",
+                "titulo": "jan-26",
+                "barras": [
+                  {
+                    "nome": "Administrativo",
+                    "valor": 9,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "F",
+                "titulo": "fev-26",
+                "barras": [
+                  {
+                    "nome": "Administrativo",
+                    "valor": 9,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "M",
+                "titulo": "mar-26",
+                "barras": [
+                  {
+                    "nome": "Administrativo",
+                    "valor": 9,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "A",
+                "titulo": "abr-26",
+                "barras": [
+                  {
+                    "nome": "Administrativo",
+                    "valor": 12,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "M",
+                "titulo": "mai-26",
+                "barras": [
+                  {
+                    "nome": "Administrativo",
+                    "valor": 12,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "J",
+                "titulo": "jun-26",
+                "barras": [
+                  {
+                    "nome": "Administrativo",
+                    "valor": 11,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "J",
+                "titulo": "jul-26",
+                "barras": [
+                  {
+                    "nome": "Administrativo",
+                    "valor": 12,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "A",
+                "titulo": "ago-26",
+                "barras": [
+                  {
+                    "nome": "Administrativo",
+                    "valor": 12,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "S",
+                "titulo": "set-26",
+                "barras": [
+                  {
+                    "nome": "Administrativo",
+                    "valor": 12,
+                    "estilo": "serie"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "titulo": "Expedição",
+          "grafico": {
+            "tipo": "barras",
+            "unidade": "qtd",
+            "rotulosNasBarras": true,
+            "grupos": [
+              {
+                "rotulo": "O",
+                "titulo": "out-25",
+                "barras": [
+                  {
+                    "nome": "Expedição",
+                    "valor": 10,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "N",
+                "titulo": "nov-25",
+                "barras": [
+                  {
+                    "nome": "Expedição",
+                    "valor": 10,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "D",
+                "titulo": "dez-25",
+                "barras": [
+                  {
+                    "nome": "Expedição",
+                    "valor": 10,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "J",
+                "titulo": "jan-26",
+                "barras": [
+                  {
+                    "nome": "Expedição",
+                    "valor": 10,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "F",
+                "titulo": "fev-26",
+                "barras": [
+                  {
+                    "nome": "Expedição",
+                    "valor": 11,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "M",
+                "titulo": "mar-26",
+                "barras": [
+                  {
+                    "nome": "Expedição",
+                    "valor": 11,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "A",
+                "titulo": "abr-26",
+                "barras": [
+                  {
+                    "nome": "Expedição",
+                    "valor": 10,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "M",
+                "titulo": "mai-26",
+                "barras": [
+                  {
+                    "nome": "Expedição",
+                    "valor": 10,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "J",
+                "titulo": "jun-26",
+                "barras": [
+                  {
+                    "nome": "Expedição",
+                    "valor": 10,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "J",
+                "titulo": "jul-26",
+                "barras": [
+                  {
+                    "nome": "Expedição",
+                    "valor": 10,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "A",
+                "titulo": "ago-26",
+                "barras": [
+                  {
+                    "nome": "Expedição",
+                    "valor": 10,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "S",
+                "titulo": "set-26",
+                "barras": [
+                  {
+                    "nome": "Expedição",
+                    "valor": 10,
+                    "estilo": "serie"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "titulo": "Estoque",
+          "grafico": {
+            "tipo": "barras",
+            "unidade": "qtd",
+            "rotulosNasBarras": true,
+            "grupos": [
+              {
+                "rotulo": "O",
+                "titulo": "out-25",
+                "barras": [
+                  {
+                    "nome": "Estoque",
+                    "valor": 6,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "N",
+                "titulo": "nov-25",
+                "barras": [
+                  {
+                    "nome": "Estoque",
+                    "valor": 6,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "D",
+                "titulo": "dez-25",
+                "barras": [
+                  {
+                    "nome": "Estoque",
+                    "valor": 6,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "J",
+                "titulo": "jan-26",
+                "barras": [
+                  {
+                    "nome": "Estoque",
+                    "valor": 4,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "F",
+                "titulo": "fev-26",
+                "barras": [
+                  {
+                    "nome": "Estoque",
+                    "valor": 4,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "M",
+                "titulo": "mar-26",
+                "barras": [
+                  {
+                    "nome": "Estoque",
+                    "valor": 4,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "A",
+                "titulo": "abr-26",
+                "barras": [
+                  {
+                    "nome": "Estoque",
+                    "valor": 0,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "M",
+                "titulo": "mai-26",
+                "barras": [
+                  {
+                    "nome": "Estoque",
+                    "valor": 0,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "J",
+                "titulo": "jun-26",
+                "barras": [
+                  {
+                    "nome": "Estoque",
+                    "valor": 0,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "J",
+                "titulo": "jul-26",
+                "barras": [
+                  {
+                    "nome": "Estoque",
+                    "valor": 0,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "A",
+                "titulo": "ago-26",
+                "barras": [
+                  {
+                    "nome": "Estoque",
+                    "valor": 0,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "S",
+                "titulo": "set-26",
+                "barras": [
+                  {
+                    "nome": "Estoque",
+                    "valor": 0,
+                    "estilo": "serie"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "titulo": "Financeiro",
+          "grafico": {
+            "tipo": "barras",
+            "unidade": "qtd",
+            "rotulosNasBarras": true,
+            "grupos": [
+              {
+                "rotulo": "O",
+                "titulo": "out-25",
+                "barras": [
+                  {
+                    "nome": "Financeiro",
+                    "valor": 5,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "N",
+                "titulo": "nov-25",
+                "barras": [
+                  {
+                    "nome": "Financeiro",
+                    "valor": 5,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "D",
+                "titulo": "dez-25",
+                "barras": [
+                  {
+                    "nome": "Financeiro",
+                    "valor": 4,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "J",
+                "titulo": "jan-26",
+                "barras": [
+                  {
+                    "nome": "Financeiro",
+                    "valor": 5,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "F",
+                "titulo": "fev-26",
+                "barras": [
+                  {
+                    "nome": "Financeiro",
+                    "valor": 5,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "M",
+                "titulo": "mar-26",
+                "barras": [
+                  {
+                    "nome": "Financeiro",
+                    "valor": 3,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "A",
+                "titulo": "abr-26",
+                "barras": [
+                  {
+                    "nome": "Financeiro",
+                    "valor": 3,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "M",
+                "titulo": "mai-26",
+                "barras": [
+                  {
+                    "nome": "Financeiro",
+                    "valor": 3,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "J",
+                "titulo": "jun-26",
+                "barras": [
+                  {
+                    "nome": "Financeiro",
+                    "valor": 3,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "J",
+                "titulo": "jul-26",
+                "barras": [
+                  {
+                    "nome": "Financeiro",
+                    "valor": 3,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "A",
+                "titulo": "ago-26",
+                "barras": [
+                  {
+                    "nome": "Financeiro",
+                    "valor": 3,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "S",
+                "titulo": "set-26",
+                "barras": [
+                  {
+                    "nome": "Financeiro",
+                    "valor": 3,
+                    "estilo": "serie"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "cargos-salarios",
+      "tipo": "tabela",
+      "largura": 7,
+      "variante": "compacta",
+      "titulo": "Cargos e salários",
+      "subtitulo": "Agregado por cargo. Nomes só no perfil de RH.",
+      "colunas": [
+        {
+          "rotulo": "Cargo"
+        },
+        {
+          "rotulo": "Pessoas"
+        },
+        {
+          "rotulo": "Salário médio"
+        },
+        {
+          "rotulo": "Custo mensal"
+        }
+      ],
+      "linhas": [
+        {
+          "celulas": [
+            {
+              "valor": "Motorista entregador",
+              "sub": "Logística"
+            },
+            {
+              "valor": {
+                "valor": 38,
+                "unidade": "qtd"
+              }
+            },
+            {
+              "valor": {
+                "valor": 3200,
+                "unidade": "brl",
+                "compacto": false
+              },
+              "sub": "+ R$ 450 de ajuda de custo"
+            },
+            {
+              "valor": {
+                "valor": 184908,
+                "unidade": "brl"
+              },
+              "negrito": true,
+              "sub": "com encargos"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Ajudante de entrega",
+              "sub": "Logística"
+            },
+            {
+              "valor": {
+                "valor": 26,
+                "unidade": "qtd"
+              }
+            },
+            {
+              "valor": {
+                "valor": 1900,
+                "unidade": "brl",
+                "compacto": false
+              },
+              "sub": "+ R$ 300 de ajuda de custo"
+            },
+            {
+              "valor": {
+                "valor": 75972,
+                "unidade": "brl"
+              },
+              "negrito": true,
+              "sub": "com encargos"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Gerente operacional",
+              "sub": "Logística"
+            },
+            {
+              "valor": {
+                "valor": 1,
+                "unidade": "qtd"
+              }
+            },
+            {
+              "valor": {
+                "valor": 24000,
+                "unidade": "brl",
+                "compacto": false
+              },
+              "sub": "sem ajuda de custo"
+            },
+            {
+              "valor": {
+                "valor": 33120,
+                "unidade": "brl"
+              },
+              "negrito": true,
+              "sub": "com encargos"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Coordenador de logística",
+              "sub": "Logística"
+            },
+            {
+              "valor": {
+                "valor": 2,
+                "unidade": "qtd"
+              }
+            },
+            {
+              "valor": {
+                "valor": 9500,
+                "unidade": "brl",
+                "compacto": false
+              },
+              "sub": "sem ajuda de custo"
+            },
+            {
+              "valor": {
+                "valor": 26220,
+                "unidade": "brl"
+              },
+              "negrito": true,
+              "sub": "com encargos"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Vendedor externo",
+              "sub": "Comercial"
+            },
+            {
+              "valor": {
+                "valor": 18,
+                "unidade": "qtd"
+              }
+            },
+            {
+              "valor": {
+                "valor": 3800,
+                "unidade": "brl",
+                "compacto": false
+              },
+              "sub": "+ R$ 900 de ajuda de custo"
+            },
+            {
+              "valor": {
+                "valor": 110592,
+                "unidade": "brl"
+              },
+              "negrito": true,
+              "sub": "com encargos"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Televendas",
+              "sub": "Comercial"
+            },
+            {
+              "valor": {
+                "valor": 6,
+                "unidade": "qtd"
+              }
+            },
+            {
+              "valor": {
+                "valor": 2600,
+                "unidade": "brl",
+                "compacto": false
+              },
+              "sub": "+ R$ 200 de ajuda de custo"
+            },
+            {
+              "valor": {
+                "valor": 22728,
+                "unidade": "brl"
+              },
+              "negrito": true,
+              "sub": "com encargos"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Supervisor de vendas",
+              "sub": "Comercial"
+            },
+            {
+              "valor": {
+                "valor": 2,
+                "unidade": "qtd"
+              }
+            },
+            {
+              "valor": {
+                "valor": 8500,
+                "unidade": "brl",
+                "compacto": false
+              },
+              "sub": "+ R$ 600 de ajuda de custo"
+            },
+            {
+              "valor": {
+                "valor": 24660,
+                "unidade": "brl"
+              },
+              "negrito": true,
+              "sub": "com encargos"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Analista administrativo",
+              "sub": "Administrativo"
+            },
+            {
+              "valor": {
+                "valor": 7,
+                "unidade": "qtd"
+              }
+            },
+            {
+              "valor": {
+                "valor": 4200,
+                "unidade": "brl",
+                "compacto": false
+              },
+              "sub": "sem ajuda de custo"
+            },
+            {
+              "valor": {
+                "valor": 40572,
+                "unidade": "brl"
+              },
+              "negrito": true,
+              "sub": "com encargos"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Gerente administrativo e financeiro",
+              "sub": "Administrativo"
+            },
+            {
+              "valor": {
+                "valor": 1,
+                "unidade": "qtd"
+              }
+            },
+            {
+              "valor": {
+                "valor": 9247,
+                "unidade": "brl",
+                "compacto": false
+              },
+              "sub": "sem ajuda de custo"
+            },
+            {
+              "valor": {
+                "valor": 12761,
+                "unidade": "brl"
+              },
+              "negrito": true,
+              "sub": "com encargos"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Conferente",
+              "sub": "Expedição"
+            },
+            {
+              "valor": {
+                "valor": 6,
+                "unidade": "qtd"
+              }
+            },
+            {
+              "valor": {
+                "valor": 2400,
+                "unidade": "brl",
+                "compacto": false
+              },
+              "sub": "+ R$ 150 de ajuda de custo"
+            },
+            {
+              "valor": {
+                "valor": 20772,
+                "unidade": "brl"
+              },
+              "negrito": true,
+              "sub": "com encargos"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Líder de expedição",
+              "sub": "Expedição"
+            },
+            {
+              "valor": {
+                "valor": 2,
+                "unidade": "qtd"
+              }
+            },
+            {
+              "valor": {
+                "valor": 3900,
+                "unidade": "brl",
+                "compacto": false
+              },
+              "sub": "+ R$ 150 de ajuda de custo"
+            },
+            {
+              "valor": {
+                "valor": 11064,
+                "unidade": "brl"
+              },
+              "negrito": true,
+              "sub": "com encargos"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Analista financeiro",
+              "sub": "Financeiro"
+            },
+            {
+              "valor": {
+                "valor": 3,
+                "unidade": "qtd"
+              }
+            },
+            {
+              "valor": {
+                "valor": 4600,
+                "unidade": "brl",
+                "compacto": false
+              },
+              "sub": "sem ajuda de custo"
+            },
+            {
+              "valor": {
+                "valor": 19044,
+                "unidade": "brl"
+              },
+              "negrito": true,
+              "sub": "com encargos"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "folha-por-setor",
+      "tipo": "barras-horizontais",
+      "largura": 5,
+      "titulo": "Folha por setor",
+      "subtitulo": "Setembro, com encargos, e custo por pessoa",
+      "escala": {
+        "unidade": "brl"
+      },
+      "itens": [
+        {
+          "rotulo": "Logística",
+          "sub": "73 pessoas · R$ 5 mil por pessoa",
+          "valor": 352000
+        },
+        {
+          "rotulo": "Comercial",
+          "sub": "29 pessoas · R$ 8 mil por pessoa",
+          "valor": 226000
+        },
+        {
+          "rotulo": "Administrativo",
+          "sub": "12 pessoas · R$ 8 mil por pessoa",
+          "valor": 96000
+        },
+        {
+          "rotulo": "Expedição",
+          "sub": "10 pessoas · R$ 5 mil por pessoa",
+          "valor": 52000
+        },
+        {
+          "rotulo": "Financeiro",
+          "sub": "3 pessoas · R$ 9 mil por pessoa",
+          "valor": 28000
+        }
+      ]
+    },
+    {
+      "id": "admissoes-turnover",
+      "tipo": "graficos",
+      "largura": 12,
+      "titulo": "Admissões, desligamentos e turnover",
+      "subtitulo": "Entrada e saída de nomes na folha e o turnover de cada mês contra a média",
+      "legenda": [
+        {
+          "nome": "Admissões",
+          "marca": "quadrado-escuro"
+        },
+        {
+          "nome": "Desligamentos",
+          "marca": "quadrado-claro"
+        }
+      ],
+      "graficos": [],
+      "rotuloVisoes": "Setor",
+      "visoes": [
+        {
+          "id": "todos",
+          "rotulo": "Todos",
+          "graficos": [
+            {
+              "titulo": "Admissões e desligamentos",
+              "grafico": {
+                "tipo": "barras",
+                "unidade": "qtd",
+                "rotulosNasBarras": true,
+                "grupos": [
+                  {
+                    "rotulo": "out",
+                    "titulo": "out-25",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 2,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 9,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "nov",
+                    "titulo": "nov-25",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 2,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 3,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "dez",
+                    "titulo": "dez-25",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 4,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 1,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "jan",
+                    "titulo": "jan-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 3,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 2,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "fev",
+                    "titulo": "fev-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 2,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 1,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "mar",
+                    "titulo": "mar-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 1,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 5,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "abr",
+                    "titulo": "abr-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 4,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 1,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "mai",
+                    "titulo": "mai-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 5,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 1,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "jun",
+                    "titulo": "jun-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 1,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 9,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "jul",
+                    "titulo": "jul-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 4,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 1,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "ago",
+                    "titulo": "ago-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 2,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 2,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "set",
+                    "titulo": "set-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 2,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 2,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "titulo": "Turnover mensal",
+              "grafico": {
+                "tipo": "linhas",
+                "unidade": "pct",
+                "casas": 1,
+                "rotulos": [
+                  "out",
+                  "nov",
+                  "dez",
+                  "jan",
+                  "fev",
+                  "mar",
+                  "abr",
+                  "mai",
+                  "jun",
+                  "jul",
+                  "ago",
+                  "set"
+                ],
+                "titulos": [
+                  "out-25",
+                  "nov-25",
+                  "dez-25",
+                  "jan-26",
+                  "fev-26",
+                  "mar-26",
+                  "abr-26",
+                  "mai-26",
+                  "jun-26",
+                  "jul-26",
+                  "ago-26",
+                  "set-26"
+                ],
+                "piso": 0,
+                "series": [
+                  {
+                    "nome": "Turnover",
+                    "valores": [7.2, 2.42, 0.79, 1.56, 0.78, 4, 0.78, 0.76, 7.26, 0.79, 1.57, 1.57],
+                    "estilo": "principal"
+                  }
+                ],
+                "referencia": {
+                  "valor": 2.46,
+                  "rotulo": "média 2,5%"
+                },
+                "marcadores": [
+                  {
+                    "serie": 0,
+                    "i": 11,
+                    "rotulo": "1,6%"
+                  }
+                ]
+              }
+            }
+          ],
+          "nota": [
+            {
+              "texto": "Empresa toda: turnover médio de "
+            },
+            {
+              "texto": "2,5% ao mês",
+              "destaque": true
+            },
+            {
+              "texto": ", "
+            },
+            {
+              "texto": "29% em 12 meses",
+              "destaque": true
+            },
+            {
+              "texto": ". 32 admissões e 37 desligamentos no período."
+            }
+          ]
+        },
+        {
+          "id": "logistica",
+          "rotulo": "Logística",
+          "graficos": [
+            {
+              "titulo": "Admissões e desligamentos",
+              "grafico": {
+                "tipo": "barras",
+                "unidade": "qtd",
+                "rotulosNasBarras": true,
+                "grupos": [
+                  {
+                    "rotulo": "out",
+                    "titulo": "out-25",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 1,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 6,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "nov",
+                    "titulo": "nov-25",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 1,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 2,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "dez",
+                    "titulo": "dez-25",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 3,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 1,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "jan",
+                    "titulo": "jan-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 2,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 1,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "fev",
+                    "titulo": "fev-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 2,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 1,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "mar",
+                    "titulo": "mar-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 1,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 3,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "abr",
+                    "titulo": "abr-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 3,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 1,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "mai",
+                    "titulo": "mai-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 4,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 1,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "jun",
+                    "titulo": "jun-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 1,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 7,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "jul",
+                    "titulo": "jul-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 2,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 1,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "ago",
+                    "titulo": "ago-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 1,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 1,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "set",
+                    "titulo": "set-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 1,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 1,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "titulo": "Turnover mensal",
+              "grafico": {
+                "tipo": "linhas",
+                "unidade": "pct",
+                "casas": 1,
+                "rotulos": [
+                  "out",
+                  "nov",
+                  "dez",
+                  "jan",
+                  "fev",
+                  "mar",
+                  "abr",
+                  "mai",
+                  "jun",
+                  "jul",
+                  "ago",
+                  "set"
+                ],
+                "titulos": [
+                  "out-25",
+                  "nov-25",
+                  "dez-25",
+                  "jan-26",
+                  "fev-26",
+                  "mar-26",
+                  "abr-26",
+                  "mai-26",
+                  "jun-26",
+                  "jul-26",
+                  "ago-26",
+                  "set-26"
+                ],
+                "piso": 0,
+                "series": [
+                  {
+                    "nome": "Turnover",
+                    "valores": [8.96, 3.03, 1.45, 1.47, 1.43, 4.29, 1.35, 1.28, 9.59, 1.35, 1.37, 1.37],
+                    "estilo": "principal"
+                  }
+                ],
+                "referencia": {
+                  "valor": 3.08,
+                  "rotulo": "média 3,1%"
+                },
+                "marcadores": [
+                  {
+                    "serie": 0,
+                    "i": 11,
+                    "rotulo": "1,4%"
+                  }
+                ]
+              }
+            }
+          ],
+          "nota": [
+            {
+              "texto": "Logística: turnover médio de "
+            },
+            {
+              "texto": "3,1% ao mês",
+              "destaque": true
+            },
+            {
+              "texto": ", "
+            },
+            {
+              "texto": "36% em 12 meses",
+              "destaque": true
+            },
+            {
+              "texto": ". 22 admissões e 26 desligamentos no período."
+            }
+          ]
+        },
+        {
+          "id": "comercial",
+          "rotulo": "Comercial",
+          "graficos": [
+            {
+              "titulo": "Admissões e desligamentos",
+              "grafico": {
+                "tipo": "barras",
+                "unidade": "qtd",
+                "rotulosNasBarras": true,
+                "grupos": [
+                  {
+                    "rotulo": "out",
+                    "titulo": "out-25",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 1,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 2,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "nov",
+                    "titulo": "nov-25",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 1,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 1,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "dez",
+                    "titulo": "dez-25",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "jan",
+                    "titulo": "jan-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 1,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 1,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "fev",
+                    "titulo": "fev-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "mar",
+                    "titulo": "mar-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 1,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "abr",
+                    "titulo": "abr-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 1,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "mai",
+                    "titulo": "mai-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "jun",
+                    "titulo": "jun-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 1,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "jul",
+                    "titulo": "jul-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 1,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "ago",
+                    "titulo": "ago-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 1,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 1,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "set",
+                    "titulo": "set-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 1,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 1,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "titulo": "Turnover mensal",
+              "grafico": {
+                "tipo": "linhas",
+                "unidade": "pct",
+                "casas": 1,
+                "rotulos": [
+                  "out",
+                  "nov",
+                  "dez",
+                  "jan",
+                  "fev",
+                  "mar",
+                  "abr",
+                  "mai",
+                  "jun",
+                  "jul",
+                  "ago",
+                  "set"
+                ],
+                "titulos": [
+                  "out-25",
+                  "nov-25",
+                  "dez-25",
+                  "jan-26",
+                  "fev-26",
+                  "mar-26",
+                  "abr-26",
+                  "mai-26",
+                  "jun-26",
+                  "jul-26",
+                  "ago-26",
+                  "set-26"
+                ],
+                "piso": 0,
+                "series": [
+                  {
+                    "nome": "Turnover",
+                    "valores": [6.45, 3.13, 0, 3.13, 0, 3.57, 0, 0, 3.7, 0, 3.45, 3.45],
+                    "estilo": "principal"
+                  }
+                ],
+                "referencia": {
+                  "valor": 2.24,
+                  "rotulo": "média 2,2%"
+                },
+                "marcadores": [
+                  {
+                    "serie": 0,
+                    "i": 11,
+                    "rotulo": "3,4%"
+                  }
+                ]
+              }
+            }
+          ],
+          "nota": [
+            {
+              "texto": "Comercial: turnover médio de "
+            },
+            {
+              "texto": "2,2% ao mês",
+              "destaque": true
+            },
+            {
+              "texto": ", "
+            },
+            {
+              "texto": "27% em 12 meses",
+              "destaque": true
+            },
+            {
+              "texto": ". 7 admissões e 8 desligamentos no período."
+            }
+          ]
+        },
+        {
+          "id": "administrativo",
+          "rotulo": "Administrativo",
+          "graficos": [
+            {
+              "titulo": "Admissões e desligamentos",
+              "grafico": {
+                "tipo": "barras",
+                "unidade": "qtd",
+                "rotulosNasBarras": true,
+                "grupos": [
+                  {
+                    "rotulo": "out",
+                    "titulo": "out-25",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 1,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "nov",
+                    "titulo": "nov-25",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "dez",
+                    "titulo": "dez-25",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 1,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "jan",
+                    "titulo": "jan-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "fev",
+                    "titulo": "fev-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "mar",
+                    "titulo": "mar-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "abr",
+                    "titulo": "abr-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "mai",
+                    "titulo": "mai-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 1,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "jun",
+                    "titulo": "jun-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "jul",
+                    "titulo": "jul-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 1,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "ago",
+                    "titulo": "ago-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "set",
+                    "titulo": "set-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "titulo": "Turnover mensal",
+              "grafico": {
+                "tipo": "linhas",
+                "unidade": "pct",
+                "casas": 1,
+                "rotulos": [
+                  "out",
+                  "nov",
+                  "dez",
+                  "jan",
+                  "fev",
+                  "mar",
+                  "abr",
+                  "mai",
+                  "jun",
+                  "jul",
+                  "ago",
+                  "set"
+                ],
+                "titulos": [
+                  "out-25",
+                  "nov-25",
+                  "dez-25",
+                  "jan-26",
+                  "fev-26",
+                  "mar-26",
+                  "abr-26",
+                  "mai-26",
+                  "jun-26",
+                  "jul-26",
+                  "ago-26",
+                  "set-26"
+                ],
+                "piso": 0,
+                "series": [
+                  {
+                    "nome": "Turnover",
+                    "valores": [16.67, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    "estilo": "principal"
+                  }
+                ],
+                "referencia": {
+                  "valor": 1.39,
+                  "rotulo": "média 1,4%"
+                },
+                "marcadores": [
+                  {
+                    "serie": 0,
+                    "i": 11,
+                    "rotulo": "0,0%"
+                  }
+                ]
+              }
+            }
+          ],
+          "nota": [
+            {
+              "texto": "Administrativo: turnover médio de "
+            },
+            {
+              "texto": "1,4% ao mês",
+              "destaque": true
+            },
+            {
+              "texto": ", "
+            },
+            {
+              "texto": "10% em 12 meses",
+              "destaque": true
+            },
+            {
+              "texto": ". 3 admissões e 1 desligamento no período."
+            }
+          ]
+        },
+        {
+          "id": "expedicao",
+          "rotulo": "Expedição",
+          "graficos": [
+            {
+              "titulo": "Admissões e desligamentos",
+              "grafico": {
+                "tipo": "barras",
+                "unidade": "qtd",
+                "rotulosNasBarras": true,
+                "grupos": [
+                  {
+                    "rotulo": "out",
+                    "titulo": "out-25",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "nov",
+                    "titulo": "nov-25",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "dez",
+                    "titulo": "dez-25",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "jan",
+                    "titulo": "jan-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "fev",
+                    "titulo": "fev-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "mar",
+                    "titulo": "mar-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "abr",
+                    "titulo": "abr-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "mai",
+                    "titulo": "mai-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "jun",
+                    "titulo": "jun-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 1,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "jul",
+                    "titulo": "jul-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "ago",
+                    "titulo": "ago-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "set",
+                    "titulo": "set-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "titulo": "Turnover mensal",
+              "grafico": {
+                "tipo": "linhas",
+                "unidade": "pct",
+                "casas": 1,
+                "rotulos": [
+                  "out",
+                  "nov",
+                  "dez",
+                  "jan",
+                  "fev",
+                  "mar",
+                  "abr",
+                  "mai",
+                  "jun",
+                  "jul",
+                  "ago",
+                  "set"
+                ],
+                "titulos": [
+                  "out-25",
+                  "nov-25",
+                  "dez-25",
+                  "jan-26",
+                  "fev-26",
+                  "mar-26",
+                  "abr-26",
+                  "mai-26",
+                  "jun-26",
+                  "jul-26",
+                  "ago-26",
+                  "set-26"
+                ],
+                "piso": 0,
+                "series": [
+                  {
+                    "nome": "Turnover",
+                    "valores": [0, 0, 0, 0, 0, 0, 0, 0, 10, 0, 0, 0],
+                    "estilo": "principal"
+                  }
+                ],
+                "referencia": {
+                  "valor": 0.83,
+                  "rotulo": "média 0,8%"
+                },
+                "marcadores": [
+                  {
+                    "serie": 0,
+                    "i": 11,
+                    "rotulo": "0,0%"
+                  }
+                ]
+              }
+            }
+          ],
+          "nota": [
+            {
+              "texto": "Expedição: turnover médio de "
+            },
+            {
+              "texto": "0,8% ao mês",
+              "destaque": true
+            },
+            {
+              "texto": ", "
+            },
+            {
+              "texto": "10% em 12 meses",
+              "destaque": true
+            },
+            {
+              "texto": ". 0 admissões e 1 desligamento no período."
+            }
+          ]
+        },
+        {
+          "id": "estoque",
+          "rotulo": "Estoque",
+          "graficos": [
+            {
+              "titulo": "Admissões e desligamentos",
+              "grafico": {
+                "tipo": "barras",
+                "unidade": "qtd",
+                "rotulosNasBarras": true,
+                "grupos": [
+                  {
+                    "rotulo": "out",
+                    "titulo": "out-25",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "nov",
+                    "titulo": "nov-25",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "dez",
+                    "titulo": "dez-25",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "jan",
+                    "titulo": "jan-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "fev",
+                    "titulo": "fev-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "mar",
+                    "titulo": "mar-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 1,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "abr",
+                    "titulo": "abr-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "mai",
+                    "titulo": "mai-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "jun",
+                    "titulo": "jun-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "jul",
+                    "titulo": "jul-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "ago",
+                    "titulo": "ago-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "set",
+                    "titulo": "set-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "titulo": "Turnover mensal",
+              "grafico": {
+                "tipo": "linhas",
+                "unidade": "pct",
+                "casas": 1,
+                "rotulos": [
+                  "out",
+                  "nov",
+                  "dez",
+                  "jan",
+                  "fev",
+                  "mar",
+                  "abr",
+                  "mai",
+                  "jun",
+                  "jul",
+                  "ago",
+                  "set"
+                ],
+                "titulos": [
+                  "out-25",
+                  "nov-25",
+                  "dez-25",
+                  "jan-26",
+                  "fev-26",
+                  "mar-26",
+                  "abr-26",
+                  "mai-26",
+                  "jun-26",
+                  "jul-26",
+                  "ago-26",
+                  "set-26"
+                ],
+                "piso": 0,
+                "series": [
+                  {
+                    "nome": "Turnover",
+                    "valores": [0, 0, 0, 0, 0, 25, 0, 0, 0, 0, 0, 0],
+                    "estilo": "principal"
+                  }
+                ],
+                "referencia": {
+                  "valor": 2.08,
+                  "rotulo": "média 2,1%"
+                },
+                "marcadores": [
+                  {
+                    "serie": 0,
+                    "i": 11,
+                    "rotulo": "0,0%"
+                  }
+                ]
+              }
+            }
+          ],
+          "nota": [
+            {
+              "texto": "Estoque: turnover médio de "
+            },
+            {
+              "texto": "2,1% ao mês",
+              "destaque": true
+            },
+            {
+              "texto": ", "
+            },
+            {
+              "texto": "40% em 12 meses",
+              "destaque": true
+            },
+            {
+              "texto": ". 0 admissões e 1 desligamento no período."
+            }
+          ]
+        },
+        {
+          "id": "financeiro",
+          "rotulo": "Financeiro",
+          "graficos": [
+            {
+              "titulo": "Admissões e desligamentos",
+              "grafico": {
+                "tipo": "barras",
+                "unidade": "qtd",
+                "rotulosNasBarras": true,
+                "grupos": [
+                  {
+                    "rotulo": "out",
+                    "titulo": "out-25",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "nov",
+                    "titulo": "nov-25",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "dez",
+                    "titulo": "dez-25",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "jan",
+                    "titulo": "jan-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "fev",
+                    "titulo": "fev-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "mar",
+                    "titulo": "mar-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "abr",
+                    "titulo": "abr-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "mai",
+                    "titulo": "mai-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "jun",
+                    "titulo": "jun-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "jul",
+                    "titulo": "jul-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "ago",
+                    "titulo": "ago-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  },
+                  {
+                    "rotulo": "set",
+                    "titulo": "set-26",
+                    "barras": [
+                      {
+                        "nome": "Admissões",
+                        "valor": 0,
+                        "estilo": "serie"
+                      },
+                      {
+                        "nome": "Desligamentos",
+                        "valor": 0,
+                        "estilo": "serie-clara"
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "titulo": "Turnover mensal",
+              "grafico": {
+                "tipo": "linhas",
+                "unidade": "pct",
+                "casas": 1,
+                "rotulos": [
+                  "out",
+                  "nov",
+                  "dez",
+                  "jan",
+                  "fev",
+                  "mar",
+                  "abr",
+                  "mai",
+                  "jun",
+                  "jul",
+                  "ago",
+                  "set"
+                ],
+                "titulos": [
+                  "out-25",
+                  "nov-25",
+                  "dez-25",
+                  "jan-26",
+                  "fev-26",
+                  "mar-26",
+                  "abr-26",
+                  "mai-26",
+                  "jun-26",
+                  "jul-26",
+                  "ago-26",
+                  "set-26"
+                ],
+                "piso": 0,
+                "series": [
+                  {
+                    "nome": "Turnover",
+                    "valores": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    "estilo": "principal"
+                  }
+                ],
+                "referencia": {
+                  "valor": 0,
+                  "rotulo": "média 0,0%"
+                },
+                "marcadores": [
+                  {
+                    "serie": 0,
+                    "i": 11,
+                    "rotulo": "0,0%"
+                  }
+                ]
+              }
+            }
+          ],
+          "nota": [
+            {
+              "texto": "Financeiro: turnover médio de "
+            },
+            {
+              "texto": "0,0% ao mês",
+              "destaque": true
+            },
+            {
+              "texto": ", "
+            },
+            {
+              "texto": "0% em 12 meses",
+              "destaque": true
+            },
+            {
+              "texto": ". 0 admissões e 0 desligamentos no período."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "turnover-por-setor",
+      "tipo": "barras-horizontais",
+      "largura": 6,
+      "titulo": "Turnover por setor",
+      "subtitulo": "Saídas em 12 meses sobre a média de pessoas do setor",
+      "escala": {
+        "unidade": "pct",
+        "casas": 0
+      },
+      "itens": [
+        {
+          "rotulo": "Estoque",
+          "sub": "1 saída em 12 meses",
+          "valor": 40,
+          "status": "critico"
+        },
+        {
+          "rotulo": "Logística",
+          "sub": "26 saídas em 12 meses",
+          "valor": 36.5,
+          "status": "critico"
+        },
+        {
+          "rotulo": "Comercial",
+          "sub": "8 saídas em 12 meses",
+          "valor": 27,
+          "status": "atencao"
+        },
+        {
+          "rotulo": "Administrativo",
+          "sub": "1 saída em 12 meses",
+          "valor": 10.4,
+          "status": "saudavel"
+        },
+        {
+          "rotulo": "Expedição",
+          "sub": "1 saída em 12 meses",
+          "valor": 9.8,
+          "status": "saudavel"
+        }
+      ]
+    },
+    {
+      "id": "tempo-de-casa",
+      "tipo": "barras-horizontais",
+      "largura": 6,
+      "titulo": "Tempo de casa",
+      "subtitulo": "Quanto tempo cada pessoa está na empresa, pelo primeiro mês na folha",
+      "escala": {
+        "unidade": "pct",
+        "casas": 0
+      },
+      "itens": [
+        {
+          "rotulo": "Até 6 meses",
+          "valor": 18
+        },
+        {
+          "rotulo": "6 meses a 1 ano",
+          "valor": 13
+        },
+        {
+          "rotulo": "1 a 2 anos",
+          "valor": 22
+        },
+        {
+          "rotulo": "2 a 5 anos",
+          "valor": 31
+        },
+        {
+          "rotulo": "Mais de 5 anos",
+          "valor": 16
+        }
+      ]
+    },
+    {
+      "id": "produtividade-por-setor",
+      "tipo": "lista-detalhe",
+      "largura": 12,
+      "titulo": "Produtividade por setor",
+      "subtitulo": "Um indicador por setor. Clique num setor para ver os 12 meses; o tracejado é a média.",
+      "colunas": [
+        {
+          "rotulo": "Setor"
+        },
+        {
+          "rotulo": "Pessoas",
+          "ocultarNoCelular": true
+        },
+        {
+          "rotulo": "Indicador",
+          "alinhar": "esquerda",
+          "ocultarNoCelular": true
+        },
+        {
+          "rotulo": "Setembro"
+        },
+        {
+          "rotulo": "vs 6m"
+        },
+        {
+          "rotulo": "12 meses",
+          "ocultarNoCelular": true
+        }
+      ],
+      "itens": [
+        {
+          "id": "comercial",
+          "celulas": [
+            {
+              "valor": "Comercial",
+              "negrito": true
+            },
+            {
+              "valor": {
+                "valor": 29,
+                "unidade": "qtd"
+              }
+            },
+            {
+              "valor": "Receita por vendedor",
+              "tom": "apagado"
+            },
+            {
+              "valor": {
+                "valor": 239655,
+                "unidade": "brl"
+              },
+              "negrito": true
+            },
+            {
+              "valor": {
+                "valor": -1.3,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "comSinal": true,
+              "tom": "critico"
+            }
+          ],
+          "tendencia": {
+            "realizado": [
+              214194, 209688, 219375, 199375, 217000, 242857, 236552, 232759, 246667, 253929, 230690, 239655
+            ],
+            "comparacao": [
+              228562, 228562, 228562, 228562, 228562, 228562, 228562, 228562, 228562, 228562, 228562, 228562
+            ]
+          },
+          "detalhe": {
+            "titulo": "Comercial: receita por vendedor",
+            "grafico": {
+              "tipo": "linhas",
+              "unidade": "brl",
+              "rotulos": ["out", "nov", "dez", "jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set"],
+              "titulos": [
+                "out-25",
+                "nov-25",
+                "dez-25",
+                "jan-26",
+                "fev-26",
+                "mar-26",
+                "abr-26",
+                "mai-26",
+                "jun-26",
+                "jul-26",
+                "ago-26",
+                "set-26"
+              ],
+              "series": [
+                {
+                  "nome": "Receita por vendedor",
+                  "valores": [
+                    214194, 209688, 219375, 199375, 217000, 242857, 236552, 232759, 246667, 253929, 230690,
+                    239655
+                  ],
+                  "estilo": "principal"
+                }
+              ],
+              "referencia": {
+                "valor": 228562,
+                "rotulo": "média R$ 229 mil"
+              },
+              "marcadores": [
+                {
+                  "serie": 0,
+                  "i": 11,
+                  "rotulo": "R$ 240 mil"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "logistica",
+          "celulas": [
+            {
+              "valor": "Logística",
+              "negrito": true
+            },
+            {
+              "valor": {
+                "valor": 73,
+                "unidade": "qtd"
+              }
+            },
+            {
+              "valor": "Entregas por pessoa",
+              "tom": "apagado"
+            },
+            {
+              "valor": {
+                "valor": 17.59,
+                "unidade": "qtd",
+                "casas": 1
+              },
+              "negrito": true
+            },
+            {
+              "valor": {
+                "valor": -2.3,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "comSinal": true,
+              "tom": "critico"
+            }
+          ],
+          "tendencia": {
+            "realizado": [18.51, 19.02, 18.7, 17.35, 17.29, 18, 17.23, 16.54, 17.26, 17.57, 17.4, 17.59],
+            "comparacao": [17.71, 17.71, 17.71, 17.71, 17.71, 17.71, 17.71, 17.71, 17.71, 17.71, 17.71, 17.71]
+          },
+          "detalhe": {
+            "titulo": "Logística: entregas por pessoa",
+            "grafico": {
+              "tipo": "linhas",
+              "unidade": "qtd",
+              "casas": 1,
+              "rotulos": ["out", "nov", "dez", "jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set"],
+              "titulos": [
+                "out-25",
+                "nov-25",
+                "dez-25",
+                "jan-26",
+                "fev-26",
+                "mar-26",
+                "abr-26",
+                "mai-26",
+                "jun-26",
+                "jul-26",
+                "ago-26",
+                "set-26"
+              ],
+              "series": [
+                {
+                  "nome": "Entregas por pessoa",
+                  "valores": [18.51, 19.02, 18.7, 17.35, 17.29, 18, 17.23, 16.54, 17.26, 17.57, 17.4, 17.59],
+                  "estilo": "principal"
+                }
+              ],
+              "referencia": {
+                "valor": 17.71,
+                "rotulo": "média 17,7"
+              },
+              "marcadores": [
+                {
+                  "serie": 0,
+                  "i": 11,
+                  "rotulo": "17,6"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "expedicao",
+          "celulas": [
+            {
+              "valor": "Expedição",
+              "negrito": true
+            },
+            {
+              "valor": {
+                "valor": 10,
+                "unidade": "qtd"
+              }
+            },
+            {
+              "valor": "Toneladas expedidas por pessoa",
+              "tom": "apagado"
+            },
+            {
+              "valor": {
+                "valor": 44,
+                "unidade": "qtd",
+                "casas": 1,
+                "sufixo": "t"
+              },
+              "negrito": true
+            },
+            {
+              "valor": {
+                "valor": 13.1,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "comSinal": true,
+              "tom": "saudavel"
+            }
+          ],
+          "tendencia": {
+            "realizado": [42, 42.5, 43.8, 40.2, 37.27, 38.91, 43.2, 42.5, 42, 44.5, 42.5, 44],
+            "comparacao": [41.95, 41.95, 41.95, 41.95, 41.95, 41.95, 41.95, 41.95, 41.95, 41.95, 41.95, 41.95]
+          },
+          "detalhe": {
+            "titulo": "Expedição: toneladas expedidas por pessoa",
+            "grafico": {
+              "tipo": "linhas",
+              "unidade": "qtd",
+              "casas": 1,
+              "sufixo": "t",
+              "rotulos": ["out", "nov", "dez", "jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set"],
+              "titulos": [
+                "out-25",
+                "nov-25",
+                "dez-25",
+                "jan-26",
+                "fev-26",
+                "mar-26",
+                "abr-26",
+                "mai-26",
+                "jun-26",
+                "jul-26",
+                "ago-26",
+                "set-26"
+              ],
+              "series": [
+                {
+                  "nome": "Toneladas expedidas por pessoa",
+                  "valores": [42, 42.5, 43.8, 40.2, 37.27, 38.91, 43.2, 42.5, 42, 44.5, 42.5, 44],
+                  "estilo": "principal"
+                }
+              ],
+              "referencia": {
+                "valor": 41.95,
+                "rotulo": "média 42,0 t"
+              },
+              "marcadores": [
+                {
+                  "serie": 0,
+                  "i": 11,
+                  "rotulo": "44,0 t"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "administrativo",
+          "celulas": [
+            {
+              "valor": "Administrativo",
+              "negrito": true
+            },
+            {
+              "valor": {
+                "valor": 12,
+                "unidade": "qtd"
+              }
+            },
+            {
+              "valor": "Despesa administrativa sobre a receita",
+              "tom": "apagado"
+            },
+            {
+              "valor": {
+                "valor": 3.8,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "negrito": true
+            },
+            {
+              "valor": {
+                "valor": 2.6,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "comSinal": true,
+              "tom": "saudavel"
+            }
+          ],
+          "tendencia": {
+            "realizado": [3.9, 3.9, 3.8, 4, 4, 3.9, 4.1, 4, 4.1, 3.9, 4, 3.8],
+            "comparacao": [3.95, 3.95, 3.95, 3.95, 3.95, 3.95, 3.95, 3.95, 3.95, 3.95, 3.95, 3.95]
+          },
+          "detalhe": {
+            "titulo": "Administrativo: despesa administrativa sobre a receita",
+            "grafico": {
+              "tipo": "linhas",
+              "unidade": "pct",
+              "casas": 1,
+              "rotulos": ["out", "nov", "dez", "jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set"],
+              "titulos": [
+                "out-25",
+                "nov-25",
+                "dez-25",
+                "jan-26",
+                "fev-26",
+                "mar-26",
+                "abr-26",
+                "mai-26",
+                "jun-26",
+                "jul-26",
+                "ago-26",
+                "set-26"
+              ],
+              "series": [
+                {
+                  "nome": "Despesa administrativa sobre a receita",
+                  "valores": [3.9, 3.9, 3.8, 4, 4, 3.9, 4.1, 4, 4.1, 3.9, 4, 3.8],
+                  "estilo": "principal"
+                }
+              ],
+              "referencia": {
+                "valor": 3.95,
+                "rotulo": "média 4,0%"
+              },
+              "marcadores": [
+                {
+                  "serie": 0,
+                  "i": 11,
+                  "rotulo": "3,8%"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "financeiro",
+          "celulas": [
+            {
+              "valor": "Financeiro",
+              "negrito": true
+            },
+            {
+              "valor": {
+                "valor": 3,
+                "unidade": "qtd"
+              }
+            },
+            {
+              "valor": "Títulos processados por pessoa",
+              "tom": "apagado"
+            },
+            {
+              "valor": {
+                "valor": 1710,
+                "unidade": "qtd",
+                "casas": 0
+              },
+              "negrito": true
+            },
+            {
+              "valor": {
+                "valor": 4.7,
+                "unidade": "pct",
+                "casas": 1
+              },
+              "comSinal": true,
+              "tom": "saudavel"
+            }
+          ],
+          "tendencia": {
+            "realizado": [980, 990, 1250, 960, 970, 1633.3, 1683.3, 1700, 1666.7, 1716.7, 1693.3, 1710],
+            "comparacao": [
+              1412.8, 1412.8, 1412.8, 1412.8, 1412.8, 1412.8, 1412.8, 1412.8, 1412.8, 1412.8, 1412.8, 1412.8
+            ]
+          },
+          "detalhe": {
+            "titulo": "Financeiro: títulos processados por pessoa",
+            "grafico": {
+              "tipo": "linhas",
+              "unidade": "qtd",
+              "casas": 0,
+              "rotulos": ["out", "nov", "dez", "jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set"],
+              "titulos": [
+                "out-25",
+                "nov-25",
+                "dez-25",
+                "jan-26",
+                "fev-26",
+                "mar-26",
+                "abr-26",
+                "mai-26",
+                "jun-26",
+                "jul-26",
+                "ago-26",
+                "set-26"
+              ],
+              "series": [
+                {
+                  "nome": "Títulos processados por pessoa",
+                  "valores": [980, 990, 1250, 960, 970, 1633.3, 1683.3, 1700, 1666.7, 1716.7, 1693.3, 1710],
+                  "estilo": "principal"
+                }
+              ],
+              "referencia": {
+                "valor": 1412.8,
+                "rotulo": "média 1.413"
+              },
+              "marcadores": [
+                {
+                  "serie": 0,
+                  "i": 11,
+                  "rotulo": "1.710"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

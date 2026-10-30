@@ -1,5 +1,5 @@
 """Painéis por cartões: GET /api/telas/vendas (COM-01), /equipe-comercial (COM-02),
-/clientes (COM-03), /resultado (FIN-02) e /receber-pagar (FIN-03).
+/clientes (COM-03), /resultado (FIN-02), /receber-pagar (FIN-03) e /pessoas (PES-01).
 
 Mesmo padrão da Visão geral (app/telas/visao_geral/router.py): acesso pela tela, `empresa`
 opcional (sem ela, todas as do vínculo), `mes` (AAAA-MM, um dos de /api/sessao) e a
@@ -8,10 +8,12 @@ empresas, no mês, nos filtros e na última carga.
 
 Filtros próprios de cada tela, pelo `id` que a resposta manda em `filtros`: Vendas, canal e
 linha; Equipe, canal e supervisor; Clientes, nenhum; Resultado, visao e cenario; Receber e
-pagar, vendedor e atraso. As opções saem dos dados; opção fora da lista → 422 "Filtro
-inválido.". O Resultado aceita também `comparar` (orcado ou mes-anterior), que vem do chip
-global "Comparar com" do front e não vai em `filtros`. A Equipe e o Receber e pagar mostram
-nomes de pessoas (vendedores, clientes): exigem um perfil que veja dado nominal (etapa 6).
+pagar, vendedor e atraso; Pessoas, nenhum (o setor se escolhe dentro do cartão). As opções
+saem dos dados; opção fora da lista → 422 "Filtro inválido.". O Resultado aceita também
+`comparar` (orcado ou mes-anterior), que vem do chip global "Comparar com" do front e não
+vai em `filtros`. A Equipe e o Receber e pagar mostram nomes de pessoas (vendedores,
+clientes): exigem um perfil que veja dado nominal (etapa 6).
+Pessoas tem dado de folha, mas sem nomes: o cadastro libera PES-01 só à diretoria e ao RH.
 
 Cartões "a decidir" (A_DECIDIR e o nível 3 da DRE): só saem com PAINEIS_A_DECIDIR (dev).
 
@@ -31,7 +33,7 @@ from app.core.cache import CacheComPrazo, por_requisicao
 from app.core.config import Settings, get_settings
 from app.seguranca.acesso import ContextoConsolidado, exigir_tela_consolidada
 from app.telas.moldura import UltimaCarga
-from app.telas.paineis import clientes, equipe, receber_pagar, resultado, vendas
+from app.telas.paineis import clientes, equipe, pessoas, receber_pagar, resultado, vendas
 from app.telas.paineis.base import MSG_FILTRO_INVALIDO, Conteudo, Opcoes, escolher
 from app.telas.paineis.contrato import Cartao, CartaoDre, PainelPayload, TelaPainel
 from app.telas.paineis.explicacoes import com_explicacao
@@ -44,6 +46,7 @@ CODIGOS: Mapping[TelaPainel, str] = {
     "clientes": "COM-03",
     "resultado": "FIN-02",
     "receber-pagar": "FIN-03",
+    "pessoas": "PES-01",
 }
 # telas que mostram nomes de pessoas: só para perfil que vê dado nominal (etapa 6)
 NOMINAL: frozenset[TelaPainel] = frozenset({"equipe-comercial", "receber-pagar"})
@@ -67,6 +70,7 @@ MONTADORES: dict[TelaPainel, Montador] = {
     "clientes": clientes.montar,
     "resultado": resultado.montar,
     "receber-pagar": receber_pagar.montar,
+    "pessoas": pessoas.montar,
 }
 
 _respostas: CacheComPrazo[PainelPayload] = CacheComPrazo(maximo=256)
@@ -174,6 +178,15 @@ def tela_receber_pagar(
 ) -> PainelPayload:
     filtros = {"vendedor": vendedor, "atraso": atraso}
     return responder(ctx, settings, "receber-pagar", mes, filtros)
+
+
+@router.get("/pessoas", response_model_exclude_defaults=True, responses=RESPOSTAS)
+def tela_pessoas(
+    ctx: Annotated[ContextoConsolidado, Depends(exigir_tela_consolidada(CODIGOS["pessoas"]))],
+    settings: Annotated[Settings, Depends(get_settings)],
+    mes: Mes = None,
+) -> PainelPayload:
+    return responder(ctx, settings, "pessoas", mes, {})
 
 
 def _comparar(valor: str | None) -> str | None:

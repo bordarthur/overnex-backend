@@ -1,4 +1,4 @@
-"""Rotas dos painéis comerciais — sem banco.
+"""Rotas dos painéis por cartões — sem banco.
 
 A sessão é falsa: a checagem de acesso lê os fatos de uma conexão que só responde a
 seg.contexto_acesso; moldura (cliente, carga, meses) e o conteúdo das telas são trocados.
@@ -110,7 +110,7 @@ def client(estado: dict[str, Any]) -> Iterator[TestClient]:
 
 
 @pytest.mark.parametrize(
-    "tela", ["vendas", "equipe-comercial", "clientes", "resultado", "receber-pagar"]
+    "tela", ["vendas", "equipe-comercial", "clientes", "resultado", "receber-pagar", "pessoas"]
 )
 def test_painel_200_com_a_moldura(client: TestClient, estado: dict[str, Any], tela: str) -> None:
     r = client.get(f"/api/telas/{tela}")
@@ -158,7 +158,7 @@ def test_mes_fora_da_lista_ou_do_formato_422(client: TestClient, mes: str) -> No
         assert r.json() == {"detail": "Mês sem dados."}
 
 
-@pytest.mark.parametrize("tela", ["vendas", "resultado", "receber-pagar"])
+@pytest.mark.parametrize("tela", ["vendas", "resultado", "receber-pagar", "pessoas"])
 def test_tela_fora_do_perfil_403(client: TestClient, estado: dict[str, Any], tela: str) -> None:
     estado["perfis"] = {}
     r = client.get(f"/api/telas/{tela}")
@@ -176,9 +176,11 @@ def test_equipe_exige_dado_nominal(client: TestClient, estado: dict[str, Any]) -
     assert client.get("/api/telas/vendas").status_code == 200
     assert client.get("/api/telas/clientes").status_code == 200
     assert client.get("/api/telas/resultado").status_code == 200
+    # Pessoas tem folha, mas sem nomes: quem libera é o perfil (diretoria e RH)
+    assert client.get("/api/telas/pessoas").status_code == 200
 
 
-@pytest.mark.parametrize("tela", ["vendas", "resultado", "receber-pagar"])
+@pytest.mark.parametrize("tela", ["vendas", "resultado", "receber-pagar", "pessoas"])
 def test_empresa_fora_do_vinculo_403(client: TestClient, tela: str) -> None:
     r = client.get(f"/api/telas/{tela}", params={"empresa": str(UUID(int=9))})
     assert r.status_code == 403
@@ -231,6 +233,35 @@ def test_antes_da_primeira_carga_vem_vazio(client: TestClient, estado: dict[str,
     assert estado["chamadas"] == []
     # sem carga, nenhum filtro vale
     assert client.get("/api/telas/vendas", params={"canal": "varejo"}).status_code == 422
+
+
+def test_pessoas_antes_da_primeira_carga_vem_vazio(
+    client: TestClient, estado: dict[str, Any]
+) -> None:
+    estado["carga"] = None
+    corpo = client.get("/api/telas/pessoas", params={"mes": "2026-10"}).json()
+
+    assert corpo["tela"] == "pessoas"
+    assert (corpo["dadosAte"], corpo["atualizadoEm"]) == (None, None)
+    assert "aviso" not in corpo
+    for campo in ("filtros", "destaques", "kpis", "apoios", "cartoes"):
+        assert corpo[campo] == []
+    assert estado["chamadas"] == []
+
+
+def test_pessoas_demo_e_o_mockup(client: TestClient) -> None:
+    app: Any = client.app
+    demo = get_settings().model_copy(
+        update={"visao_geral_demo": True, "visao_geral_cache_segundos": 0}
+    )
+    app.dependency_overrides[get_settings] = lambda: demo
+
+    corpo = client.get("/api/telas/pessoas").json()
+    assert [c["tipo"] for c in corpo["cartoes"]][:2] == ["destaques", "numero-grafico"]
+    assert corpo["cartoes"][-1]["tipo"] == "lista-detalhe"
+    admissoes = next(c for c in corpo["cartoes"] if c["id"] == "admissoes-turnover")
+    assert admissoes["graficos"] == []
+    assert admissoes["visoes"][0]["id"] == "todos"
 
 
 def test_demo_devolve_o_mockup_e_confere_os_filtros(
@@ -290,6 +321,8 @@ def test_openapi_tem_as_rotas_e_os_filtros(client: TestClient) -> None:
         ("/api/telas/clientes", {"mes", "empresa"}),
         ("/api/telas/resultado", {"mes", "empresa", "visao", "cenario", "comparar"}),
         ("/api/telas/receber-pagar", {"mes", "empresa", "vendedor", "atraso"}),
+        # o setor se escolhe dentro do cartão; `comparar` não vale aqui
+        ("/api/telas/pessoas", {"mes", "empresa"}),
     ):
         parametros = esquema["paths"][caminho]["get"]["parameters"]
         assert {p["name"] for p in parametros} == filtros

@@ -162,6 +162,13 @@ PADROES: dict[str, Farol] = {
         maximo=Decimal(14),
         meta=Decimal(0),
     ),
+    # Pessoas: desligamentos de 12 meses sobre a média de colaboradores, em %
+    "turnover": Farol(
+        faixa=Faixa(atencao=Decimal(15), critico=Decimal(30), maior_melhor=False),
+        minimo=Decimal(0),
+        maximo=Decimal(60),
+        meta=Decimal(10),
+    ),
     # a pagar lançado nos próximos 30 dias, em % da média paga por mês
     "pagar_lancado": Farol(
         faixa=Faixa(atencao=Decimal(80), critico=Decimal(50)),

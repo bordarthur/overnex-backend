@@ -97,6 +97,8 @@ EXPLICACOES: Mapping[TelaPainel, Mapping[str, str]] = {
             "clientes pagarem."
         ),
     },
+    # a fixture ainda não tem texto para nenhum cartão
+    "pessoas": {},
 }
 
 
