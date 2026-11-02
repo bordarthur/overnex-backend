@@ -300,7 +300,8 @@ def test_admissoes_turnover_tem_uma_visao_por_setor_com_gente_suficiente() -> No
     todos = cartao.visoes[0]
     barras, linha = todos.graficos
     abril = barras.grafico.grupos[5]  # type: ignore[union-attr]
-    assert abril.titulo == "abr-26"
+    assert (abril.rotulo, abril.titulo) == ("abr-26", "abr-26")
+    assert linha.grafico.rotulos[0] == "nov-25"  # type: ignore[union-attr]
     assert [(b.nome, b.valor) for b in abril.barras] == [("Admissões", 0), ("Desligamentos", 1)]
     assert linha.grafico.tipo == "linhas"
     assert todos.nota is not None
@@ -322,6 +323,8 @@ def test_colaboradores_por_setor_soma_o_topo_de_cada_barra() -> None:
     assert grafico.totais[-1] == 7
     assert [s.nome for s in grafico.series] == ["Logística", "Comercial", "Estoque"]
     assert grafico.series[0].valores[-1] == 5
+    # out/25 a set/26: com o ano
+    assert (grafico.rotulos[0], grafico.rotulos[-1]) == ("out-25", "set-26")
 
 
 @pytest.mark.usefixtures("leitura")

@@ -47,18 +47,24 @@ Farol das linhas da DRE (o do mockup):
 - os outros subtotais: margem sobre a receita líquida contra a da comparação; até −0,2 p.p.,
   saudável; até −1,2 p.p., atenção.
 Análise vertical sobre a receita bruta; o CMV (120.01) sobre a receita bruta menos as
-devoluções (110.02). Diferença com |dif. %| ≥ 3 ganha fundo de farol.
+devoluções (110.02). Diferença com |dif. %| ≥ 3 ganha fundo de farol. Valores em reais.
+Tendência de 6 meses: em % da receita bruta de cada mês (na mesma base da análise vertical;
+a comparação sobre a receita da comparação) nos grupos 110, 120 e 130, com todas as contas
+de dentro, e no EBITDA; nas outras linhas, em reais.
 
 Destaques: receita líquida, EBITDA e lucro líquido (antes das participações, grupo 210).
 Apoios: margem bruta e de contribuição (da receita líquida), ponto de equilíbrio (despesas
 fixas ÷ margem de contribuição % da receita líquida), margem de segurança (farol
 margem_seguranca) e as contas de nível 2 com o maior desvio contra e a favor do resultado.
 
-Cartões: resultado nos 12 meses até o do período, sempre contra o orçado (barra vermelha:
+Cartões: resultado nos 12 meses até o do período (receita bruta, custos, margem de
+contribuição, despesas fixas, EBITDA e lucro líquido), sempre contra o orçado (barra vermelha:
 mês 2% pior que o orçado; "leitura rápida" na chamada), DRE em cascata, ponto de equilíbrio
-e DRE gerencial. Só com PAINEIS_A_DECIDIR (dev): ponte do EBITDA (só contra o orçado),
-maiores desvios de nível 3, o nível 3 da DRE e a tabela financeira (12 meses; fundo contra a
-média do indicador, com 3% de tolerância; sem ciclo de caixa e dívida líquida, sem fonte).
+DRE gerencial e a tabela financeira (12 meses, na variante "tendencia"; fundo contra a média
+do indicador, com 3% de tolerância; sem ciclo de caixa e dívida líquida, sem fonte). A DRE
+gerencial abre até o nível 3 (desde 30/10/2026, para conferir conta a conta o que entra);
+começa no nível 2. Só com PAINEIS_A_DECIDIR (dev): ponte do EBITDA (só contra o orçado) e
+maiores desvios de nível 3.
 """
 
 from collections.abc import Callable, Iterable, Mapping, Sequence
@@ -110,7 +116,7 @@ from app.telas.paineis.contrato import (
 from app.telas.paineis.formato import CEM, brl, mais, nome_mes, pct, pct_texto, q
 from app.telas.paineis.receber_pagar import indicadores_mensais
 from app.telas.plano import Plano, ler_plano, normalizar
-from app.telas.visao_geral.contra_referencia import MESES_CURTOS, rotulo_eixo
+from app.telas.visao_geral.contra_referencia import MESES_CURTOS, rotulo_eixo, rotulos_meses
 from app.telas.visao_geral.contrato import Trecho, Valor
 from app.telas.visao_geral.resultado import (
     PARAMETRO_CENARIO,
@@ -141,7 +147,6 @@ from app.telas.visao_geral.vendas import (
 )
 
 ZERO = Decimal(0)
-MIL = Decimal(1000)
 
 # conta (código do plano, no nível mais fundo que veio) → valor na direção da DRE:
 # positivo = receita nos grupos de receita e despesa nos outros
@@ -181,6 +186,12 @@ NOMES_OPERACAO: Mapping[str, str] = {
 }
 FOLHA = "140.01"
 CMV = "120.01"
+# tendência da DRE em % da receita bruta: estes grupos, com todas as contas de dentro, e o
+# EBITDA (decisão de 30/10/2026, também para o custo de pessoal e os indiretos de 120)
+GRUPOS_TENDENCIA_PCT = frozenset({"110", "120", "130"})
+SUBTOTAIS_TENDENCIA_PCT = frozenset({"sub-ebitda"})
+# diferença que ganha cor na DRE, em R$
+LIMIAR_TOM_DRE = Decimal(500)
 CONTA_DEVOLUCOES = "110.02"
 
 # projeção: grupos que andam com as vendas; os outros, pela média dos meses anteriores
@@ -277,8 +288,12 @@ class Totais:
         return self.g("100") - self.g("110")
 
     @property
+    def custos(self) -> Decimal:
+        return self.g("120")
+
+    @property
     def lucro_bruto(self) -> Decimal:
-        return self.receita_liquida - self.g("120")
+        return self.receita_liquida - self.custos
 
     @property
     def margem_contribuicao(self) -> Decimal:
@@ -687,10 +702,6 @@ def status_subtotal(real: Decimal, comp: Decimal, rl: Decimal, rlc: Decimal) -> 
 # ---------- DRE ----------
 
 
-def mil(v: Decimal) -> Decimal:
-    return q(v / MIL, 1)
-
-
 def linha_dre(
     *,
     id: str,
@@ -698,17 +709,17 @@ def linha_dre(
     nivel: Literal[0, 1, 2, 3],
     real: Decimal,
     comp: Decimal,
-    tendencia: tuple[list[Decimal], list[Decimal]],
+    tendencia: TendenciaDre,
     status: Status,
     base: Decimal,
     codigo: str | None = None,
     pai: str | None = None,
 ) -> LinhaDre:
-    """Valores exibidos (receita positiva, custo negativo), em R$ mil."""
+    """Valores exibidos (receita positiva, custo negativo), em reais."""
     diferenca = real - comp
     percentual = diferenca / abs(comp) * CEM if comp else None
     tom: Status | None = None
-    if abs(mil(diferenca)) >= Decimal("0.5"):
+    if abs(diferenca) >= LIMIAR_TOM_DRE:
         tom = "saudavel" if diferenca > 0 else "critico"
     return LinhaDre(
         id=id,
@@ -716,18 +727,44 @@ def linha_dre(
         nome=nome,
         nivel=nivel,
         pai=pai,
-        realizado=mil(real),
+        realizado=q(real, 0),
         percentual_receita_bruta=q(abs(real) / base * CEM, 1) if base > 0 else ZERO,
-        comparacao=mil(comp),
-        diferenca=mil(diferenca),
+        comparacao=q(comp, 0),
+        diferenca=q(diferenca, 0),
         diferenca_percentual=None if percentual is None else q(percentual, 1),
         tom_diferenca=tom,
         destacar_diferenca=tom is not None and percentual is not None and abs(percentual) >= 3,
         status=status,
         com_desvio=False,
-        tendencia=TendenciaDre(
-            realizado=[mil(v) for v in tendencia[0]], comparacao=[mil(v) for v in tendencia[1]]
-        ),
+        tendencia=tendencia,
+    )
+
+
+def tendencia_brl(real: Sequence[Decimal], comp: Sequence[Decimal]) -> TendenciaDre:
+    return TendenciaDre(
+        realizado=[q(v, 0) for v in real], comparacao=[q(v, 0) for v in comp], unidade="brl"
+    )
+
+
+def tendencia_pct(
+    real: Sequence[Decimal],
+    comp: Sequence[Decimal],
+    base_real: Sequence[Decimal],
+    base_comp: Sequence[Decimal],
+    *,
+    com_sinal: bool = False,
+) -> TendenciaDre:
+    """Cada mês em % da receita bruta do próprio mês (a comparação, na dela). Positivo,
+    menos com `com_sinal` (EBITDA negativo fica negativo); mês sem receita, 0."""
+
+    def em_pct(valores: Sequence[Decimal], bases: Sequence[Decimal]) -> list[Decimal]:
+        return [
+            q((v if com_sinal else abs(v)) / b * CEM, 1) if b > 0 else ZERO
+            for v, b in zip(valores, bases, strict=True)
+        ]
+
+    return TendenciaDre(
+        realizado=em_pct(real, base_real), comparacao=em_pct(comp, base_comp), unidade="pct"
     )
 
 
@@ -764,6 +801,18 @@ def linhas_dre(k: Calculo, niveis: Sequence[int]) -> tuple[list[LinhaDre], list[
         else:
             status = status_custo(rv, cv, rl, rlc)
         numerico = all(p.isdigit() for p in codigo.split("."))
+        real_m = [s * x.get(codigo, ZERO) for x in tr]
+        comp_m = [s * x.get(codigo, ZERO) for x in tc]
+        if grupo(codigo) in GRUPOS_TENDENCIA_PCT:
+            # a base da coluna "% receita bruta": no CMV, sem as devoluções
+            def base(x: Totais) -> Decimal:
+                return x.receita_bruta - x.devolucoes if _dentro(codigo, CMV) else x.receita_bruta
+
+            tendencia = tendencia_pct(
+                real_m, comp_m, [base(x) for x in ttr], [base(x) for x in ttc]
+            )
+        else:
+            tendencia = tendencia_brl(real_m, comp_m)
         return linha_dre(
             id=codigo,
             codigo=(f"{codigo}.00" if nivel == 1 else codigo) if numerico else None,
@@ -772,10 +821,7 @@ def linhas_dre(k: Calculo, niveis: Sequence[int]) -> tuple[list[LinhaDre], list[
             pai=pai,
             real=s * rv,
             comp=s * cv,
-            tendencia=(
-                [s * x.get(codigo, ZERO) for x in tr],
-                [s * x.get(codigo, ZERO) for x in tc],
-            ),
+            tendencia=tendencia,
             status=status,
             base=base_cmv if _dentro(codigo, CMV) else t.receita_bruta,
         )
@@ -809,7 +855,17 @@ def linhas_dre(k: Calculo, niveis: Sequence[int]) -> tuple[list[LinhaDre], list[
                     nivel=0,
                     real=rv,
                     comp=cv,
-                    tendencia=([s.valor(x) for x in ttr], [s.valor(x) for x in ttc]),
+                    tendencia=(
+                        tendencia_pct(
+                            [s.valor(x) for x in ttr],
+                            [s.valor(x) for x in ttc],
+                            [x.receita_bruta for x in ttr],
+                            [x.receita_bruta for x in ttc],
+                            com_sinal=True,
+                        )
+                        if s.id in SUBTOTAIS_TENDENCIA_PCT
+                        else tendencia_brl([s.valor(x) for x in ttr], [s.valor(x) for x in ttc])
+                    ),
                     status=status,
                     base=t.receita_bruta,
                 )
@@ -827,8 +883,8 @@ def linhas_dre(k: Calculo, niveis: Sequence[int]) -> tuple[list[LinhaDre], list[
     ], sem_movimento
 
 
-def cartao_dre(k: Calculo, a_decidir: bool) -> CartaoDre:
-    niveis: list[Literal[1, 2, 3]] = [1, 2, 3] if a_decidir else [1, 2]
+def cartao_dre(k: Calculo) -> CartaoDre:
+    niveis: list[Literal[1, 2, 3]] = [1, 2, 3]
     linhas, sem_movimento = linhas_dre(k, niveis)
     rodape = []
     if sem_movimento:
@@ -846,7 +902,7 @@ def cartao_dre(k: Calculo, a_decidir: bool) -> CartaoDre:
         titulo=f"DRE gerencial de {k.periodo.texto}, pelo plano de contas",
         subtitulo="Clique numa linha para abrir o nível seguinte. Só aparecem as contas com "
         "movimento ou comparação no período.",
-        rotulo_conta="Conta (R$ mil)",
+        rotulo_conta="Conta (R$)",
         rotulo_comparacao=k.comp.rotulo,
         escala=Escala(unidade="qtd", casas=0),
         nivel_inicial=2,
@@ -986,6 +1042,8 @@ class Metrica:
 
 METRICAS_12_MESES = (
     Metrica("Receita bruta", lambda t: t.receita_bruta, True, False),
+    # o grupo 120 inteiro; a linha sobre a receita bruta, como o grupo na DRE
+    Metrica("Custos", lambda t: t.custos, False, True),
     Metrica("Margem de contribuição", lambda t: t.margem_contribuicao, True, True),
     Metrica("Despesas fixas", lambda t: t.despesas_fixas, False, True),
     Metrica("EBITDA", lambda t: t.ebitda, True, True),
@@ -1049,6 +1107,7 @@ def cartao_doze_meses(k: Calculo) -> CartaoGraficos | None:
     com_orcado = any(o is not None for o in orc)
     projetado = k.periodo.visao == "projecao"
     graficos = []
+    rotulos = rotulos_meses(meses)
     for metrica in METRICAS_12_MESES:
         pontos = []
         for i, (m, r, o) in enumerate(zip(meses, real, orc, strict=True)):
@@ -1057,7 +1116,7 @@ def cartao_doze_meses(k: Calculo) -> CartaoGraficos | None:
             titulo = rotulo_eixo(m) + (" (projeção)" if projetado and i == len(meses) - 1 else "")
             pontos.append(
                 PontoCombo(
-                    rotulo=MESES_CURTOS[m.month - 1],
+                    rotulo=rotulos[i],
                     titulo=titulo,
                     valor=q(v),
                     referencia=None if ref is None else q(ref),
@@ -1332,6 +1391,8 @@ class LinhaFinanceira:
     valores: list[Decimal | None]
     valor: Callable[[Decimal], Valor]
     maior_melhor: bool
+    # a média, quando o formato dela é outro (dias: "27,7 d" na média, "26 d" nos meses)
+    valor_media: Callable[[Decimal], Valor] | None = None
 
 
 def _celulas(linha: LinhaFinanceira) -> list[Celula]:
@@ -1347,7 +1408,7 @@ def _celulas(linha: LinhaFinanceira) -> list[Celula]:
         fundo: Status | None = "saudavel" if d > folga else "critico" if d < -folga else None
         celulas.append(Celula(valor=linha.valor(v), fundo=fundo))
     celulas.append(
-        Celula(valor=linha.valor(media), tom="apagado")
+        Celula(valor=(linha.valor_media or linha.valor)(media), tom="apagado")
         if media is not None
         else Celula(valor="–", tom="apagado")
     )
@@ -1356,6 +1417,15 @@ def _celulas(linha: LinhaFinanceira) -> list[Celula]:
 
 def _dias(v: Decimal) -> Valor:
     return Valor(valor=q(v, 1), unidade="dias", casas=0)
+
+
+def _dias_media(v: Decimal) -> Valor:
+    return Valor(valor=q(v, 2), unidade="dias", casas=1)
+
+
+def _brl_mi(v: Decimal) -> Valor:
+    """Receita na tabela: "6,64 mi" (o front escreve curto na variante "tendencia")."""
+    return Valor(valor=q(v), unidade="brl", casas=2)
 
 
 def cartao_tabela_financeira(
@@ -1370,7 +1440,7 @@ def cartao_tabela_financeira(
         return [x.sobre_rl(f(x)) for x in t]
 
     linhas = [
-        LinhaFinanceira("Receita bruta", [x.receita_bruta for x in t], brl, True),
+        LinhaFinanceira("Receita bruta", [x.receita_bruta for x in t], _brl_mi, True),
         LinhaFinanceira("Margem bruta", margem(lambda x: x.lucro_bruto), pct, True),
         LinhaFinanceira(
             "Margem de contribuição", margem(lambda x: x.margem_contribuicao), pct, True
@@ -1391,20 +1461,21 @@ def cartao_tabela_financeira(
             ("Inadimplência", titulos.inadimplencia, pct, False),
         ):
             if serie:
+                media = _dias_media if valor is _dias else None
                 linhas.append(
-                    LinhaFinanceira(nome, [serie.get(m) for m in meses], valor, maior_melhor)
+                    LinhaFinanceira(nome, [serie.get(m) for m in meses], valor, maior_melhor, media)
                 )
     return CartaoTabela(
         id="tabela-financeira",
         tipo="tabela",
-        variante="compacta",
+        variante="tendencia",
         largura=12,
         titulo="Tabela financeira mês a mês",
         subtitulo=f"Principais indicadores dos últimos {len(meses)} meses. Fundo pela média do "
         "período: melhor ou pior que ela.",
         colunas=[
             ColunaTabela(rotulo="Indicador"),
-            *(ColunaTabela(rotulo=MESES_CURTOS[m.month - 1]) for m in meses),
+            *(ColunaTabela(rotulo=r) for r in rotulos_meses(meses)),
             ColunaTabela(rotulo="Média"),
         ],
         linhas=[LinhaTabela(celulas=_celulas(x)) for x in linhas],
@@ -1526,9 +1597,7 @@ def montar(
     ]
     if a_decidir:
         cartoes += [cartao_ponte(k), cartao_desvios(k)]
-    cartoes.append(cartao_dre(k, a_decidir))
-    if a_decidir:
-        cartoes.append(cartao_tabela_financeira(k, conn, ctx))
+    cartoes += [cartao_dre(k), cartao_tabela_financeira(k, conn, ctx)]
     return Conteudo(
         filtros=[o.filtro for o in (visao_o, cenario_o) if o is not None],
         aviso=aviso,

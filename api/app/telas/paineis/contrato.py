@@ -433,8 +433,9 @@ class LinhaTabela(ModeloCamel):
 
 class CartaoTabela(CartaoBase):
     tipo: Literal["tabela"]
-    # calor: células coloridas e centralizadas (atingimento mês a mês)
-    variante: Literal["padrao", "compacta", "calor"] | None = None
+    # calor: células coloridas e centralizadas (atingimento mês a mês); tendencia: para ler a
+    # tendência, não número a número (números curtos e farol claro, sem negrito)
+    variante: Literal["padrao", "compacta", "calor", "tendencia"] | None = None
     colunas: list[ColunaTabela]
     linhas: list[LinhaTabela]
     vazio: str | None = None
@@ -528,10 +529,16 @@ class CartaoMatriz(CartaoBase):
     valores: list[list[CelulaMatriz]]
 
 
-class TendenciaDre(ModeloCamel):
-    # últimos 6 meses, na escala do cartão
+class TendenciaLista(ModeloCamel):
     realizado: list[Numero]
     comparacao: list[Numero]
+
+
+class TendenciaDre(TendenciaLista):
+    """Últimos 6 meses. brl: em reais; pct: em % da receita bruta, na base da coluna
+    "% receita bruta" da linha. Sem unidade, o front desenha só a faísca."""
+
+    unidade: Literal["brl", "pct"] | None = None
 
 
 class LinhaDre(ModeloCamel):
@@ -729,8 +736,8 @@ class ItemListaDetalhe(ModeloCamel):
     id: str
     # uma a menos que as colunas: a última é a tendência
     celulas: list[Celula]
-    # realizado cheio, comparação tracejada (mesmo formato da tendência da DRE)
-    tendencia: TendenciaDre
+    # realizado cheio, comparação tracejada
+    tendencia: TendenciaLista
     detalhe: DetalheLista
 
 
@@ -741,6 +748,32 @@ class CartaoListaDetalhe(CartaoBase):
     tipo: Literal["lista-detalhe"]
     colunas: list[ColunaTabela]
     itens: list[ItemListaDetalhe]
+
+
+class TrechoCiclo(ModeloCamel):
+    # texto dentro do trecho ("Estoque 15 d")
+    rotulo: str
+    # em dias, já calculados; a régua vai até o maior `ate`
+    de: Numero
+    ate: Numero
+    estilo: Literal["estoque", "recebimento", "pagamento", "preso"]
+
+
+class LinhaCiclo(ModeloCamel):
+    rotulo: str
+    trechos: list[TrechoCiclo]
+
+
+class CartaoCicloCaixa(CartaoBase):
+    """Ciclo de caixa em réguas de dias: compra → venda → recebe, compra → paga e o dinheiro
+    preso."""
+
+    tipo: Literal["ciclo-caixa"]
+    linhas: list[LinhaCiclo]
+    # frases do rodapé, lado a lado ("Eram 17 dias em março; hoje 22")
+    rodape: list[list[Trecho]] | None = None
+    # os prazos mês a mês, embaixo
+    grafico: GraficoLinhas | None = None
 
 
 Cartao = Annotated[
@@ -760,7 +793,8 @@ Cartao = Annotated[
     | CartaoDoisLados
     | CartaoBarrasHorizontais
     | CartaoNumeroGrafico
-    | CartaoListaDetalhe,
+    | CartaoListaDetalhe
+    | CartaoCicloCaixa,
     Field(discriminator="tipo"),
 ]
 

@@ -160,7 +160,7 @@ Contrato `PainelPayload` (espelho de `src/contracts/painel.ts` do front), em [ap
 
 - As opções de cada filtro saem dos dados (cadastro dos vendedores, linhas das vendas) e vêm em `filtros`, com `padrao` (`todos`/`todas`); opção fora da lista → 422 "Filtro inválido.".
 - Antes da primeira carga do cliente: 200 com `dadosAte` e `atualizadoEm` nulos e tudo vazio. O mesmo no Resultado sem `f_lancamentos_*`, no Receber e pagar sem `f_receitas_*` nem `f_despesas_*` e em Pessoas sem `f_folha_*`. Nesses casos, filtro da tela vindo na consulta → 422; `comparar` vale sempre.
-- Cartões "A decidir" do mockup (no Resultado: ponte do EBITDA, maiores desvios, nível 3 da DRE e tabela financeira) só saem com `PAINEIS_A_DECIDIR=1` (só dev), também no demo.
+- Cartões "A decidir" do mockup (no Resultado: ponte do EBITDA e maiores desvios; a tabela financeira e o nível 3 da DRE saem sempre desde 30/10/2026) só saem com `PAINEIS_A_DECIDIR=1` (só dev), também no demo.
 - Cartão sem fonte de dados não sai (ex.: sem meta de clientes, sem o cartão de fatores; sem o papel `vendedor` nas vendas, sem canais nem Equipe).
 - As regras (provisórias) estão no topo de cada módulo: [vendas.py](app/telas/paineis/vendas.py), [equipe.py](app/telas/paineis/equipe.py), [clientes.py](app/telas/paineis/clientes.py), [resultado.py](app/telas/paineis/resultado.py), [receber_pagar.py](app/telas/paineis/receber_pagar.py), [pessoas.py](app/telas/paineis/pessoas.py) e [base.py](app/telas/paineis/base.py) (fontes, papéis e o mês).
 - `explicacao` de cada cartão (o botão "i" do front): texto fixo por cartão em [explicacoes.py](app/telas/paineis/explicacoes.py); cartão sem texto sai sem a chave.

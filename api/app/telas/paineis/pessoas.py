@@ -95,7 +95,7 @@ from app.telas.paineis.contrato import (
     ReferenciaLinha,
     SerieEmpilhada,
     SerieLinha,
-    TendenciaDre,
+    TendenciaLista,
     VariacaoNumero,
     VisaoGraficos,
 )
@@ -109,7 +109,7 @@ from app.telas.paineis.formato import (
     pct_texto,
     q,
 )
-from app.telas.visao_geral.contra_referencia import MESES_CURTOS, rotulo_eixo
+from app.telas.visao_geral.contra_referencia import MESES_CURTOS, rotulo_eixo, rotulos_meses
 from app.telas.visao_geral.contrato import Kpi, Trecho, Unidade, Valor
 from app.telas.visao_geral.texto import moeda, moeda_cheia
 from app.telas.visao_geral.vendas import (
@@ -785,7 +785,7 @@ def _linha_mensal(
         unidade=unidade,
         casas=casas if unidade != "brl" else None,
         casas_mil=casas_mil,
-        rotulos=[MESES_CURTOS[m.month - 1] for m in meses],
+        rotulos=rotulos_meses(meses),
         titulos=[rotulo_eixo(m) for m in meses],
         series=[SerieLinha(nome=nome, valores=serie, estilo="principal", area=area)],
         referencia=ReferenciaLinha(valor=q(media, casas + 1), rotulo=f"média {texto(media)}"),
@@ -859,7 +859,7 @@ def cartao_por_setor(folha: Folha, p: Periodo, setores: list[str]) -> CartaoGraf
                 grafico=GraficoEmpilhado(
                     tipo="empilhado",
                     unidade="qtd",
-                    rotulos=[MESES_CURTOS[m.month - 1] for m in p.janela],
+                    rotulos=rotulos_meses(p.janela),
                     rotulos_nas_barras=True,
                     totais=[Decimal(pessoas(folha, m)) for m in p.janela],
                     series=series,
@@ -1030,7 +1030,7 @@ def _visao_movimento(
                     rotulos_nas_barras=True,
                     grupos=[
                         GrupoBarras(
-                            rotulo=MESES_CURTOS[m.month - 1],
+                            rotulo=r,
                             titulo=rotulo_eixo(m),
                             barras=[
                                 Barra(
@@ -1045,7 +1045,7 @@ def _visao_movimento(
                                 ),
                             ],
                         )
-                        for m in meses
+                        for m, r in zip(meses, rotulos_meses(meses), strict=True)
                     ],
                 ),
             ),
@@ -1169,7 +1169,7 @@ def cartao_produtividade(folha: Folha, p: Periodo, setores: list[str]) -> Cartao
                     Celula(valor=brl(serie[p.ref]), negrito=True),
                     vs,
                 ],
-                tendencia=TendenciaDre(
+                tendencia=TendenciaLista(
                     realizado=[q(serie[m]) for m in meses],
                     comparacao=[q(media)] * len(meses),
                 ),

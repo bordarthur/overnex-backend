@@ -412,6 +412,13 @@ def test_series_de_12_meses(leituras: dict[str, Any]) -> None:
     assert [s.nome for s in idade.series] == list(rp.FAIXAS_SERIE)
     prazos = _cartao(c, "prazos").graficos[0].grafico
     assert [s.rotulo_fim for s in prazos.series] == ["Pagamento, 24 d", "Recebimento, 30 d"]
+    # 12 meses cruzam anos: o rótulo do eixo é o mesmo da dica ("out-25")
+    for grafico in (linhas, prazos):
+        assert grafico.titulos is not None
+        assert grafico.rotulos == grafico.titulos
+    assert "-" in idade.rotulos[0]
+    # sem estoque a custo não há prazo de estoque: o ciclo de caixa (só no demo) não sai
+    assert "ciclo-caixa" not in [x.id for x in c.cartoes]
 
 
 def test_limite_de_credito(leituras: dict[str, Any]) -> None:

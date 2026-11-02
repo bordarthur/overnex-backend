@@ -137,78 +137,185 @@
             },
             "pontos": [
               {
-                "rotulo": "out",
+                "rotulo": "out-25",
                 "titulo": "out-25",
                 "valor": 6640000,
                 "referencia": 6550000
               },
               {
-                "rotulo": "nov",
+                "rotulo": "nov-25",
                 "titulo": "nov-25",
                 "valor": 6710000,
                 "referencia": 6600000
               },
               {
-                "rotulo": "dez",
+                "rotulo": "dez-25",
                 "titulo": "dez-25",
                 "valor": 7020000,
                 "referencia": 6900000
               },
               {
-                "rotulo": "jan",
+                "rotulo": "jan-26",
                 "titulo": "jan-26",
                 "valor": 6380000,
                 "referencia": 6400000
               },
               {
-                "rotulo": "fev",
+                "rotulo": "fev-26",
                 "titulo": "fev-26",
                 "valor": 6510000,
                 "referencia": 6450000
               },
               {
-                "rotulo": "mar",
+                "rotulo": "mar-26",
                 "titulo": "mar-26",
                 "valor": 6800000,
                 "referencia": 6700000
               },
               {
-                "rotulo": "abr",
+                "rotulo": "abr-26",
                 "titulo": "abr-26",
                 "valor": 6860000,
                 "referencia": 6750000
               },
               {
-                "rotulo": "mai",
+                "rotulo": "mai-26",
                 "titulo": "mai-26",
                 "valor": 6750000,
                 "referencia": 6680000
               },
               {
-                "rotulo": "jun",
+                "rotulo": "jun-26",
                 "titulo": "jun-26",
                 "valor": 6660000,
                 "referencia": 6800000,
                 "status": "critico"
               },
               {
-                "rotulo": "jul",
+                "rotulo": "jul-26",
                 "titulo": "jul-26",
                 "valor": 7110000,
                 "referencia": 6900000
               },
               {
-                "rotulo": "ago",
+                "rotulo": "ago-26",
                 "titulo": "ago-26",
                 "valor": 6690000,
                 "referencia": 6900000,
                 "status": "critico"
               },
               {
-                "rotulo": "set",
+                "rotulo": "set-26",
                 "titulo": "set-26",
                 "valor": 6950000,
                 "referencia": 6800000
+              }
+            ]
+          }
+        },
+        {
+          "titulo": "Custos",
+          "grafico": {
+            "tipo": "combo",
+            "unidade": "brl",
+            "nomes": {
+              "valor": "Realizado",
+              "referencia": "Orçado",
+              "linha": "% da receita bruta"
+            },
+            "escalaLinha": {
+              "unidade": "pct",
+              "casas": 1
+            },
+            "pontos": [
+              {
+                "rotulo": "out-25",
+                "titulo": "out-25",
+                "valor": 4382000,
+                "referencia": 4316000,
+                "linha": 66
+              },
+              {
+                "rotulo": "nov-25",
+                "titulo": "nov-25",
+                "valor": 4455000,
+                "referencia": 4349000,
+                "status": "critico",
+                "linha": 66.4
+              },
+              {
+                "rotulo": "dez-25",
+                "titulo": "dez-25",
+                "valor": 4598000,
+                "referencia": 4547000,
+                "linha": 65.5
+              },
+              {
+                "rotulo": "jan-26",
+                "titulo": "jan-26",
+                "valor": 4243000,
+                "referencia": 4218000,
+                "linha": 66.5
+              },
+              {
+                "rotulo": "fev-26",
+                "titulo": "fev-26",
+                "valor": 4323000,
+                "referencia": 4251000,
+                "linha": 66.4
+              },
+              {
+                "rotulo": "mar-26",
+                "titulo": "mar-26",
+                "valor": 4515000,
+                "referencia": 4415000,
+                "status": "critico",
+                "linha": 66.4
+              },
+              {
+                "rotulo": "abr-26",
+                "titulo": "abr-26",
+                "valor": 4548000,
+                "referencia": 4448000,
+                "status": "critico",
+                "linha": 66.3
+              },
+              {
+                "rotulo": "mai-26",
+                "titulo": "mai-26",
+                "valor": 4428000,
+                "referencia": 4402000,
+                "linha": 65.6
+              },
+              {
+                "rotulo": "jun-26",
+                "titulo": "jun-26",
+                "valor": 4382000,
+                "referencia": 4481000,
+                "linha": 65.8
+              },
+              {
+                "rotulo": "jul-26",
+                "titulo": "jul-26",
+                "valor": 4785000,
+                "referencia": 4547000,
+                "status": "critico",
+                "linha": 67.3
+              },
+              {
+                "rotulo": "ago-26",
+                "titulo": "ago-26",
+                "valor": 4456000,
+                "referencia": 4547000,
+                "linha": 66.6
+              },
+              {
+                "rotulo": "set-26",
+                "titulo": "set-26",
+                "valor": 4691000,
+                "referencia": 4481000,
+                "status": "critico",
+                "linha": 67.5
               }
             ]
           }
@@ -229,28 +336,28 @@
             },
             "pontos": [
               {
-                "rotulo": "out",
+                "rotulo": "out-25",
                 "titulo": "out-25",
                 "valor": 2000560,
                 "referencia": 1971900,
                 "linha": 30.1
               },
               {
-                "rotulo": "nov",
+                "rotulo": "nov-25",
                 "titulo": "nov-25",
                 "valor": 1991000,
                 "referencia": 1976800,
                 "linha": 29.7
               },
               {
-                "rotulo": "dez",
+                "rotulo": "dez-25",
                 "titulo": "dez-25",
                 "valor": 2145180,
                 "referencia": 2056200,
                 "linha": 30.6
               },
               {
-                "rotulo": "jan",
+                "rotulo": "jan-26",
                 "titulo": "jan-26",
                 "valor": 1886960,
                 "referencia": 1947200,
@@ -258,49 +365,49 @@
                 "linha": 29.6
               },
               {
-                "rotulo": "fev",
+                "rotulo": "fev-26",
                 "titulo": "fev-26",
                 "valor": 1934960,
                 "referencia": 1952100,
                 "linha": 29.7
               },
               {
-                "rotulo": "mar",
+                "rotulo": "mar-26",
                 "titulo": "mar-26",
                 "valor": 2016800,
                 "referencia": 1996600,
                 "linha": 29.7
               },
               {
-                "rotulo": "abr",
+                "rotulo": "abr-26",
                 "titulo": "abr-26",
                 "valor": 2046580,
                 "referencia": 2011500,
                 "linha": 29.8
               },
               {
-                "rotulo": "mai",
+                "rotulo": "mai-26",
                 "titulo": "mai-26",
                 "valor": 2058750,
                 "referencia": 2004640,
                 "linha": 30.5
               },
               {
-                "rotulo": "jun",
+                "rotulo": "jun-26",
                 "titulo": "jun-26",
                 "valor": 2019340,
                 "referencia": 2026400,
                 "linha": 30.3
               },
               {
-                "rotulo": "jul",
+                "rotulo": "jul-26",
                 "titulo": "jul-26",
                 "valor": 2045450,
                 "referencia": 2036200,
                 "linha": 28.8
               },
               {
-                "rotulo": "ago",
+                "rotulo": "ago-26",
                 "titulo": "ago-26",
                 "valor": 1975480,
                 "referencia": 2043200,
@@ -308,7 +415,7 @@
                 "linha": 29.5
               },
               {
-                "rotulo": "set",
+                "rotulo": "set-26",
                 "titulo": "set-26",
                 "valor": 1988550,
                 "referencia": 2033400,
@@ -334,84 +441,84 @@
             },
             "pontos": [
               {
-                "rotulo": "out",
+                "rotulo": "out-25",
                 "titulo": "out-25",
                 "valor": 1310000,
                 "referencia": 1330000,
                 "linha": 19.7
               },
               {
-                "rotulo": "nov",
+                "rotulo": "nov-25",
                 "titulo": "nov-25",
                 "valor": 1320000,
                 "referencia": 1330000,
                 "linha": 19.7
               },
               {
-                "rotulo": "dez",
+                "rotulo": "dez-25",
                 "titulo": "dez-25",
                 "valor": 1380000,
                 "referencia": 1380000,
                 "linha": 19.7
               },
               {
-                "rotulo": "jan",
+                "rotulo": "jan-26",
                 "titulo": "jan-26",
                 "valor": 1300000,
                 "referencia": 1320000,
                 "linha": 20.4
               },
               {
-                "rotulo": "fev",
+                "rotulo": "fev-26",
                 "titulo": "fev-26",
                 "valor": 1310000,
                 "referencia": 1320000,
                 "linha": 20.1
               },
               {
-                "rotulo": "mar",
+                "rotulo": "mar-26",
                 "titulo": "mar-26",
                 "valor": 1330000,
                 "referencia": 1340000,
                 "linha": 19.6
               },
               {
-                "rotulo": "abr",
+                "rotulo": "abr-26",
                 "titulo": "abr-26",
                 "valor": 1340000,
                 "referencia": 1350000,
                 "linha": 19.5
               },
               {
-                "rotulo": "mai",
+                "rotulo": "mai-26",
                 "titulo": "mai-26",
                 "valor": 1350000,
                 "referencia": 1350000,
                 "linha": 20
               },
               {
-                "rotulo": "jun",
+                "rotulo": "jun-26",
                 "titulo": "jun-26",
                 "valor": 1360000,
                 "referencia": 1360000,
                 "linha": 20.4
               },
               {
-                "rotulo": "jul",
+                "rotulo": "jul-26",
                 "titulo": "jul-26",
                 "valor": 1370000,
                 "referencia": 1360000,
                 "linha": 19.3
               },
               {
-                "rotulo": "ago",
+                "rotulo": "ago-26",
                 "titulo": "ago-26",
                 "valor": 1360000,
                 "referencia": 1367000,
                 "linha": 20.3
               },
               {
-                "rotulo": "set",
+                "rotulo": "set-26",
                 "titulo": "set-26",
                 "valor": 1370000,
                 "referencia": 1367000,
@@ -436,28 +543,28 @@
             },
             "pontos": [
               {
-                "rotulo": "out",
+                "rotulo": "out-25",
                 "titulo": "out-25",
                 "valor": 690560,
                 "referencia": 641900,
                 "linha": 10.4
               },
               {
-                "rotulo": "nov",
+                "rotulo": "nov-25",
                 "titulo": "nov-25",
                 "valor": 671000,
                 "referencia": 646800,
                 "linha": 10
               },
               {
-                "rotulo": "dez",
+                "rotulo": "dez-25",
                 "titulo": "dez-25",
                 "valor": 765180,
                 "referencia": 676200,
                 "linha": 10.9
               },
               {
-                "rotulo": "jan",
+                "rotulo": "jan-26",
                 "titulo": "jan-26",
                 "valor": 586960,
                 "referencia": 627200,
@@ -465,49 +572,49 @@
                 "linha": 9.2
               },
               {
-                "rotulo": "fev",
+                "rotulo": "fev-26",
                 "titulo": "fev-26",
                 "valor": 624960,
                 "referencia": 632100,
                 "linha": 9.6
               },
               {
-                "rotulo": "mar",
+                "rotulo": "mar-26",
                 "titulo": "mar-26",
                 "valor": 686800,
                 "referencia": 656600,
                 "linha": 10.1
               },
               {
-                "rotulo": "abr",
+                "rotulo": "abr-26",
                 "titulo": "abr-26",
                 "valor": 706580,
                 "referencia": 661500,
                 "linha": 10.3
               },
               {
-                "rotulo": "mai",
+                "rotulo": "mai-26",
                 "titulo": "mai-26",
                 "valor": 708750,
                 "referencia": 654640,
                 "linha": 10.5
               },
               {
-                "rotulo": "jun",
+                "rotulo": "jun-26",
                 "titulo": "jun-26",
                 "valor": 659340,
                 "referencia": 666400,
                 "linha": 9.9
               },
               {
-                "rotulo": "jul",
+                "rotulo": "jul-26",
                 "titulo": "jul-26",
                 "valor": 675450,
                 "referencia": 676200,
                 "linha": 9.5
               },
               {
-                "rotulo": "ago",
+                "rotulo": "ago-26",
                 "titulo": "ago-26",
                 "valor": 615480,
                 "referencia": 676200,
@@ -515,7 +622,7 @@
                 "linha": 9.2
               },
               {
-                "rotulo": "set",
+                "rotulo": "set-26",
                 "titulo": "set-26",
                 "valor": 618550,
                 "referencia": 666400,
@@ -541,28 +648,28 @@
             },
             "pontos": [
               {
-                "rotulo": "out",
+                "rotulo": "out-25",
                 "titulo": "out-25",
                 "valor": 494953,
                 "referencia": 455246,
                 "linha": 7.5
               },
               {
-                "rotulo": "nov",
+                "rotulo": "nov-25",
                 "titulo": "nov-25",
                 "valor": 476544,
                 "referencia": 459245,
                 "linha": 7.1
               },
               {
-                "rotulo": "dez",
+                "rotulo": "dez-25",
                 "titulo": "dez-25",
                 "valor": 551763,
                 "referencia": 483235,
                 "linha": 7.9
               },
               {
-                "rotulo": "jan",
+                "rotulo": "jan-26",
                 "titulo": "jan-26",
                 "valor": 411231,
                 "referencia": 443251,
@@ -570,35 +677,35 @@
                 "linha": 6.4
               },
               {
-                "rotulo": "fev",
+                "rotulo": "fev-26",
                 "titulo": "fev-26",
                 "valor": 440607,
                 "referencia": 447250,
                 "linha": 6.8
               },
               {
-                "rotulo": "mar",
+                "rotulo": "mar-26",
                 "titulo": "mar-26",
                 "valor": 490253,
                 "referencia": 467242,
                 "linha": 7.2
               },
               {
-                "rotulo": "abr",
+                "rotulo": "abr-26",
                 "titulo": "abr-26",
                 "valor": 504761,
                 "referencia": 471240,
                 "linha": 7.4
               },
               {
-                "rotulo": "mai",
+                "rotulo": "mai-26",
                 "titulo": "mai-26",
                 "valor": 505716,
                 "referencia": 465642,
                 "linha": 7.5
               },
               {
-                "rotulo": "jun",
+                "rotulo": "jun-26",
                 "titulo": "jun-26",
                 "valor": 463765,
                 "referencia": 475238,
@@ -606,14 +713,14 @@
                 "linha": 7
               },
               {
-                "rotulo": "jul",
+                "rotulo": "jul-26",
                 "titulo": "jul-26",
                 "valor": 474463,
                 "referencia": 483235,
                 "linha": 6.7
               },
               {
-                "rotulo": "ago",
+                "rotulo": "ago-26",
                 "titulo": "ago-26",
                 "valor": 424712,
                 "referencia": 483235,
@@ -621,7 +728,7 @@
                 "linha": 6.3
               },
               {
-                "rotulo": "set",
+                "rotulo": "set-26",
                 "titulo": "set-26",
                 "valor": 425585,
                 "referencia": 475238,
@@ -632,7 +739,18 @@
           }
         }
       ],
-      "nota": "Leitura rápida: a receita veio acima do orçado em 9 dos 12 meses, mas a margem de contribuição caiu de 31% para 29% desde maio. As despesas fixas estão no orçado. O EBITDA e o lucro só ficam abaixo do orçado por causa da margem."
+      "chamada": {
+        "status": "critico",
+        "texto": [
+          {
+            "texto": "Leitura rápida: ",
+            "destaque": true
+          },
+          {
+            "texto": "a receita veio acima do orçado em 9 dos 12 meses, mas a margem de contribuição caiu de 31% para 29% desde maio. As despesas fixas estão no orçado. O EBITDA e o lucro só ficam abaixo do orçado por causa da margem."
+          }
+        ]
+      }
     },
     {
       "id": "dre-cascata",
@@ -898,7 +1016,7 @@
       "titulo": "DRE gerencial de setembro, pelo plano de contas",
       "subtitulo": "Clique numa linha para abrir o nível seguinte. Só aparecem as contas com movimento ou orçamento nesta empresa.",
       "explicacao": "A DRE pelo plano de contas, com orçado e diferença. Clique numa linha para abrir o nível seguinte. A chave “Só desvios” esconde o que está dentro do orçado e deixa só as linhas em atenção ou críticas. Análise vertical sobre a receita bruta.",
-      "rotuloConta": "Conta (R$ mil)",
+      "rotuloConta": "Conta (R$)",
       "rotuloComparacao": "Orçado",
       "escala": {
         "unidade": "qtd",
@@ -912,17 +1030,18 @@
           "codigo": "100.00",
           "nome": "Receita bruta",
           "nivel": 1,
-          "realizado": 6950,
+          "realizado": 6950000,
           "percentualReceitaBruta": 100,
-          "comparacao": 6800,
-          "diferenca": 150,
+          "comparacao": 6800000,
+          "diferenca": 150000,
           "diferencaPercentual": 2.2,
           "tomDiferenca": "saudavel",
           "status": "saudavel",
           "comDesvio": true,
           "tendencia": {
-            "realizado": [7359.3, 7933.3, 7542.5, 6755.4, 7035.2, 6950],
-            "comparacao": [6756.6, 6877.3, 6884.8, 6768, 6698.1, 6800]
+            "realizado": [7359300, 7933300, 7542500, 6755400, 7035200, 6950000],
+            "comparacao": [6756600, 6877300, 6884800, 6768000, 6698100, 6800000],
+            "unidade": "brl"
           }
         },
         {
@@ -931,17 +1050,18 @@
           "nome": "Venda de produtos",
           "nivel": 2,
           "pai": "100",
-          "realizado": 6812,
+          "realizado": 6812000,
           "percentualReceitaBruta": 98,
-          "comparacao": 6710,
-          "diferenca": 102,
+          "comparacao": 6710000,
+          "diferenca": 102000,
           "diferencaPercentual": 1.5,
           "tomDiferenca": "saudavel",
           "status": "saudavel",
           "comDesvio": true,
           "tendencia": {
-            "realizado": [6607.6, 6199.1, 5944, 6725.8, 7087.1, 6812],
-            "comparacao": [6780.5, 6659.6, 6612.6, 6708.2, 6806.5, 6710]
+            "realizado": [6607600, 6199100, 5944000, 6725800, 7087100, 6812000],
+            "comparacao": [6780500, 6659600, 6612600, 6708200, 6806500, 6710000],
+            "unidade": "brl"
           }
         },
         {
@@ -950,18 +1070,19 @@
           "nome": "Bovinos",
           "nivel": 3,
           "pai": "100.01",
-          "realizado": 2290,
+          "realizado": 2290000,
           "percentualReceitaBruta": 32.9,
-          "comparacao": 2180,
-          "diferenca": 110,
+          "comparacao": 2180000,
+          "diferenca": 110000,
           "diferencaPercentual": 5,
           "tomDiferenca": "saudavel",
           "destacarDiferenca": true,
           "status": "saudavel",
           "comDesvio": false,
           "tendencia": {
-            "realizado": [2467.5, 2630.4, 2438.4, 2221.6, 2366, 2290],
-            "comparacao": [2187.4, 2151.3, 2157.2, 2196.5, 2211.6, 2180]
+            "realizado": [2467500, 2630400, 2438400, 2221600, 2366000, 2290000],
+            "comparacao": [2187400, 2151300, 2157200, 2196500, 2211600, 2180000],
+            "unidade": "brl"
           }
         },
         {
@@ -970,17 +1091,18 @@
           "nome": "Aves",
           "nivel": 3,
           "pai": "100.01",
-          "realizado": 1450,
+          "realizado": 1450000,
           "percentualReceitaBruta": 20.9,
-          "comparacao": 1470,
-          "diferenca": -20,
+          "comparacao": 1470000,
+          "diferenca": -20000,
           "diferencaPercentual": -1.4,
           "tomDiferenca": "critico",
           "status": "atencao",
           "comDesvio": true,
           "tendencia": {
-            "realizado": [1499.1, 1531.8, 1379.8, 1386.3, 1536.6, 1450],
-            "comparacao": [1462.4, 1448, 1465.9, 1489.8, 1484.7, 1470]
+            "realizado": [1499100, 1531800, 1379800, 1386300, 1536600, 1450000],
+            "comparacao": [1462400, 1448000, 1465900, 1489800, 1484700, 1470000],
+            "unidade": "brl"
           }
         },
         {
@@ -989,17 +1111,18 @@
           "nome": "Embutidos / industrializados",
           "nivel": 3,
           "pai": "100.01",
-          "realizado": 900,
+          "realizado": 900000,
           "percentualReceitaBruta": 12.9,
-          "comparacao": 880,
-          "diferenca": 20,
+          "comparacao": 880000,
+          "diferenca": 20000,
           "diferencaPercentual": 2.3,
           "tomDiferenca": "saudavel",
           "status": "saudavel",
           "comDesvio": false,
           "tendencia": {
-            "realizado": [748.4, 823.1, 908.9, 852.7, 822, 900],
-            "comparacao": [880.2, 892.8, 886.7, 870.8, 868.4, 880]
+            "realizado": [748400, 823100, 908900, 852700, 822000, 900000],
+            "comparacao": [880200, 892800, 886700, 870800, 868400, 880000],
+            "unidade": "brl"
           }
         },
         {
@@ -1008,17 +1131,18 @@
           "nome": "Suínos",
           "nivel": 3,
           "pai": "100.01",
-          "realizado": 820,
+          "realizado": 820000,
           "percentualReceitaBruta": 11.8,
-          "comparacao": 800,
-          "diferenca": 20,
+          "comparacao": 800000,
+          "diferenca": 20000,
           "diferencaPercentual": 2.5,
           "tomDiferenca": "saudavel",
           "status": "saudavel",
           "comDesvio": false,
           "tendencia": {
-            "realizado": [795.1, 741.2, 717.1, 814.2, 850.4, 820],
-            "comparacao": [788.9, 792.5, 807.1, 811.2, 798.9, 800]
+            "realizado": [795100, 741200, 717100, 814200, 850400, 820000],
+            "comparacao": [788900, 792500, 807100, 811200, 798900, 800000],
+            "unidade": "brl"
           }
         },
         {
@@ -1027,18 +1151,19 @@
           "nome": "Peixes",
           "nivel": 3,
           "pai": "100.01",
-          "realizado": 610,
+          "realizado": 610000,
           "percentualReceitaBruta": 8.8,
-          "comparacao": 640,
-          "diferenca": -30,
+          "comparacao": 640000,
+          "diferenca": -30000,
           "diferencaPercentual": -4.7,
           "tomDiferenca": "critico",
           "destacarDiferenca": true,
           "status": "critico",
           "comDesvio": true,
           "tendencia": {
-            "realizado": [708.8, 673.6, 605, 630.4, 664.9, 610],
-            "comparacao": [646.6, 648.5, 637.9, 630.4, 637, 640]
+            "realizado": [708800, 673600, 605000, 630400, 664900, 610000],
+            "comparacao": [646600, 648500, 637900, 630400, 637000, 640000],
+            "unidade": "brl"
           }
         },
         {
@@ -1047,17 +1172,18 @@
           "nome": "Laticínios",
           "nivel": 3,
           "pai": "100.01",
-          "realizado": 560,
+          "realizado": 560000,
           "percentualReceitaBruta": 8.1,
-          "comparacao": 570,
-          "diferenca": -10,
+          "comparacao": 570000,
+          "diferenca": -10000,
           "diferencaPercentual": -1.8,
           "tomDiferenca": "critico",
           "status": "atencao",
           "comDesvio": true,
           "tendencia": {
-            "realizado": [540.8, 523.8, 487.4, 539.1, 587.5, 560],
-            "comparacao": [577.3, 567.7, 561.5, 567.7, 577.3, 570]
+            "realizado": [540800, 523800, 487400, 539100, 587500, 560000],
+            "comparacao": [577300, 567700, 561500, 567700, 577300, 570000],
+            "unidade": "brl"
           }
         },
         {
@@ -1066,18 +1192,19 @@
           "nome": "Outros",
           "nivel": 3,
           "pai": "100.01",
-          "realizado": 182,
+          "realizado": 182000,
           "percentualReceitaBruta": 2.6,
-          "comparacao": 170,
-          "diferenca": 12,
+          "comparacao": 170000,
+          "diferenca": 12000,
           "diferencaPercentual": 7.1,
           "tomDiferenca": "saudavel",
           "destacarDiferenca": true,
           "status": "saudavel",
           "comDesvio": false,
           "tendencia": {
-            "realizado": [164.9, 179.9, 166.7, 163.4, 185.6, 182],
-            "comparacao": [170.2, 172.5, 171.2, 168.1, 167.8, 170]
+            "realizado": [164900, 179900, 166700, 163400, 185600, 182000],
+            "comparacao": [170200, 172500, 171200, 168100, 167800, 170000],
+            "unidade": "brl"
           }
         },
         {
@@ -1086,18 +1213,19 @@
           "nome": "Venda de serviços",
           "nivel": 2,
           "pai": "100",
-          "realizado": 98,
+          "realizado": 98000,
           "percentualReceitaBruta": 1.4,
-          "comparacao": 90,
-          "diferenca": 8,
+          "comparacao": 90000,
+          "diferenca": 8000,
           "diferencaPercentual": 8.9,
           "tomDiferenca": "saudavel",
           "destacarDiferenca": true,
           "status": "saudavel",
           "comDesvio": false,
           "tendencia": {
-            "realizado": [111.4, 99.6, 101.9, 108.7, 100.2, 98],
-            "comparacao": [90.1, 88.7, 89.2, 90.9, 91.2, 90]
+            "realizado": [111400, 99600, 101900, 108700, 100200, 98000],
+            "comparacao": [90100, 88700, 89200, 90900, 91200, 90000],
+            "unidade": "brl"
           }
         },
         {
@@ -1106,18 +1234,19 @@
           "nome": "Fretes retorno",
           "nivel": 3,
           "pai": "100.02",
-          "realizado": 98,
+          "realizado": 98000,
           "percentualReceitaBruta": 1.4,
-          "comparacao": 90,
-          "diferenca": 8,
+          "comparacao": 90000,
+          "diferenca": 8000,
           "diferencaPercentual": 8.9,
           "tomDiferenca": "saudavel",
           "destacarDiferenca": true,
           "status": "saudavel",
           "comDesvio": false,
           "tendencia": {
-            "realizado": [99.2, 104.6, 95.2, 92.2, 102.3, 98],
-            "comparacao": [89.8, 88.7, 89.4, 91, 91.1, 90]
+            "realizado": [99200, 104600, 95200, 92200, 102300, 98000],
+            "comparacao": [89800, 88700, 89400, 91000, 91100, 90000],
+            "unidade": "brl"
           }
         },
         {
@@ -1126,17 +1255,18 @@
           "nome": "Outras receitas",
           "nivel": 2,
           "pai": "100",
-          "realizado": 40,
+          "realizado": 40000,
           "percentualReceitaBruta": 0.6,
           "comparacao": 0,
-          "diferenca": 40,
+          "diferenca": 40000,
           "diferencaPercentual": null,
           "tomDiferenca": "saudavel",
           "status": "saudavel",
           "comDesvio": false,
           "tendencia": {
-            "realizado": [38.8, 37.6, 41.8, 41.9, 37.7, 40],
-            "comparacao": [0, 0, 0, 0, 0, 0]
+            "realizado": [38800, 37600, 41800, 41900, 37700, 40000],
+            "comparacao": [0, 0, 0, 0, 0, 0],
+            "unidade": "brl"
           }
         },
         {
@@ -1145,17 +1275,18 @@
           "nome": "Outras receitas operacionais",
           "nivel": 3,
           "pai": "100.03",
-          "realizado": 40,
+          "realizado": 40000,
           "percentualReceitaBruta": 0.6,
           "comparacao": 0,
-          "diferenca": 40,
+          "diferenca": 40000,
           "diferencaPercentual": null,
           "tomDiferenca": "saudavel",
           "status": "saudavel",
           "comDesvio": false,
           "tendencia": {
-            "realizado": [46.4, 41.5, 40.5, 43.8, 42.2, 40],
-            "comparacao": [0, 0, 0, 0, 0, 0]
+            "realizado": [46400, 41500, 40500, 43800, 42200, 40000],
+            "comparacao": [0, 0, 0, 0, 0, 0],
+            "unidade": "brl"
           }
         },
         {
@@ -1163,17 +1294,18 @@
           "codigo": "110.00",
           "nome": "Deduções da receita",
           "nivel": 1,
-          "realizado": -112,
+          "realizado": -112000,
           "percentualReceitaBruta": 1.6,
-          "comparacao": -110,
-          "diferenca": -2,
+          "comparacao": -110000,
+          "diferenca": -2000,
           "diferencaPercentual": -1.8,
           "tomDiferenca": "critico",
           "status": "saudavel",
           "comDesvio": true,
           "tendencia": {
-            "realizado": [-105.2, -116.8, -117.5, -105.8, -108.1, -112],
-            "comparacao": [-111.1, -109.1, -108.4, -110, -111.6, -110]
+            "realizado": [1.4, 1.5, 1.6, 1.6, 1.5, 1.6],
+            "comparacao": [1.6, 1.6, 1.6, 1.6, 1.7, 1.6],
+            "unidade": "pct"
           }
         },
         {
@@ -1182,18 +1314,19 @@
           "nome": "Descontos",
           "nivel": 2,
           "pai": "110",
-          "realizado": -31,
+          "realizado": -31000,
           "percentualReceitaBruta": 0.4,
-          "comparacao": -30,
-          "diferenca": -1,
+          "comparacao": -30000,
+          "diferenca": -1000,
           "diferencaPercentual": -3.3,
           "tomDiferenca": "critico",
           "destacarDiferenca": true,
           "status": "atencao",
           "comDesvio": true,
           "tendencia": {
-            "realizado": [-32, -33.4, -35, -31.7, -29.6, -31],
-            "comparacao": [-30.4, -30, -29.6, -29.8, -30.3, -30]
+            "realizado": [0.4, 0.4, 0.5, 0.5, 0.4, 0.4],
+            "comparacao": [0.4, 0.4, 0.4, 0.4, 0.5, 0.4],
+            "unidade": "pct"
           }
         },
         {
@@ -1202,18 +1335,19 @@
           "nome": "Descontos concedidos",
           "nivel": 3,
           "pai": "110.01",
-          "realizado": -31,
+          "realizado": -31000,
           "percentualReceitaBruta": 0.4,
-          "comparacao": -30,
-          "diferenca": -1,
+          "comparacao": -30000,
+          "diferenca": -1000,
           "diferencaPercentual": -3.3,
           "tomDiferenca": "critico",
           "destacarDiferenca": true,
           "status": "atencao",
           "comDesvio": true,
           "tendencia": {
-            "realizado": [-26.2, -27.5, -31.2, -30.3, -28.2, -31],
-            "comparacao": [-30.1, -29.6, -29.7, -30.2, -30.4, -30]
+            "realizado": [0.4, 0.3, 0.4, 0.4, 0.4, 0.4],
+            "comparacao": [0.4, 0.4, 0.4, 0.4, 0.5, 0.4],
+            "unidade": "pct"
           }
         },
         {
@@ -1222,18 +1356,19 @@
           "nome": "Devoluções de venda",
           "nivel": 2,
           "pai": "110",
-          "realizado": -58,
+          "realizado": -58000,
           "percentualReceitaBruta": 0.8,
-          "comparacao": -55,
-          "diferenca": -3,
+          "comparacao": -55000,
+          "diferenca": -3000,
           "diferencaPercentual": -5.5,
           "tomDiferenca": "critico",
           "destacarDiferenca": true,
           "status": "atencao",
           "comDesvio": true,
           "tendencia": {
-            "realizado": [-55.3, -61.4, -59.8, -54.2, -57.2, -58],
-            "comparacao": [-55.4, -54.4, -54.3, -55.2, -55.8, -55]
+            "realizado": [0.8, 0.8, 0.8, 0.8, 0.8, 0.8],
+            "comparacao": [0.8, 0.8, 0.8, 0.8, 0.8, 0.8],
+            "unidade": "pct"
           }
         },
         {
@@ -1242,18 +1377,19 @@
           "nome": "Devoluções de vendas",
           "nivel": 3,
           "pai": "110.02",
-          "realizado": -58,
+          "realizado": -58000,
           "percentualReceitaBruta": 0.8,
-          "comparacao": -55,
-          "diferenca": -3,
+          "comparacao": -55000,
+          "diferenca": -3000,
           "diferencaPercentual": -5.5,
           "tomDiferenca": "critico",
           "destacarDiferenca": true,
           "status": "atencao",
           "comDesvio": true,
           "tendencia": {
-            "realizado": [-67.8, -61.5, -57.8, -62.4, -62.3, -58],
-            "comparacao": [-55.8, -55.5, -54.5, -54.2, -55.1, -55]
+            "realizado": [0.9, 0.8, 0.8, 0.9, 0.9, 0.8],
+            "comparacao": [0.8, 0.8, 0.8, 0.8, 0.8, 0.8],
+            "unidade": "pct"
           }
         },
         {
@@ -1262,18 +1398,19 @@
           "nome": "Impostos sobre a venda",
           "nivel": 2,
           "pai": "110",
-          "realizado": -23,
+          "realizado": -23000,
           "percentualReceitaBruta": 0.3,
-          "comparacao": -25,
-          "diferenca": 2,
+          "comparacao": -25000,
+          "diferenca": 2000,
           "diferencaPercentual": 8,
           "tomDiferenca": "saudavel",
           "destacarDiferenca": true,
           "status": "saudavel",
           "comDesvio": false,
           "tendencia": {
-            "realizado": [-21.1, -22.6, -20.8, -20.8, -23.7, -23],
-            "comparacao": [-24.9, -24.6, -24.9, -25.3, -25.3, -25]
+            "realizado": [0.3, 0.3, 0.3, 0.3, 0.3, 0.3],
+            "comparacao": [0.4, 0.4, 0.4, 0.4, 0.4, 0.4],
+            "unidade": "pct"
           }
         },
         {
@@ -1282,35 +1419,37 @@
           "nome": "Impostos sobre venda",
           "nivel": 3,
           "pai": "110.03",
-          "realizado": -23,
+          "realizado": -23000,
           "percentualReceitaBruta": 0.3,
-          "comparacao": -25,
-          "diferenca": 2,
+          "comparacao": -25000,
+          "diferenca": 2000,
           "diferencaPercentual": 8,
           "tomDiferenca": "saudavel",
           "destacarDiferenca": true,
           "status": "saudavel",
           "comDesvio": false,
           "tendencia": {
-            "realizado": [-21.8, -24.2, -23.9, -21.6, -22.4, -23],
-            "comparacao": [-24.8, -24.6, -25, -25.4, -25.2, -25]
+            "realizado": [0.3, 0.3, 0.3, 0.3, 0.3, 0.3],
+            "comparacao": [0.4, 0.4, 0.4, 0.4, 0.4, 0.4],
+            "unidade": "pct"
           }
         },
         {
           "id": "sub-receita-liquida",
           "nome": "Receita líquida",
           "nivel": 0,
-          "realizado": 6838,
+          "realizado": 6838000,
           "percentualReceitaBruta": 98.4,
-          "comparacao": 6690,
-          "diferenca": 148,
+          "comparacao": 6690000,
+          "diferenca": 148000,
           "diferencaPercentual": 2.2,
           "tomDiferenca": "saudavel",
           "status": "saudavel",
           "comDesvio": true,
           "tendencia": {
-            "realizado": [7927, 7585.5, 6791.4, 7028.8, 7452.9, 6838],
-            "comparacao": [6697.8, 6788.5, 6734.8, 6615.5, 6605.3, 6690]
+            "realizado": [7927000, 7585500, 6791400, 7028800, 7452900, 6838000],
+            "comparacao": [6697800, 6788500, 6734800, 6615500, 6605300, 6690000],
+            "unidade": "brl"
           }
         },
         {
@@ -1318,18 +1457,19 @@
           "codigo": "120.00",
           "nome": "Custos",
           "nivel": 1,
-          "realizado": -4590,
+          "realizado": -4590000,
           "percentualReceitaBruta": 66,
-          "comparacao": -4409,
-          "diferenca": -181,
+          "comparacao": -4409000,
+          "diferenca": -181000,
           "diferencaPercentual": -4.1,
           "tomDiferenca": "critico",
           "destacarDiferenca": true,
           "status": "atencao",
           "comDesvio": true,
           "tendencia": {
-            "realizado": [-3811.7, -4299.4, -4614.2, -4252.6, -4238.2, -4590],
-            "comparacao": [-4352.6, -4427.2, -4475.1, -4426.2, -4352.1, -4409]
+            "realizado": [51.8, 54.2, 61.2, 63, 60.2, 66],
+            "comparacao": [64.4, 64.4, 65, 65.4, 65, 64.8],
+            "unidade": "pct"
           }
         },
         {
@@ -1338,18 +1478,19 @@
           "nome": "CMV",
           "nivel": 2,
           "pai": "120",
-          "realizado": -4550,
+          "realizado": -4550000,
           "percentualReceitaBruta": 66,
-          "comparacao": -4372,
-          "diferenca": -178,
+          "comparacao": -4372000,
+          "diferenca": -178000,
           "diferencaPercentual": -4.1,
           "tomDiferenca": "critico",
           "destacarDiferenca": true,
           "status": "atencao",
           "comDesvio": true,
           "tendencia": {
-            "realizado": [-4191.9, -3872.6, -4260.8, -4685.5, -4393.3, -4550],
-            "comparacao": [-4432.1, -4362.8, -4307, -4346.4, -4423.4, -4372]
+            "realizado": [57, 48.8, 56.5, 69.4, 62.4, 65.5],
+            "comparacao": [65.6, 63.4, 62.6, 64.2, 66, 64.3],
+            "unidade": "pct"
           }
         },
         {
@@ -1358,18 +1499,19 @@
           "nome": "Custo bovinos",
           "nivel": 3,
           "pai": "120.01",
-          "realizado": -1670,
+          "realizado": -1670000,
           "percentualReceitaBruta": 24.2,
-          "comparacao": -1488,
-          "diferenca": -182,
+          "comparacao": -1488000,
+          "diferenca": -182000,
           "diferencaPercentual": -12.2,
           "tomDiferenca": "critico",
           "destacarDiferenca": true,
           "status": "critico",
           "comDesvio": true,
           "tendencia": {
-            "realizado": [-1939.6, -1845.9, -1656.7, -1723.7, -1820.3, -1670],
-            "comparacao": [-1490.7, -1510.1, -1497.1, -1470.8, -1469.7, -1488]
+            "realizado": [26.4, 23.3, 22, 25.5, 25.9, 24],
+            "comparacao": [22.1, 22, 21.7, 21.7, 21.9, 21.9],
+            "unidade": "pct"
           }
         },
         {
@@ -1378,17 +1520,18 @@
           "nome": "Custo aves",
           "nivel": 3,
           "pai": "120.01",
-          "realizado": -950,
+          "realizado": -950000,
           "percentualReceitaBruta": 13.8,
-          "comparacao": -960,
-          "diferenca": 10,
+          "comparacao": -960000,
+          "diferenca": 10000,
           "diferencaPercentual": 1,
           "tomDiferenca": "saudavel",
           "status": "saudavel",
           "comDesvio": false,
           "tendencia": {
-            "realizado": [-997.1, -897.4, -916.4, -1011.3, -967.8, -950],
-            "comparacao": [-963.4, -947.4, -949.9, -967.2, -974, -960]
+            "realizado": [13.5, 11.3, 12.1, 15, 13.8, 13.7],
+            "comparacao": [14.3, 13.8, 13.8, 14.3, 14.5, 14.1],
+            "unidade": "pct"
           }
         },
         {
@@ -1397,17 +1540,18 @@
           "nome": "Custo embutidos e industrializados",
           "nivel": 3,
           "pai": "120.01",
-          "realizado": -540,
+          "realizado": -540000,
           "percentualReceitaBruta": 7.8,
-          "comparacao": -530,
-          "diferenca": -10,
+          "comparacao": -530000,
+          "diferenca": -10000,
           "diferencaPercentual": -1.9,
           "tomDiferenca": "critico",
           "status": "saudavel",
           "comDesvio": false,
           "tendencia": {
-            "realizado": [-513, -517.3, -572.9, -554.2, -503.4, -540],
-            "comparacao": [-536.1, -536.6, -527.4, -522.1, -528.3, -530]
+            "realizado": [7, 6.5, 7.6, 8.2, 7.2, 7.8],
+            "comparacao": [7.9, 7.8, 7.7, 7.7, 7.9, 7.8],
+            "unidade": "pct"
           }
         },
         {
@@ -1416,17 +1560,18 @@
           "nome": "Custo suínos",
           "nivel": 3,
           "pai": "120.01",
-          "realizado": -560,
+          "realizado": -560000,
           "percentualReceitaBruta": 8.1,
-          "comparacao": -545,
-          "diferenca": -15,
+          "comparacao": -545000,
+          "diferenca": -15000,
           "diferencaPercentual": -2.8,
           "tomDiferenca": "critico",
           "status": "saudavel",
           "comDesvio": false,
           "tendencia": {
-            "realizado": [-577.1, -522.8, -552.5, -599.1, -557.4, -560],
-            "comparacao": [-545, -537.1, -540.8, -550.6, -552.2, -545]
+            "realizado": [7.8, 6.6, 7.3, 8.9, 7.9, 8.1],
+            "comparacao": [8.1, 7.8, 7.9, 8.1, 8.2, 8],
+            "unidade": "pct"
           }
         },
         {
@@ -1435,18 +1580,19 @@
           "nome": "Custo peixes",
           "nivel": 3,
           "pai": "120.01",
-          "realizado": -372,
+          "realizado": -372000,
           "percentualReceitaBruta": 5.4,
-          "comparacao": -390,
-          "diferenca": 18,
+          "comparacao": -390000,
+          "diferenca": 18000,
           "diferencaPercentual": 4.6,
           "tomDiferenca": "saudavel",
           "destacarDiferenca": true,
           "status": "saudavel",
           "comDesvio": false,
           "tendencia": {
-            "realizado": [-412, -427.1, -385, -364, -394.6, -372],
-            "comparacao": [-384.3, -387.1, -394.2, -395.1, -388.6, -390]
+            "realizado": [5.6, 5.4, 5.1, 5.4, 5.6, 5.4],
+            "comparacao": [5.7, 5.6, 5.7, 5.8, 5.8, 5.7],
+            "unidade": "pct"
           }
         },
         {
@@ -1455,17 +1601,18 @@
           "nome": "Custo laticínios",
           "nivel": 3,
           "pai": "120.01",
-          "realizado": -355,
+          "realizado": -355000,
           "percentualReceitaBruta": 5.2,
-          "comparacao": -362,
-          "diferenca": 7,
+          "comparacao": -362000,
+          "diferenca": 7000,
           "diferencaPercentual": 1.9,
           "tomDiferenca": "saudavel",
           "status": "saudavel",
           "comDesvio": false,
           "tendencia": {
-            "realizado": [-415.3, -381.4, -352, -377.5, -384.3, -355],
-            "comparacao": [-366, -359.5, -356.7, -361.7, -367.1, -362]
+            "realizado": [5.6, 4.8, 4.7, 5.6, 5.5, 5.1],
+            "comparacao": [5.4, 5.2, 5.2, 5.3, 5.5, 5.3],
+            "unidade": "pct"
           }
         },
         {
@@ -1474,18 +1621,19 @@
           "nome": "Custo outros",
           "nivel": 3,
           "pai": "120.01",
-          "realizado": -103,
+          "realizado": -103000,
           "percentualReceitaBruta": 1.5,
-          "comparacao": -97,
-          "diferenca": -6,
+          "comparacao": -97000,
+          "diferenca": -6000,
           "diferencaPercentual": -6.2,
           "tomDiferenca": "critico",
           "destacarDiferenca": true,
           "status": "atencao",
           "comDesvio": true,
           "tendencia": {
-            "realizado": [-94.4, -101.5, -93.4, -93, -105.9, -103],
-            "comparacao": [-96.4, -98.1, -98.2, -96.6, -95.5, -97]
+            "realizado": [1.3, 1.3, 1.2, 1.4, 1.5, 1.5],
+            "comparacao": [1.4, 1.4, 1.4, 1.4, 1.4, 1.4],
+            "unidade": "pct"
           }
         },
         {
@@ -1494,18 +1642,19 @@
           "nome": "Custo com transportes de compra",
           "nivel": 2,
           "pai": "120",
-          "realizado": -28,
+          "realizado": -28000,
           "percentualReceitaBruta": 0.4,
-          "comparacao": -25,
-          "diferenca": -3,
+          "comparacao": -25000,
+          "diferenca": -3000,
           "diferencaPercentual": -12,
           "tomDiferenca": "critico",
           "destacarDiferenca": true,
           "status": "critico",
           "comDesvio": true,
           "tendencia": {
-            "realizado": [-24.3, -27.6, -26.7, -24.9, -27.6, -28],
-            "comparacao": [-24.7, -24.7, -25.1, -25.4, -25.1, -25]
+            "realizado": [0.3, 0.3, 0.4, 0.4, 0.4, 0.4],
+            "comparacao": [0.4, 0.4, 0.4, 0.4, 0.4, 0.4],
+            "unidade": "pct"
           }
         },
         {
@@ -1514,18 +1663,19 @@
           "nome": "Frete sobre compras",
           "nivel": 3,
           "pai": "120.04",
-          "realizado": -28,
+          "realizado": -28000,
           "percentualReceitaBruta": 0.4,
-          "comparacao": -25,
-          "diferenca": -3,
+          "comparacao": -25000,
+          "diferenca": -3000,
           "diferencaPercentual": -12,
           "tomDiferenca": "critico",
           "destacarDiferenca": true,
           "status": "critico",
           "comDesvio": true,
           "tendencia": {
-            "realizado": [-29.9, -28.6, -31, -30.4, -26.9, -28],
-            "comparacao": [-24.8, -25.2, -25.3, -24.9, -24.6, -25]
+            "realizado": [0.4, 0.4, 0.4, 0.5, 0.4, 0.4],
+            "comparacao": [0.4, 0.4, 0.4, 0.4, 0.4, 0.4],
+            "unidade": "pct"
           }
         },
         {
@@ -1534,16 +1684,17 @@
           "nome": "Outros custos",
           "nivel": 2,
           "pai": "120",
-          "realizado": -12,
+          "realizado": -12000,
           "percentualReceitaBruta": 0.2,
-          "comparacao": -12,
+          "comparacao": -12000,
           "diferenca": 0,
           "diferencaPercentual": 0,
           "status": "saudavel",
           "comDesvio": false,
           "tendencia": {
-            "realizado": [-13.6, -13.6, -12.1, -12, -13, -12],
-            "comparacao": [-11.8, -12, -12.2, -12.1, -11.9, -12]
+            "realizado": [0.2, 0.2, 0.2, 0.2, 0.2, 0.2],
+            "comparacao": [0.2, 0.2, 0.2, 0.2, 0.2, 0.2],
+            "unidade": "pct"
           }
         },
         {
@@ -1552,33 +1703,35 @@
           "nome": "Energia elétrica, custo indireto",
           "nivel": 3,
           "pai": "120.05",
-          "realizado": -12,
+          "realizado": -12000,
           "percentualReceitaBruta": 0.2,
-          "comparacao": -12,
+          "comparacao": -12000,
           "diferenca": 0,
           "diferencaPercentual": 0,
           "status": "saudavel",
           "comDesvio": false,
           "tendencia": {
-            "realizado": [-11.2, -12, -12.8, -11.8, -11.2, -12],
-            "comparacao": [-12.2, -12, -11.8, -11.9, -12.1, -12]
+            "realizado": [0.2, 0.2, 0.2, 0.2, 0.2, 0.2],
+            "comparacao": [0.2, 0.2, 0.2, 0.2, 0.2, 0.2],
+            "unidade": "pct"
           }
         },
         {
           "id": "sub-lucro-bruto",
           "nome": "Lucro bruto",
           "nivel": 0,
-          "realizado": 2248,
+          "realizado": 2248000,
           "percentualReceitaBruta": 32.3,
-          "comparacao": 2281,
-          "diferenca": -33,
+          "comparacao": 2281000,
+          "diferenca": -33000,
           "diferencaPercentual": -1.4,
           "tomDiferenca": "critico",
           "status": "critico",
           "comDesvio": true,
           "tendencia": {
-            "realizado": [1891.6, 2170.7, 2218.3, 2028.5, 2131.2, 2248],
-            "comparacao": [2249.2, 2260.3, 2301.7, 2312.8, 2277.3, 2281]
+            "realizado": [1891600, 2170700, 2218300, 2028500, 2131200, 2248000],
+            "comparacao": [2249200, 2260300, 2301700, 2312800, 2277300, 2281000],
+            "unidade": "brl"
           }
         },
         {
@@ -1586,18 +1739,19 @@
           "codigo": "130.00",
           "nome": "Despesas variáveis",
           "nivel": 1,
-          "realizado": -265,
+          "realizado": -265000,
           "percentualReceitaBruta": 3.8,
-          "comparacao": -248,
-          "diferenca": -17,
+          "comparacao": -248000,
+          "diferenca": -17000,
           "diferencaPercentual": -6.9,
           "tomDiferenca": "critico",
           "destacarDiferenca": true,
           "status": "atencao",
           "comDesvio": true,
           "tendencia": {
-            "realizado": [-273.8, -283, -299.4, -274.1, -252.2, -265],
-            "comparacao": [-251.6, -248, -244.4, -246, -250.5, -248]
+            "realizado": [3.7, 3.6, 4, 4.1, 3.6, 3.8],
+            "comparacao": [3.7, 3.6, 3.5, 3.6, 3.7, 3.6],
+            "unidade": "pct"
           }
         },
         {
@@ -1606,17 +1760,18 @@
           "nome": "Despesa com vendas",
           "nivel": 2,
           "pai": "130",
-          "realizado": -139,
+          "realizado": -139000,
           "percentualReceitaBruta": 2,
-          "comparacao": -136,
-          "diferenca": -3,
+          "comparacao": -136000,
+          "diferenca": -3000,
           "diferencaPercentual": -2.2,
           "tomDiferenca": "critico",
           "status": "saudavel",
           "comDesvio": false,
           "tendencia": {
-            "realizado": [-148.4, -159.3, -149.5, -134.9, -142.2, -139],
-            "comparacao": [-138, -136.6, -134.3, -134.5, -136.9, -136]
+            "realizado": [2, 2, 2, 2, 2, 2],
+            "comparacao": [2, 2, 2, 2, 2, 2],
+            "unidade": "pct"
           }
         },
         {
@@ -1625,17 +1780,18 @@
           "nome": "Comissões vendedores",
           "nivel": 3,
           "pai": "130.01",
-          "realizado": -139,
+          "realizado": -139000,
           "percentualReceitaBruta": 2,
-          "comparacao": -136,
-          "diferenca": -3,
+          "comparacao": -136000,
+          "diferenca": -3000,
           "diferencaPercentual": -2.2,
           "tomDiferenca": "critico",
           "status": "saudavel",
           "comDesvio": false,
           "tendencia": {
-            "realizado": [-129.5, -142.2, -147.7, -133.5, -131.7, -139],
-            "comparacao": [-138, -136.6, -134.3, -134.5, -136.9, -136]
+            "realizado": [1.8, 1.8, 2, 2, 1.9, 2],
+            "comparacao": [2, 2, 2, 2, 2, 2],
+            "unidade": "pct"
           }
         },
         {
@@ -1644,18 +1800,19 @@
           "nome": "Despesas financeiras sobre a venda",
           "nivel": 2,
           "pai": "130",
-          "realizado": -38,
+          "realizado": -38000,
           "percentualReceitaBruta": 0.5,
-          "comparacao": -32,
-          "diferenca": -6,
+          "comparacao": -32000,
+          "diferenca": -6000,
           "diferencaPercentual": -18.7,
           "tomDiferenca": "critico",
           "destacarDiferenca": true,
           "status": "critico",
           "comDesvio": true,
           "tendencia": {
-            "realizado": [-39.3, -40.1, -36.1, -36.4, -40.3, -38],
-            "comparacao": [-32.4, -31.8, -31.5, -31.9, -32.4, -32]
+            "realizado": [0.5, 0.5, 0.5, 0.5, 0.6, 0.5],
+            "comparacao": [0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
+            "unidade": "pct"
           }
         },
         {
@@ -1664,18 +1821,19 @@
           "nome": "Juro de antecipação",
           "nivel": 3,
           "pai": "130.02",
-          "realizado": -14,
+          "realizado": -14000,
           "percentualReceitaBruta": 0.2,
-          "comparacao": -8,
-          "diferenca": -6,
+          "comparacao": -8000,
+          "diferenca": -6000,
           "diferencaPercentual": -75,
           "tomDiferenca": "critico",
           "destacarDiferenca": true,
           "status": "critico",
           "comDesvio": true,
           "tendencia": {
-            "realizado": [-15, -14.3, -15.5, -15.2, -13.5, -14],
-            "comparacao": [-8.1, -8.1, -8, -7.9, -7.9, -8]
+            "realizado": [0.2, 0.2, 0.2, 0.2, 0.2, 0.2],
+            "comparacao": [0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+            "unidade": "pct"
           }
         },
         {
@@ -1684,16 +1842,17 @@
           "nome": "Taxas sobre vendas, crédito",
           "nivel": 3,
           "pai": "130.02",
-          "realizado": -24,
+          "realizado": -24000,
           "percentualReceitaBruta": 0.3,
-          "comparacao": -24,
+          "comparacao": -24000,
           "diferenca": 0,
           "diferencaPercentual": 0,
           "status": "saudavel",
           "comDesvio": false,
           "tendencia": {
-            "realizado": [-20.5, -23.5, -23.3, -21.4, -23.2, -24],
-            "comparacao": [-24.3, -23.9, -23.6, -23.9, -24.3, -24]
+            "realizado": [0.3, 0.3, 0.3, 0.3, 0.3, 0.3],
+            "comparacao": [0.4, 0.3, 0.3, 0.4, 0.4, 0.4],
+            "unidade": "pct"
           }
         },
         {
@@ -1702,18 +1861,19 @@
           "nome": "Despesas com transporte de venda",
           "nivel": 2,
           "pai": "130",
-          "realizado": -80,
+          "realizado": -80000,
           "percentualReceitaBruta": 1.2,
-          "comparacao": -74,
-          "diferenca": -6,
+          "comparacao": -74000,
+          "diferenca": -6000,
           "diferencaPercentual": -8.1,
           "tomDiferenca": "critico",
           "destacarDiferenca": true,
           "status": "critico",
           "comDesvio": true,
           "tendencia": {
-            "realizado": [-77.6, -73.1, -69.7, -78.7, -83.4, -80],
-            "comparacao": [-74.2, -73, -73.3, -74.6, -75.1, -74]
+            "realizado": [1.1, 0.9, 0.9, 1.2, 1.2, 1.2],
+            "comparacao": [1.1, 1.1, 1.1, 1.1, 1.1, 1.1],
+            "unidade": "pct"
           }
         },
         {
@@ -1722,18 +1882,19 @@
           "nome": "Combustível sobre vendas",
           "nivel": 3,
           "pai": "130.03",
-          "realizado": -52,
+          "realizado": -52000,
           "percentualReceitaBruta": 0.7,
-          "comparacao": -48,
-          "diferenca": -4,
+          "comparacao": -48000,
+          "diferenca": -4000,
           "diferencaPercentual": -8.3,
           "tomDiferenca": "critico",
           "destacarDiferenca": true,
           "status": "critico",
           "comDesvio": true,
           "tendencia": {
-            "realizado": [-58.1, -59.5, -53.4, -51.2, -55.6, -52],
-            "comparacao": [-47.3, -47.7, -48.6, -48.6, -47.8, -48]
+            "realizado": [0.8, 0.8, 0.7, 0.8, 0.8, 0.7],
+            "comparacao": [0.7, 0.7, 0.7, 0.7, 0.7, 0.7],
+            "unidade": "pct"
           }
         },
         {
@@ -1742,18 +1903,19 @@
           "nome": "Frete sobre vendas",
           "nivel": 3,
           "pai": "130.03",
-          "realizado": -28,
+          "realizado": -28000,
           "percentualReceitaBruta": 0.4,
-          "comparacao": -26,
-          "diferenca": -2,
+          "comparacao": -26000,
+          "diferenca": -2000,
           "diferencaPercentual": -7.7,
           "tomDiferenca": "critico",
           "destacarDiferenca": true,
           "status": "critico",
           "comDesvio": true,
           "tendencia": {
-            "realizado": [-30.6, -28.3, -30.4, -30.8, -27.4, -28],
-            "comparacao": [-26.1, -26.4, -26.1, -25.6, -25.8, -26]
+            "realizado": [0.4, 0.4, 0.4, 0.5, 0.4, 0.4],
+            "comparacao": [0.4, 0.4, 0.4, 0.4, 0.4, 0.4],
+            "unidade": "pct"
           }
         },
         {
@@ -1762,18 +1924,19 @@
           "nome": "Marketing variável",
           "nivel": 2,
           "pai": "130",
-          "realizado": -8,
+          "realizado": -8000,
           "percentualReceitaBruta": 0.1,
-          "comparacao": -6,
-          "diferenca": -2,
+          "comparacao": -6000,
+          "diferenca": -2000,
           "diferencaPercentual": -33.3,
           "tomDiferenca": "critico",
           "destacarDiferenca": true,
           "status": "critico",
           "comDesvio": true,
           "tendencia": {
-            "realizado": [-9.1, -8.1, -8.3, -8.9, -8.2, -8],
-            "comparacao": [-6, -5.9, -6, -6.1, -6, -6]
+            "realizado": [0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+            "comparacao": [0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+            "unidade": "pct"
           }
         },
         {
@@ -1782,35 +1945,37 @@
           "nome": "Campanhas digitais",
           "nivel": 3,
           "pai": "130.04",
-          "realizado": -8,
+          "realizado": -8000,
           "percentualReceitaBruta": 0.1,
-          "comparacao": -6,
-          "diferenca": -2,
+          "comparacao": -6000,
+          "diferenca": -2000,
           "diferencaPercentual": -33.3,
           "tomDiferenca": "critico",
           "destacarDiferenca": true,
           "status": "critico",
           "comDesvio": true,
           "tendencia": {
-            "realizado": [-7.5, -7.8, -8.5, -8.1, -7.4, -8],
-            "comparacao": [-6, -5.9, -5.9, -6, -6.1, -6]
+            "realizado": [0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+            "comparacao": [0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+            "unidade": "pct"
           }
         },
         {
           "id": "sub-margem-de-contribuicao",
           "nome": "Margem de contribuição",
           "nivel": 0,
-          "realizado": 1983,
+          "realizado": 1983000,
           "percentualReceitaBruta": 28.5,
-          "comparacao": 2033,
-          "diferenca": -50,
+          "comparacao": 2033000,
+          "diferenca": -50000,
           "diferencaPercentual": -2.5,
           "tomDiferenca": "critico",
           "status": "critico",
           "comDesvio": true,
           "tendencia": {
-            "realizado": [2000.2, 2117.4, 1931.2, 1862, 2066, 1983],
-            "comparacao": [2003.3, 2018.4, 2054.9, 2059.3, 2025.1, 2033]
+            "realizado": [2000200, 2117400, 1931200, 1862000, 2066000, 1983000],
+            "comparacao": [2003300, 2018400, 2054900, 2059300, 2025100, 2033000],
+            "unidade": "brl"
           }
         },
         {
@@ -1818,17 +1983,18 @@
           "codigo": "140.00",
           "nome": "Despesas fixas",
           "nivel": 1,
-          "realizado": -1370,
+          "realizado": -1370000,
           "percentualReceitaBruta": 19.7,
-          "comparacao": -1367,
-          "diferenca": -3,
+          "comparacao": -1367000,
+          "diferenca": -3000,
           "diferencaPercentual": -0.2,
           "tomDiferenca": "critico",
           "status": "saudavel",
           "comDesvio": true,
           "tendencia": {
-            "realizado": [-1297.9, -1316.5, -1455.8, -1401.3, -1276.1, -1370],
-            "comparacao": [-1346.5, -1360.9, -1384.2, -1382.3, -1358, -1367]
+            "realizado": [-1297900, -1316500, -1455800, -1401300, -1276100, -1370000],
+            "comparacao": [-1346500, -1360900, -1384200, -1382300, -1358000, -1367000],
+            "unidade": "brl"
           }
         },
         {
@@ -1837,18 +2003,19 @@
           "nome": "Despesas com pessoal",
           "nivel": 2,
           "pai": "140",
-          "realizado": -820,
+          "realizado": -820000,
           "percentualReceitaBruta": 11.8,
-          "comparacao": -796,
-          "diferenca": -24,
+          "comparacao": -796000,
+          "diferenca": -24000,
           "diferencaPercentual": -3,
           "tomDiferenca": "critico",
           "destacarDiferenca": true,
           "status": "saudavel",
           "comDesvio": true,
           "tendencia": {
-            "realizado": [-691.7, -726.7, -824.2, -801.1, -746.6, -820],
-            "comparacao": [-807.9, -798.9, -785.6, -787.6, -801.9, -796]
+            "realizado": [-691700, -726700, -824200, -801100, -746600, -820000],
+            "comparacao": [-807900, -798900, -785600, -787600, -801900, -796000],
+            "unidade": "brl"
           }
         },
         {
@@ -1857,17 +2024,18 @@
           "nome": "Salários",
           "nivel": 3,
           "pai": "140.01",
-          "realizado": -560,
+          "realizado": -560000,
           "percentualReceitaBruta": 8.1,
-          "comparacao": -548,
-          "diferenca": -12,
+          "comparacao": -548000,
+          "diferenca": -12000,
           "diferencaPercentual": -2.2,
           "tomDiferenca": "critico",
           "status": "saudavel",
           "comDesvio": false,
           "tendencia": {
-            "realizado": [-535.6, -488.1, -501.8, -571, -564.8, -560],
-            "comparacao": [-554.5, -554.6, -545, -539.8, -546.6, -548]
+            "realizado": [-535600, -488100, -501800, -571000, -564800, -560000],
+            "comparacao": [-554500, -554600, -545000, -539800, -546600, -548000],
+            "unidade": "brl"
           }
         },
         {
@@ -1876,17 +2044,18 @@
           "nome": "INSS",
           "nivel": 3,
           "pai": "140.01",
-          "realizado": -118,
+          "realizado": -118000,
           "percentualReceitaBruta": 1.7,
-          "comparacao": -115,
-          "diferenca": -3,
+          "comparacao": -115000,
+          "diferenca": -3000,
           "diferencaPercentual": -2.6,
           "tomDiferenca": "critico",
           "status": "saudavel",
           "comDesvio": false,
           "tendencia": {
-            "realizado": [-98.9, -113.4, -117, -106.9, -111.2, -118],
-            "comparacao": [-115.2, -113.4, -113.9, -116, -116.6, -115]
+            "realizado": [-98900, -113400, -117000, -106900, -111200, -118000],
+            "comparacao": [-115200, -113400, -113900, -116000, -116600, -115000],
+            "unidade": "brl"
           }
         },
         {
@@ -1895,17 +2064,18 @@
           "nome": "FGTS",
           "nivel": 3,
           "pai": "140.01",
-          "realizado": -45,
+          "realizado": -45000,
           "percentualReceitaBruta": 0.6,
-          "comparacao": -44,
-          "diferenca": -1,
+          "comparacao": -44000,
+          "diferenca": -1000,
           "diferencaPercentual": -2.3,
           "tomDiferenca": "critico",
           "status": "saudavel",
           "comDesvio": false,
           "tendencia": {
-            "realizado": [-49.2, -51.7, -47.1, -43.8, -47.2, -45],
-            "comparacao": [-43.6, -43.4, -44, -44.6, -44.3, -44]
+            "realizado": [-49200, -51700, -47100, -43800, -47200, -45000],
+            "comparacao": [-43600, -43400, -44000, -44600, -44300, -44000],
+            "unidade": "brl"
           }
         },
         {
@@ -1914,18 +2084,19 @@
           "nome": "Plano de saúde",
           "nivel": 3,
           "pai": "140.01",
-          "realizado": -52,
+          "realizado": -52000,
           "percentualReceitaBruta": 0.7,
-          "comparacao": -50,
-          "diferenca": -2,
+          "comparacao": -50000,
+          "diferenca": -2000,
           "diferencaPercentual": -4,
           "tomDiferenca": "critico",
           "destacarDiferenca": true,
           "status": "atencao",
           "comDesvio": true,
           "tendencia": {
-            "realizado": [-48.6, -50.8, -46.4, -47.6, -54.1, -52],
-            "comparacao": [-50.6, -50.6, -49.7, -49.3, -49.9, -50]
+            "realizado": [-48600, -50800, -46400, -47600, -54100, -52000],
+            "comparacao": [-50600, -50600, -49700, -49300, -49900, -50000],
+            "unidade": "brl"
           }
         },
         {
@@ -1934,18 +2105,19 @@
           "nome": "Pró-labore",
           "nivel": 3,
           "pai": "140.01",
-          "realizado": -45,
+          "realizado": -45000,
           "percentualReceitaBruta": 0.6,
-          "comparacao": -39,
-          "diferenca": -6,
+          "comparacao": -39000,
+          "diferenca": -6000,
           "diferencaPercentual": -15.4,
           "tomDiferenca": "critico",
           "destacarDiferenca": true,
           "status": "critico",
           "comDesvio": true,
           "tendencia": {
-            "realizado": [-42.7, -38.9, -40.8, -46.1, -44.9, -45],
-            "comparacao": [-39.5, -39.4, -38.7, -38.4, -39, -39]
+            "realizado": [-42700, -38900, -40800, -46100, -44900, -45000],
+            "comparacao": [-39500, -39400, -38700, -38400, -39000, -39000],
+            "unidade": "brl"
           }
         },
         {
@@ -1954,18 +2126,19 @@
           "nome": "Despesas administrativas",
           "nivel": 2,
           "pai": "140",
-          "realizado": -260,
+          "realizado": -260000,
           "percentualReceitaBruta": 3.7,
-          "comparacao": -278,
-          "diferenca": 18,
+          "comparacao": -278000,
+          "diferenca": 18000,
           "diferencaPercentual": 6.5,
           "tomDiferenca": "saudavel",
           "destacarDiferenca": true,
           "status": "saudavel",
           "comDesvio": false,
           "tendencia": {
-            "realizado": [-269, -289.5, -290.3, -257.9, -253.7, -260],
-            "comparacao": [-281.1, -276.2, -273.9, -277.7, -281.9, -278]
+            "realizado": [-269000, -289500, -290300, -257900, -253700, -260000],
+            "comparacao": [-281100, -276200, -273900, -277700, -281900, -278000],
+            "unidade": "brl"
           }
         },
         {
@@ -1974,16 +2147,17 @@
           "nome": "Aluguel e condomínio",
           "nivel": 3,
           "pai": "140.02",
-          "realizado": -120,
+          "realizado": -120000,
           "percentualReceitaBruta": 1.7,
-          "comparacao": -120,
+          "comparacao": -120000,
           "diferenca": 0,
           "diferencaPercentual": 0,
           "status": "saudavel",
           "comDesvio": false,
           "tendencia": {
-            "realizado": [-130.9, -138, -126.1, -116.7, -125.5, -120],
-            "comparacao": [-118.8, -121, -121.7, -119.9, -118.2, -120]
+            "realizado": [-130900, -138000, -126100, -116700, -125500, -120000],
+            "comparacao": [-118800, -121000, -121700, -119900, -118200, -120000],
+            "unidade": "brl"
           }
         },
         {
@@ -1992,18 +2166,19 @@
           "nome": "Energia",
           "nivel": 3,
           "pai": "140.02",
-          "realizado": -46,
+          "realizado": -46000,
           "percentualReceitaBruta": 0.7,
-          "comparacao": -52,
-          "diferenca": 6,
+          "comparacao": -52000,
+          "diferenca": 6000,
           "diferencaPercentual": 11.5,
           "tomDiferenca": "saudavel",
           "destacarDiferenca": true,
           "status": "saudavel",
           "comDesvio": false,
           "tendencia": {
-            "realizado": [-48.5, -47.7, -43.1, -45, -49.2, -46],
-            "comparacao": [-52, -52.7, -52.4, -51.5, -51.3, -52]
+            "realizado": [-48500, -47700, -43100, -45000, -49200, -46000],
+            "comparacao": [-52000, -52700, -52400, -51500, -51300, -52000],
+            "unidade": "brl"
           }
         },
         {
@@ -2012,16 +2187,17 @@
           "nome": "Mensalidades sistemas ERP",
           "nivel": 3,
           "pai": "140.02",
-          "realizado": -28,
+          "realizado": -28000,
           "percentualReceitaBruta": 0.4,
-          "comparacao": -28,
+          "comparacao": -28000,
           "diferenca": 0,
           "diferencaPercentual": 0,
           "status": "saudavel",
           "comDesvio": false,
           "tendencia": {
-            "realizado": [-27.2, -25.5, -24.4, -27.6, -29.1, -28],
-            "comparacao": [-27.6, -28, -28.4, -28.3, -27.7, -28]
+            "realizado": [-27200, -25500, -24400, -27600, -29100, -28000],
+            "comparacao": [-27600, -28000, -28400, -28300, -27700, -28000],
+            "unidade": "brl"
           }
         },
         {
@@ -2030,18 +2206,19 @@
           "nome": "Telefone e internet",
           "nivel": 3,
           "pai": "140.02",
-          "realizado": -14,
+          "realizado": -14000,
           "percentualReceitaBruta": 0.2,
-          "comparacao": -15,
-          "diferenca": 1,
+          "comparacao": -15000,
+          "diferenca": 1000,
           "diferencaPercentual": 6.7,
           "tomDiferenca": "saudavel",
           "destacarDiferenca": true,
           "status": "saudavel",
           "comDesvio": false,
           "tendencia": {
-            "realizado": [-15.7, -14.2, -14.8, -15.5, -14, -14],
-            "comparacao": [-15.2, -15.1, -14.8, -14.8, -15.1, -15]
+            "realizado": [-15700, -14200, -14800, -15500, -14000, -14000],
+            "comparacao": [-15200, -15100, -14800, -14800, -15100, -15000],
+            "unidade": "brl"
           }
         },
         {
@@ -2050,18 +2227,19 @@
           "nome": "Outras despesas administrativas",
           "nivel": 3,
           "pai": "140.02",
-          "realizado": -52,
+          "realizado": -52000,
           "percentualReceitaBruta": 0.7,
-          "comparacao": -63,
-          "diferenca": 11,
+          "comparacao": -63000,
+          "diferenca": 11000,
           "diferencaPercentual": 17.5,
           "tomDiferenca": "saudavel",
           "destacarDiferenca": true,
           "status": "saudavel",
           "comDesvio": false,
           "tendencia": {
-            "realizado": [-49.3, -54.8, -54, -48.7, -50.9, -52],
-            "comparacao": [-63, -63.9, -63.4, -62.3, -62.2, -63]
+            "realizado": [-49300, -54800, -54000, -48700, -50900, -52000],
+            "comparacao": [-63000, -63900, -63400, -62300, -62200, -63000],
+            "unidade": "brl"
           }
         },
         {
@@ -2070,18 +2248,19 @@
           "nome": "Despesas comerciais",
           "nivel": 2,
           "pai": "140",
-          "realizado": -95,
+          "realizado": -95000,
           "percentualReceitaBruta": 1.4,
-          "comparacao": -105,
-          "diferenca": 10,
+          "comparacao": -105000,
+          "diferenca": 10000,
           "diferencaPercentual": 9.5,
           "tomDiferenca": "saudavel",
           "destacarDiferenca": true,
           "status": "saudavel",
           "comDesvio": true,
           "tendencia": {
-            "realizado": [-93.7, -101.6, -94.6, -88.5, -97.1, -95],
-            "comparacao": [-105.2, -103.6, -104, -105.9, -106.5, -105]
+            "realizado": [-93700, -101600, -94600, -88500, -97100, -95000],
+            "comparacao": [-105200, -103600, -104000, -105900, -106500, -105000],
+            "unidade": "brl"
           }
         },
         {
@@ -2090,18 +2269,19 @@
           "nome": "Viagens e hospedagem",
           "nivel": 3,
           "pai": "140.03",
-          "realizado": -38,
+          "realizado": -38000,
           "percentualReceitaBruta": 0.5,
-          "comparacao": -45,
-          "diferenca": 7,
+          "comparacao": -45000,
+          "diferenca": 7000,
           "diferencaPercentual": 15.6,
           "tomDiferenca": "saudavel",
           "destacarDiferenca": true,
           "status": "saudavel",
           "comDesvio": false,
           "tendencia": {
-            "realizado": [-40.6, -43.5, -40.8, -36.9, -38.9, -38],
-            "comparacao": [-44.4, -45.2, -45.7, -45.1, -44.4, -45]
+            "realizado": [-40600, -43500, -40800, -36900, -38900, -38000],
+            "comparacao": [-44400, -45200, -45700, -45100, -44400, -45000],
+            "unidade": "brl"
           }
         },
         {
@@ -2110,18 +2290,19 @@
           "nome": "Verba ações comercial",
           "nivel": 3,
           "pai": "140.03",
-          "realizado": -35,
+          "realizado": -35000,
           "percentualReceitaBruta": 0.5,
-          "comparacao": -40,
-          "diferenca": 5,
+          "comparacao": -40000,
+          "diferenca": 5000,
           "diferencaPercentual": 12.5,
           "tomDiferenca": "saudavel",
           "destacarDiferenca": true,
           "status": "saudavel",
           "comDesvio": false,
           "tendencia": {
-            "realizado": [-36.2, -36.9, -33.3, -33.5, -37.1, -35],
-            "comparacao": [-39.8, -40.5, -40.4, -39.7, -39.4, -40]
+            "realizado": [-36200, -36900, -33300, -33500, -37100, -35000],
+            "comparacao": [-39800, -40500, -40400, -39700, -39400, -40000],
+            "unidade": "brl"
           }
         },
         {
@@ -2130,18 +2311,19 @@
           "nome": "Serviço de cobrança",
           "nivel": 3,
           "pai": "140.03",
-          "realizado": -22,
+          "realizado": -22000,
           "percentualReceitaBruta": 0.3,
-          "comparacao": -20,
-          "diferenca": -2,
+          "comparacao": -20000,
+          "diferenca": -2000,
           "diferencaPercentual": -10,
           "tomDiferenca": "critico",
           "destacarDiferenca": true,
           "status": "critico",
           "comDesvio": true,
           "tendencia": {
-            "realizado": [-21.3, -20.1, -19.2, -21.6, -22.9, -22],
-            "comparacao": [-20.1, -20.3, -20, -19.7, -19.8, -20]
+            "realizado": [-21300, -20100, -19200, -21600, -22900, -22000],
+            "comparacao": [-20100, -20300, -20000, -19700, -19800, -20000],
+            "unidade": "brl"
           }
         },
         {
@@ -2150,18 +2332,19 @@
           "nome": "Publicidade e marketing",
           "nivel": 2,
           "pai": "140",
-          "realizado": -45,
+          "realizado": -45000,
           "percentualReceitaBruta": 0.6,
-          "comparacao": -50,
-          "diferenca": 5,
+          "comparacao": -50000,
+          "diferenca": 5000,
           "diferencaPercentual": 10,
           "tomDiferenca": "saudavel",
           "destacarDiferenca": true,
           "status": "saudavel",
           "comDesvio": false,
           "tendencia": {
-            "realizado": [-42.8, -43.3, -39.6, -42, -47.1, -45],
-            "comparacao": [-49.6, -49.3, -50, -50.7, -50.4, -50]
+            "realizado": [-42800, -43300, -39600, -42000, -47100, -45000],
+            "comparacao": [-49600, -49300, -50000, -50700, -50400, -50000],
+            "unidade": "brl"
           }
         },
         {
@@ -2170,18 +2353,19 @@
           "nome": "Publicidade e propaganda",
           "nivel": 3,
           "pai": "140.04",
-          "realizado": -45,
+          "realizado": -45000,
           "percentualReceitaBruta": 0.6,
-          "comparacao": -50,
-          "diferenca": 5,
+          "comparacao": -50000,
+          "diferenca": 5000,
           "diferencaPercentual": 10,
           "tomDiferenca": "saudavel",
           "destacarDiferenca": true,
           "status": "saudavel",
           "comDesvio": false,
           "tendencia": {
-            "realizado": [-37.4, -41.1, -45.4, -42.7, -41.1, -45],
-            "comparacao": [-49.3, -49.6, -50.5, -50.7, -49.9, -50]
+            "realizado": [-37400, -41100, -45400, -42700, -41100, -45000],
+            "comparacao": [-49300, -49600, -50500, -50700, -49900, -50000],
+            "unidade": "brl"
           }
         },
         {
@@ -2190,18 +2374,19 @@
           "nome": "Despesa com veículos",
           "nivel": 2,
           "pai": "140",
-          "realizado": -88,
+          "realizado": -88000,
           "percentualReceitaBruta": 1.3,
-          "comparacao": -78,
-          "diferenca": -10,
+          "comparacao": -78000,
+          "diferenca": -10000,
           "diferencaPercentual": -12.8,
           "tomDiferenca": "critico",
           "destacarDiferenca": true,
           "status": "critico",
           "comDesvio": true,
           "tendencia": {
-            "realizado": [-102.8, -92.9, -87.8, -95.1, -94.3, -88],
-            "comparacao": [-76.9, -77.4, -78.8, -79.1, -77.8, -78]
+            "realizado": [-102800, -92900, -87800, -95100, -94300, -88000],
+            "comparacao": [-76900, -77400, -78800, -79100, -77800, -78000],
+            "unidade": "brl"
           }
         },
         {
@@ -2210,18 +2395,19 @@
           "nome": "Manutenção de veículos",
           "nivel": 3,
           "pai": "140.05",
-          "realizado": -36,
+          "realizado": -36000,
           "percentualReceitaBruta": 0.5,
-          "comparacao": -28,
-          "diferenca": -8,
+          "comparacao": -28000,
+          "diferenca": -8000,
           "diferencaPercentual": -28.6,
           "tomDiferenca": "critico",
           "destacarDiferenca": true,
           "status": "critico",
           "comDesvio": true,
           "tendencia": {
-            "realizado": [-36, -33.5, -36.6, -38.3, -34.8, -36],
-            "comparacao": [-27.9, -27.6, -27.9, -28.4, -28.3, -28]
+            "realizado": [-36000, -33500, -36600, -38300, -34800, -36000],
+            "comparacao": [-27900, -27600, -27900, -28400, -28300, -28000],
+            "unidade": "brl"
           }
         },
         {
@@ -2230,18 +2416,19 @@
           "nome": "Combustível e lubrificantes",
           "nivel": 3,
           "pai": "140.05",
-          "realizado": -30,
+          "realizado": -30000,
           "percentualReceitaBruta": 0.4,
-          "comparacao": -28,
-          "diferenca": -2,
+          "comparacao": -28000,
+          "diferenca": -2000,
           "diferencaPercentual": -7.1,
           "tomDiferenca": "critico",
           "destacarDiferenca": true,
           "status": "atencao",
           "comDesvio": true,
           "tendencia": {
-            "realizado": [-30.3, -32, -29.2, -28.2, -31.3, -30],
-            "comparacao": [-28.4, -28.2, -27.7, -27.6, -28.1, -28]
+            "realizado": [-30300, -32000, -29200, -28200, -31300, -30000],
+            "comparacao": [-28400, -28200, -27700, -27600, -28100, -28000],
+            "unidade": "brl"
           }
         },
         {
@@ -2250,16 +2437,17 @@
           "nome": "Seguro veicular",
           "nivel": 3,
           "pai": "140.05",
-          "realizado": -22,
+          "realizado": -22000,
           "percentualReceitaBruta": 0.3,
-          "comparacao": -22,
+          "comparacao": -22000,
           "diferenca": 0,
           "diferencaPercentual": 0,
           "status": "saudavel",
           "comDesvio": false,
           "tendencia": {
-            "realizado": [-21.8, -23.5, -21.8, -20.5, -22.6, -22],
-            "comparacao": [-21.8, -22.2, -22.3, -22, -21.7, -22]
+            "realizado": [-21800, -23500, -21800, -20500, -22600, -22000],
+            "comparacao": [-21800, -22200, -22300, -22000, -21700, -22000],
+            "unidade": "brl"
           }
         },
         {
@@ -2268,18 +2456,19 @@
           "nome": "Serviços de terceiros",
           "nivel": 2,
           "pai": "140",
-          "realizado": -62,
+          "realizado": -62000,
           "percentualReceitaBruta": 0.9,
-          "comparacao": -60,
-          "diferenca": -2,
+          "comparacao": -60000,
+          "diferenca": -2000,
           "diferencaPercentual": -3.3,
           "tomDiferenca": "critico",
           "destacarDiferenca": true,
           "status": "atencao",
           "comDesvio": true,
           "tendencia": {
-            "realizado": [-63.5, -57.8, -61.6, -66.3, -61.3, -62],
-            "comparacao": [-59.2, -60.1, -60.9, -60.4, -59.3, -60]
+            "realizado": [-63500, -57800, -61600, -66300, -61300, -62000],
+            "comparacao": [-59200, -60100, -60900, -60400, -59300, -60000],
+            "unidade": "brl"
           }
         },
         {
@@ -2288,16 +2477,17 @@
           "nome": "Assessoria financeira",
           "nivel": 3,
           "pai": "140.06",
-          "realizado": -24,
+          "realizado": -24000,
           "percentualReceitaBruta": 0.3,
-          "comparacao": -24,
+          "comparacao": -24000,
           "diferenca": 0,
           "diferencaPercentual": 0,
           "status": "saudavel",
           "comDesvio": false,
           "tendencia": {
-            "realizado": [-24.8, -26.7, -26.8, -23.8, -23.4, -24],
-            "comparacao": [-24.1, -24.4, -24, -23.7, -23.8, -24]
+            "realizado": [-24800, -26700, -26800, -23800, -23400, -24000],
+            "comparacao": [-24100, -24400, -24000, -23700, -23800, -24000],
+            "unidade": "brl"
           }
         },
         {
@@ -2306,18 +2496,19 @@
           "nome": "Assessoria jurídica",
           "nivel": 3,
           "pai": "140.06",
-          "realizado": -20,
+          "realizado": -20000,
           "percentualReceitaBruta": 0.3,
-          "comparacao": -18,
-          "diferenca": -2,
+          "comparacao": -18000,
+          "diferenca": -2000,
           "diferencaPercentual": -11.1,
           "tomDiferenca": "critico",
           "destacarDiferenca": true,
           "status": "critico",
           "comDesvio": true,
           "tendencia": {
-            "realizado": [-20.1, -18.6, -20.3, -21.3, -19.4, -20],
-            "comparacao": [-17.8, -18.1, -18.3, -18.1, -17.8, -18]
+            "realizado": [-20100, -18600, -20300, -21300, -19400, -20000],
+            "comparacao": [-17800, -18100, -18300, -18100, -17800, -18000],
+            "unidade": "brl"
           }
         },
         {
@@ -2326,34 +2517,36 @@
           "nome": "Assessoria contábil",
           "nivel": 3,
           "pai": "140.06",
-          "realizado": -18,
+          "realizado": -18000,
           "percentualReceitaBruta": 0.3,
-          "comparacao": -18,
+          "comparacao": -18000,
           "diferenca": 0,
           "diferencaPercentual": 0,
           "status": "saudavel",
           "comDesvio": false,
           "tendencia": {
-            "realizado": [-15.2, -16, -18.1, -17.6, -16.4, -18],
-            "comparacao": [-17.9, -18.2, -18.2, -17.9, -17.7, -18]
+            "realizado": [-15200, -16000, -18100, -17600, -16400, -18000],
+            "comparacao": [-17900, -18200, -18200, -17900, -17700, -18000],
+            "unidade": "brl"
           }
         },
         {
           "id": "sub-ebitda",
           "nome": "EBITDA",
           "nivel": 0,
-          "realizado": 613,
+          "realizado": 613000,
           "percentualReceitaBruta": 8.8,
-          "comparacao": 666,
-          "diferenca": -53,
+          "comparacao": 666000,
+          "diferenca": -53000,
           "diferencaPercentual": -8,
           "tomDiferenca": "critico",
           "destacarDiferenca": true,
           "status": "atencao",
           "comDesvio": true,
           "tendencia": {
-            "realizado": [587, 583.7, 535.9, 579.2, 643.5, 613],
-            "comparacao": [671.5, 659.4, 657, 667.8, 675.9, 666]
+            "realizado": [8, 7.4, 7.1, 8.6, 9.1, 8.8],
+            "comparacao": [9.9, 9.6, 9.5, 9.9, 10.1, 9.8],
+            "unidade": "pct"
           }
         },
         {
@@ -2361,16 +2554,17 @@
           "codigo": "150.00",
           "nome": "Depreciação e amortização",
           "nivel": 1,
-          "realizado": -39,
+          "realizado": -39000,
           "percentualReceitaBruta": 0.6,
-          "comparacao": -39,
+          "comparacao": -39000,
           "diferenca": 0,
           "diferencaPercentual": 0,
           "status": "saudavel",
           "comDesvio": false,
           "tendencia": {
-            "realizado": [-34, -33.6, -38.4, -39.3, -36, -39],
-            "comparacao": [-39.6, -39.3, -38.6, -38.5, -39.1, -39]
+            "realizado": [-34000, -33600, -38400, -39300, -36000, -39000],
+            "comparacao": [-39600, -39300, -38600, -38500, -39100, -39000],
+            "unidade": "brl"
           }
         },
         {
@@ -2379,16 +2573,17 @@
           "nome": "Depreciação e amortização",
           "nivel": 2,
           "pai": "150",
-          "realizado": -39,
+          "realizado": -39000,
           "percentualReceitaBruta": 0.6,
-          "comparacao": -39,
+          "comparacao": -39000,
           "diferenca": 0,
           "diferencaPercentual": 0,
           "status": "saudavel",
           "comDesvio": false,
           "tendencia": {
-            "realizado": [-44.8, -43.8, -39, -39.5, -42.4, -39],
-            "comparacao": [-39.5, -39.4, -38.7, -38.5, -39, -39]
+            "realizado": [-44800, -43800, -39000, -39500, -42400, -39000],
+            "comparacao": [-39500, -39400, -38700, -38500, -39000, -39000],
+            "unidade": "brl"
           }
         },
         {
@@ -2397,16 +2592,17 @@
           "nome": "Depreciação e amortização",
           "nivel": 3,
           "pai": "150.01",
-          "realizado": -39,
+          "realizado": -39000,
           "percentualReceitaBruta": 0.6,
-          "comparacao": -39,
+          "comparacao": -39000,
           "diferenca": 0,
           "diferencaPercentual": 0,
           "status": "saudavel",
           "comDesvio": false,
           "tendencia": {
-            "realizado": [-41.6, -44.7, -42, -37.9, -39.8, -39],
-            "comparacao": [-39.2, -39.6, -39.2, -38.5, -38.6, -39]
+            "realizado": [-41600, -44700, -42000, -37900, -39800, -39000],
+            "comparacao": [-39200, -39600, -39200, -38500, -38600, -39000],
+            "unidade": "brl"
           }
         },
         {
@@ -2414,18 +2610,19 @@
           "codigo": "160.00",
           "nome": "Receitas financeiras",
           "nivel": 1,
-          "realizado": 12,
+          "realizado": 12000,
           "percentualReceitaBruta": 0.2,
-          "comparacao": 10,
-          "diferenca": 2,
+          "comparacao": 10000,
+          "diferenca": 2000,
           "diferencaPercentual": 20,
           "tomDiferenca": "saudavel",
           "destacarDiferenca": true,
           "status": "saudavel",
           "comDesvio": false,
           "tendencia": {
-            "realizado": [13.2, 12.1, 12.9, 13.3, 11.8, 12],
-            "comparacao": [9.9, 9.9, 10.1, 10.1, 10, 10]
+            "realizado": [13200, 12100, 12900, 13300, 11800, 12000],
+            "comparacao": [9900, 9900, 10100, 10100, 10000, 10000],
+            "unidade": "brl"
           }
         },
         {
@@ -2434,18 +2631,19 @@
           "nome": "Receitas financeiras",
           "nivel": 2,
           "pai": "160",
-          "realizado": 12,
+          "realizado": 12000,
           "percentualReceitaBruta": 0.2,
-          "comparacao": 10,
-          "diferenca": 2,
+          "comparacao": 10000,
+          "diferenca": 2000,
           "diferencaPercentual": 20,
           "tomDiferenca": "saudavel",
           "destacarDiferenca": true,
           "status": "saudavel",
           "comDesvio": false,
           "tendencia": {
-            "realizado": [11.5, 11.4, 12.6, 12.5, 11.2, 12],
-            "comparacao": [10.1, 10.1, 10, 9.9, 9.9, 10]
+            "realizado": [11500, 11400, 12600, 12500, 11200, 12000],
+            "comparacao": [10100, 10100, 10000, 9900, 9900, 10000],
+            "unidade": "brl"
           }
         },
         {
@@ -2454,18 +2652,19 @@
           "nome": "Rendimento de aplicação",
           "nivel": 3,
           "pai": "160.01",
-          "realizado": 12,
+          "realizado": 12000,
           "percentualReceitaBruta": 0.2,
-          "comparacao": 10,
-          "diferenca": 2,
+          "comparacao": 10000,
+          "diferenca": 2000,
           "diferencaPercentual": 20,
           "tomDiferenca": "saudavel",
           "destacarDiferenca": true,
           "status": "saudavel",
           "comDesvio": false,
           "tendencia": {
-            "realizado": [12.3, 12.7, 11.5, 11.4, 12.6, 12],
-            "comparacao": [10.1, 10, 9.9, 9.9, 10.1, 10]
+            "realizado": [12300, 12700, 11500, 11400, 12600, 12000],
+            "comparacao": [10100, 10000, 9900, 9900, 10100, 10000],
+            "unidade": "brl"
           }
         },
         {
@@ -2473,18 +2672,19 @@
           "codigo": "170.00",
           "nome": "Despesas financeiras",
           "nivel": 1,
-          "realizado": -70,
+          "realizado": -70000,
           "percentualReceitaBruta": 1,
-          "comparacao": -52,
-          "diferenca": -18,
+          "comparacao": -52000,
+          "diferenca": -18000,
           "diferencaPercentual": -34.6,
           "tomDiferenca": "critico",
           "destacarDiferenca": true,
           "status": "critico",
           "comDesvio": true,
           "tendencia": {
-            "realizado": [-71.9, -65.3, -69.3, -74.9, -69.4, -70],
-            "comparacao": [-52.5, -52.7, -51.9, -51.2, -51.7, -52]
+            "realizado": [-71900, -65300, -69300, -74900, -69400, -70000],
+            "comparacao": [-52500, -52700, -51900, -51200, -51700, -52000],
+            "unidade": "brl"
           }
         },
         {
@@ -2493,18 +2693,19 @@
           "nome": "Despesas financeiras",
           "nivel": 2,
           "pai": "170",
-          "realizado": -70,
+          "realizado": -70000,
           "percentualReceitaBruta": 1,
-          "comparacao": -52,
-          "diferenca": -18,
+          "comparacao": -52000,
+          "diferenca": -18000,
           "diferencaPercentual": -34.6,
           "tomDiferenca": "critico",
           "destacarDiferenca": true,
           "status": "critico",
           "comDesvio": true,
           "tendencia": {
-            "realizado": [-81.4, -72.9, -70.5, -76.4, -74.2, -70],
-            "comparacao": [-52.6, -52.7, -51.8, -51.2, -51.8, -52]
+            "realizado": [-81400, -72900, -70500, -76400, -74200, -70000],
+            "comparacao": [-52600, -52700, -51800, -51200, -51800, -52000],
+            "unidade": "brl"
           }
         },
         {
@@ -2513,18 +2714,19 @@
           "nome": "Juros de empréstimos e financiamentos",
           "nivel": 3,
           "pai": "170.01",
-          "realizado": -52,
+          "realizado": -52000,
           "percentualReceitaBruta": 0.7,
-          "comparacao": -45,
-          "diferenca": -7,
+          "comparacao": -45000,
+          "diferenca": -7000,
           "diferencaPercentual": -15.6,
           "tomDiferenca": "critico",
           "destacarDiferenca": true,
           "status": "critico",
           "comDesvio": true,
           "tendencia": {
-            "realizado": [-50.7, -55.5, -52.4, -48.4, -52.6, -52],
-            "comparacao": [-45.5, -44.7, -44.3, -44.9, -45.6, -45]
+            "realizado": [-50700, -55500, -52400, -48400, -52600, -52000],
+            "comparacao": [-45500, -44700, -44300, -44900, -45600, -45000],
+            "unidade": "brl"
           }
         },
         {
@@ -2533,18 +2735,19 @@
           "nome": "Taxas bancárias",
           "nivel": 3,
           "pai": "170.01",
-          "realizado": -11,
+          "realizado": -11000,
           "percentualReceitaBruta": 0.2,
-          "comparacao": -7,
-          "diferenca": -4,
+          "comparacao": -7000,
+          "diferenca": -4000,
           "diferencaPercentual": -57.1,
           "tomDiferenca": "critico",
           "destacarDiferenca": true,
           "status": "critico",
           "comDesvio": true,
           "tendencia": {
-            "realizado": [-11.2, -10.2, -11, -11.8, -10.8, -11],
-            "comparacao": [-7, -7.1, -7, -6.9, -6.9, -7]
+            "realizado": [-11200, -10200, -11000, -11800, -10800, -11000],
+            "comparacao": [-7000, -7100, -7000, -6900, -6900, -7000],
+            "unidade": "brl"
           }
         },
         {
@@ -2553,35 +2756,37 @@
           "nome": "Juros e multas de mora",
           "nivel": 3,
           "pai": "170.01",
-          "realizado": -7,
+          "realizado": -7000,
           "percentualReceitaBruta": 0.1,
           "comparacao": 0,
-          "diferenca": -7,
+          "diferenca": -7000,
           "diferencaPercentual": null,
           "tomDiferenca": "critico",
           "status": "atencao",
           "comDesvio": true,
           "tendencia": {
-            "realizado": [-8.2, -7.5, -7, -7.5, -7.5, -7],
-            "comparacao": [0, 0, 0, 0, 0, 0]
+            "realizado": [-8200, -7500, -7000, -7500, -7500, -7000],
+            "comparacao": [0, 0, 0, 0, 0, 0],
+            "unidade": "brl"
           }
         },
         {
           "id": "sub-resultado-antes-dos-impostos",
           "nome": "Resultado antes dos impostos",
           "nivel": 0,
-          "realizado": 516,
+          "realizado": 516000,
           "percentualReceitaBruta": 7.4,
-          "comparacao": 585,
-          "diferenca": -69,
+          "comparacao": 585000,
+          "diferenca": -69000,
           "diferencaPercentual": -11.8,
           "tomDiferenca": "critico",
           "destacarDiferenca": true,
           "status": "atencao",
           "comDesvio": true,
           "tendencia": {
-            "realizado": [538.7, 485.2, 501.2, 550.6, 521.9, 516],
-            "comparacao": [592.8, 591, 580.4, 576.6, 585.1, 585]
+            "realizado": [538700, 485200, 501200, 550600, 521900, 516000],
+            "comparacao": [592800, 591000, 580400, 576600, 585100, 585000],
+            "unidade": "brl"
           }
         },
         {
@@ -2589,18 +2794,19 @@
           "codigo": "200.00",
           "nome": "Impostos sobre o resultado",
           "nivel": 1,
-          "realizado": -95,
+          "realizado": -95000,
           "percentualReceitaBruta": 1.4,
-          "comparacao": -110,
-          "diferenca": 15,
+          "comparacao": -110000,
+          "diferenca": 15000,
           "diferencaPercentual": 13.6,
           "tomDiferenca": "saudavel",
           "destacarDiferenca": true,
           "status": "saudavel",
           "comDesvio": false,
           "tendencia": {
-            "realizado": [-89.6, -99.5, -99.3, -89.4, -92.2, -95],
-            "comparacao": [-109.9, -111.6, -110.9, -108.9, -108.5, -110]
+            "realizado": [-89600, -99500, -99300, -89400, -92200, -95000],
+            "comparacao": [-109900, -111600, -110900, -108900, -108500, -110000],
+            "unidade": "brl"
           }
         },
         {
@@ -2609,18 +2815,19 @@
           "nome": "IRPJ e CSLL",
           "nivel": 2,
           "pai": "200",
-          "realizado": -95,
+          "realizado": -95000,
           "percentualReceitaBruta": 1.4,
-          "comparacao": -110,
-          "diferenca": 15,
+          "comparacao": -110000,
+          "diferenca": 15000,
           "diferencaPercentual": 13.6,
           "tomDiferenca": "saudavel",
           "destacarDiferenca": true,
           "status": "saudavel",
           "comDesvio": false,
           "tendencia": {
-            "realizado": [-102.4, -109.1, -101.2, -92.2, -98.2, -95],
-            "comparacao": [-111.4, -111.2, -109.2, -108.4, -109.9, -110]
+            "realizado": [-102400, -109100, -101200, -92200, -98200, -95000],
+            "comparacao": [-111400, -111200, -109200, -108400, -109900, -110000],
+            "unidade": "brl"
           }
         },
         {
@@ -2629,36 +2836,38 @@
           "nome": "IRPJ e CSLL",
           "nivel": 3,
           "pai": "200.01",
-          "realizado": -95,
+          "realizado": -95000,
           "percentualReceitaBruta": 1.4,
-          "comparacao": -110,
-          "diferenca": 15,
+          "comparacao": -110000,
+          "diferenca": 15000,
           "diferencaPercentual": 13.6,
           "tomDiferenca": "saudavel",
           "destacarDiferenca": true,
           "status": "saudavel",
           "comDesvio": false,
           "tendencia": {
-            "realizado": [-101, -97, -88.5, -94.7, -101.6, -95],
-            "comparacao": [-109.7, -108.4, -109.4, -111.3, -111.3, -110]
+            "realizado": [-101000, -97000, -88500, -94700, -101600, -95000],
+            "comparacao": [-109700, -108400, -109400, -111300, -111300, -110000],
+            "unidade": "brl"
           }
         },
         {
           "id": "sub-lucro-liquido",
           "nome": "Lucro líquido",
           "nivel": 0,
-          "realizado": 421,
+          "realizado": 421000,
           "percentualReceitaBruta": 6.1,
-          "comparacao": 475,
-          "diferenca": -54,
+          "comparacao": 475000,
+          "diferenca": -54000,
           "diferencaPercentual": -11.4,
           "tomDiferenca": "critico",
           "destacarDiferenca": true,
           "status": "atencao",
           "comDesvio": true,
           "tendencia": {
-            "realizado": [354.1, 406.3, 415.6, 380, 398.9, 421],
-            "comparacao": [481.6, 479.3, 470.7, 468.4, 475.7, 475]
+            "realizado": [354100, 406300, 415600, 380000, 398900, 421000],
+            "comparacao": [481600, 479300, 470700, 468400, 475700, 475000],
+            "unidade": "brl"
           }
         },
         {
@@ -2666,16 +2875,17 @@
           "codigo": "210.00",
           "nome": "Participações dos sócios",
           "nivel": 1,
-          "realizado": -60,
+          "realizado": -60000,
           "percentualReceitaBruta": 0.9,
-          "comparacao": -60,
+          "comparacao": -60000,
           "diferenca": 0,
           "diferencaPercentual": 0,
           "status": "saudavel",
           "comDesvio": false,
           "tendencia": {
-            "realizado": [-49.9, -56.6, -60.2, -55.3, -55.6, -60],
-            "comparacao": [-60.3, -59.3, -59.3, -60.4, -60.9, -60]
+            "realizado": [-49900, -56600, -60200, -55300, -55600, -60000],
+            "comparacao": [-60300, -59300, -59300, -60400, -60900, -60000],
+            "unidade": "brl"
           }
         },
         {
@@ -2684,16 +2894,17 @@
           "nome": "Participações dos sócios",
           "nivel": 2,
           "pai": "210",
-          "realizado": -60,
+          "realizado": -60000,
           "percentualReceitaBruta": 0.9,
-          "comparacao": -60,
+          "comparacao": -60000,
           "diferenca": 0,
           "diferencaPercentual": 0,
           "status": "saudavel",
           "comDesvio": false,
           "tendencia": {
-            "realizado": [-50.3, -53.8, -60.5, -58, -54.6, -60],
-            "comparacao": [-60.8, -60.6, -59.5, -59.1, -60, -60]
+            "realizado": [-50300, -53800, -60500, -58000, -54600, -60000],
+            "comparacao": [-60800, -60600, -59500, -59100, -60000, -60000],
+            "unidade": "brl"
           }
         },
         {
@@ -2702,16 +2913,17 @@
           "nome": "Retirada de sócio",
           "nivel": 3,
           "pai": "210.01",
-          "realizado": -60,
+          "realizado": -60000,
           "percentualReceitaBruta": 0.9,
-          "comparacao": -60,
+          "comparacao": -60000,
           "diferenca": 0,
           "diferencaPercentual": 0,
           "status": "saudavel",
           "comDesvio": false,
           "tendencia": {
-            "realizado": [-49.8, -55.7, -60.5, -56.1, -55.1, -60],
-            "comparacao": [-60.4, -59.3, -59.2, -60.2, -60.9, -60]
+            "realizado": [-49800, -55700, -60500, -56100, -55100, -60000],
+            "comparacao": [-60400, -59300, -59200, -60200, -60900, -60000],
+            "unidade": "brl"
           }
         },
         {
@@ -2719,18 +2931,19 @@
           "nome": "Lucro líquido final",
           "nivel": 0,
           "final": true,
-          "realizado": 361,
+          "realizado": 361000,
           "percentualReceitaBruta": 5.2,
-          "comparacao": 415,
-          "diferenca": -54,
+          "comparacao": 415000,
+          "diferenca": -54000,
           "diferencaPercentual": -13,
           "tomDiferenca": "critico",
           "destacarDiferenca": true,
           "status": "atencao",
           "comDesvio": true,
           "tendencia": {
-            "realizado": [308.1, 353, 350.7, 322.7, 348.6, 361],
-            "comparacao": [414.2, 408.8, 412.5, 419.8, 420.1, 415]
+            "realizado": [308100, 353000, 350700, 322700, 348600, 361000],
+            "comparacao": [414200, 408800, 412500, 419800, 420100, 415000],
+            "unidade": "brl"
           }
         }
       ],
@@ -2742,50 +2955,50 @@
     {
       "id": "tabela-financeira",
       "tipo": "tabela",
-      "variante": "compacta",
+      "variante": "tendencia",
       "largura": 12,
       "titulo": "Tabela financeira mês a mês",
-      "subtitulo": "Principais indicadores dos últimos 12 meses. Azul: melhor que a média do período; vermelho: pior.",
+      "subtitulo": "Principais indicadores dos últimos 12 meses. Fundo pela média do período: melhor ou pior que ela.",
       "explicacao": "Os principais indicadores dos últimos 12 meses lado a lado. Cada célula é comparada com a média do próprio indicador: azul está melhor que a média, vermelho está pior. Serve para ver tendência, não para ler número a número.",
       "colunas": [
         {
           "rotulo": "Indicador"
         },
         {
-          "rotulo": "out"
+          "rotulo": "out-25"
         },
         {
-          "rotulo": "nov"
+          "rotulo": "nov-25"
         },
         {
-          "rotulo": "dez"
+          "rotulo": "dez-25"
         },
         {
-          "rotulo": "jan"
+          "rotulo": "jan-26"
         },
         {
-          "rotulo": "fev"
+          "rotulo": "fev-26"
         },
         {
-          "rotulo": "mar"
+          "rotulo": "mar-26"
         },
         {
-          "rotulo": "abr"
+          "rotulo": "abr-26"
         },
         {
-          "rotulo": "mai"
+          "rotulo": "mai-26"
         },
         {
-          "rotulo": "jun"
+          "rotulo": "jun-26"
         },
         {
-          "rotulo": "jul"
+          "rotulo": "jul-26"
         },
         {
-          "rotulo": "ago"
+          "rotulo": "ago-26"
         },
         {
-          "rotulo": "set"
+          "rotulo": "set-26"
         },
         {
           "rotulo": "Média"
@@ -2800,83 +3013,96 @@
             {
               "valor": {
                 "valor": 6640000,
-                "unidade": "brl"
+                "unidade": "brl",
+                "casas": 2
               }
             },
             {
               "valor": {
                 "valor": 6710000,
-                "unidade": "brl"
+                "unidade": "brl",
+                "casas": 2
               }
             },
             {
               "valor": {
                 "valor": 7020000,
-                "unidade": "brl"
+                "unidade": "brl",
+                "casas": 2
               },
               "fundo": "saudavel"
             },
             {
               "valor": {
                 "valor": 6380000,
-                "unidade": "brl"
+                "unidade": "brl",
+                "casas": 2
               },
               "fundo": "critico"
             },
             {
               "valor": {
                 "valor": 6510000,
-                "unidade": "brl"
+                "unidade": "brl",
+                "casas": 2
               },
               "fundo": "critico"
             },
             {
               "valor": {
                 "valor": 6800000,
-                "unidade": "brl"
+                "unidade": "brl",
+                "casas": 2
               }
             },
             {
               "valor": {
                 "valor": 6860000,
-                "unidade": "brl"
+                "unidade": "brl",
+                "casas": 2
               }
             },
             {
               "valor": {
                 "valor": 6750000,
-                "unidade": "brl"
+                "unidade": "brl",
+                "casas": 2
               }
             },
             {
               "valor": {
                 "valor": 6660000,
-                "unidade": "brl"
+                "unidade": "brl",
+                "casas": 2
               }
             },
             {
               "valor": {
                 "valor": 7110000,
-                "unidade": "brl"
+                "unidade": "brl",
+                "casas": 2
               },
               "fundo": "saudavel"
             },
             {
               "valor": {
                 "valor": 6690000,
-                "unidade": "brl"
+                "unidade": "brl",
+                "casas": 2
               }
             },
             {
               "valor": {
                 "valor": 6950000,
-                "unidade": "brl"
+                "unidade": "brl",
+                "casas": 2
               }
             },
             {
               "valor": {
                 "valor": 6756666.67,
-                "unidade": "brl"
+                "unidade": "brl",
+                "casas": 2
               },
               "tom": "apagado"
             }

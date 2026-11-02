@@ -109,7 +109,7 @@ from app.telas.paineis.formato import (
     q,
     qtd,
 )
-from app.telas.visao_geral.contra_referencia import rotulo_eixo
+from app.telas.visao_geral.contra_referencia import rotulos_meses
 from app.telas.visao_geral.contrato import Valor
 from app.telas.visao_geral.texto import moeda, numero
 from app.telas.visao_geral.vendas import mes_menos
@@ -976,13 +976,13 @@ def cartao_doze_meses(
         return None
     vendas: list[PontoCombo] = []
     clientes: list[PontoCombo] = []
-    for m in meses:
+    for m, eixo in zip(meses, rotulos_meses(meses), strict=True):
         d = dados.meses[m]
         meta = metas.de(m, escolhidos) if com_meta else None
         meta_cli = metas.de(m, escolhidos, clientes=True) if com_meta else None
         vendas.append(
             PontoCombo(
-                rotulo=rotulo_eixo(m),
+                rotulo=eixo,
                 valor=q(d.valor),
                 referencia=None if meta is None else q(meta),
                 status="critico" if meta is not None and d.valor < meta * TOLERANCIA_META else None,
@@ -991,7 +991,7 @@ def cartao_doze_meses(
         )
         clientes.append(
             PontoCombo(
-                rotulo=rotulo_eixo(m),
+                rotulo=eixo,
                 valor=Decimal(d.clientes),
                 referencia=None if meta_cli is None else q(meta_cli),
                 status=(
@@ -1079,7 +1079,7 @@ def cartao_participacao(dados: DadosVendas, mes: date) -> CartaoGraficos | None:
                     tipo="empilhado",
                     unidade="pct",
                     casas=0,
-                    rotulos=[rotulo_eixo(m) for m in meses],
+                    rotulos=rotulos_meses(meses),
                     series=[SerieEmpilhada(nome=n, valores=v) for n, v in series.items()],
                 )
             )

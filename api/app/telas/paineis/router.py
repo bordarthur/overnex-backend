@@ -15,7 +15,7 @@ vai em `filtros`. A Equipe e o Receber e pagar mostram nomes de pessoas (vendedo
 clientes): exigem um perfil que veja dado nominal (etapa 6).
 Pessoas tem dado de folha, mas sem nomes: o cadastro libera PES-01 só à diretoria e ao RH.
 
-Cartões "a decidir" (A_DECIDIR e o nível 3 da DRE): só saem com PAINEIS_A_DECIDIR (dev).
+Cartões "a decidir" (A_DECIDIR): só saem com PAINEIS_A_DECIDIR (dev).
 
 Antes da primeira carga do cliente: 200 com dadosAte e atualizadoEm nulos e tudo vazio.
 """
@@ -35,7 +35,7 @@ from app.seguranca.acesso import ContextoConsolidado, exigir_tela_consolidada
 from app.telas.moldura import UltimaCarga
 from app.telas.paineis import clientes, equipe, pessoas, receber_pagar, resultado, vendas
 from app.telas.paineis.base import MSG_FILTRO_INVALIDO, Conteudo, Opcoes, escolher
-from app.telas.paineis.contrato import Cartao, CartaoDre, PainelPayload, TelaPainel
+from app.telas.paineis.contrato import Cartao, PainelPayload, TelaPainel
 from app.telas.paineis.explicacoes import com_explicacao
 from app.telas.preleitura import Inicio, preler
 from app.telas.visao_geral.router import FORMATO_MES, mes_escolhido
@@ -50,9 +50,9 @@ CODIGOS: Mapping[TelaPainel, str] = {
 }
 # telas que mostram nomes de pessoas: só para perfil que vê dado nominal (etapa 6)
 NOMINAL: frozenset[TelaPainel] = frozenset({"equipe-comercial", "receber-pagar"})
-# cartões marcados "A decidir" no mockup: só com PAINEIS_A_DECIDIR (o nível 3 da DRE também)
+# cartões marcados "A decidir" no mockup: só com PAINEIS_A_DECIDIR
 A_DECIDIR: Mapping[TelaPainel, frozenset[str]] = {
-    "resultado": frozenset({"ponte-ebitda", "maiores-desvios", "tabela-financeira"}),
+    "resultado": frozenset({"ponte-ebitda", "maiores-desvios"}),
 }
 # parâmetros que não são filtros da tela (chips globais do front): valem sempre
 GLOBAIS = frozenset({"comparar"})
@@ -297,20 +297,7 @@ def conteudo_demo(tela: TelaPainel, filtros: Mapping[str, str | None]) -> Conteu
 
 
 def sem_a_decidir(tela: TelaPainel, cartoes: list[Cartao]) -> list[Cartao]:
-    """Sem os cartões a decidir da tela e sem o nível 3 da DRE (as telas de verdade já montam
-    assim; aqui é para o demo, que é o mockup inteiro)."""
+    """Sem os cartões a decidir da tela (as telas de verdade já montam assim; aqui é para o
+    demo, que é o mockup inteiro)."""
     fora = A_DECIDIR.get(tela, frozenset())
-    saida: list[Cartao] = []
-    for c in cartoes:
-        if c.id in fora:
-            continue
-        if isinstance(c, CartaoDre) and 3 in c.niveis:
-            c = c.model_copy(
-                update={
-                    "linhas": [x for x in c.linhas if x.nivel != 3],
-                    "niveis": [n for n in c.niveis if n != 3],
-                    "nivel_inicial": min(c.nivel_inicial, 2),
-                }
-            )
-        saida.append(c)
-    return saida
+    return [c for c in cartoes if c.id not in fora]
