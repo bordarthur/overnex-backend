@@ -104,7 +104,7 @@ from app.telas.paineis.contrato import (
     SerieLinha,
 )
 from app.telas.paineis.formato import CEM, brl, pct, q, qtd
-from app.telas.visao_geral.contra_referencia import MESES_CURTOS, Mensal, rotulo_eixo
+from app.telas.visao_geral.contra_referencia import Mensal, rotulo_eixo, rotulos_meses
 from app.telas.visao_geral.contrato import Kpi, Trecho, Valor
 from app.telas.visao_geral.financeiro import (
     COLUNAS_PAGAR,
@@ -1330,7 +1330,7 @@ def cartao_safra(c: Calculo) -> CartaoTabela | None:
 
 
 def _eixo(meses: Sequence[date]) -> tuple[list[str], list[str]]:
-    return [MESES_CURTOS[m.month - 1] for m in meses], [rotulo_eixo(m) for m in meses]
+    return rotulos_meses(meses), [rotulo_eixo(m) for m in meses]
 
 
 def cartao_inadimplencia_12_meses(c: Calculo) -> CartaoGraficos | None:

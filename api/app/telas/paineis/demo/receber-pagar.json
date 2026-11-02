@@ -71,14 +71,6 @@
   "destaques": [],
   "kpis": [
     {
-      "rotulo": "Saldo em caixa hoje",
-      "valor": {
-        "valor": 1420000,
-        "unidade": "brl"
-      },
-      "contexto": "todas as contas"
-    },
-    {
       "rotulo": "A receber em 30 dias",
       "valor": {
         "valor": 5260000,
@@ -94,15 +86,6 @@
       },
       "contexto": "só o que está lançado",
       "status": "atencao"
-    },
-    {
-      "rotulo": "Saldo em 30 dias",
-      "valor": {
-        "valor": 3020000,
-        "unidade": "brl"
-      },
-      "contexto": "otimista: faltam saídas lançadas",
-      "status": "saudavel"
     },
     {
       "rotulo": "Inadimplência",
@@ -122,11 +105,10 @@
       "tipo": "janelas",
       "largura": 12,
       "titulo": "Próximos dias: entra, sai e quanto sobra",
-      "subtitulo": "O saldo de hoje mais o que vence a receber, menos o que vence a pagar em cada janela",
+      "subtitulo": "O que vence a receber e a pagar em cada janela, e quanto sobra",
       "janelas": [
         {
           "titulo": "Próximos 7 dias",
-          "status": "saudavel",
           "linhas": [
             {
               "rotulo": "A receber",
@@ -150,20 +132,11 @@
               },
               "comSinal": true,
               "tipo": "total"
-            },
-            {
-              "rotulo": "Saldo no fim",
-              "valor": {
-                "valor": 2124640,
-                "unidade": "brl"
-              },
-              "tipo": "saldo"
             }
           ]
         },
         {
           "titulo": "Próximos 15 dias",
-          "status": "saudavel",
           "linhas": [
             {
               "rotulo": "A receber",
@@ -187,20 +160,11 @@
               },
               "comSinal": true,
               "tipo": "total"
-            },
-            {
-              "rotulo": "Saldo no fim",
-              "valor": {
-                "valor": 3086680,
-                "unidade": "brl"
-              },
-              "tipo": "saldo"
             }
           ]
         },
         {
           "titulo": "Próximos 30 dias",
-          "status": "saudavel",
           "linhas": [
             {
               "rotulo": "A receber",
@@ -224,14 +188,6 @@
               },
               "comSinal": true,
               "tipo": "total"
-            },
-            {
-              "rotulo": "Saldo no fim",
-              "valor": {
-                "valor": 3016492,
-                "unidade": "brl"
-              },
-              "tipo": "saldo"
             }
           ]
         }
@@ -337,18 +293,6 @@
               },
               "participacao": 0.8,
               "status": "critico"
-            }
-          ],
-          "observacao": [
-            {
-              "texto": "Provisão para perdas (PDD): "
-            },
-            {
-              "texto": "R$ 31 mil",
-              "destaque": true
-            },
-            {
-              "texto": ", 0,44% da carteira. Regra a definir."
             }
           ],
           "maiores": [
@@ -569,7 +513,7 @@
           "celulas": [
             {
               "valor": "Mercantil Aurora",
-              "sub": "parou de comprar"
+              "etiqueta": "parou de comprar"
             },
             {
               "valor": {
@@ -628,7 +572,7 @@
           "celulas": [
             {
               "valor": "Rede Bom Preço Sul",
-              "sub": "parou de comprar"
+              "etiqueta": "parou de comprar"
             },
             {
               "valor": {
@@ -687,7 +631,7 @@
           "celulas": [
             {
               "valor": "Supermercado Primavera",
-              "sub": "parou de comprar"
+              "etiqueta": "parou de comprar"
             },
             {
               "valor": {
@@ -790,10 +734,8 @@
               "fundo": "critico"
             },
             {
-              "pill": {
-                "status": "critico",
-                "rotulo": "Baixa"
-              }
+              "valor": "sem histórico",
+              "tom": "apagado"
             },
             {
               "valor": "Diego"
@@ -1106,7 +1048,20 @@
             "tipo": "linhas",
             "unidade": "pct",
             "casas": 0,
-            "rotulos": ["out", "nov", "dez", "jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set"],
+            "rotulos": [
+              "out-25",
+              "nov-25",
+              "dez-25",
+              "jan-26",
+              "fev-26",
+              "mar-26",
+              "abr-26",
+              "mai-26",
+              "jun-26",
+              "jul-26",
+              "ago-26",
+              "set-26"
+            ],
             "titulos": [
               "out-25",
               "nov-25",
@@ -1156,7 +1111,20 @@
             "tipo": "empilhado",
             "unidade": "brl",
             "paleta": "atraso",
-            "rotulos": ["out", "nov", "dez", "jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set"],
+            "rotulos": [
+              "out-25",
+              "nov-25",
+              "dez-25",
+              "jan-26",
+              "fev-26",
+              "mar-26",
+              "abr-26",
+              "mai-26",
+              "jun-26",
+              "jul-26",
+              "ago-26",
+              "set-26"
+            ],
             "series": [
               {
                 "nome": "1 a 15 dias",
@@ -1195,56 +1163,133 @@
       ]
     },
     {
-      "id": "prazos",
-      "tipo": "graficos",
+      "id": "ciclo-caixa",
+      "tipo": "ciclo-caixa",
       "largura": 7,
-      "titulo": "Prazos de recebimento e de pagamento",
-      "subtitulo": "Prazo médio, em dias, nos últimos 12 meses. Quanto maior a distância, mais tempo o dinheiro fica preso.",
-      "nota": "O ciclo de caixa completo (com o prazo de estoque) entra quando houver o custo do estoque.",
-      "graficos": [
+      "titulo": "Ciclo de caixa",
+      "subtitulo": "Quanto tempo o dinheiro fica preso entre comprar, vender e receber",
+      "explicacao": "Dias de estoque mais dias para receber, menos dias para pagar. É o tempo em que o dinheiro da empresa fica preso na operação.",
+      "linhas": [
         {
-          "grafico": {
-            "tipo": "linhas",
-            "unidade": "dias",
-            "rotulos": ["out", "nov", "dez", "jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set"],
-            "titulos": [
-              "out-25",
-              "nov-25",
-              "dez-25",
-              "jan-26",
-              "fev-26",
-              "mar-26",
-              "abr-26",
-              "mai-26",
-              "jun-26",
-              "jul-26",
-              "ago-26",
-              "set-26"
-            ],
-            "series": [
-              {
-                "nome": "Pagamento",
-                "valores": [25, 24, 25, 25, 24, 24, 25, 24, 24, 24, 24, 24],
-                "estilo": "secundaria",
-                "rotuloFim": "Pagamento, 24 d"
-              },
-              {
-                "nome": "Recebimento",
-                "valores": [26, 26, 27, 26, 26, 26, 27, 28, 29, 30, 30, 31],
-                "estilo": "principal",
-                "rotuloFim": "Recebimento, 31 d"
-              }
-            ],
-            "marcadores": [
-              {
-                "serie": 1,
-                "i": 5,
-                "rotulo": "26 dias"
-              }
-            ]
-          }
+          "rotulo": "Compra → venda → recebe",
+          "trechos": [
+            {
+              "rotulo": "Estoque 15 d",
+              "de": 0,
+              "ate": 15,
+              "estilo": "estoque"
+            },
+            {
+              "rotulo": "Recebimento 31 d",
+              "de": 15,
+              "ate": 46,
+              "estilo": "recebimento"
+            }
+          ]
+        },
+        {
+          "rotulo": "Compra → paga",
+          "trechos": [
+            {
+              "rotulo": "Pagamento 24 d",
+              "de": 0,
+              "ate": 24,
+              "estilo": "pagamento"
+            }
+          ]
+        },
+        {
+          "rotulo": "Dinheiro preso",
+          "trechos": [
+            {
+              "rotulo": "22 dias",
+              "de": 24,
+              "ate": 46,
+              "estilo": "preso"
+            }
+          ]
         }
-      ]
+      ],
+      "rodape": [
+        [
+          {
+            "texto": "Eram "
+          },
+          {
+            "texto": "17 dias",
+            "destaque": true
+          },
+          {
+            "texto": " em março; hoje "
+          },
+          {
+            "texto": "22",
+            "destaque": true
+          }
+        ],
+        [
+          {
+            "texto": "Cada dia a menos libera cerca de "
+          },
+          {
+            "texto": "R$ 230 mil",
+            "destaque": true
+          }
+        ]
+      ],
+      "grafico": {
+        "tipo": "linhas",
+        "unidade": "dias",
+        "rotulos": [
+          "out-25",
+          "nov-25",
+          "dez-25",
+          "jan-26",
+          "fev-26",
+          "mar-26",
+          "abr-26",
+          "mai-26",
+          "jun-26",
+          "jul-26",
+          "ago-26",
+          "set-26"
+        ],
+        "titulos": [
+          "out-25",
+          "nov-25",
+          "dez-25",
+          "jan-26",
+          "fev-26",
+          "mar-26",
+          "abr-26",
+          "mai-26",
+          "jun-26",
+          "jul-26",
+          "ago-26",
+          "set-26"
+        ],
+        "series": [
+          {
+            "nome": "Pagamento",
+            "valores": [25, 24, 25, 25, 24, 24, 25, 24, 24, 24, 24, 24],
+            "estilo": "secundaria",
+            "rotuloFim": "Pagamento, 24 d"
+          },
+          {
+            "nome": "Recebimento",
+            "valores": [26, 26, 27, 26, 26, 26, 27, 28, 29, 30, 30, 31],
+            "estilo": "principal",
+            "rotuloFim": "Recebimento, 31 d"
+          }
+        ],
+        "marcadores": [
+          {
+            "serie": 1,
+            "i": 5,
+            "rotulo": "26 dias"
+          }
+        ]
+      }
     },
     {
       "id": "limite-credito",
@@ -1272,7 +1317,7 @@
           "celulas": [
             {
               "valor": "Mercantil Aurora",
-              "sub": "título vencido"
+              "etiqueta": "título vencido"
             },
             {
               "valor": {
@@ -1300,7 +1345,7 @@
           "celulas": [
             {
               "valor": "Rede Bom Preço Sul",
-              "sub": "título vencido"
+              "etiqueta": "título vencido"
             },
             {
               "valor": {
@@ -1382,7 +1427,7 @@
           "celulas": [
             {
               "valor": "Supermercado Primavera",
-              "sub": "título vencido"
+              "etiqueta": "título vencido"
             },
             {
               "valor": {

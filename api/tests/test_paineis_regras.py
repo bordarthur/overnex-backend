@@ -21,6 +21,7 @@ from app.telas.calendario import dias_uteis, feriados_nacionais
 from app.telas.moldura import UltimaCarga
 from app.telas.paineis import base, clientes, equipe, vendas
 from app.telas.paineis.contrato import PainelPayload
+from app.telas.visao_geral.contra_referencia import rotulos_meses
 from app.telas.visao_geral.vendas import TabelaDoCliente
 
 D = Decimal
@@ -138,6 +139,13 @@ def _payload(tela: Any, conteudo: base.Conteudo) -> dict[str, Any]:
 
 
 # ---------- filtros ----------
+
+
+def test_rotulos_de_mes_com_o_ano_so_quando_cruzam_anos() -> None:
+    cruza = [date(2025, 11, 1), date(2025, 12, 1), date(2026, 1, 1)]
+    assert rotulos_meses(cruza) == ["nov-25", "dez-25", "jan-26"]
+    assert rotulos_meses([date(2026, 5, 1), date(2026, 6, 1)]) == ["mai", "jun"]
+    assert rotulos_meses([]) == []
 
 
 def test_opcoes_juntam_grafias_e_tem_o_padrao() -> None:
@@ -430,6 +438,16 @@ def test_equipe_monta_o_painel(leituras: dict[str, Any], monkeypatch: pytest.Mon
     assert "Vencido na carteira" in rotulos
     # com filtro, sem a nota dos códigos fora da tabela
     assert "nota" not in report
+    # 6 meses num ano só: só o mês, com o "*" da projeção no fim
+    calor = next(c for c in corpo["cartoes"] if c["id"] == "atingimento-6-meses")
+    assert [c["rotulo"] for c in calor["colunas"]][1:7] == [
+        "mai",
+        "jun",
+        "jul",
+        "ago",
+        "set",
+        "out*",
+    ]
 
 
 def test_equipe_sem_filtro_lista_os_codigos_fora(
@@ -501,6 +519,9 @@ def test_clientes_monta_o_painel(leituras: dict[str, Any], monkeypatch: pytest.M
     barras = corpo["cartoes"][0]["graficos"][0]["grafico"]["grupos"]
     assert len(barras) == 13
     assert barras[-1]["barras"][0]["estilo"] == "projecao"
+    # os meses cruzam anos: o rótulo leva o ano, e o "*" da projeção fica no fim
+    assert [barras[0]["rotulo"], barras[-1]["rotulo"]] == ["out-25", "out-26*"]
+    assert barras[-1]["titulo"] == "out-26 (projeção)"
 
 
 def test_clientes_nao_tem_filtro(leituras: dict[str, Any]) -> None:

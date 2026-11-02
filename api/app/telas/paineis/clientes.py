@@ -96,7 +96,7 @@ from app.telas.paineis.formato import (
     q,
     qtd,
 )
-from app.telas.visao_geral.contra_referencia import MESES_CURTOS, rotulo_eixo
+from app.telas.visao_geral.contra_referencia import rotulo_eixo, rotulos_meses
 from app.telas.visao_geral.contrato import Kpi, Trecho
 from app.telas.visao_geral.texto import moeda_cheia, numero
 from app.telas.visao_geral.vendas import filtro_empresa, mes_menos
@@ -455,10 +455,6 @@ def kpis(
 # ---------- cartões ----------
 
 
-def _mes_curto(m: date) -> str:
-    return MESES_CURTOS[m.month - 1]
-
-
 def cartao_atendimentos(
     dados: DadosClientes, historico: list[date], mes: date, atendimentos: Decimal, aberto: bool
 ) -> CartaoGraficos | None:
@@ -468,9 +464,10 @@ def cartao_atendimentos(
     tickets = [(m, dados.meses[m].ticket) for m in historico]
     atual = dados.meses[mes]
     nome_atual = f"{rotulo_eixo(mes)} (projeção)" if aberto else rotulo_eixo(mes)
+    *rotulos, rotulo_atual = rotulos_meses([*historico, mes])
     grupos = [
         GrupoBarras(
-            rotulo=_mes_curto(m),
+            rotulo=r,
             titulo=rotulo_eixo(m),
             barras=[
                 Barra(
@@ -480,11 +477,11 @@ def cartao_atendimentos(
                 )
             ],
         )
-        for m in historico
+        for m, r in zip(historico, rotulos, strict=True)
     ]
     grupos.append(
         GrupoBarras(
-            rotulo=_mes_curto(mes) + ("*" if aberto else ""),
+            rotulo=rotulo_atual + ("*" if aberto else ""),
             titulo=nome_atual,
             barras=[
                 Barra(
@@ -934,7 +931,7 @@ def cartao_itens(dados: DadosClientes, historico: list[date]) -> CartaoGraficos 
                     tipo="linhas",
                     unidade="qtd",
                     casas=1,
-                    rotulos=[rotulo_eixo(m) for m, _ in pontos],
+                    rotulos=rotulos_meses([m for m, _ in pontos]),
                     series=[
                         SerieLinha(
                             nome="Itens por atendimento",

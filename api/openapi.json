@@ -1886,6 +1886,153 @@
         "title": "CartaoBarrasHorizontais",
         "description": "Lista de barras horizontais (a pagar por semana); a maior ocupa a largura toda."
       },
+      "CartaoCicloCaixa": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "largura": {
+            "type": "integer",
+            "enum": [
+              4,
+              5,
+              6,
+              7,
+              8,
+              12
+            ],
+            "title": "Largura"
+          },
+          "titulo": {
+            "type": "string",
+            "title": "Titulo"
+          },
+          "subtitulo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subtitulo"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "saudavel",
+                  "atencao",
+                  "critico"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "legenda": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ItemLegenda"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Legenda"
+          },
+          "chamada": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Chamada"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "nota": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nota"
+          },
+          "explicacao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Explicacao"
+          },
+          "tipo": {
+            "type": "string",
+            "const": "ciclo-caixa",
+            "title": "Tipo"
+          },
+          "linhas": {
+            "items": {
+              "$ref": "#/components/schemas/LinhaCiclo"
+            },
+            "type": "array",
+            "title": "Linhas"
+          },
+          "rodape": {
+            "anyOf": [
+              {
+                "items": {
+                  "items": {
+                    "$ref": "#/components/schemas/Trecho"
+                  },
+                  "type": "array"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rodape"
+          },
+          "grafico": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GraficoLinhas"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "largura",
+          "titulo",
+          "tipo",
+          "linhas"
+        ],
+        "title": "CartaoCicloCaixa",
+        "description": "Ciclo de caixa em réguas de dias: compra → venda → recebe, compra → paga e o dinheiro\npreso."
+      },
       "CartaoContraMeta": {
         "properties": {
           "id": {
@@ -4038,7 +4185,8 @@
                 "enum": [
                   "padrao",
                   "compacta",
-                  "calor"
+                  "calor",
+                  "tendencia"
                 ]
               },
               {
@@ -6179,7 +6327,7 @@
             "title": "Celulas"
           },
           "tendencia": {
-            "$ref": "#/components/schemas/TendenciaDre"
+            "$ref": "#/components/schemas/TendenciaLista"
           },
           "detalhe": {
             "$ref": "#/components/schemas/DetalheLista"
@@ -6506,6 +6654,28 @@
           "falta"
         ],
         "title": "LegendaProximosDias"
+      },
+      "LinhaCiclo": {
+        "properties": {
+          "rotulo": {
+            "type": "string",
+            "title": "Rotulo"
+          },
+          "trechos": {
+            "items": {
+              "$ref": "#/components/schemas/TrechoCiclo"
+            },
+            "type": "array",
+            "title": "Trechos"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rotulo",
+          "trechos"
+        ],
+        "title": "LinhaCiclo"
       },
       "LinhaDre": {
         "properties": {
@@ -7133,6 +7303,9 @@
                 },
                 {
                   "$ref": "#/components/schemas/CartaoListaDetalhe"
+                },
+                {
+                  "$ref": "#/components/schemas/CartaoCicloCaixa"
                 }
               ],
               "discriminator": {
@@ -7141,6 +7314,7 @@
                   "andamento-mes": "#/components/schemas/CartaoAndamentoMes",
                   "barra-partes": "#/components/schemas/CartaoBarraPartes",
                   "barras-horizontais": "#/components/schemas/CartaoBarrasHorizontais",
+                  "ciclo-caixa": "#/components/schemas/CartaoCicloCaixa",
                   "contra-meta": "#/components/schemas/CartaoContraMeta",
                   "curva-abc": "#/components/schemas/CartaoCurvaAbc",
                   "destaques": "#/components/schemas/CartaoDestaques",
@@ -8221,6 +8395,21 @@
             },
             "type": "array",
             "title": "Comparacao"
+          },
+          "unidade": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "brl",
+                  "pct"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unidade"
           }
         },
         "additionalProperties": false,
@@ -8229,7 +8418,33 @@
           "realizado",
           "comparacao"
         ],
-        "title": "TendenciaDre"
+        "title": "TendenciaDre",
+        "description": "Últimos 6 meses. brl: em reais; pct: em % da receita bruta, na base da coluna\n\"% receita bruta\" da linha. Sem unidade, o front desenha só a faísca."
+      },
+      "TendenciaLista": {
+        "properties": {
+          "realizado": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Realizado"
+          },
+          "comparacao": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Comparacao"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "realizado",
+          "comparacao"
+        ],
+        "title": "TendenciaLista"
       },
       "Trecho": {
         "properties": {
@@ -8249,6 +8464,41 @@
           "texto"
         ],
         "title": "Trecho"
+      },
+      "TrechoCiclo": {
+        "properties": {
+          "rotulo": {
+            "type": "string",
+            "title": "Rotulo"
+          },
+          "de": {
+            "type": "number",
+            "title": "De"
+          },
+          "ate": {
+            "type": "number",
+            "title": "Ate"
+          },
+          "estilo": {
+            "type": "string",
+            "enum": [
+              "estoque",
+              "recebimento",
+              "pagamento",
+              "preso"
+            ],
+            "title": "Estilo"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rotulo",
+          "de",
+          "ate",
+          "estilo"
+        ],
+        "title": "TrechoCiclo"
       },
       "TrechoRegua": {
         "properties": {

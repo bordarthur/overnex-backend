@@ -95,7 +95,7 @@ from app.telas.paineis.formato import (
 )
 from app.telas.paineis.vendas import clientes_no_fim, lado_a_lado
 from app.telas.paralelo import em_paralelo
-from app.telas.visao_geral.contra_referencia import MESES_CURTOS
+from app.telas.visao_geral.contra_referencia import rotulos_meses
 from app.telas.visao_geral.financeiro import ultimo_vencimento_vencido
 from app.telas.visao_geral.texto import moeda, numero
 from app.telas.visao_geral.vendas import filtro_empresa, mes_menos
@@ -859,7 +859,7 @@ def cartao_calor(
     mp: MesPainel,
 ) -> CartaoTabela:
     meses = [*meses_antes(mes, MESES_CALOR - 1), mes]
-    rotulos = [MESES_CURTOS[m.month - 1] for m in meses]
+    rotulos = rotulos_meses(meses)
     if mp.aberto:
         rotulos[-1] += "*"
     tabela: list[LinhaTabela] = []

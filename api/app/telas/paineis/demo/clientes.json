@@ -77,7 +77,7 @@
             "rotulosNasBarras": true,
             "grupos": [
               {
-                "rotulo": "out",
+                "rotulo": "out-25",
                 "titulo": "out-25",
                 "barras": [
                   {
@@ -88,7 +88,7 @@
                 ]
               },
               {
-                "rotulo": "nov",
+                "rotulo": "nov-25",
                 "titulo": "nov-25",
                 "barras": [
                   {
@@ -99,7 +99,7 @@
                 ]
               },
               {
-                "rotulo": "dez",
+                "rotulo": "dez-25",
                 "titulo": "dez-25",
                 "barras": [
                   {
@@ -110,7 +110,7 @@
                 ]
               },
               {
-                "rotulo": "jan",
+                "rotulo": "jan-26",
                 "titulo": "jan-26",
                 "barras": [
                   {
@@ -121,7 +121,7 @@
                 ]
               },
               {
-                "rotulo": "fev",
+                "rotulo": "fev-26",
                 "titulo": "fev-26",
                 "barras": [
                   {
@@ -132,7 +132,7 @@
                 ]
               },
               {
-                "rotulo": "mar",
+                "rotulo": "mar-26",
                 "titulo": "mar-26",
                 "barras": [
                   {
@@ -143,7 +143,7 @@
                 ]
               },
               {
-                "rotulo": "abr",
+                "rotulo": "abr-26",
                 "titulo": "abr-26",
                 "barras": [
                   {
@@ -154,7 +154,7 @@
                 ]
               },
               {
-                "rotulo": "mai",
+                "rotulo": "mai-26",
                 "titulo": "mai-26",
                 "barras": [
                   {
@@ -165,7 +165,7 @@
                 ]
               },
               {
-                "rotulo": "jun",
+                "rotulo": "jun-26",
                 "titulo": "jun-26",
                 "barras": [
                   {
@@ -176,7 +176,7 @@
                 ]
               },
               {
-                "rotulo": "jul",
+                "rotulo": "jul-26",
                 "titulo": "jul-26",
                 "barras": [
                   {
@@ -187,7 +187,7 @@
                 ]
               },
               {
-                "rotulo": "ago",
+                "rotulo": "ago-26",
                 "titulo": "ago-26",
                 "barras": [
                   {
@@ -198,7 +198,7 @@
                 ]
               },
               {
-                "rotulo": "set",
+                "rotulo": "set-26",
                 "titulo": "set-26",
                 "barras": [
                   {
@@ -209,7 +209,7 @@
                 ]
               },
               {
-                "rotulo": "out*",
+                "rotulo": "out-26*",
                 "titulo": "Outubro (projeção)",
                 "barras": [
                   {
@@ -236,19 +236,19 @@
             "tipo": "linhas",
             "unidade": "brl",
             "rotulos": [
-              "out",
-              "nov",
-              "dez",
-              "jan",
-              "fev",
-              "mar",
-              "abr",
-              "mai",
-              "jun",
-              "jul",
-              "ago",
-              "set",
-              "out*"
+              "out-25",
+              "nov-25",
+              "dez-25",
+              "jan-26",
+              "fev-26",
+              "mar-26",
+              "abr-26",
+              "mai-26",
+              "jun-26",
+              "jul-26",
+              "ago-26",
+              "set-26",
+              "out-26*"
             ],
             "titulos": [
               "out-25",

@@ -310,6 +310,8 @@ def test_mes_fechado_contra_o_orcado(leituras: dict[str, Any]) -> None:
         "dre-cascata",
         "ponto-equilibrio",
         "dre-gerencial",
+        # aprovada em 30/10/2026: sai sem PAINEIS_A_DECIDIR
+        "tabela-financeira",
     ]
     # filtros: visão (com a projeção: sem `mes`, o mês em aberto existe) e sem cenário
     assert [f["id"] for f in corpo["filtros"]] == ["visao"]
@@ -323,7 +325,8 @@ def test_dre_gerencial(leituras: dict[str, Any]) -> None:
     por_id = {x.id: x for x in dre.linhas}
 
     assert dre.rotulo_comparacao == "Orçado"
-    assert dre.niveis == [1, 2]
+    # o nível 3 sai sempre (para conferir conta a conta); a tela começa no 2
+    assert (dre.niveis, dre.nivel_inicial) == ([1, 2, 3], 2)
     assert [x.id for x in dre.linhas if x.nivel == 0] == [
         "sub-receita-liquida",
         "sub-lucro-bruto",
@@ -334,11 +337,16 @@ def test_dre_gerencial(leituras: dict[str, Any]) -> None:
     ]
     # o último subtotal em destaque
     assert por_id["sub-lucro-liquido"].final
-    assert not any(x.nivel == 3 for x in dre.linhas)
-    # receita positiva, custo negativo, em R$ mil
-    assert por_id["100"].realizado == 1
+    nivel_3 = {x.id: x for x in dre.linhas if x.nivel == 3}
+    assert nivel_3["140.02.04"].nome == "Telefone/Internet"
+    assert nivel_3["140.02.04"].pai == "140.02"
+    assert nivel_3[resultado.FATURADO].pai == "100.01"
+    # receita positiva, custo negativo, em reais
+    assert dre.rotulo_conta == "Conta (R$)"
+    assert (dre.escala.unidade, dre.escala.casas) == ("qtd", 0)
+    assert por_id["100"].realizado == 1000
     assert por_id["100"].codigo == "100.00"
-    assert por_id["120"].realizado == D("-0.6")
+    assert por_id["120"].realizado == -600
     # CMV sobre a receita bruta menos as devoluções
     assert por_id["120.01"].percentual_receita_bruta == D("61.2")
     assert por_id["120"].percentual_receita_bruta == 60
@@ -354,7 +362,23 @@ def test_dre_gerencial(leituras: dict[str, Any]) -> None:
     assert not por_id["160"].com_desvio
     # devolução sem orçado: diferença sem percentual
     assert por_id["110"].diferenca_percentual is None
-    assert len(por_id["100"].tendencia.realizado) == 6
+    # tendência: receita e despesas fixas em reais
+    receita = por_id["100"].tendencia
+    assert (receita.unidade, len(receita.realizado)) == ("brl", 6)
+    assert receita.realizado[-1] == 1000
+    assert receita.comparacao[-1] == 1050
+    assert por_id["140.01"].tendencia.unidade == "brl"
+    assert por_id["sub-lucro-liquido"].tendencia.unidade == "brl"
+    # 110, 120 e 130 (com as contas de dentro) e o EBITDA em % da receita bruta, positivos
+    custos = por_id["120"].tendencia
+    assert custos.unidade == "pct"
+    assert (custos.realizado[-1], custos.comparacao[-1]) == (60, D("57.1"))
+    # o CMV na base da coluna: receita bruta menos as devoluções (980)
+    assert por_id["120.01"].tendencia.realizado[-1] == D("61.2")
+    assert por_id["130"].tendencia.unidade == "pct"
+    assert por_id["130.01"].tendencia.realizado[-1] == 3
+    ebitda = por_id["sub-ebitda"].tendencia
+    assert (ebitda.unidade, ebitda.realizado[-1]) == ("pct", 17)
     assert dre.rodape == [
         "Sem movimento no período, por isso fora da tabela: 150 Depreciação e amortização, "
         "170 Despesas financeiras, 180 Despesas não operacionais, 190 Receitas não "
@@ -393,20 +417,49 @@ def test_ponto_de_equilibrio(leituras: dict[str, Any]) -> None:
 def test_doze_meses_contra_o_orcado(leituras: dict[str, Any]) -> None:
     cartao = _cartao(_montar(), "resultado-12-meses")
     assert isinstance(cartao, CartaoGraficos)
-    receita, _, fixas, *_ = cartao.graficos
+    assert [g.titulo for g in cartao.graficos] == [
+        "Receita bruta",
+        "Custos",
+        "Margem de contribuição",
+        "Despesas fixas",
+        "EBITDA",
+        "Lucro líquido",
+    ]
+    receita, custos, _, fixas, *_ = cartao.graficos
     pontos = receita.grafico.pontos  # type: ignore[union-attr]
 
     assert len(pontos) == 12
+    # out/25 a set/26: o rótulo leva o ano; a dica continua "out-25"
+    assert (pontos[0].rotulo, pontos[-1].rotulo) == ("out-25", "set-26")
     # 2025 sem orçado: sem traço
     assert pontos[0].referencia is None
     # receita 1.000 contra 1.050: mais de 2% abaixo
     assert pontos[-1].status == "critico"
     # despesas fixas: setembro acima do orçado
     assert fixas.grafico.pontos[-1].status == "critico"  # type: ignore[union-attr]
+    # custos: o grupo 120 positivo, contra o orçado, e a linha em % da receita bruta
+    assert custos.grafico.nomes.linha == "% da receita bruta"  # type: ignore[union-attr]
+    assert custos.grafico.escala_linha.unidade == "pct"  # type: ignore[union-attr]
+    setembro = custos.grafico.pontos[-1]  # type: ignore[union-attr]
+    assert (setembro.rotulo, setembro.valor, setembro.referencia) == ("set-26", 600, 600)
+    assert (setembro.status, setembro.linha) == (None, 60)
+    assert custos.grafico.pontos[0].referencia is None  # type: ignore[union-attr]
     assert cartao.chamada is not None
     assert cartao.chamada.texto[1].texto.startswith(
         "a receita bruta veio acima do orçado em 0 dos 9 meses"
     )
+
+
+def test_custos_acima_do_orcado_ficam_criticos(leituras: dict[str, Any]) -> None:
+    # setembro: custo de 700 contra 600 orçados (mais de 2% acima)
+    for r in leituras["linhas"]["vendas"]:
+        if r["mes"] == SETEMBRO and r["medida"] == "custo":
+            r["valor"] = D(700)
+    custos = _cartao(_montar(), "resultado-12-meses").graficos[1]
+    setembro = custos.grafico.pontos[-1]  # type: ignore[union-attr]
+
+    assert custos.titulo == "Custos"
+    assert (setembro.valor, setembro.status, setembro.linha) == (700, "critico", 70)
 
 
 def test_sem_orcado_compara_com_o_mes_anterior_e_avisa(leituras: dict[str, Any]) -> None:
@@ -488,12 +541,34 @@ def test_sem_lancamentos_vem_vazio(leituras: dict[str, Any]) -> None:
         _montar({"visao": "ano"})
 
 
-def test_a_decidir(leituras: dict[str, Any]) -> None:
+def test_tabela_financeira(leituras: dict[str, Any]) -> None:
     leituras["titulos"] = IndicadoresMensais(
         recebimento={SETEMBRO: D(30), date(2026, 8, 1): D(28)},
         pagamento={},
         inadimplencia={SETEMBRO: D(5)},
     )
+    tabela = _cartao(_montar(), "tabela-financeira")
+
+    assert isinstance(tabela, CartaoTabela)
+    # números curtos e farol claro no front
+    assert tabela.variante == "tendencia"
+    # out/25 a set/26: os meses cruzam anos, as colunas levam o ano
+    colunas = [c.rotulo for c in tabela.colunas]
+    assert (colunas[1], colunas[-2], colunas[-1]) == ("out-25", "set-26", "Média")
+    linhas = {x.celulas[0].valor: x.celulas for x in tabela.linhas}
+    assert list(linhas)[-2:] == ["Prazo médio de recebimento", "Inadimplência"]
+    # receita em "6,64 mi"
+    receita = linhas["Receita bruta"]
+    assert receita[1].valor.casas == 2  # type: ignore[union-attr]
+    assert receita[-1].valor.casas == 2  # type: ignore[union-attr]
+    # prazos em dias: o mês sem casa, a média com uma ("27,7 d")
+    prazo = linhas["Prazo médio de recebimento"]
+    assert (prazo[-2].valor.unidade, prazo[-2].valor.casas) == ("dias", 0)  # type: ignore[union-attr]
+    assert (prazo[-1].valor.valor, prazo[-1].valor.casas) == (29, 1)  # type: ignore[union-attr]
+    assert prazo[-1].tom == "apagado"
+
+
+def test_a_decidir(leituras: dict[str, Any]) -> None:
     c = _montar(a_decidir=True)
     corpo = _payload(c)
 
@@ -523,12 +598,6 @@ def test_a_decidir(leituras: dict[str, Any]) -> None:
     assert desvios.grupos[0].itens[0].nome == "Bovinos"
     assert desvios.grupos[1].itens[0].nome == "Faturado das vendas"
 
-    tabela = _cartao(c, "tabela-financeira")
-    assert isinstance(tabela, CartaoTabela)
-    assert [x.celulas[0].valor for x in tabela.linhas][-2:] == [
-        "Prazo médio de recebimento",
-        "Inadimplência",
-    ]
     assert corpo["cartoes"][3]["graficos"][0]["grafico"]["tipo"] == "cascata"
 
 

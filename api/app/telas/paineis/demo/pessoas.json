@@ -25,7 +25,7 @@
         "valor": 127,
         "unidade": "qtd"
       },
-      "contexto": "eram 125 há 12 meses"
+      "contexto": "eram 125 em outubro de 2025"
     },
     {
       "rotulo": "Folha com encargos",
@@ -33,7 +33,7 @@
         "valor": 820000,
         "unidade": "brl"
       },
-      "contexto": "12,0% da receita; orçado 11,9%",
+      "contexto": "11,8% do faturamento; média de 11 meses 11,4%",
       "status": "atencao"
     },
     {
@@ -53,7 +53,7 @@
         "unidade": "brl",
         "casasMil": 1
       },
-      "contexto": "salário, encargos e ajuda de custo"
+      "contexto": "salário, encargos, ajuda de custo e premiação"
     }
   ],
   "apoios": [],
@@ -63,7 +63,7 @@
       "tipo": "destaques",
       "largura": 12,
       "titulo": "O que mudou na equipe",
-      "subtitulo": "Os quatro fatos do mês, para ler em 10 segundos",
+      "subtitulo": "Os fatos do mês, para ler em 10 segundos",
       "itens": [
         {
           "categoria": "Saídas",
@@ -130,7 +130,20 @@
         "tipo": "linhas",
         "unidade": "brl",
         "casasMil": 1,
-        "rotulos": ["out", "nov", "dez", "jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set"],
+        "rotulos": [
+          "out-25",
+          "nov-25",
+          "dez-25",
+          "jan-26",
+          "fev-26",
+          "mar-26",
+          "abr-26",
+          "mai-26",
+          "jun-26",
+          "jul-26",
+          "ago-26",
+          "set-26"
+        ],
         "titulos": [
           "out-25",
           "nov-25",
@@ -177,7 +190,20 @@
           "grafico": {
             "tipo": "empilhado",
             "unidade": "qtd",
-            "rotulos": ["out", "nov", "dez", "jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set"],
+            "rotulos": [
+              "out-25",
+              "nov-25",
+              "dez-25",
+              "jan-26",
+              "fev-26",
+              "mar-26",
+              "abr-26",
+              "mai-26",
+              "jun-26",
+              "jul-26",
+              "ago-26",
+              "set-26"
+            ],
             "rotulosNasBarras": true,
             "totais": [125, 124, 127, 128, 129, 125, 128, 132, 124, 127, 127, 127],
             "series": [
@@ -1468,27 +1494,27 @@
       "itens": [
         {
           "rotulo": "Logística",
-          "sub": "73 pessoas · R$ 5 mil por pessoa",
+          "sub": "73 pessoas · R$ 4,8 mil por pessoa",
           "valor": 352000
         },
         {
           "rotulo": "Comercial",
-          "sub": "29 pessoas · R$ 8 mil por pessoa",
+          "sub": "29 pessoas · R$ 7,8 mil por pessoa",
           "valor": 226000
         },
         {
           "rotulo": "Administrativo",
-          "sub": "12 pessoas · R$ 8 mil por pessoa",
+          "sub": "12 pessoas · R$ 8,0 mil por pessoa",
           "valor": 96000
         },
         {
           "rotulo": "Expedição",
-          "sub": "10 pessoas · R$ 5 mil por pessoa",
+          "sub": "10 pessoas · R$ 5,2 mil por pessoa",
           "valor": 52000
         },
         {
           "rotulo": "Financeiro",
-          "sub": "3 pessoas · R$ 9 mil por pessoa",
+          "sub": "3 pessoas · R$ 9,3 mil por pessoa",
           "valor": 28000
         }
       ]
@@ -1524,7 +1550,7 @@
                 "rotulosNasBarras": true,
                 "grupos": [
                   {
-                    "rotulo": "out",
+                    "rotulo": "out-25",
                     "titulo": "out-25",
                     "barras": [
                       {
@@ -1540,7 +1566,7 @@
                     ]
                   },
                   {
-                    "rotulo": "nov",
+                    "rotulo": "nov-25",
                     "titulo": "nov-25",
                     "barras": [
                       {
@@ -1556,7 +1582,7 @@
                     ]
                   },
                   {
-                    "rotulo": "dez",
+                    "rotulo": "dez-25",
                     "titulo": "dez-25",
                     "barras": [
                       {
@@ -1572,7 +1598,7 @@
                     ]
                   },
                   {
-                    "rotulo": "jan",
+                    "rotulo": "jan-26",
                     "titulo": "jan-26",
                     "barras": [
                       {
@@ -1588,7 +1614,7 @@
                     ]
                   },
                   {
-                    "rotulo": "fev",
+                    "rotulo": "fev-26",
                     "titulo": "fev-26",
                     "barras": [
                       {
@@ -1604,7 +1630,7 @@
                     ]
                   },
                   {
-                    "rotulo": "mar",
+                    "rotulo": "mar-26",
                     "titulo": "mar-26",
                     "barras": [
                       {
@@ -1620,7 +1646,7 @@
                     ]
                   },
                   {
-                    "rotulo": "abr",
+                    "rotulo": "abr-26",
                     "titulo": "abr-26",
                     "barras": [
                       {
@@ -1636,7 +1662,7 @@
                     ]
                   },
                   {
-                    "rotulo": "mai",
+                    "rotulo": "mai-26",
                     "titulo": "mai-26",
                     "barras": [
                       {
@@ -1652,7 +1678,7 @@
                     ]
                   },
                   {
-                    "rotulo": "jun",
+                    "rotulo": "jun-26",
                     "titulo": "jun-26",
                     "barras": [
                       {
@@ -1668,7 +1694,7 @@
                     ]
                   },
                   {
-                    "rotulo": "jul",
+                    "rotulo": "jul-26",
                     "titulo": "jul-26",
                     "barras": [
                       {
@@ -1684,7 +1710,7 @@
                     ]
                   },
                   {
-                    "rotulo": "ago",
+                    "rotulo": "ago-26",
                     "titulo": "ago-26",
                     "barras": [
                       {
@@ -1700,7 +1726,7 @@
                     ]
                   },
                   {
-                    "rotulo": "set",
+                    "rotulo": "set-26",
                     "titulo": "set-26",
                     "barras": [
                       {
@@ -1725,18 +1751,18 @@
                 "unidade": "pct",
                 "casas": 1,
                 "rotulos": [
-                  "out",
-                  "nov",
-                  "dez",
-                  "jan",
-                  "fev",
-                  "mar",
-                  "abr",
-                  "mai",
-                  "jun",
-                  "jul",
-                  "ago",
-                  "set"
+                  "out-25",
+                  "nov-25",
+                  "dez-25",
+                  "jan-26",
+                  "fev-26",
+                  "mar-26",
+                  "abr-26",
+                  "mai-26",
+                  "jun-26",
+                  "jul-26",
+                  "ago-26",
+                  "set-26"
                 ],
                 "titulos": [
                   "out-25",
@@ -1806,7 +1832,7 @@
                 "rotulosNasBarras": true,
                 "grupos": [
                   {
-                    "rotulo": "out",
+                    "rotulo": "out-25",
                     "titulo": "out-25",
                     "barras": [
                       {
@@ -1822,7 +1848,7 @@
                     ]
                   },
                   {
-                    "rotulo": "nov",
+                    "rotulo": "nov-25",
                     "titulo": "nov-25",
                     "barras": [
                       {
@@ -1838,7 +1864,7 @@
                     ]
                   },
                   {
-                    "rotulo": "dez",
+                    "rotulo": "dez-25",
                     "titulo": "dez-25",
                     "barras": [
                       {
@@ -1854,7 +1880,7 @@
                     ]
                   },
                   {
-                    "rotulo": "jan",
+                    "rotulo": "jan-26",
                     "titulo": "jan-26",
                     "barras": [
                       {
@@ -1870,7 +1896,7 @@
                     ]
                   },
                   {
-                    "rotulo": "fev",
+                    "rotulo": "fev-26",
                     "titulo": "fev-26",
                     "barras": [
                       {
@@ -1886,7 +1912,7 @@
                     ]
                   },
                   {
-                    "rotulo": "mar",
+                    "rotulo": "mar-26",
                     "titulo": "mar-26",
                     "barras": [
                       {
@@ -1902,7 +1928,7 @@
                     ]
                   },
                   {
-                    "rotulo": "abr",
+                    "rotulo": "abr-26",
                     "titulo": "abr-26",
                     "barras": [
                       {
@@ -1918,7 +1944,7 @@
                     ]
                   },
                   {
-                    "rotulo": "mai",
+                    "rotulo": "mai-26",
                     "titulo": "mai-26",
                     "barras": [
                       {
@@ -1934,7 +1960,7 @@
                     ]
                   },
                   {
-                    "rotulo": "jun",
+                    "rotulo": "jun-26",
                     "titulo": "jun-26",
                     "barras": [
                       {
@@ -1950,7 +1976,7 @@
                     ]
                   },
                   {
-                    "rotulo": "jul",
+                    "rotulo": "jul-26",
                     "titulo": "jul-26",
                     "barras": [
                       {
@@ -1966,7 +1992,7 @@
                     ]
                   },
                   {
-                    "rotulo": "ago",
+                    "rotulo": "ago-26",
                     "titulo": "ago-26",
                     "barras": [
                       {
@@ -1982,7 +2008,7 @@
                     ]
                   },
                   {
-                    "rotulo": "set",
+                    "rotulo": "set-26",
                     "titulo": "set-26",
                     "barras": [
                       {
@@ -2007,18 +2033,18 @@
                 "unidade": "pct",
                 "casas": 1,
                 "rotulos": [
-                  "out",
-                  "nov",
-                  "dez",
-                  "jan",
-                  "fev",
-                  "mar",
-                  "abr",
-                  "mai",
-                  "jun",
-                  "jul",
-                  "ago",
-                  "set"
+                  "out-25",
+                  "nov-25",
+                  "dez-25",
+                  "jan-26",
+                  "fev-26",
+                  "mar-26",
+                  "abr-26",
+                  "mai-26",
+                  "jun-26",
+                  "jul-26",
+                  "ago-26",
+                  "set-26"
                 ],
                 "titulos": [
                   "out-25",
@@ -2088,7 +2114,7 @@
                 "rotulosNasBarras": true,
                 "grupos": [
                   {
-                    "rotulo": "out",
+                    "rotulo": "out-25",
                     "titulo": "out-25",
                     "barras": [
                       {
@@ -2104,7 +2130,7 @@
                     ]
                   },
                   {
-                    "rotulo": "nov",
+                    "rotulo": "nov-25",
                     "titulo": "nov-25",
                     "barras": [
                       {
@@ -2120,7 +2146,7 @@
                     ]
                   },
                   {
-                    "rotulo": "dez",
+                    "rotulo": "dez-25",
                     "titulo": "dez-25",
                     "barras": [
                       {
@@ -2136,7 +2162,7 @@
                     ]
                   },
                   {
-                    "rotulo": "jan",
+                    "rotulo": "jan-26",
                     "titulo": "jan-26",
                     "barras": [
                       {
@@ -2152,7 +2178,7 @@
                     ]
                   },
                   {
-                    "rotulo": "fev",
+                    "rotulo": "fev-26",
                     "titulo": "fev-26",
                     "barras": [
                       {
@@ -2168,7 +2194,7 @@
                     ]
                   },
                   {
-                    "rotulo": "mar",
+                    "rotulo": "mar-26",
                     "titulo": "mar-26",
                     "barras": [
                       {
@@ -2184,7 +2210,7 @@
                     ]
                   },
                   {
-                    "rotulo": "abr",
+                    "rotulo": "abr-26",
                     "titulo": "abr-26",
                     "barras": [
                       {
@@ -2200,7 +2226,7 @@
                     ]
                   },
                   {
-                    "rotulo": "mai",
+                    "rotulo": "mai-26",
                     "titulo": "mai-26",
                     "barras": [
                       {
@@ -2216,7 +2242,7 @@
                     ]
                   },
                   {
-                    "rotulo": "jun",
+                    "rotulo": "jun-26",
                     "titulo": "jun-26",
                     "barras": [
                       {
@@ -2232,7 +2258,7 @@
                     ]
                   },
                   {
-                    "rotulo": "jul",
+                    "rotulo": "jul-26",
                     "titulo": "jul-26",
                     "barras": [
                       {
@@ -2248,7 +2274,7 @@
                     ]
                   },
                   {
-                    "rotulo": "ago",
+                    "rotulo": "ago-26",
                     "titulo": "ago-26",
                     "barras": [
                       {
@@ -2264,7 +2290,7 @@
                     ]
                   },
                   {
-                    "rotulo": "set",
+                    "rotulo": "set-26",
                     "titulo": "set-26",
                     "barras": [
                       {
@@ -2289,18 +2315,18 @@
                 "unidade": "pct",
                 "casas": 1,
                 "rotulos": [
-                  "out",
-                  "nov",
-                  "dez",
-                  "jan",
-                  "fev",
-                  "mar",
-                  "abr",
-                  "mai",
-                  "jun",
-                  "jul",
-                  "ago",
-                  "set"
+                  "out-25",
+                  "nov-25",
+                  "dez-25",
+                  "jan-26",
+                  "fev-26",
+                  "mar-26",
+                  "abr-26",
+                  "mai-26",
+                  "jun-26",
+                  "jul-26",
+                  "ago-26",
+                  "set-26"
                 ],
                 "titulos": [
                   "out-25",
@@ -2370,7 +2396,7 @@
                 "rotulosNasBarras": true,
                 "grupos": [
                   {
-                    "rotulo": "out",
+                    "rotulo": "out-25",
                     "titulo": "out-25",
                     "barras": [
                       {
@@ -2386,7 +2412,7 @@
                     ]
                   },
                   {
-                    "rotulo": "nov",
+                    "rotulo": "nov-25",
                     "titulo": "nov-25",
                     "barras": [
                       {
@@ -2402,7 +2428,7 @@
                     ]
                   },
                   {
-                    "rotulo": "dez",
+                    "rotulo": "dez-25",
                     "titulo": "dez-25",
                     "barras": [
                       {
@@ -2418,7 +2444,7 @@
                     ]
                   },
                   {
-                    "rotulo": "jan",
+                    "rotulo": "jan-26",
                     "titulo": "jan-26",
                     "barras": [
                       {
@@ -2434,7 +2460,7 @@
                     ]
                   },
                   {
-                    "rotulo": "fev",
+                    "rotulo": "fev-26",
                     "titulo": "fev-26",
                     "barras": [
                       {
@@ -2450,7 +2476,7 @@
                     ]
                   },
                   {
-                    "rotulo": "mar",
+                    "rotulo": "mar-26",
                     "titulo": "mar-26",
                     "barras": [
                       {
@@ -2466,7 +2492,7 @@
                     ]
                   },
                   {
-                    "rotulo": "abr",
+                    "rotulo": "abr-26",
                     "titulo": "abr-26",
                     "barras": [
                       {
@@ -2482,7 +2508,7 @@
                     ]
                   },
                   {
-                    "rotulo": "mai",
+                    "rotulo": "mai-26",
                     "titulo": "mai-26",
                     "barras": [
                       {
@@ -2498,7 +2524,7 @@
                     ]
                   },
                   {
-                    "rotulo": "jun",
+                    "rotulo": "jun-26",
                     "titulo": "jun-26",
                     "barras": [
                       {
@@ -2514,7 +2540,7 @@
                     ]
                   },
                   {
-                    "rotulo": "jul",
+                    "rotulo": "jul-26",
                     "titulo": "jul-26",
                     "barras": [
                       {
@@ -2530,7 +2556,7 @@
                     ]
                   },
                   {
-                    "rotulo": "ago",
+                    "rotulo": "ago-26",
                     "titulo": "ago-26",
                     "barras": [
                       {
@@ -2546,7 +2572,7 @@
                     ]
                   },
                   {
-                    "rotulo": "set",
+                    "rotulo": "set-26",
                     "titulo": "set-26",
                     "barras": [
                       {
@@ -2571,18 +2597,18 @@
                 "unidade": "pct",
                 "casas": 1,
                 "rotulos": [
-                  "out",
-                  "nov",
-                  "dez",
-                  "jan",
-                  "fev",
-                  "mar",
-                  "abr",
-                  "mai",
-                  "jun",
-                  "jul",
-                  "ago",
-                  "set"
+                  "out-25",
+                  "nov-25",
+                  "dez-25",
+                  "jan-26",
+                  "fev-26",
+                  "mar-26",
+                  "abr-26",
+                  "mai-26",
+                  "jun-26",
+                  "jul-26",
+                  "ago-26",
+                  "set-26"
                 ],
                 "titulos": [
                   "out-25",
@@ -2652,7 +2678,7 @@
                 "rotulosNasBarras": true,
                 "grupos": [
                   {
-                    "rotulo": "out",
+                    "rotulo": "out-25",
                     "titulo": "out-25",
                     "barras": [
                       {
@@ -2668,7 +2694,7 @@
                     ]
                   },
                   {
-                    "rotulo": "nov",
+                    "rotulo": "nov-25",
                     "titulo": "nov-25",
                     "barras": [
                       {
@@ -2684,7 +2710,7 @@
                     ]
                   },
                   {
-                    "rotulo": "dez",
+                    "rotulo": "dez-25",
                     "titulo": "dez-25",
                     "barras": [
                       {
@@ -2700,7 +2726,7 @@
                     ]
                   },
                   {
-                    "rotulo": "jan",
+                    "rotulo": "jan-26",
                     "titulo": "jan-26",
                     "barras": [
                       {
@@ -2716,7 +2742,7 @@
                     ]
                   },
                   {
-                    "rotulo": "fev",
+                    "rotulo": "fev-26",
                     "titulo": "fev-26",
                     "barras": [
                       {
@@ -2732,7 +2758,7 @@
                     ]
                   },
                   {
-                    "rotulo": "mar",
+                    "rotulo": "mar-26",
                     "titulo": "mar-26",
                     "barras": [
                       {
@@ -2748,7 +2774,7 @@
                     ]
                   },
                   {
-                    "rotulo": "abr",
+                    "rotulo": "abr-26",
                     "titulo": "abr-26",
                     "barras": [
                       {
@@ -2764,7 +2790,7 @@
                     ]
                   },
                   {
-                    "rotulo": "mai",
+                    "rotulo": "mai-26",
                     "titulo": "mai-26",
                     "barras": [
                       {
@@ -2780,7 +2806,7 @@
                     ]
                   },
                   {
-                    "rotulo": "jun",
+                    "rotulo": "jun-26",
                     "titulo": "jun-26",
                     "barras": [
                       {
@@ -2796,7 +2822,7 @@
                     ]
                   },
                   {
-                    "rotulo": "jul",
+                    "rotulo": "jul-26",
                     "titulo": "jul-26",
                     "barras": [
                       {
@@ -2812,7 +2838,7 @@
                     ]
                   },
                   {
-                    "rotulo": "ago",
+                    "rotulo": "ago-26",
                     "titulo": "ago-26",
                     "barras": [
                       {
@@ -2828,7 +2854,7 @@
                     ]
                   },
                   {
-                    "rotulo": "set",
+                    "rotulo": "set-26",
                     "titulo": "set-26",
                     "barras": [
                       {
@@ -2853,18 +2879,18 @@
                 "unidade": "pct",
                 "casas": 1,
                 "rotulos": [
-                  "out",
-                  "nov",
-                  "dez",
-                  "jan",
-                  "fev",
-                  "mar",
-                  "abr",
-                  "mai",
-                  "jun",
-                  "jul",
-                  "ago",
-                  "set"
+                  "out-25",
+                  "nov-25",
+                  "dez-25",
+                  "jan-26",
+                  "fev-26",
+                  "mar-26",
+                  "abr-26",
+                  "mai-26",
+                  "jun-26",
+                  "jul-26",
+                  "ago-26",
+                  "set-26"
                 ],
                 "titulos": [
                   "out-25",
@@ -2934,7 +2960,7 @@
                 "rotulosNasBarras": true,
                 "grupos": [
                   {
-                    "rotulo": "out",
+                    "rotulo": "out-25",
                     "titulo": "out-25",
                     "barras": [
                       {
@@ -2950,7 +2976,7 @@
                     ]
                   },
                   {
-                    "rotulo": "nov",
+                    "rotulo": "nov-25",
                     "titulo": "nov-25",
                     "barras": [
                       {
@@ -2966,7 +2992,7 @@
                     ]
                   },
                   {
-                    "rotulo": "dez",
+                    "rotulo": "dez-25",
                     "titulo": "dez-25",
                     "barras": [
                       {
@@ -2982,7 +3008,7 @@
                     ]
                   },
                   {
-                    "rotulo": "jan",
+                    "rotulo": "jan-26",
                     "titulo": "jan-26",
                     "barras": [
                       {
@@ -2998,7 +3024,7 @@
                     ]
                   },
                   {
-                    "rotulo": "fev",
+                    "rotulo": "fev-26",
                     "titulo": "fev-26",
                     "barras": [
                       {
@@ -3014,7 +3040,7 @@
                     ]
                   },
                   {
-                    "rotulo": "mar",
+                    "rotulo": "mar-26",
                     "titulo": "mar-26",
                     "barras": [
                       {
@@ -3030,7 +3056,7 @@
                     ]
                   },
                   {
-                    "rotulo": "abr",
+                    "rotulo": "abr-26",
                     "titulo": "abr-26",
                     "barras": [
                       {
@@ -3046,7 +3072,7 @@
                     ]
                   },
                   {
-                    "rotulo": "mai",
+                    "rotulo": "mai-26",
                     "titulo": "mai-26",
                     "barras": [
                       {
@@ -3062,7 +3088,7 @@
                     ]
                   },
                   {
-                    "rotulo": "jun",
+                    "rotulo": "jun-26",
                     "titulo": "jun-26",
                     "barras": [
                       {
@@ -3078,7 +3104,7 @@
                     ]
                   },
                   {
-                    "rotulo": "jul",
+                    "rotulo": "jul-26",
                     "titulo": "jul-26",
                     "barras": [
                       {
@@ -3094,7 +3120,7 @@
                     ]
                   },
                   {
-                    "rotulo": "ago",
+                    "rotulo": "ago-26",
                     "titulo": "ago-26",
                     "barras": [
                       {
@@ -3110,7 +3136,7 @@
                     ]
                   },
                   {
-                    "rotulo": "set",
+                    "rotulo": "set-26",
                     "titulo": "set-26",
                     "barras": [
                       {
@@ -3135,18 +3161,18 @@
                 "unidade": "pct",
                 "casas": 1,
                 "rotulos": [
-                  "out",
-                  "nov",
-                  "dez",
-                  "jan",
-                  "fev",
-                  "mar",
-                  "abr",
-                  "mai",
-                  "jun",
-                  "jul",
-                  "ago",
-                  "set"
+                  "out-25",
+                  "nov-25",
+                  "dez-25",
+                  "jan-26",
+                  "fev-26",
+                  "mar-26",
+                  "abr-26",
+                  "mai-26",
+                  "jun-26",
+                  "jul-26",
+                  "ago-26",
+                  "set-26"
                 ],
                 "titulos": [
                   "out-25",
@@ -3216,7 +3242,7 @@
                 "rotulosNasBarras": true,
                 "grupos": [
                   {
-                    "rotulo": "out",
+                    "rotulo": "out-25",
                     "titulo": "out-25",
                     "barras": [
                       {
@@ -3232,7 +3258,7 @@
                     ]
                   },
                   {
-                    "rotulo": "nov",
+                    "rotulo": "nov-25",
                     "titulo": "nov-25",
                     "barras": [
                       {
@@ -3248,7 +3274,7 @@
                     ]
                   },
                   {
-                    "rotulo": "dez",
+                    "rotulo": "dez-25",
                     "titulo": "dez-25",
                     "barras": [
                       {
@@ -3264,7 +3290,7 @@
                     ]
                   },
                   {
-                    "rotulo": "jan",
+                    "rotulo": "jan-26",
                     "titulo": "jan-26",
                     "barras": [
                       {
@@ -3280,7 +3306,7 @@
                     ]
                   },
                   {
-                    "rotulo": "fev",
+                    "rotulo": "fev-26",
                     "titulo": "fev-26",
                     "barras": [
                       {
@@ -3296,7 +3322,7 @@
                     ]
                   },
                   {
-                    "rotulo": "mar",
+                    "rotulo": "mar-26",
                     "titulo": "mar-26",
                     "barras": [
                       {
@@ -3312,7 +3338,7 @@
                     ]
                   },
                   {
-                    "rotulo": "abr",
+                    "rotulo": "abr-26",
                     "titulo": "abr-26",
                     "barras": [
                       {
@@ -3328,7 +3354,7 @@
                     ]
                   },
                   {
-                    "rotulo": "mai",
+                    "rotulo": "mai-26",
                     "titulo": "mai-26",
                     "barras": [
                       {
@@ -3344,7 +3370,7 @@
                     ]
                   },
                   {
-                    "rotulo": "jun",
+                    "rotulo": "jun-26",
                     "titulo": "jun-26",
                     "barras": [
                       {
@@ -3360,7 +3386,7 @@
                     ]
                   },
                   {
-                    "rotulo": "jul",
+                    "rotulo": "jul-26",
                     "titulo": "jul-26",
                     "barras": [
                       {
@@ -3376,7 +3402,7 @@
                     ]
                   },
                   {
-                    "rotulo": "ago",
+                    "rotulo": "ago-26",
                     "titulo": "ago-26",
                     "barras": [
                       {
@@ -3392,7 +3418,7 @@
                     ]
                   },
                   {
-                    "rotulo": "set",
+                    "rotulo": "set-26",
                     "titulo": "set-26",
                     "barras": [
                       {
@@ -3417,18 +3443,18 @@
                 "unidade": "pct",
                 "casas": 1,
                 "rotulos": [
-                  "out",
-                  "nov",
-                  "dez",
-                  "jan",
-                  "fev",
-                  "mar",
-                  "abr",
-                  "mai",
-                  "jun",
-                  "jul",
-                  "ago",
-                  "set"
+                  "out-25",
+                  "nov-25",
+                  "dez-25",
+                  "jan-26",
+                  "fev-26",
+                  "mar-26",
+                  "abr-26",
+                  "mai-26",
+                  "jun-26",
+                  "jul-26",
+                  "ago-26",
+                  "set-26"
                 ],
                 "titulos": [
                   "out-25",
@@ -3609,7 +3635,7 @@
               }
             },
             {
-              "valor": "Receita por vendedor",
+              "valor": "Faturamento por pessoa",
               "tom": "apagado"
             },
             {
@@ -3638,11 +3664,24 @@
             ]
           },
           "detalhe": {
-            "titulo": "Comercial: receita por vendedor",
+            "titulo": "Comercial: faturamento por pessoa",
             "grafico": {
               "tipo": "linhas",
               "unidade": "brl",
-              "rotulos": ["out", "nov", "dez", "jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set"],
+              "rotulos": [
+                "out-25",
+                "nov-25",
+                "dez-25",
+                "jan-26",
+                "fev-26",
+                "mar-26",
+                "abr-26",
+                "mai-26",
+                "jun-26",
+                "jul-26",
+                "ago-26",
+                "set-26"
+              ],
               "titulos": [
                 "out-25",
                 "nov-25",
@@ -3659,7 +3698,7 @@
               ],
               "series": [
                 {
-                  "nome": "Receita por vendedor",
+                  "nome": "Faturamento por pessoa",
                   "valores": [
                     214194, 209688, 219375, 199375, 217000, 242857, 236552, 232759, 246667, 253929, 230690,
                     239655
@@ -3726,7 +3765,20 @@
               "tipo": "linhas",
               "unidade": "qtd",
               "casas": 1,
-              "rotulos": ["out", "nov", "dez", "jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set"],
+              "rotulos": [
+                "out-25",
+                "nov-25",
+                "dez-25",
+                "jan-26",
+                "fev-26",
+                "mar-26",
+                "abr-26",
+                "mai-26",
+                "jun-26",
+                "jul-26",
+                "ago-26",
+                "set-26"
+              ],
               "titulos": [
                 "out-25",
                 "nov-25",
@@ -3809,7 +3861,20 @@
               "unidade": "qtd",
               "casas": 1,
               "sufixo": "t",
-              "rotulos": ["out", "nov", "dez", "jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set"],
+              "rotulos": [
+                "out-25",
+                "nov-25",
+                "dez-25",
+                "jan-26",
+                "fev-26",
+                "mar-26",
+                "abr-26",
+                "mai-26",
+                "jun-26",
+                "jul-26",
+                "ago-26",
+                "set-26"
+              ],
               "titulos": [
                 "out-25",
                 "nov-25",
@@ -3890,7 +3955,20 @@
               "tipo": "linhas",
               "unidade": "pct",
               "casas": 1,
-              "rotulos": ["out", "nov", "dez", "jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set"],
+              "rotulos": [
+                "out-25",
+                "nov-25",
+                "dez-25",
+                "jan-26",
+                "fev-26",
+                "mar-26",
+                "abr-26",
+                "mai-26",
+                "jun-26",
+                "jul-26",
+                "ago-26",
+                "set-26"
+              ],
               "titulos": [
                 "out-25",
                 "nov-25",
@@ -3973,7 +4051,20 @@
               "tipo": "linhas",
               "unidade": "qtd",
               "casas": 0,
-              "rotulos": ["out", "nov", "dez", "jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set"],
+              "rotulos": [
+                "out-25",
+                "nov-25",
+                "dez-25",
+                "jan-26",
+                "fev-26",
+                "mar-26",
+                "abr-26",
+                "mai-26",
+                "jun-26",
+                "jul-26",
+                "ago-26",
+                "set-26"
+              ],
               "titulos": [
                 "out-25",
                 "nov-25",

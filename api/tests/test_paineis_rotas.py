@@ -281,20 +281,25 @@ def test_demo_devolve_o_mockup_e_confere_os_filtros(
     # o aviso da fixture cita um módulo que ainda não existe
     assert "aviso" not in client.get("/api/telas/clientes").json()
 
-    # cartões a decidir e o nível 3 da DRE ficam de fora sem PAINEIS_A_DECIDIR
+    # cartões a decidir ficam de fora sem PAINEIS_A_DECIDIR; o nível 3 da DRE sai sempre
     corpo = client.get("/api/telas/resultado", params={"comparar": "mes-anterior"}).json()
     ids = [c["id"] for c in corpo["cartoes"]]
     assert "ponte-ebitda" not in ids
-    assert "tabela-financeira" not in ids
+    # aprovada em 30/10/2026
+    assert "tabela-financeira" in ids
     dre = next(c for c in corpo["cartoes"] if c["id"] == "dre-gerencial")
-    assert dre["niveis"] == [1, 2]
-    assert all(linha["nivel"] != 3 for linha in dre["linhas"])
+    assert dre["niveis"] == [1, 2, 3]
+    assert any(linha["nivel"] == 3 for linha in dre["linhas"])
     assert client.get("/api/telas/receber-pagar", params={"atraso": "x"}).status_code == 422
+    # o demo já traz o ciclo de caixa do mockup (a tela de verdade ainda manda os prazos)
+    cartoes = client.get("/api/telas/receber-pagar").json()["cartoes"]
+    ciclo = next(c for c in cartoes if c["tipo"] == "ciclo-caixa")
+    assert [x["rotulo"] for x in ciclo["linhas"]][-1] == "Dinheiro preso"
 
     com_a_decidir = demo.model_copy(update={"paineis_a_decidir": True})
     app.dependency_overrides[get_settings] = lambda: com_a_decidir
     ids = [c["id"] for c in client.get("/api/telas/resultado").json()["cartoes"]]
-    assert {"ponte-ebitda", "maiores-desvios", "tabela-financeira"} <= set(ids)
+    assert {"ponte-ebitda", "maiores-desvios"} <= set(ids)
 
 
 def test_resposta_fica_no_cache_com_a_chave_dos_filtros(
