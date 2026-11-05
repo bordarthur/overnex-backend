@@ -36,6 +36,9 @@ class UsuarioToken:
     # `sub` do Supabase (ou `oid` do Entra); é o seg.usuario.id_autenticacao.
     id_autenticacao: UUID
     email: str | None = None
+    # `session_id` do Supabase: a sessão de login cujo último uso fica em seg.sessao_uso
+    # (None no Entra e no token fake)
+    sessao_id: UUID | None = None
 
 
 def _nao_autenticado() -> HTTPException:
@@ -97,9 +100,12 @@ def validar_token_supabase(token: str, settings: Settings, obter_chave: ObterCha
         raise _nao_autenticado()
     try:
         id_autenticacao = UUID(str(claims["sub"]))
+        sessao_id = UUID(str(claims["session_id"])) if claims.get("session_id") else None
     except ValueError as exc:
         raise _nao_autenticado() from exc
-    return UsuarioToken(id_autenticacao=id_autenticacao, email=claims.get("email"))
+    return UsuarioToken(
+        id_autenticacao=id_autenticacao, email=claims.get("email"), sessao_id=sessao_id
+    )
 
 
 def validar_token_entra(token: str, settings: Settings, obter_chave: ObterChave) -> UsuarioToken:

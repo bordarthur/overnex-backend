@@ -135,6 +135,8 @@ class MesDeVendas:
     pedidos: int
     # pares cliente × produto distintos
     clientes_produtos: int
+    # dias com venda (menos domingo): contam como dia útil; vazio no mês do resumo mensal
+    dias_venda: frozenset[date] = frozenset()
 
 
 @dataclass(frozen=True)
@@ -293,7 +295,9 @@ def _vendas_do_mes(
                    coalesce(sum(v.custo), 0) as custo,
                    count(distinct v.cliente) as clientes,
                    count(distinct v.pedido) as pedidos,
-                   count(distinct (v.cliente, v.produto)) as clientes_produtos
+                   count(distinct (v.cliente, v.produto)) as clientes_produtos,
+                   array_agg(distinct v.dia) filter (where extract(isodow from v.dia) <> 7)
+                       as dias_venda
               from v
               join ref on v.dia >= ref.mes and v.dia < ref.mes + interval '1 month'
              group by ref.mes
@@ -311,6 +315,7 @@ def _vendas_do_mes(
         clientes=linha["clientes"],
         clientes_produtos=linha["clientes_produtos"],
         pedidos=linha["pedidos"],
+        dias_venda=frozenset(linha["dias_venda"] or ()),
     )
 
 
@@ -531,7 +536,7 @@ def secao_vendas(
     feriados_mes = feriados(conn, ctx.cliente_id, v.mes, ultimo_dia_do_mes(v.mes))
     # mês fechado: sem projeção nem "A realizar"; o faturado é o do mês inteiro
     proj = (
-        projetar(v.faturado, meta, v.ultimo_dia, feriados_mes)
+        projetar(v.faturado, meta, v.ultimo_dia, feriados_mes, v.dias_venda)
         if meta is not None and not fechado
         else None
     )

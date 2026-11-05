@@ -35,7 +35,7 @@ from psycopg import sql
 from app.core.cache import existe, existe_coluna
 from app.core.db import Conexao, em_uma_ida
 from app.seguranca.acesso import ContextoConsolidado
-from app.telas.calendario import dias_uteis, feriados, ultimo_dia_do_mes
+from app.telas.calendario import dias_uteis, feriados, ultimo_dia_do_mes, util
 from app.telas.paineis.contrato import Aviso, Cartao, FiltroPainel, ItemValor, OpcaoFiltro
 from app.telas.visao_geral.contrato import Kpi
 from app.telas.visao_geral.financeiro import COLUNAS_RECEBER
@@ -287,6 +287,9 @@ class Panorama:
     ultimo_dia: date | None
     # valores distintos do papel linha nas tabelas de vendas
     linhas: list[str]
+    # dias com venda (menos domingo) no mês da tela e no anterior, de todas as vendas: contam
+    # como dia útil
+    dias_venda: frozenset[date] = frozenset()
 
 
 type Consulta = tuple[sql.Composed, dict[str, Any]]
@@ -355,7 +358,11 @@ def _consulta_panorama(ctx: ContextoConsolidado, f: Fontes, mes: date | None) ->
         select ref.mes,
                (select max(dia) from v
                  where dia >= ref.mes and dia < ref.mes + interval '1 month') as ultimo_dia,
-               array(select distinct linha from v where linha is not null) as linhas
+               array(select distinct linha from v where linha is not null) as linhas,
+               array(select distinct dia from v
+                      where dia >= ref.mes - interval '1 month'
+                        and dia < ref.mes + interval '1 month'
+                        and extract(isodow from dia) <> 7) as dias_venda
           from ref
         """
     ).format(vendas=vendas_sql(ctx, f)), parametros(ctx, mes=mes)
@@ -416,7 +423,12 @@ def ler_inicio(
     panorama = Panorama(mes=mes, ultimo_dia=None, linhas=[])
     if linhas.get("panorama"):  # agregado sem group by: sempre uma linha
         r = linhas["panorama"][0]
-        panorama = Panorama(mes=r["mes"], ultimo_dia=r["ultimo_dia"], linhas=r["linhas"])
+        panorama = Panorama(
+            mes=r["mes"],
+            ultimo_dia=r["ultimo_dia"],
+            linhas=r["linhas"],
+            dias_venda=frozenset(r["dias_venda"] or ()),
+        )
     return InicioPainel(
         panorama=panorama,
         vendedores=_vendedores(linhas.get("vendedores", [])),
@@ -437,6 +449,8 @@ class MesPainel:
     feriados: frozenset[date]
     du_mes: int
     du_passados: int
+    # dias com venda (menos domingo), deste mês e do anterior: contam como dia útil
+    dias_venda: frozenset[date] = frozenset()
 
     @property
     def du_restantes(self) -> int:
@@ -454,12 +468,20 @@ class MesPainel:
         return valor / self.du_passados * self.du_mes
 
     def util(self, dia: date) -> bool:
-        return dia.weekday() < 5 and dia not in self.feriados
+        return util(dia, self.feriados, self.dias_venda)
 
 
 def mes_painel(
-    conn: Conexao, ctx: ContextoConsolidado, mes: date, ultimo_dia: date, fechado: bool
+    conn: Conexao,
+    ctx: ContextoConsolidado,
+    mes: date,
+    ultimo_dia: date,
+    fechado: bool,
+    dias_venda: frozenset[date] = frozenset(),
 ) -> MesPainel:
+    """Dias úteis do mês: segunda a sexta fora dos feriados e os `dias_venda` (sábado ou
+    feriado com venda). Os dias com venda só existem até hoje: a projeção não conta
+    sábados que ainda vão ter venda."""
     fim = ultimo_dia_do_mes(mes)
     fer = feriados(conn, ctx.cliente_id, mes, fim)
     ultimo = fim if fechado else ultimo_dia
@@ -468,8 +490,9 @@ def mes_painel(
         ultimo_dia=ultimo,
         fechado=fechado,
         feriados=frozenset(fer),
-        du_mes=dias_uteis(mes, fim, fer),
-        du_passados=dias_uteis(mes, ultimo, fer),
+        du_mes=dias_uteis(mes, fim, fer, dias_venda),
+        du_passados=dias_uteis(mes, ultimo, fer, dias_venda),
+        dias_venda=dias_venda,
     )
 
 

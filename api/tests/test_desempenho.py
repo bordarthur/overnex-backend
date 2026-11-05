@@ -4,6 +4,7 @@ sem banco."""
 import threading
 from collections.abc import Iterator
 from contextlib import contextmanager
+from datetime import date
 from typing import Any
 from uuid import UUID
 
@@ -16,6 +17,7 @@ from app.core.erros import AcessoNegado
 from app.seguranca.auth import UsuarioToken
 from app.telas import preparo
 from app.telas.paineis import base
+from app.telas.preleitura import versao_do_cadastro
 from app.telas.visao_geral.vendas import TabelaDoCliente
 
 # ---------- CacheComPrazo.obter_ou_montar ----------
@@ -160,6 +162,20 @@ def test_agenda_so_as_telas_liberadas_e_uma_vez_por_usuario(
     assert preparo.agendar(PoolFalso(), USUARIO, ["VG-01"], com_cache) == []  # type: ignore[arg-type]
 
 
+@pytest.mark.parametrize(("prazo", "intervalo"), [(3600, 450), (600, 300)])
+def test_pre_monta_de_novo_a_cada_metade_do_prazo_e_no_maximo_a_cada_7_min_e_meio(
+    com_cache: Any, monkeypatch: pytest.MonkeyPatch, prazo: int, intervalo: int
+) -> None:
+    guardados: list[float] = []
+    monkeypatch.setattr(preparo._fila, "submit", lambda *a: None)
+    monkeypatch.setattr(preparo._agendados, "guardar", lambda c, v, s: guardados.append(s))
+    settings = com_cache.model_copy(update={"visao_geral_cache_segundos": prazo})
+
+    preparo.agendar(PoolFalso(), USUARIO, ["VG-01"], settings)  # type: ignore[arg-type]
+
+    assert guardados == [intervalo]
+
+
 def test_sem_cache_ou_sem_pool_nao_agenda(com_cache: Any) -> None:
     sem_cache = com_cache.model_copy(update={"visao_geral_cache_segundos": 0})
     assert preparo.agendar(PoolFalso(), USUARIO, ["VG-01"], sem_cache) == []  # type: ignore[arg-type]
@@ -205,3 +221,45 @@ def test_premontagem_inclui_os_paineis_financeiros() -> None:
     # Receber e pagar mostra clientes, fornecedores e vendedores
     assert telas["FIN-03"].nominal is True
     assert next(iter(telas)) == "VG-01"
+
+
+# ---------- versão do cadastro (chave do cache) ----------
+
+
+def _cadastro() -> dict[str, list[dict[str, Any]]]:
+    return {
+        "cliente": [{"nome": "PJ Cortes", "logo_url": None}],
+        "fontes": [{"tabela_destino": "f_vendas_pj", "colunas_modelo": {}, "existentes": ["a"]}],
+        "feriados": [{"data": date(2026, 11, 20)}],
+        "parametros": [
+            {
+                "chave": "orcamento.cenario",
+                "valor": {"cenario": "Meta"},
+                "vigente_de": date(2026, 1, 1),
+                "vigente_ate": None,
+            }
+        ],
+        "plano": [{"id_descritivo": "100.01.01", "fator": 1}],
+        "conta_dre": [{"versao": "abc"}],
+        "carga": [{"data_snapshot": date(2026, 11, 3)}],
+    }
+
+
+def test_versao_do_cadastro_muda_so_com_o_cadastro() -> None:
+    base_ = versao_do_cadastro(_cadastro())
+    assert versao_do_cadastro(_cadastro()) == base_
+
+    def mudado(nome: str, linhas: list[dict[str, Any]]) -> str:
+        return versao_do_cadastro({**_cadastro(), nome: linhas})
+
+    # a carga tem chave própria; aqui não conta
+    assert mudado("carga", []) == base_
+    assert mudado("feriados", []) != base_
+    assert mudado("conta_dre", [{"versao": "def"}]) != base_
+    outro = _cadastro()["parametros"]
+    outro[0]["valor"] = {"cenario": "Base"}
+    assert mudado("parametros", outro) != base_
+    # sem a tabela de uma migration, a consulta fica de fora: vale como vazia
+    assert versao_do_cadastro({k: v for k, v in _cadastro().items() if k != "plano"}) == mudado(
+        "plano", []
+    )

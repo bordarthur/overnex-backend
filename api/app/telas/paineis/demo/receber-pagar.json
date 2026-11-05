@@ -248,6 +248,7 @@
               "status": "atencao"
             }
           ],
+          "rotuloParticipacao": "da carteira",
           "idade": [
             {
               "rotulo": "A vencer",
@@ -256,7 +257,8 @@
                 "unidade": "brl"
               },
               "participacao": 92.6,
-              "status": "saudavel"
+              "status": "saudavel",
+              "soNaBarra": true
             },
             {
               "rotulo": "1 a 30 dias",
@@ -381,6 +383,7 @@
               "status": "atencao"
             }
           ],
+          "rotuloParticipacao": "do total",
           "idade": [
             {
               "rotulo": "A vencer",
@@ -389,7 +392,8 @@
                 "unidade": "brl"
               },
               "participacao": 99.1,
-              "status": "saudavel"
+              "status": "saudavel",
+              "soNaBarra": true
             },
             {
               "rotulo": "1 a 30 dias",

@@ -18,7 +18,7 @@ from app.farol.parametro import Parametro
 from app.main import create_app
 from app.seguranca.auth import UsuarioToken
 from app.telas.visao_geral import router
-from app.telas.visao_geral.preferencias import PREFERENCIAS, valor, valores
+from app.telas.visao_geral.preferencias import PREFERENCIAS, valor
 
 USUARIO = UUID("d1000000-0000-4000-8000-00000000000a")
 CLIENTE = UUID("c1000000-0000-4000-8000-00000000000a")
@@ -86,7 +86,7 @@ def client(estado: dict[str, Any]) -> TestClient:
 
 
 def _guardar(cliente: UUID, mes: str | None) -> tuple[Any, ...]:
-    chave = (cliente, None, (EMPRESA,), mes, None, date(2026, 10, 28), False, ())
+    chave = (cliente, None, (EMPRESA,), mes, None, date(2026, 10, 28), False, "versao")
     router._respostas.guardar(chave, object(), 900)  # type: ignore[arg-type]
     return chave
 
@@ -168,7 +168,6 @@ def test_sem_escolha_salva_vale_o_automatico() -> None:
     with por_requisicao():
         conn = _com_parametros()
         assert valor(conn, CLIENTE, "linhas-custo") == "auto"
-        assert valores(conn, CLIENTE) == (("linhas-custo", "auto"),)
 
 
 def test_vale_a_escolha_mais_recente() -> None:

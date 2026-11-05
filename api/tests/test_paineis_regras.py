@@ -21,6 +21,7 @@ from app.telas.calendario import dias_uteis, feriados_nacionais
 from app.telas.moldura import UltimaCarga
 from app.telas.paineis import base, clientes, equipe, vendas
 from app.telas.paineis.contrato import PainelPayload
+from app.telas.paineis.formato import brl
 from app.telas.visao_geral.contra_referencia import rotulos_meses
 from app.telas.visao_geral.vendas import TabelaDoCliente
 
@@ -290,6 +291,12 @@ def _dados_vendas() -> vendas.DadosVendas:
     dados.por_vendedor = {"1": total * D("0.5"), "2": total * D("0.3"), "3": total * D("0.2")}
     # mês anterior: 30 clientes, metade até o 6º dia útil
     dados.novos_anterior = {date(2026, 9, 2): 15, date(2026, 9, 25): 15}
+    # 7 dias úteis até 09/10; em setembro (feriado em 07/09), o 7º é 10/09
+    dados.dias_anterior = {
+        date(2026, 9, 2): D(100),
+        date(2026, 9, 10): D(200),
+        date(2026, 9, 11): D(999),
+    }
     return dados
 
 
@@ -349,6 +356,28 @@ def test_vendas_monta_o_painel_e_passa_os_filtros(
     canais = corpo["cartoes"][4]
     assert [i["nome"] for i in canais["itens"]] == ["Varejo"]
 
+    estat = {e["rotulo"]: e for e in andamento["estatisticas"]}
+    # sem supermeta; "Vendido em setembro" saiu
+    assert list(estat) == [
+        "Dias úteis",
+        "Ritmo atual",
+        "Necessário para a meta",
+        "Melhor e pior dia",
+        "No mesmo dia de setembro",
+    ]
+    melhor_pior = estat["Melhor e pior dia"]
+    assert melhor_pior["valor"] == "R$ 160 · R$ 100"
+    assert melhor_pior["partes"] == [
+        {"valor": 160.0, "unidade": "brl"},
+        {"valor": 100.0, "unidade": "brl"},
+    ]
+    assert melhor_pior["contexto"] == "09/10 e 01/10"
+    # setembro até 10/09: 100 + 200; hoje: 910
+    mesmo_dia = estat["No mesmo dia de setembro"]
+    assert mesmo_dia["valor"]["valor"] == 300
+    assert mesmo_dia["contexto"] == "+R$ 610 contra hoje"
+    assert mesmo_dia["status"] == "saudavel"
+
 
 def test_vendas_com_filtro_de_linha_tira_a_meta(
     leituras: dict[str, Any], monkeypatch: pytest.MonkeyPatch
@@ -383,6 +412,113 @@ def test_vendas_mes_fechado_sem_projecao(
     assert rotulos == ["Vendido em outubro", "Meta de outubro"]
     andamento = corpo["cartoes"][0]
     assert "projecao" not in {t["estilo"] for t in andamento["regua"]["trechos"]}
+    # mês fechado: setembro inteiro (3.011) contra outubro (910)
+    anterior = andamento["estatisticas"][-1]
+    assert anterior["rotulo"] == "Vendido em setembro"
+    assert anterior["valor"]["valor"] == 3011
+    assert anterior["contexto"] == "−R$ 2 mil contra outubro"
+    assert anterior["status"] == "atencao"
+
+
+def _calculo(supermeta: Decimal | None) -> vendas.Calculo:
+    # 10 de 20 dias úteis: projeção = 2 × vendido = 6,54 mi
+    mp = base.MesPainel(
+        mes=OUTUBRO,
+        ultimo_dia=date(2026, 10, 14),
+        fechado=False,
+        feriados=frozenset(),
+        du_mes=20,
+        du_passados=10,
+    )
+    atual = vendas.MesVendas(D(3_270_000), D(0), D(0), 1, 1)
+    return vendas.Calculo(
+        mp=mp, atual=atual, meta=D(7_000_000), f_meta=PADROES["vendas_meta"], supermeta=supermeta
+    )
+
+
+def test_estatisticas_para_a_supermeta() -> None:
+    itens = {
+        i.rotulo: i
+        for i in vendas.estatisticas(_calculo(D(7_590_000)), vendas.DadosVendas(), OUTUBRO)
+    }
+
+    sup = itens["Para a supermeta"]
+    assert sup.valor == brl(D(1_050_000))
+    assert sup.contexto == "acima da projeção"
+    # 6,54 ÷ 7,59 = 86%: abaixo de 90, crítico
+    assert sup.status == "critico"
+
+    # sem supermeta, ou com a projeção já acima dela: não sai
+    for supermeta in (None, D(6_000_000)):
+        rotulos = [
+            i.rotulo
+            for i in vendas.estatisticas(_calculo(supermeta), vendas.DadosVendas(), OUTUBRO)
+        ]
+        assert "Para a supermeta" not in rotulos
+
+
+def test_estatisticas_melhor_e_pior_dia_com_partes() -> None:
+    dados = vendas.DadosVendas(
+        dias={date(2026, 10, 14): (D(1_210_000), D(0)), date(2026, 10, 12): (D(20_000), D(0))}
+    )
+    itens = {i.rotulo: i for i in vendas.estatisticas(_calculo(None), dados, OUTUBRO)}
+
+    item = itens["Melhor e pior dia"]
+    assert item.valor == "R$ 1,21 mi · R$ 20 mil"
+    assert item.partes == [brl(D(1_210_000)), brl(D(20_000))]
+    assert item.contexto == "14/10 e 12/10"
+
+
+def test_estatisticas_no_mesmo_dia_abaixo_e_atencao() -> None:
+    dados = vendas.DadosVendas(dias_anterior={date(2026, 9, 3): D(3_362_000)})
+    # corte em 14/09: o 10º dia útil de setembro
+    itens = vendas.estatisticas(_calculo(None), dados, OUTUBRO, date(2026, 9, 14))
+
+    item = itens[-1]
+    assert item.rotulo == "No mesmo dia de setembro"
+    assert item.contexto == "−R$ 92 mil contra hoje"
+    assert item.status == "atencao"
+    # sem venda no mês anterior até o corte: não sai
+    vazio = vendas.DadosVendas(dias_anterior={date(2026, 9, 20): D(5)})
+    rotulos = [
+        i.rotulo for i in vendas.estatisticas(_calculo(None), vazio, OUTUBRO, date(2026, 9, 14))
+    ]
+    assert "No mesmo dia de setembro" not in rotulos
+
+
+def test_mes_painel_conta_o_dia_com_venda_menos_o_domingo(leituras: dict[str, Any]) -> None:
+    novembro = date(2026, 11, 1)
+    # venda no domingo 01/11, em Finados (02/11) e em 03/11
+    dias_venda = frozenset({novembro, date(2026, 11, 2), date(2026, 11, 3)})
+    sem = base.mes_painel(None, _ctx(), novembro, date(2026, 11, 3), False)  # type: ignore[arg-type]
+    com = base.mes_painel(None, _ctx(), novembro, date(2026, 11, 3), False, dias_venda)  # type: ignore[arg-type]
+
+    assert (sem.du_passados, sem.du_mes) == (1, 19)
+    # Finados com venda conta; o domingo, não
+    assert (com.du_passados, com.du_mes) == (2, 20)
+    assert com.util(date(2026, 11, 2))
+    assert not com.util(novembro)
+
+
+def test_corte_anterior_conta_o_sabado_com_venda(leituras: dict[str, Any]) -> None:
+    # sábado 05/09 com venda: o 7º dia útil de setembro passa de 10/09 para 09/09
+    mp = base.mes_painel(
+        None,  # type: ignore[arg-type]
+        _ctx(),
+        OUTUBRO,
+        ULTIMA_VENDA,
+        False,
+        frozenset({date(2026, 9, 5)}),
+    )
+    assert mp.du_passados == 7
+    assert vendas.corte_anterior(None, _ctx(), mp) == date(2026, 9, 9)  # type: ignore[arg-type]
+
+
+def test_corte_anterior_conta_os_dias_uteis_com_feriado(leituras: dict[str, Any]) -> None:
+    mp = base.mes_painel(None, _ctx(), OUTUBRO, ULTIMA_VENDA, False)  # type: ignore[arg-type]
+    # 7 dias úteis até 09/10; setembro: 1, 2, 3, 4, (7 feriado), 8, 9, 10
+    assert mp.du_passados == 7
+    assert vendas.corte_anterior(None, _ctx(), mp) == date(2026, 9, 10)  # type: ignore[arg-type]
 
 
 # ---------- Equipe ----------

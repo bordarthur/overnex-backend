@@ -87,11 +87,6 @@ def valor(conn: Conexao, cliente_id: UUID, id_: str) -> str:
     return salvo
 
 
-def valores(conn: Conexao, cliente_id: UUID) -> tuple[tuple[str, str], ...]:
-    """Todas as escolhas do cliente (id, valor): entram na chave do cache da tela."""
-    return tuple((id_, valor(conn, cliente_id, id_)) for id_ in PREFERENCIAS)
-
-
 SQL_GRAVAR = """
     with antes as (
         select valor, vigente_de = %(hoje)s as mesmo_dia

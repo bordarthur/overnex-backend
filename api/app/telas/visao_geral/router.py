@@ -12,12 +12,13 @@ fechado; Financeiro, a posição no snapshot). Com ele (ver Recorte):
 - Resultado: o mês escolhido, se fechado; no mês do snapshot, o último fechado antes dele;
 - Financeiro: a posição dos títulos no último dia do mês (no mês do snapshot, na data dele).
 
-Desempenho: a resposta pronta fica em memória por VISAO_GERAL_CACHE_SEGUNDOS (padrão 15
-min; 0 desliga), com chave no cliente, nas empresas, no mês e na última carga: uma carga
-nova troca a chave. Parâmetros mudados no banco (farol, de-para) valem depois do prazo; as
-escolhas salvas do cliente (preferencias.py) entram na chave, e a rota que grava uma
-escolha apaga as respostas do cliente. O acesso continua conferido e registrado a cada
-requisição. Duas requisições da mesma chave
+Desempenho: a resposta pronta fica em memória por VISAO_GERAL_CACHE_SEGUNDOS (padrão 1 h;
+0 desliga), com chave no cliente, nas empresas, no mês, na última carga e na versão do
+cadastro do cliente (parâmetros, como farol e escolhas salvas, feriados, fontes, plano e
+de-para da DRE; app/telas/preleitura.py): uma carga nova ou um cadastro mudado trocam a
+chave na hora. Só uma correção feita à mão no mart, sem carga nova, espera o prazo. A rota
+que grava uma escolha apaga as respostas do cliente (libera a memória). O acesso continua
+conferido e registrado a cada requisição. Duas requisições da mesma chave
 ao mesmo tempo (ex.: a pré-montagem depois de /api/sessao e o clique) montam uma vez só.
 Ao montar, última carga, cliente, fontes, parâmetros e feriados vêm numa ida ao banco
 (app/telas/preleitura.py), e as seções independentes rodam em paralelo, cada ramo com uma
@@ -188,8 +189,8 @@ def responder(
             inicio.carga,
             hoje,
             settings.visao_geral_demo,
-            # lidas da pré-leitura, sem outra ida ao banco
-            preferencias.valores(ctx.sessao.conn, ctx.cliente_id),
+            # da pré-leitura, sem outra ida ao banco; inclui as escolhas salvas
+            inicio.versao,
         )
         return _respostas.obter_ou_montar(
             chave,

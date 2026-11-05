@@ -64,9 +64,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.exception_handler(AcessoNegado)
     async def _acesso_negado(request: Request, exc: AcessoNegado) -> JSONResponse:
-        return JSONResponse(
-            status_code=status.HTTP_403_FORBIDDEN, content={"detail": "Acesso negado."}
-        )
+        return JSONResponse(status_code=status.HTTP_403_FORBIDDEN, content={"detail": exc.resposta})
 
     @app.exception_handler(ErroAuth)
     async def _erro_auth(request: Request, exc: ErroAuth) -> JSONResponse:

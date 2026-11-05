@@ -418,7 +418,7 @@ def secao_custos(ctx: ContextoConsolidado, base: BaseVendas) -> SecaoDoMes | Non
             v.faturado,
             v.custo,
             base.mensal,
-            projetar_faturado(v.faturado, v.ultimo_dia, base.feriados),
+            projetar_faturado(v.faturado, v.ultimo_dia, base.feriados, v.dias_venda),
             f,
         ),
         seletor=PREFERENCIAS[LINHAS_CUSTO].seletor(escolha),

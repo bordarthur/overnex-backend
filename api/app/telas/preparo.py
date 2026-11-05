@@ -10,7 +10,9 @@ de montar de novo (CacheComPrazo.obter_ou_montar).
 - a checagem de acesso é a mesma da rota (tela no perfil, empresas, dado nominal), mas o
   registro em seg.log_acesso não é gravado: o usuário não abriu a tela. Quando abrir, a
   rota confere e registra como sempre;
-- uma vez por usuário a cada metade do prazo do cache; com o cache desligado
+- uma vez por usuário a cada metade do prazo do cache, no máximo a cada 7,5 min
+  (INTERVALO_MAXIMO): com o prazo longo, uma carga nova não espera para ser pré-montada, e
+  com o cache quente pré-montar custa só a checagem e a pré-leitura; com o cache desligado
   (VISAO_GERAL_CACHE_SEGUNDOS=0), não pré-monta;
 - uma tela por vez, numa fila de 2 threads, para não disputar o banco com as requisições;
 - erro numa tela vai para o log e não afeta as outras nem a sessão.
@@ -55,6 +57,8 @@ TELAS: Sequence[Tela] = (
 )
 
 _agendados: CacheComPrazo[bool] = CacheComPrazo(maximo=1024)
+# segundos entre duas pré-montagens do mesmo usuário, no máximo
+INTERVALO_MAXIMO = 450
 _fila = ThreadPoolExecutor(max_workers=2, thread_name_prefix="preparo")
 
 
@@ -68,7 +72,7 @@ def agendar(
     chave: UUID = usuario.id_autenticacao
     if _agendados.obter(chave):
         return []
-    _agendados.guardar(chave, True, prazo / 2)
+    _agendados.guardar(chave, True, min(prazo / 2, INTERVALO_MAXIMO))
     escolhidas = [t for t in TELAS if t.codigo in telas]
     _fila.submit(preparar, pool, usuario, escolhidas, settings)
     return [t.codigo for t in escolhidas]

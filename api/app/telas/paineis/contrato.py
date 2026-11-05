@@ -35,6 +35,9 @@ class ItemValor(ModeloCamel):
     status: Status | None = None
     # "+2,1%" em vez de "2,1%"
     com_sinal: bool = False
+    # valores lado a lado ("R$ 1,21 mi · R$ 20 mil"), cada um inteiro; quando vem, o front
+    # mostra estes no lugar de `valor` (por enquanto só nas estatísticas do andamento do mês)
+    partes: list[Exibicao] | None = None
 
 
 class OpcaoFiltro(ModeloCamel):
@@ -431,11 +434,28 @@ class LinhaTabela(ModeloCamel):
     celulas: list[Celula]
 
 
+class NomesCartao(ModeloCamel):
+    rotulo: str
+
+
 class CartaoTabela(CartaoBase):
     tipo: Literal["tabela"]
     # calor: células coloridas e centralizadas (atingimento mês a mês); tendencia: para ler a
     # tendência, não número a número (números curtos e farol claro, sem negrito)
     variante: Literal["padrao", "compacta", "calor", "tendencia"] | None = None
+    colunas: list[ColunaTabela]
+    linhas: list[LinhaTabela]
+    vazio: str | None = None
+    # chave "Mostrar nomes": só para quem vê dado nominal na tela; ligada, o front pede
+    # GET /api/telas/{tela}/cartoes/{id}/nomes
+    nomes: NomesCartao | None = None
+
+
+class TabelaNomes(ModeloCamel):
+    """GET /api/telas/{tela}/cartoes/{id}/nomes: o cartão com uma linha por pessoa."""
+
+    # no lugar do subtítulo do cartão
+    subtitulo: str | None = None
     colunas: list[ColunaTabela]
     linhas: list[LinhaTabela]
     vazio: str | None = None
@@ -660,6 +680,8 @@ class FaixaIdade(ModeloCamel):
     # em % do total do lado
     participacao: Numero
     status: Status | None = None
+    # a faixa fica só na barra, com o rótulo dentro, sem quadro embaixo (o a vencer)
+    so_na_barra: bool | None = None
 
 
 class ItemMaior(ModeloCamel):
@@ -678,6 +700,8 @@ class LadoConta(ModeloCamel):
     alerta: str | None = None
     kpis: list[Kpi]
     idade: list[FaixaIdade]
+    # texto depois do percentual de cada faixa da idade: "da carteira", "do total"
+    rotulo_participacao: str | None = None
     observacao: list[Trecho] | None = None
     maiores: list[ItemMaior]
 

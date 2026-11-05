@@ -1104,6 +1104,9 @@
       "largura": 7,
       "variante": "compacta",
       "titulo": "Cargos e salários",
+      "nomes": {
+        "rotulo": "Mostrar nomes"
+      },
       "subtitulo": "Agregado por cargo. Nomes só no perfil de RH.",
       "colunas": [
         {

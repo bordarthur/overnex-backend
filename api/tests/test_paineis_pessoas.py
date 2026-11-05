@@ -28,6 +28,7 @@ from app.telas.paineis.contrato import (
     GraficoEmpilhado,
     PainelPayload,
 )
+from app.telas.visao_geral.contrato import Valor
 from app.telas.visao_geral.vendas import mes_menos
 
 D = Decimal
@@ -391,3 +392,69 @@ def test_filtro_desconhecido_422() -> None:
     with pytest.raises(HTTPException) as erro:
         _montar(pedidos={"setor": "logistica"})
     assert erro.value.status_code == 422
+
+
+# ---------- nomes (tabela de uma linha por pessoa) ----------
+
+
+def test_nome_na_grafia_mais_apresentavel() -> None:
+    assert pessoas.nome_exibido(["DIANA LIMA", "Diana Lima"]) == "Diana Lima"
+    assert pessoas.nome_exibido(["ANA DE SOUZA"]) == "Ana de Souza"
+    assert pessoas.nome_exibido(["JOSÉ DA SILVA E SOUZA"]) == "José da Silva e Souza"
+
+
+def test_linhas_de_nomes_do_maior_salario_para_o_menor(folha: pessoas.Folha) -> None:
+    linhas = pessoas.linhas_nomes(
+        folha, SETEMBRO, {"A": "Ana", "D": "Diana Lima", "F": "Fabio", "H": "Helena"}
+    )
+    # A (3.000) antes de D, F e H (2.000 cada, pelo nome); B, E e G sem nome ficam de fora
+    assert [ln.celulas[0].valor for ln in linhas] == ["Ana", "Diana Lima", "Fabio", "Helena"]
+    ana, diana, fabio, _ = (ln.celulas for ln in linhas)
+    assert (ana[0].sub, ana[1].valor) == ("Logística", "Motorista")
+    assert ana[2].valor == Valor(valor=D(3000), unidade="brl", compacto=False)
+    assert ana[2].sub == "+ R$ 450 de ajuda de custo"
+    assert (ana[3].valor.valor, ana[3].negrito, ana[3].sub) == (  # type: ignore[union-attr]
+        D(4500),
+        True,
+        "com encargos",
+    )
+    assert (diana[0].sub, diana[1].valor) == ("Comercial", "Vendedor")
+    # o setor de F está escrito "LOGISTICA" em setembro: o rótulo é o do painel
+    assert fabio[0].sub == "Logística"
+
+
+def test_nomes_no_mes_da_tela(leitura: dict[str, Any], monkeypatch: pytest.MonkeyPatch) -> None:
+    pedidos: list[date] = []
+
+    def consulta_nomes(ctx: Any, tabelas: Any, ate: date) -> tuple[str, dict[str, Any]]:
+        pedidos.append(ate)
+        return "nomes", {}
+
+    monkeypatch.setattr(pessoas, "consulta_folha", lambda ctx, t: ("folha", {}))
+    monkeypatch.setattr(pessoas, "consulta_nomes", consulta_nomes)
+    monkeypatch.setattr(
+        pessoas,
+        "em_uma_ida",
+        lambda conn, c: {
+            "folha": _linhas(),
+            "nomes": [{"pessoa": "C", "nomes": ["CARLA"]}, {"pessoa": "D", "nomes": ["DIANA"]}],
+        },
+    )
+    tabela = pessoas.nomes_cargos(_ctx(), None, CARGA)
+    # sem mês escolhido, o da carga (outubro, sem folha): as pessoas de setembro
+    assert pedidos[0] == date(2026, 11, 1)
+    assert tabela.subtitulo == "Uma linha por pessoa, do maior salário para o menor."
+    assert [ln.celulas[0].valor for ln in tabela.linhas] == ["Diana"]
+    # em março, C ainda estava na folha
+    tabela = pessoas.nomes_cargos(_ctx(), date(2026, 3, 1), CARGA)
+    assert pedidos[1] == date(2026, 4, 1)
+    assert [ln.celulas[0].valor for ln in tabela.linhas] == ["Carla", "Diana"]
+    # antes da folha: nada
+    assert pessoas.nomes_cargos(_ctx(), date(2025, 1, 1), CARGA).linhas == []
+
+
+def test_nomes_sem_folha_ou_sem_carga_vem_vazio(leitura: dict[str, Any]) -> None:
+    assert pessoas.nomes_cargos(_ctx(), None, None).linhas == []
+    leitura["tabelas"] = []
+    tabela = pessoas.nomes_cargos(_ctx(), None, CARGA)
+    assert (tabela.linhas, tabela.vazio) == ([], "Nenhuma pessoa com esses filtros.")

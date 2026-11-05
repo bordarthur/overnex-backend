@@ -1010,7 +1010,8 @@ def _status_idade(i: int, valor: Decimal) -> Status | None:
 
 
 def _idade(carteira: Carteira) -> list[FaixaIdade]:
-    """5 faixas; a vencer inclui o que está em compensação (D+2)."""
+    """5 faixas; a vencer inclui o que está em compensação (D+2) e fica só na barra (sem
+    quadro), como na inadimplência da Visão geral."""
     faixas = list(
         zip(
             ("A vencer", "1 a 30 dias", "31 a 60", "61 a 90", "Mais de 90"),
@@ -1025,6 +1026,7 @@ def _idade(carteira: Carteira) -> list[FaixaIdade]:
             valor=brl(valor),
             participacao=q(valor / total * CEM, 1) if total else ZERO,
             status=_status_idade(i, valor),
+            so_na_barra=True if i == 0 else None,
         )
         for i, (rotulo, valor) in enumerate(faixas)
     ]
@@ -1102,6 +1104,7 @@ def cartao_dois_lados(c: Calculo) -> CartaoDoisLados | None:
                 total=f"em aberto: {moeda(cart.total)}",
                 kpis=kpis_r,
                 idade=_idade(cart),
+                rotulo_participacao="da carteira",
                 maiores=_maiores(c.leitura.clientes, cart.total, "Cliente"),
             )
         )
@@ -1136,6 +1139,7 @@ def cartao_dois_lados(c: Calculo) -> CartaoDoisLados | None:
                 ),
                 kpis=kpis_p,
                 idade=_idade(cart),
+                rotulo_participacao="do total",
                 maiores=_maiores(c.leitura.fornecedores, cart.total, "Fornecedor"),
             )
         )

@@ -95,6 +95,8 @@ class ItemCarteira(ModeloCamel):
     valor: Valor
     percentual: Numero
     status: Status
+    # a faixa fica só na barra, com o rótulo dentro, sem quadro embaixo (o a vencer)
+    so_na_barra: bool | None = None
 
 
 class SerieInadimplencia(ModeloCamel):
@@ -125,18 +127,21 @@ class ValorRotulado(ModeloCamel):
 
 
 class ModoProximosDias(ModeloCamel):
-    """Um modo do seletor do cartão ("Só o lançado", "Com o que falta lançar")."""
+    """Um modo do seletor do cartão ("Só o lançado", "Com a projeção")."""
 
     id: str
     rotulo: str
     # true: completa o a pagar com o que falta lançar
     com_falta: bool
+    # true: completa o a receber com as vendas novas
+    com_novas: bool | None = None
     status: Status | None
 
 
 class LegendaProximosDias(ModeloCamel):
     saldo: str | None
     receber: str
+    novas: str | None = None
     pagar: str
     falta: str
 
@@ -163,6 +168,8 @@ class JanelaProximosDias(ModeloCamel):
     pagar: Valor
     # o que falta lançar para chegar à média paga, proporcional aos dias
     falta: Valor
+    # vendas novas para chegar à média recebida, proporcional aos dias
+    novas: Valor | None = None
     # onde o caixa termina em cada modo, pelo id do modo
     fim: dict[str, FimJanela]
 
@@ -195,8 +202,26 @@ class ProximosLancado(ModeloCamel):
     falta: ValorRotulado
 
 
+class GrupoPagar(ModeloCamel):
+    """Um grupo de pagamento: o que foi pago por mês e o que está lançado para os próximos
+    dias."""
+
+    nome: str
+    # None: grupo sem farol (capex oscila muito para tratar o que falta como falta)
+    status: Status | None
+    percentual: Valor
+    # ao lado do percentual: "lançado; falta R$ 1,04 mi"
+    texto: str
+    pagos: list[PagoNoMes]
+    media: ValorRotulado
+    proximos: ProximosLancado
+    # embaixo do gráfico do grupo
+    nota: str | None
+
+
 class CartaoPagarLancado(ModeloCamel):
-    """O que já está lançado a pagar nos próximos dias, contra o que a empresa pagou por mês."""
+    """O que já está lançado a pagar nos próximos dias, contra o que a empresa pagou por mês,
+    por grupo."""
 
     tipo: Literal["pagar-lancado"]
     titulo: str
@@ -206,14 +231,58 @@ class CartaoPagarLancado(ModeloCamel):
     percentual: Valor
     # o texto ao lado do número grande
     texto: str
+    # embaixo do texto: quanto falta e em quais grupos
     nota: str
-    pagos: list[PagoNoMes]
-    media: ValorRotulado
-    proximos: ProximosLancado
+    # acima dos grupos ("Por grupo de pagamento")
+    rotulo_grupos: str
+    grupos: list[GrupoPagar]
+
+
+class ReguaCobertura(ModeloCamel):
+    """Um quadrado por dia: os cobertos preenchidos e, até a referência, contornados."""
+
+    total: int
+    cobertos: int
+    referencia: int
+    rotulo_cobertos: str
+    rotulo_referencia: str
+    # datas nas pontas ("12/10", "11/11")
+    inicio: str
+    fim: str
+
+
+class MediaRotulada(ModeloCamel):
+    valor: Numero
+    rotulo: str
+
+
+class SerieCobertura(ModeloCamel):
+    titulo: str
+    # o último é o de hoje
+    rotulos: list[str]
+    valores: list[Numero]
+    media: MediaRotulada
+
+
+class CartaoCobertura(ModeloCamel):
+    """Quantos dias o saldo de hoje paga, se nada entrar: a régua de dias e os últimos
+    meses."""
+
+    tipo: Literal["cobertura"]
+    titulo: str
+    subtitulo: str
+    explicacao: str | None = None
+    status: Status
+    dias: Valor
+    texto: list[Trecho]
+    nota: str
+    regua: ReguaCobertura
+    serie: SerieCobertura
 
 
 CartaoSecao = Annotated[
-    CartaoInadimplencia | CartaoProximosDias | CartaoPagarLancado, Field(discriminator="tipo")
+    CartaoInadimplencia | CartaoProximosDias | CartaoPagarLancado | CartaoCobertura,
+    Field(discriminator="tipo"),
 ]
 
 

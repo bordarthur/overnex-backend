@@ -1,0 +1,454 @@
+{
+  "subtitulo": "Uma linha por pessoa, do maior salário para o menor. Dado nominal: só para o perfil de RH.",
+  "colunas": [
+    {
+      "rotulo": "Pessoa"
+    },
+    {
+      "rotulo": "Cargo",
+      "alinhar": "esquerda",
+      "ocultarNoCelular": true
+    },
+    {
+      "rotulo": "Salário"
+    },
+    {
+      "rotulo": "Custo mensal"
+    }
+  ],
+  "linhas": [
+    {
+      "celulas": [
+        {
+          "valor": "Renato Albuquerque",
+          "sub": "Logística"
+        },
+        {
+          "valor": "Gerente operacional"
+        },
+        {
+          "valor": {
+            "valor": 24000,
+            "unidade": "brl",
+            "compacto": false
+          },
+          "sub": "sem ajuda de custo"
+        },
+        {
+          "valor": {
+            "valor": 33120,
+            "unidade": "brl"
+          },
+          "negrito": true,
+          "sub": "com encargos"
+        }
+      ]
+    },
+    {
+      "celulas": [
+        {
+          "valor": "Tiago Ferraz",
+          "sub": "Logística"
+        },
+        {
+          "valor": "Coordenador de logística"
+        },
+        {
+          "valor": {
+            "valor": 9800,
+            "unidade": "brl",
+            "compacto": false
+          },
+          "sub": "sem ajuda de custo"
+        },
+        {
+          "valor": {
+            "valor": 13524,
+            "unidade": "brl"
+          },
+          "negrito": true,
+          "sub": "com encargos"
+        }
+      ]
+    },
+    {
+      "celulas": [
+        {
+          "valor": "Sílvia Moreira",
+          "sub": "Administrativo"
+        },
+        {
+          "valor": "Gerente administrativo e financeiro"
+        },
+        {
+          "valor": {
+            "valor": 9247,
+            "unidade": "brl",
+            "compacto": false
+          },
+          "sub": "sem ajuda de custo"
+        },
+        {
+          "valor": {
+            "valor": 12761,
+            "unidade": "brl"
+          },
+          "negrito": true,
+          "sub": "com encargos"
+        }
+      ]
+    },
+    {
+      "celulas": [
+        {
+          "valor": "Juliana Prado",
+          "sub": "Logística"
+        },
+        {
+          "valor": "Coordenador de logística"
+        },
+        {
+          "valor": {
+            "valor": 9200,
+            "unidade": "brl",
+            "compacto": false
+          },
+          "sub": "sem ajuda de custo"
+        },
+        {
+          "valor": {
+            "valor": 12696,
+            "unidade": "brl"
+          },
+          "negrito": true,
+          "sub": "com encargos"
+        }
+      ]
+    },
+    {
+      "celulas": [
+        {
+          "valor": "Marcelo Antunes",
+          "sub": "Comercial"
+        },
+        {
+          "valor": "Supervisor de vendas"
+        },
+        {
+          "valor": {
+            "valor": 8700,
+            "unidade": "brl",
+            "compacto": false
+          },
+          "sub": "+ R$ 600 de ajuda de custo"
+        },
+        {
+          "valor": {
+            "valor": 12834,
+            "unidade": "brl"
+          },
+          "negrito": true,
+          "sub": "com encargos"
+        }
+      ]
+    },
+    {
+      "celulas": [
+        {
+          "valor": "Patrícia Nunes",
+          "sub": "Comercial"
+        },
+        {
+          "valor": "Supervisor de vendas"
+        },
+        {
+          "valor": {
+            "valor": 8300,
+            "unidade": "brl",
+            "compacto": false
+          },
+          "sub": "+ R$ 600 de ajuda de custo"
+        },
+        {
+          "valor": {
+            "valor": 12282,
+            "unidade": "brl"
+          },
+          "negrito": true,
+          "sub": "com encargos"
+        }
+      ]
+    },
+    {
+      "celulas": [
+        {
+          "valor": "Beatriz Campos",
+          "sub": "Financeiro"
+        },
+        {
+          "valor": "Analista financeiro"
+        },
+        {
+          "valor": {
+            "valor": 4900,
+            "unidade": "brl",
+            "compacto": false
+          },
+          "sub": "sem ajuda de custo"
+        },
+        {
+          "valor": {
+            "valor": 6762,
+            "unidade": "brl"
+          },
+          "negrito": true,
+          "sub": "com encargos"
+        }
+      ]
+    },
+    {
+      "celulas": [
+        {
+          "valor": "Eduardo Ribeiro",
+          "sub": "Administrativo"
+        },
+        {
+          "valor": "Analista administrativo"
+        },
+        {
+          "valor": {
+            "valor": 4400,
+            "unidade": "brl",
+            "compacto": false
+          },
+          "sub": "sem ajuda de custo"
+        },
+        {
+          "valor": {
+            "valor": 6072,
+            "unidade": "brl"
+          },
+          "negrito": true,
+          "sub": "com encargos"
+        }
+      ]
+    },
+    {
+      "celulas": [
+        {
+          "valor": "Fernanda Rocha",
+          "sub": "Comercial"
+        },
+        {
+          "valor": "Vendedor externo"
+        },
+        {
+          "valor": {
+            "valor": 4100,
+            "unidade": "brl",
+            "compacto": false
+          },
+          "sub": "+ R$ 900 de ajuda de custo"
+        },
+        {
+          "valor": {
+            "valor": 6900,
+            "unidade": "brl"
+          },
+          "negrito": true,
+          "sub": "com encargos"
+        }
+      ]
+    },
+    {
+      "celulas": [
+        {
+          "valor": "Cláudio Mendes",
+          "sub": "Expedição"
+        },
+        {
+          "valor": "Líder de expedição"
+        },
+        {
+          "valor": {
+            "valor": 3900,
+            "unidade": "brl",
+            "compacto": false
+          },
+          "sub": "+ R$ 150 de ajuda de custo"
+        },
+        {
+          "valor": {
+            "valor": 5589,
+            "unidade": "brl"
+          },
+          "negrito": true,
+          "sub": "com encargos"
+        }
+      ]
+    },
+    {
+      "celulas": [
+        {
+          "valor": "Gustavo Pires",
+          "sub": "Comercial"
+        },
+        {
+          "valor": "Vendedor externo"
+        },
+        {
+          "valor": {
+            "valor": 3700,
+            "unidade": "brl",
+            "compacto": false
+          },
+          "sub": "+ R$ 900 de ajuda de custo"
+        },
+        {
+          "valor": {
+            "valor": 6348,
+            "unidade": "brl"
+          },
+          "negrito": true,
+          "sub": "com encargos"
+        }
+      ]
+    },
+    {
+      "celulas": [
+        {
+          "valor": "Ana Souza",
+          "sub": "Logística"
+        },
+        {
+          "valor": "Motorista entregador"
+        },
+        {
+          "valor": {
+            "valor": 3300,
+            "unidade": "brl",
+            "compacto": false
+          },
+          "sub": "+ R$ 450 de ajuda de custo"
+        },
+        {
+          "valor": {
+            "valor": 5175,
+            "unidade": "brl"
+          },
+          "negrito": true,
+          "sub": "com encargos"
+        }
+      ]
+    },
+    {
+      "celulas": [
+        {
+          "valor": "Bruno Lima",
+          "sub": "Logística"
+        },
+        {
+          "valor": "Motorista entregador"
+        },
+        {
+          "valor": {
+            "valor": 3100,
+            "unidade": "brl",
+            "compacto": false
+          },
+          "sub": "+ R$ 450 de ajuda de custo"
+        },
+        {
+          "valor": {
+            "valor": 4899,
+            "unidade": "brl"
+          },
+          "negrito": true,
+          "sub": "com encargos"
+        }
+      ]
+    },
+    {
+      "celulas": [
+        {
+          "valor": "Larissa Teixeira",
+          "sub": "Comercial"
+        },
+        {
+          "valor": "Televendas"
+        },
+        {
+          "valor": {
+            "valor": 2600,
+            "unidade": "brl",
+            "compacto": false
+          },
+          "sub": "+ R$ 200 de ajuda de custo"
+        },
+        {
+          "valor": {
+            "valor": 3864,
+            "unidade": "brl"
+          },
+          "negrito": true,
+          "sub": "com encargos"
+        }
+      ]
+    },
+    {
+      "celulas": [
+        {
+          "valor": "Rafael Dias",
+          "sub": "Expedição"
+        },
+        {
+          "valor": "Conferente"
+        },
+        {
+          "valor": {
+            "valor": 2400,
+            "unidade": "brl",
+            "compacto": false
+          },
+          "sub": "+ R$ 150 de ajuda de custo"
+        },
+        {
+          "valor": {
+            "valor": 3519,
+            "unidade": "brl"
+          },
+          "negrito": true,
+          "sub": "com encargos"
+        }
+      ]
+    },
+    {
+      "celulas": [
+        {
+          "valor": "Diego Martins",
+          "sub": "Logística"
+        },
+        {
+          "valor": "Ajudante de entrega"
+        },
+        {
+          "valor": {
+            "valor": 1900,
+            "unidade": "brl",
+            "compacto": false
+          },
+          "sub": "+ R$ 300 de ajuda de custo"
+        },
+        {
+          "valor": {
+            "valor": 3036,
+            "unidade": "brl"
+          },
+          "negrito": true,
+          "sub": "com encargos"
+        }
+      ]
+    }
+  ],
+  "vazio": "Nenhuma pessoa com esses filtros."
+}

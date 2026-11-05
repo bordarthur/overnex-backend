@@ -1184,15 +1184,23 @@
       "id": "financeiro",
       "titulo": "Financeiro",
       "modulo": null,
-      "resumo": "Com o que falta lançar, sai mais do que entra nos próximos 30 dias.",
+      "resumo": "Faltam lançar R$ 2,65 mi de contas a pagar; com a projeção, o caixa de 30 dias fecha em R$ 1,21 mi.",
       "kpis": [
         {
-          "rotulo": "A receber a vencer",
+          "rotulo": "Saldo em conta hoje",
           "valor": {
-            "valor": 6600000,
+            "valor": 1420000,
             "unidade": "brl"
           },
-          "contexto": "carteira de R$ 7,13 mi"
+          "contexto": "todas as contas"
+        },
+        {
+          "rotulo": "A receber, 30 dias",
+          "valor": {
+            "valor": 5260000,
+            "unidade": "brl"
+          },
+          "contexto": "a vencer no total: R$ 6,60 mi; carteira: R$ 7,13 mi"
         },
         {
           "rotulo": "A pagar, 30 dias",
@@ -1216,31 +1224,40 @@
         {
           "tipo": "proximos-dias",
           "titulo": "Próximos 7, 15 e 30 dias",
-          "subtitulo": "O que vence a receber, menos o que vence a pagar: quanto sobra ou falta em cada janela",
-          "explicacao": "Cada linha mostra o que vence a receber na janela. Embaixo, o que vence a pagar volta do fim dessa barra. O traço marca quanto sobra ou falta. O saldo em conta ainda não entra: o sistema não tem essa fonte.",
-          "nota": "Só o lançado considera as contas a pagar que já estão no sistema; com o que falta lançar completa cada janela até a média paga por mês (R$ 6,31 mi, proporcional aos dias), porque essas contas também vão vencer.",
+          "subtitulo": "O saldo de hoje, mais o que entra, menos o que sai: onde o caixa termina em cada janela",
+          "explicacao": "Cada linha começa no saldo de hoje e soma o que vence a receber na janela. Embaixo, o que vence a pagar volta do fim dessa barra. O traço marca onde o caixa termina; a linha tracejada é o caixa mínimo. Na projeção, o hachurado claro são vendas novas, pela média recebida, e o escuro, contas ainda não lançadas, pela média paga.",
+          "nota": "Só o lançado usa o que já está no sistema; com a projeção, cada janela completa o a receber até a média recebida (R$ 6,10 mi por mês) e o a pagar até a média paga (R$ 6,31 mi por mês), proporcionais aos dias, porque vendas novas e contas ainda não lançadas também passam pelo caixa.",
           "modos": [
             {
               "id": "lancado",
               "rotulo": "Só o lançado",
               "comFalta": false,
+              "comNovas": false,
               "status": "saudavel"
             },
             {
-              "id": "com-falta",
-              "rotulo": "Com o que falta lançar",
+              "id": "projecao",
+              "rotulo": "Com a projeção",
               "comFalta": true,
-              "status": "atencao"
+              "comNovas": true,
+              "status": "saudavel"
             }
           ],
           "legenda": {
-            "saldo": null,
+            "saldo": "Saldo hoje",
             "receber": "A receber",
+            "novas": "Vendas novas, pela média recebida",
             "pagar": "A pagar",
-            "falta": "Falta lançar, pela média paga"
+            "falta": "Contas a lançar, pela média paga"
           },
-          "saldo": null,
-          "minimo": null,
+          "saldo": {
+            "valor": 1420000,
+            "unidade": "brl"
+          },
+          "minimo": {
+            "valor": 500000,
+            "rotulo": "caixa mínimo R$ 500 mil"
+          },
           "janelas": [
             {
               "titulo": "7 dias",
@@ -1257,22 +1274,26 @@
                 "valor": 942000,
                 "unidade": "brl"
               },
+              "novas": {
+                "valor": 193000,
+                "unidade": "brl"
+              },
               "fim": {
                 "lancado": {
                   "valor": {
-                    "valor": 700000,
+                    "valor": 2120000,
                     "unidade": "brl"
                   },
                   "status": "saudavel",
-                  "texto": "entra mais do que sai"
+                  "texto": "caixa no fim"
                 },
-                "com-falta": {
+                "projecao": {
                   "valor": {
-                    "valor": -242000,
+                    "valor": 1371000,
                     "unidade": "brl"
                   },
-                  "status": "atencao",
-                  "texto": "sai mais do que entra"
+                  "status": "saudavel",
+                  "texto": "caixa no fim"
                 }
               }
             },
@@ -1291,22 +1312,26 @@
                 "valor": 2145000,
                 "unidade": "brl"
               },
+              "novas": {
+                "valor": 370000,
+                "unidade": "brl"
+              },
               "fim": {
                 "lancado": {
                   "valor": {
-                    "valor": 1670000,
+                    "valor": 3090000,
                     "unidade": "brl"
                   },
                   "status": "saudavel",
-                  "texto": "entra mais do que sai"
+                  "texto": "caixa no fim"
                 },
-                "com-falta": {
+                "projecao": {
                   "valor": {
-                    "valor": -475000,
+                    "valor": 1315000,
                     "unidade": "brl"
                   },
-                  "status": "atencao",
-                  "texto": "sai mais do que entra"
+                  "status": "saudavel",
+                  "texto": "caixa no fim"
                 }
               }
             },
@@ -1325,22 +1350,26 @@
                 "valor": 2650000,
                 "unidade": "brl"
               },
+              "novas": {
+                "valor": 840000,
+                "unidade": "brl"
+              },
               "fim": {
                 "lancado": {
                   "valor": {
-                    "valor": 1600000,
+                    "valor": 3020000,
                     "unidade": "brl"
                   },
                   "status": "saudavel",
-                  "texto": "entra mais do que sai"
+                  "texto": "caixa no fim"
                 },
-                "com-falta": {
+                "projecao": {
                   "valor": {
-                    "valor": -1050000,
+                    "valor": 1210000,
                     "unidade": "brl"
                   },
-                  "status": "atencao",
-                  "texto": "sai mais do que entra"
+                  "status": "saudavel",
+                  "texto": "caixa no fim"
                 }
               }
             }
@@ -1350,7 +1379,7 @@
           "tipo": "pagar-lancado",
           "titulo": "Contas a pagar lançadas",
           "subtitulo": "O que já está lançado para os próximos 30 dias, contra o que a empresa paga por mês",
-          "explicacao": "As barras cinza são o que a empresa pagou em cada mês. A barra da direita é o que já está lançado para vencer nos próximos 30 dias; o hachurado é o que ainda falta para chegar à média paga.",
+          "explicacao": "Em cada grupo (fornecedores, custos fixos, despesas e impostos, dívida e capex), as barras cinza são o que a empresa pagou por mês. A barra da direita é o que já está lançado para vencer nos próximos 30 dias; o hachurado é o que falta para chegar à média do grupo. Capex oscila muito: confira se há investimento previsto antes de tratar como falta.",
           "status": "atencao",
           "percentual": {
             "valor": 58,
@@ -1358,73 +1387,379 @@
             "casas": 0
           },
           "texto": "da média paga por mês já está lançada para os próximos 30 dias.",
-          "nota": "De abril a setembro, a empresa pagou em média R$ 6,31 mi por mês.",
-          "pagos": [
+          "nota": "Faltam R$ 2,65 mi: R$ 1,35 mi em custos fixos, despesas e impostos, R$ 1,04 mi em fornecedores, R$ 240 mil em capex e R$ 20 mil em dívida.",
+          "rotuloGrupos": "Por grupo de pagamento",
+          "grupos": [
             {
-              "rotulo": "abr-26",
-              "valor": {
-                "valor": 6120000,
-                "unidade": "brl"
-              }
+              "nome": "Fornecedores",
+              "status": "atencao",
+              "percentual": {
+                "valor": 73,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "texto": "lançado; falta R$ 1,04 mi",
+              "pagos": [
+                {
+                  "rotulo": "abr",
+                  "valor": {
+                    "valor": 3860000,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "mai",
+                  "valor": {
+                    "valor": 3700000,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "jun",
+                  "valor": {
+                    "valor": 4120000,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "jul",
+                  "valor": {
+                    "valor": 3860000,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "ago",
+                  "valor": {
+                    "valor": 4070000,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "set",
+                  "valor": {
+                    "valor": 3790000,
+                    "unidade": "brl"
+                  }
+                }
+              ],
+              "media": {
+                "valor": {
+                  "valor": 3900000,
+                  "unidade": "brl"
+                },
+                "rotulo": "média R$ 3,90 mi"
+              },
+              "proximos": {
+                "rotulo": "30 dias",
+                "lancado": {
+                  "valor": {
+                    "valor": 2860000,
+                    "unidade": "brl"
+                  },
+                  "rotulo": "lançado"
+                },
+                "falta": {
+                  "valor": {
+                    "valor": 1040000,
+                    "unidade": "brl"
+                  },
+                  "rotulo": "falta"
+                }
+              },
+              "nota": null
             },
             {
-              "rotulo": "mai-26",
-              "valor": {
-                "valor": 6280000,
-                "unidade": "brl"
-              }
+              "nome": "Custos fixos, despesas e impostos",
+              "status": "critico",
+              "percentual": {
+                "valor": 31,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "texto": "lançado; falta R$ 1,35 mi",
+              "pagos": [
+                {
+                  "rotulo": "abr",
+                  "valor": {
+                    "valor": 1970000,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "mai",
+                  "valor": {
+                    "valor": 1770000,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "jun",
+                  "valor": {
+                    "valor": 1930000,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "jul",
+                  "valor": {
+                    "valor": 1990000,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "ago",
+                  "valor": {
+                    "valor": 2010000,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "set",
+                  "valor": {
+                    "valor": 2090000,
+                    "unidade": "brl"
+                  }
+                }
+              ],
+              "media": {
+                "valor": {
+                  "valor": 1960000,
+                  "unidade": "brl"
+                },
+                "rotulo": "média R$ 1,96 mi"
+              },
+              "proximos": {
+                "rotulo": "30 dias",
+                "lancado": {
+                  "valor": {
+                    "valor": 610000,
+                    "unidade": "brl"
+                  },
+                  "rotulo": "lançado"
+                },
+                "falta": {
+                  "valor": {
+                    "valor": 1350000,
+                    "unidade": "brl"
+                  },
+                  "rotulo": "falta"
+                }
+              },
+              "nota": null
             },
             {
-              "rotulo": "jun-26",
-              "valor": {
-                "valor": 6410000,
-                "unidade": "brl"
-              }
+              "nome": "Dívida",
+              "status": "saudavel",
+              "percentual": {
+                "valor": 90,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "texto": "lançado; falta R$ 20 mil",
+              "pagos": [
+                {
+                  "rotulo": "abr",
+                  "valor": {
+                    "valor": 190000,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "mai",
+                  "valor": {
+                    "valor": 190000,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "jun",
+                  "valor": {
+                    "valor": 310000,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "jul",
+                  "valor": {
+                    "valor": 190000,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "ago",
+                  "valor": {
+                    "valor": 190000,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "set",
+                  "valor": {
+                    "valor": 190000,
+                    "unidade": "brl"
+                  }
+                }
+              ],
+              "media": {
+                "valor": {
+                  "valor": 210000,
+                  "unidade": "brl"
+                },
+                "rotulo": "média R$ 210 mil"
+              },
+              "proximos": {
+                "rotulo": "30 dias",
+                "lancado": {
+                  "valor": {
+                    "valor": 190000,
+                    "unidade": "brl"
+                  },
+                  "rotulo": "lançado"
+                },
+                "falta": {
+                  "valor": {
+                    "valor": 20000,
+                    "unidade": "brl"
+                  },
+                  "rotulo": "falta"
+                }
+              },
+              "nota": null
             },
             {
-              "rotulo": "jul-26",
-              "valor": {
-                "valor": 6220000,
-                "unidade": "brl"
-              }
+              "nome": "Capex",
+              "status": null,
+              "percentual": {
+                "valor": 0,
+                "unidade": "pct",
+                "casas": 0
+              },
+              "texto": "lançado; falta R$ 240 mil",
+              "pagos": [
+                {
+                  "rotulo": "abr",
+                  "valor": {
+                    "valor": 100000,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "mai",
+                  "valor": {
+                    "valor": 620000,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "jun",
+                  "valor": {
+                    "valor": 50000,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "jul",
+                  "valor": {
+                    "valor": 180000,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "ago",
+                  "valor": {
+                    "valor": 80000,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "set",
+                  "valor": {
+                    "valor": 410000,
+                    "unidade": "brl"
+                  }
+                }
+              ],
+              "media": {
+                "valor": {
+                  "valor": 240000,
+                  "unidade": "brl"
+                },
+                "rotulo": "média R$ 240 mil"
+              },
+              "proximos": {
+                "rotulo": "30 dias",
+                "lancado": {
+                  "valor": {
+                    "valor": 0,
+                    "unidade": "brl"
+                  },
+                  "rotulo": "lançado"
+                },
+                "falta": {
+                  "valor": {
+                    "valor": 240000,
+                    "unidade": "brl"
+                  },
+                  "rotulo": "falta"
+                }
+              },
+              "nota": "Oscila de R$ 50 mil a R$ 620 mil por mês. Confira se há investimento previsto antes de tratar como falta."
+            }
+          ]
+        },
+        {
+          "tipo": "cobertura",
+          "titulo": "Cobertura de caixa",
+          "subtitulo": "Quantos dias o saldo de hoje paga, se nada entrar",
+          "explicacao": "Cada quadrado é um dia. Os preenchidos são os dias que o saldo de hoje paga, pela média do que a empresa paga por dia, se nada entrar. Os contornados vão até a média de 12 meses.",
+          "status": "critico",
+          "dias": {
+            "valor": 7,
+            "unidade": "dias"
+          },
+          "texto": [
+            {
+              "texto": "Sem nada entrar, o saldo acaba em "
             },
             {
-              "rotulo": "ago-26",
-              "valor": {
-                "valor": 6350000,
-                "unidade": "brl"
-              }
+              "texto": "19/10",
+              "destaque": true
             },
             {
-              "rotulo": "set-26",
-              "valor": {
-                "valor": 6480000,
-                "unidade": "brl"
-              }
+              "texto": "."
             }
           ],
-          "media": {
-            "valor": {
-              "valor": 6310000,
-              "unidade": "brl"
-            },
-            "rotulo": "média paga R$ 6,31 mi"
+          "nota": "Eram 8 dias em setembro. A média de 12 meses é 12.",
+          "regua": {
+            "total": 30,
+            "cobertos": 7,
+            "referencia": 12,
+            "rotuloCobertos": "hoje: 7 dias",
+            "rotuloReferencia": "média: 12",
+            "inicio": "12/10",
+            "fim": "11/11"
           },
-          "proximos": {
-            "rotulo": "próximos 30 dias",
-            "lancado": {
-              "valor": {
-                "valor": 3660000,
-                "unidade": "brl"
-              },
-              "rotulo": "lançado"
-            },
-            "falta": {
-              "valor": {
-                "valor": 2650000,
-                "unidade": "brl"
-              },
-              "rotulo": "falta"
+          "serie": {
+            "titulo": "Últimos 12 meses, em dias de cobertura",
+            "rotulos": [
+              "nov-25",
+              "dez-25",
+              "jan-26",
+              "fev-26",
+              "mar-26",
+              "abr-26",
+              "mai-26",
+              "jun-26",
+              "jul-26",
+              "ago-26",
+              "set-26",
+              "hoje"
+            ],
+            "valores": [14, 13, 13, 12, 12, 13, 12, 11, 10, 9, 8, 7],
+            "media": {
+              "valor": 12,
+              "rotulo": "média 12"
             }
           }
         },
@@ -1466,7 +1801,8 @@
                 "unidade": "brl"
               },
               "percentual": 92.6,
-              "status": "saudavel"
+              "status": "saudavel",
+              "soNaBarra": true
             },
             {
               "rotulo": "1 a 30 dias",

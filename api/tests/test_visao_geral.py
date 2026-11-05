@@ -660,30 +660,97 @@ def test_financeiro_com_proximos_dias_e_pagar_lancado(client: TestClient) -> Non
     assert [c["tipo"] for c in financeiro["cartoes"]] == ["proximos-dias", "pagar-lancado"]
 
     proximos, lancado = financeiro["cartoes"]
-    assert [m["id"] for m in proximos["modos"]] == ["lancado", "com-falta"]
+    assert [m["id"] for m in proximos["modos"]] == ["lancado", "projecao"]
     sete, quinze, trinta = proximos["janelas"]
     assert [j["ate"] for j in proximos["janelas"]] == ["até 18/10", "até 26/10", "até 10/11"]
     # 7 dias: nada a pagar; falta 600 × 7/30 = 140
     assert (sete["receber"]["valor"], sete["pagar"]["valor"]) == (1000, 0)
     assert sete["falta"]["valor"] == 140
-    assert sete["fim"]["com-falta"]["valor"]["valor"] == 860
+    assert sete["fim"]["projecao"]["valor"]["valor"] == 860
+    # nada recebido nos meses fechados: sem vendas novas
+    assert sete["novas"]["valor"] == 0
     # 15 dias: 300 lançados = 600 × 15/30, nada falta
     assert (quinze["pagar"]["valor"], quinze["falta"]["valor"]) == (300, 0)
     assert quinze["fim"]["lancado"]["valor"]["valor"] == 700
     # 30 dias: falta 600 − 300
     assert (trinta["receber"]["valor"], trinta["falta"]["valor"]) == (3000, 300)
-    assert trinta["fim"]["com-falta"]["valor"]["valor"] == 2400
+    assert trinta["fim"]["projecao"]["valor"]["valor"] == 2400
     assert [m["status"] for m in proximos["modos"]] == ["saudavel", "saudavel"]
 
     # 300 de 600: 50%, o limite de atenção
     assert lancado["percentual"]["valor"] == 50
     assert lancado["status"] == "atencao"
-    assert lancado["nota"] == "Em setembro, a empresa pagou R$ 600."
-    assert [p["rotulo"] for p in lancado["pagos"]] == ["set-26"]
-    assert lancado["proximos"]["falta"]["valor"]["valor"] == 300
+    assert lancado["nota"] == (
+        "Faltam R$ 300 para chegar à média paga por mês (R$ 600, em setembro)."
+    )
+    (grupo,) = lancado["grupos"]
+    assert [p["rotulo"] for p in grupo["pagos"]] == ["set"]
+    assert grupo["proximos"]["falta"]["valor"]["valor"] == 300
+    assert financeiro["resumo"] == (
+        "Faltam lançar R$ 300 de contas a pagar; com a projeção, entram R$ 2 mil a mais do "
+        "que saem nos próximos 30 dias."
+    )
     # o KPI usa a mesma conta
     kpis = {k["rotulo"]: k for k in financeiro["kpis"]}
     assert kpis["A pagar, 30 dias"]["contexto"] == "só o que está lançado: 50% da média paga"
+
+
+@pytest.fixture
+def grupos_do_bruno(
+    titulos_do_bruno: None, admin_conn: psycopg.Connection[tuple[Any, ...]]
+) -> Iterator[None]:
+    # de-para com grupo de pagamento: compra de mercadoria em fornecedores, imobilizado em
+    # capex e retirada de sócios fora dos grupos
+    admin_conn.execute(
+        """
+        insert into cfg.conta_dre (cliente_id, conta, id_descritivo, descricao, grupo_pagamento)
+        values (%(c)s, '100001', '120.01.01', 'Compra de mercadoria', 'fornecedores'),
+               (%(c)s, '4043', '420.02.07', 'Imobilizado', 'capex'),
+               (%(c)s, '900004', '210.01.01', 'Retirada de sócio', null)
+        """,
+        {"c": CLIENTE_B},
+    )
+    # os 300 a vencer e os 600 pagos de titulos_do_bruno são compra de mercadoria
+    admin_conn.execute(
+        "update mart.f_despesas_pj set en_codigoplanocliente = '100001' where _cliente_id = %s",
+        (CLIENTE_B,),
+    )
+    # capex: 200 pagos em setembro e 50 a vencer em 25/10; retirada: 1.000 pagos em setembro
+    admin_conn.execute(
+        """
+        insert into mart.f_despesas_pj
+            (_linha, _cliente_id, "en_datemi", "en_datven", "en_datpag", "en_valor",
+             "en_codigoplanocliente")
+        values (3, %(c)s, '2026-09-01', '2026-09-15', '2026-09-15', 200, '4043'),
+               (4, %(c)s, '2026-10-01', '2026-10-25', null, 50, '4043'),
+               (5, %(c)s, '2026-09-01', '2026-09-20', '2026-09-20', 1000, '900004')
+        """,
+        {"c": CLIENTE_B},
+    )
+    yield
+    admin_conn.execute("delete from cfg.conta_dre where cliente_id = %s", (CLIENTE_B,))
+
+
+@pytest.mark.usefixtures("grupos_do_bruno")
+def test_financeiro_pagar_lancado_por_grupo_de_pagamento(client: TestClient) -> None:
+    secoes = {s["id"]: s for s in client.get(VISAO_GERAL, headers=auth(OID_B)).json()["secoes"]}
+    lancado = next(c for c in secoes["financeiro"]["cartoes"] if c["tipo"] == "pagar-lancado")
+
+    assert lancado["rotuloGrupos"] == "Por grupo de pagamento"
+    # custos fixos e dívida sem nada pago: fora do cartão
+    assert [g["nome"] for g in lancado["grupos"]] == ["Fornecedores", "Capex"]
+    fornecedores, capex = lancado["grupos"]
+    assert (fornecedores["percentual"]["valor"], fornecedores["status"]) == (50, "atencao")
+    assert capex["status"] is None
+    assert capex["proximos"]["lancado"]["valor"]["valor"] == 50
+    # o topo é a soma dos grupos (a retirada fica fora): 350 lançados contra 800
+    assert lancado["percentual"]["valor"] == 43.75
+    assert lancado["status"] == "critico"
+    assert lancado["nota"] == "Faltam R$ 450: R$ 300 em fornecedores e R$ 150 em capex."
+    assert lancado["explicacao"].endswith(
+        "Ficam fora dos grupos R$ 1 mil pagos em setembro em contas sem grupo de pagamento no "
+        "cadastro."
+    )
 
 
 # --- Custos: seletor "Linhas de custo" e PUT da escolha ----------------------------------

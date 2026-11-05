@@ -211,7 +211,17 @@
         },
         {
           "rotulo": "Melhor e pior dia",
-          "valor": "R$ 341 · 287 mil",
+          "valor": "R$ 341 mil · R$ 287 mil",
+          "partes": [
+            {
+              "valor": 341000,
+              "unidade": "brl"
+            },
+            {
+              "valor": 287000,
+              "unidade": "brl"
+            }
+          ],
           "contexto": "02/10 e 05/10"
         },
         {

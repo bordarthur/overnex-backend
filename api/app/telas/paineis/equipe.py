@@ -379,7 +379,7 @@ def montar(
     if not com_vendedor or mes is None or panorama.ultimo_dia is None:
         return Conteudo(filtros=filtros)
     fechado = mes < carga.data_snapshot.replace(day=1)
-    mp = mes_painel(conn, ctx, mes, panorama.ultimo_dia, fechado)
+    mp = mes_painel(conn, ctx, mes, panorama.ultimo_dia, fechado, panorama.dias_venda)
     permitidos = None if escolhidos is None else set(escolhidos)
     equipe = sorted(
         v
