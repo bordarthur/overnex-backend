@@ -11,6 +11,7 @@ from typing import Any, Literal
 from uuid import UUID
 
 import httpx
+import jwt
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +41,8 @@ class SessaoGoTrue:
     expira_em: datetime
     id_autenticacao: UUID
     email: str | None
+    # claim session_id do access token (auth.sessions.id): a mesma em todas as renovações
+    sessao_id: UUID
 
 
 def _parece_jwt(chave: str) -> bool:
@@ -55,14 +58,18 @@ def _sessao(dados: dict[str, Any]) -> SessaoGoTrue:
         else:
             expira_em = datetime.now(UTC) + timedelta(seconds=int(dados["expires_in"]))
         usuario = dados["user"]
+        access_token = str(dados["access_token"])
+        # sem conferir a assinatura: o token acabou de chegar do próprio GoTrue, por HTTPS
+        claims = jwt.decode(access_token, options={"verify_signature": False})
         return SessaoGoTrue(
-            access_token=str(dados["access_token"]),
+            access_token=access_token,
             refresh_token=str(dados["refresh_token"]),
             expira_em=expira_em,
             id_autenticacao=UUID(str(usuario["id"])),
             email=usuario.get("email"),
+            sessao_id=UUID(str(claims["session_id"])),
         )
-    except (KeyError, TypeError, ValueError) as exc:
+    except (KeyError, TypeError, ValueError, jwt.InvalidTokenError) as exc:
         raise GoTrueIndisponivel("resposta de sessão inesperada do GoTrue") from exc
 
 

@@ -1,7 +1,10 @@
 """PES-01 — Pessoas. REGRAS PROVISÓRIAS: confirmar com o negócio (ver TODO.md).
 
 Painel restrito (dado de folha): o cadastro libera PES-01 só aos perfis de diretoria e RH.
-Não mostra nomes; eles nem saem do banco (a pessoa vira o md5 do nome).
+O painel não mostra nomes; eles nem saem do banco (a pessoa vira o md5 do nome). Os nomes
+só saem na tabela de uma linha por pessoa de "Cargos e salários" (`nomes_cargos`, rota
+GET /api/telas/pessoas/cartoes/cargos-salarios/nomes), para o perfil que vê dado nominal na
+PES-01 (o de RH); quem confere é a rota.
 
 Fontes do cliente, pelo prefixo da tabela (cfg.fonte_carga), com a coluna de cada papel
 (padrão abaixo, o da PJ Cortes, trocado por cfg.fonte_carga.colunas_modelo):
@@ -35,7 +38,7 @@ Regras:
   6 meses anteriores (mesmo farol).
 
 Fora, sem fonte ou sem regra (ver TODO.md): orçado da folha, entregas, toneladas expedidas,
-títulos processados, despesa administrativa sobre a receita e salário por nome.
+títulos processados e despesa administrativa sobre a receita.
 """
 
 from collections import Counter
@@ -95,6 +98,7 @@ from app.telas.paineis.contrato import (
     ReferenciaLinha,
     SerieEmpilhada,
     SerieLinha,
+    TabelaNomes,
     TendenciaLista,
     VariacaoNumero,
     VisaoGraficos,
@@ -204,13 +208,19 @@ CAMPOS_FOLHA: Mapping[str, tuple[str, Tipo]] = {
 }
 
 
+# a pessoa: md5 do nome sem acento, caixa e espaços a mais (o painel e a tabela de nomes)
+CHAVE_PESSOA = sql.SQL(
+    """md5(upper(translate(regexp_replace(pessoa, '\\s+', ' ', 'g'),
+                                   %(com_acento)s, %(sem_acento)s)))"""
+)
+
+
 def consulta_folha(ctx: ContextoConsolidado, tabelas: list[TabelaDoCliente]) -> Consulta:
     """Uma linha por mês e pessoa (o histórico inteiro: a saída depende dos meses depois)."""
     return sql.SQL(
         """
         select date_trunc('month', dia)::date as mes,
-               md5(upper(translate(regexp_replace(pessoa, '\\s+', ' ', 'g'),
-                                   %(com_acento)s, %(sem_acento)s))) as pessoa,
+               {chave} as pessoa,
                max(setor) as setor, max(cargo) as cargo,
                coalesce(sum(valor) filter (where upper(lancamento) = any(%(salario)s)), 0)
                    as salario,
@@ -221,13 +231,38 @@ def consulta_folha(ctx: ContextoConsolidado, tabelas: list[TabelaDoCliente]) -> 
          where dia is not null and pessoa is not null
          group by 1, 2
         """
-    ).format(folha=selecao(tabelas, CAMPOS_FOLHA, filtro_empresa(ctx))), parametros(
+    ).format(
+        chave=CHAVE_PESSOA, folha=selecao(tabelas, CAMPOS_FOLHA, filtro_empresa(ctx))
+    ), parametros(
         ctx,
         salario=list(SALARIO),
         ajuda=list(AJUDA_DE_CUSTO),
         com_acento=COM_ACENTO,
         sem_acento=SEM_ACENTO,
     )
+
+
+def consulta_nomes(ctx: ContextoConsolidado, tabelas: list[TabelaDoCliente], ate: date) -> Consulta:
+    """As grafias do nome de cada pessoa do último mês com folha antes de `ate` (o mês depois
+    do da tela: o mesmo mês do painel). Só para a tabela de nomes; os valores vêm da folha."""
+    return sql.SQL(
+        """
+        with t as ({folha}),
+        ref as (
+            select max(date_trunc('month', dia))::date as mes
+              from t
+             where dia < %(ate)s and pessoa is not null
+        )
+        select {chave} as pessoa,
+               array_agg(distinct btrim(regexp_replace(pessoa, '\\s+', ' ', 'g'))) as nomes
+          from t
+          join ref on date_trunc('month', t.dia) = ref.mes
+         where pessoa is not null
+         group by 1
+        """
+    ).format(
+        chave=CHAVE_PESSOA, folha=selecao(tabelas, CAMPOS_FOLHA, filtro_empresa(ctx))
+    ), parametros(ctx, ate=ate, com_acento=COM_ACENTO, sem_acento=SEM_ACENTO)
 
 
 def consulta_faturado(ctx: ContextoConsolidado, tabelas: list[TabelaDoCliente]) -> Consulta:
@@ -981,6 +1016,86 @@ def cartao_cargos(folha: Folha, p: Periodo) -> CartaoTabela | None:
         ],
         linhas=[linha(k) for k in mostrados],
         nota=nota,
+    )
+
+
+# ---------- nomes (só o perfil de RH: quem confere é a rota) ----------
+
+SUBTITULO_NOMES = "Uma linha por pessoa, do maior salário para o menor."
+VAZIO_NOMES = "Nenhuma pessoa com esses filtros."
+COLUNAS_NOMES = [
+    ColunaTabela(rotulo="Pessoa"),
+    ColunaTabela(rotulo="Cargo", alinhar="esquerda", ocultar_no_celular=True),
+    ColunaTabela(rotulo="Salário"),
+    ColunaTabela(rotulo="Custo mensal"),
+]
+# ficam em minúsculas no meio do nome ("Ana de Souza")
+PARTICULAS = frozenset({"da", "das", "de", "do", "dos", "e"})
+
+
+def nome_exibido(grafias: Iterable[str]) -> str:
+    """A grafia mais apresentável do nome ("Diana Lima" antes de "DIANA LIMA"); em
+    maiúsculas, vira nome próprio ("ANA DE SOUZA" → "Ana de Souza")."""
+    texto = max(grafias, key=lambda t: (not t.isupper(), not t.isascii(), t))
+    if not texto.isupper():
+        return texto
+    return " ".join(
+        p if i and p in PARTICULAS else p.capitalize() for i, p in enumerate(texto.lower().split())
+    )
+
+
+def linhas_nomes(folha: Folha, ref: date, nomes: Mapping[str, str]) -> list[LinhaTabela]:
+    """Uma linha por pessoa de `ref` (com nome), do maior salário para o menor; setor, cargo e
+    valores como no painel, o custo mensal com encargos."""
+    pessoas = sorted(
+        ((nomes[k], x) for k, x in folha.meses.get(ref, {}).items() if k in nomes),
+        key=lambda item: (-item[1].salario, slug(item[0])),
+    )
+    return [
+        LinhaTabela(
+            celulas=[
+                Celula(valor=nome, sub=_rotulo_setor(folha, x.setor)),
+                Celula(valor=folha.cargos.get(x.cargo, x.cargo)),
+                Celula(
+                    valor=Valor(valor=q(x.salario, 0), unidade="brl", compacto=False),
+                    sub=(
+                        f"+ {moeda_cheia(x.ajuda)} de ajuda de custo"
+                        if q(x.ajuda, 0) > 0
+                        else "sem ajuda de custo"
+                    ),
+                ),
+                Celula(valor=brl(x.total), negrito=True, sub="com encargos"),
+            ]
+        )
+        for nome, x in pessoas
+    ]
+
+
+def nomes_cargos(
+    ctx: ContextoConsolidado, escolhido: date | None, carga: UltimaCarga | None
+) -> TabelaNomes:
+    """ "Cargos e salários" com uma linha por pessoa ativa no mês da tela (o mesmo do painel:
+    o escolhido ou, sem folha nele, o último com folha antes dele). A folha é a mesma leitura
+    do painel (números e rótulos iguais); os nomes vêm junto, na mesma ida ao banco."""
+    linhas: list[LinhaTabela] = []
+    conn = ctx.sessao.conn
+    tabelas = tabelas_folha(conn, ctx) if carga is not None else []
+    if carga is not None and tabelas:
+        alvo = escolhido or carga.data_snapshot.replace(day=1)
+        lido = em_uma_ida(
+            conn,
+            {
+                "folha": consulta_folha(ctx, tabelas),
+                "nomes": consulta_nomes(ctx, tabelas, mes_menos(alvo, -1)),
+            },
+        )
+        folha = folha_das_linhas(lido["folha"])
+        meses = [m for m in folha.meses if m <= alvo]
+        if meses:
+            nomes = {r["pessoa"]: nome_exibido(r["nomes"]) for r in lido["nomes"]}
+            linhas = linhas_nomes(folha, max(meses), nomes)
+    return TabelaNomes(
+        subtitulo=SUBTITULO_NOMES, colunas=COLUNAS_NOMES, linhas=linhas, vazio=VAZIO_NOMES
     )
 
 

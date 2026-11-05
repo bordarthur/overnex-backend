@@ -10,7 +10,11 @@ comparam as linhas entre si.
 - projeção, ritmo e necessário por dia útil: base.MesPainel (como na Visão geral);
 - andamento do mês: régua, estatísticas e o acumulado dia a dia contra a meta acumulada
   por dia útil (visão Volume com o papel quantidade, sem meta: a meta de volume está vazia).
-  "Mês anterior": o vendido no mês anterior inteiro;
+  "No mesmo dia do mês anterior": o vendido no mês anterior até o dia em que ele completou
+  os mesmos dias úteis de hoje (corte_anterior), contra o vendido até hoje; abaixo,
+  atenção. Com o mês fechado, o mês anterior inteiro ("Vendido em <mês>"). "Para a
+  supermeta": supermeta − projeção, com o farol da meta em projeção ÷ supermeta (só sai
+  com supermeta acima da projeção);
 - fatores: faturamento = clientes × venda por cliente, contra a meta de valor e a de
   clientes (NDeClientes). Clientes no fim do mês: os de hoje × (clientes do mês anterior ÷
   os que ele tinha no mesmo número de dias úteis), porque cliente distinto não cresce em
@@ -25,7 +29,8 @@ comparam as linhas entre si.
   de 98% da meta) e clientes contra a meta de clientes, com o ticket por cliente;
 - participação das linhas: as 6 maiores dos 12 meses e "Outras".
 
-Fora, por falta de fonte: supermeta. Fora por decisão (textos que interpretam): conclusão
+Fora, por falta de fonte: supermeta (a estatística "Para a supermeta" está pronta, mas
+nada a preenche). Fora por decisão (textos que interpretam): conclusão
 dos fatores e as notas de linhas, canais e participação.
 """
 
@@ -40,7 +45,7 @@ from psycopg import sql
 from app.core.db import Conexao
 from app.farol.parametro import Farol, farol
 from app.seguranca.acesso import ContextoConsolidado
-from app.telas.calendario import feriados, ultimo_dia_do_mes
+from app.telas.calendario import feriados, ultimo_dia_do_mes, util
 from app.telas.contrato import Status
 from app.telas.moldura import UltimaCarga
 from app.telas.paineis.base import (
@@ -137,6 +142,8 @@ class MesVendas:
 class DadosVendas:
     # dia do mês da tela → (valor, quantidade)
     dias: dict[date, tuple[Decimal, Decimal]] = field(default_factory=dict)
+    # dia do mês anterior → valor
+    dias_anterior: dict[date, Decimal] = field(default_factory=dict)
     meses: dict[date, MesVendas] = field(default_factory=dict)
     # (mês, linha) → (valor, custo); sem o filtro de linha
     linhas: dict[tuple[date, str], tuple[Decimal, Decimal]] = field(default_factory=dict)
@@ -168,7 +175,7 @@ def ler_dados(
             select 'dia' as parte, dia as data, null::text as chave,
                    sum(valor) as valor, sum(custo) as custo, sum(quantidade) as quantidade,
                    null::bigint as pedidos, null::bigint as clientes
-              from f where dia >= %(mes)s group by dia
+              from f where dia >= %(anterior)s group by dia
             union all
             select 'mes', date_trunc('month', dia)::date, null,
                    sum(valor), sum(custo), sum(quantidade),
@@ -204,7 +211,10 @@ def ler_dados(
     for r in rows:
         valor = r["valor"] or ZERO
         if r["parte"] == "dia":
-            d.dias[r["data"]] = (valor, r["quantidade"] or ZERO)
+            if r["data"] >= mes:
+                d.dias[r["data"]] = (valor, r["quantidade"] or ZERO)
+            else:
+                d.dias_anterior[r["data"]] = valor
         elif r["parte"] == "mes":
             d.meses[r["data"]] = MesVendas(
                 valor, r["custo"] or ZERO, r["quantidade"] or ZERO, r["pedidos"], r["clientes"]
@@ -244,7 +254,7 @@ def montar(
     if mes is None or panorama.ultimo_dia is None:
         # sem venda no mês (ainda, ou fora da janela das tabelas de vendas)
         return Conteudo(filtros=filtros)
-    mp = mes_painel(conn, ctx, mes, panorama.ultimo_dia, fechado)
+    mp = mes_painel(conn, ctx, mes, panorama.ultimo_dia, fechado, panorama.dias_venda)
     dados = ler_dados(conn, ctx, f, mes, escolhidos, None if linhas is None else list(linhas))
     atual = dados.meses.get(mes)
     if atual is None or not atual.valor:
@@ -255,8 +265,9 @@ def montar(
     f_meta = farol(conn, ctx.cliente_id, "vendas_meta", mes)
     calc = Calculo(mp=mp, atual=atual, meta=meta, f_meta=f_meta)
 
+    corte = corte_anterior(conn, ctx, mp) if mp.aberto else None
     cartoes: list[Cartao | None] = [
-        cartao_andamento(calc, dados, mes, tem_papel(f.vendas, "quantidade"))
+        cartao_andamento(calc, dados, mes, tem_papel(f.vendas, "quantidade"), corte)
     ]
     fatores = None
     if linhas is None:
@@ -299,6 +310,8 @@ class Calculo:
     atual: MesVendas
     meta: Decimal | None
     f_meta: Farol
+    # sem fonte por enquanto (ver o topo do módulo)
+    supermeta: Decimal | None = None
 
     @property
     def vendido(self) -> Decimal:
@@ -511,7 +524,8 @@ def degraus(
 
 
 def _nota_andamento(mp: MesPainel) -> str:
-    feriados_uteis = sorted(d for d in mp.feriados if d.weekday() < 5)
+    # o feriado com venda conta como dia útil: a linha anda nele
+    feriados_uteis = sorted(d for d in mp.feriados if d.weekday() < 5 and not mp.util(d))
     if not feriados_uteis:
         planos = "nos fins de semana"
     elif len(feriados_uteis) == 1:
@@ -527,8 +541,10 @@ def _nota_andamento(mp: MesPainel) -> str:
 
 
 def cartao_andamento(
-    c: Calculo, dados: DadosVendas, mes: date, com_volume: bool
+    c: Calculo, dados: DadosVendas, mes: date, com_volume: bool, corte: date | None = None
 ) -> CartaoAndamentoMes:
+    """`corte`: o dia em que o mês anterior completou os dias úteis de hoje (só no mês
+    aberto)."""
     mp = c.mp
     trechos = [
         TrechoRegua(
@@ -587,12 +603,21 @@ def cartao_andamento(
         subtitulo="A régua mostra o mês inteiro; o gráfico, o acumulado por dia",
         nota=_nota_andamento(mp),
         regua=Regua(trechos=trechos, marcas=marcas),
-        estatisticas=estatisticas(c, dados, mes),
+        estatisticas=estatisticas(c, dados, mes, corte),
         visoes=visoes,
     )
 
 
-def estatisticas(c: Calculo, dados: DadosVendas, mes: date) -> list[ItemValor]:
+def _com_sinal(v: Decimal) -> str:
+    """+R$ 120 mil, −R$ 92 mil (com o sinal de menos tipográfico)."""
+    return ("−" if v < 0 else "+") + moeda(v)
+
+
+def estatisticas(
+    c: Calculo, dados: DadosVendas, mes: date, corte: date | None = None
+) -> list[ItemValor]:
+    """Dias úteis, ritmo, necessário para a meta, melhor e pior dia, para a supermeta e o
+    mês anterior no mesmo dia útil (`corte`; sem ele, o mês anterior inteiro)."""
     mp = c.mp
     itens = [
         ItemValor(
@@ -627,19 +652,34 @@ def estatisticas(c: Calculo, dados: DadosVendas, mes: date) -> list[ItemValor]:
             ItemValor(
                 rotulo="Melhor e pior dia",
                 valor=f"{moeda(melhor[1])} · {moeda(pior[1])}",
+                partes=[brl(melhor[1]), brl(pior[1])],
                 contexto=f"{melhor[0]:%d/%m} e {pior[0]:%d/%m}",
             )
         )
-    anterior = mes_menos(mes, 1)
-    if (ant := dados.meses.get(anterior)) is not None and ant.valor:
-        diferenca = c.projecao - ant.valor
-        sujeito = "a projeção fica" if mp.aberto else f"{nome_mes(mes)} ficou"
-        lado = "acima" if diferenca >= 0 else "abaixo"
+    if c.supermeta and c.projecao < c.supermeta:
         itens.append(
             ItemValor(
-                rotulo=f"Vendido em {nome_mes(anterior)}",
-                valor=brl(ant.valor),
-                contexto=f"{sujeito} {moeda(diferenca)} {lado}",
+                rotulo="Para a supermeta",
+                valor=brl(c.supermeta - c.projecao),
+                contexto="acima da projeção",
+                status=c.f_meta.status(c.projecao / c.supermeta * CEM),
+            )
+        )
+    anterior = mes_menos(mes, 1)
+    if mp.aberto and corte is not None:
+        rotulo, quando = f"No mesmo dia de {nome_mes(anterior)}", "hoje"
+        valor_anterior = sum((v for d, v in dados.dias_anterior.items() if d <= corte), ZERO)
+    else:
+        rotulo, quando = f"Vendido em {nome_mes(anterior)}", nome_mes(mes)
+        ant = dados.meses.get(anterior)
+        valor_anterior = ant.valor if ant is not None else ZERO
+    if valor_anterior:
+        diferenca = c.vendido - valor_anterior
+        itens.append(
+            ItemValor(
+                rotulo=rotulo,
+                valor=brl(valor_anterior),
+                contexto=f"{_com_sinal(diferenca)} contra {quando}",
                 status="atencao" if diferenca < 0 else "saudavel",
             )
         )
@@ -647,6 +687,23 @@ def estatisticas(c: Calculo, dados: DadosVendas, mes: date) -> list[ItemValor]:
 
 
 # ---------- fatores ----------
+
+
+def corte_anterior(conn: Conexao, ctx: ContextoConsolidado, mp: MesPainel) -> date:
+    """Dia em que o mês anterior completou os mesmos dias úteis do mês da tela até hoje
+    (sem tantos dias úteis, o último dia dele). O sábado ou feriado com venda no mês
+    anterior também conta."""
+    anterior = mes_menos(mp.mes, 1)
+    fim = ultimo_dia_do_mes(anterior)
+    fer = feriados(conn, ctx.cliente_id, anterior, fim)
+    contados, dia = 0, anterior
+    while dia <= fim:
+        if util(dia, fer, mp.dias_venda):
+            contados += 1
+            if contados == mp.du_passados:
+                return dia
+        dia += timedelta(days=1)
+    return fim
 
 
 def clientes_no_fim(
@@ -662,18 +719,7 @@ def clientes_no_fim(
     `novos_anterior`: dia → clientes que compraram pela primeira vez no mês anterior."""
     if not mp.aberto:
         return Decimal(clientes)
-    anterior = mes_menos(mp.mes, 1)
-    fim = ultimo_dia_do_mes(anterior)
-    fer = feriados(conn, ctx.cliente_id, anterior, fim)
-    # dia em que o mês anterior completou os mesmos dias úteis
-    corte, contados, dia = fim, 0, anterior
-    while dia <= fim:
-        if dia.weekday() < 5 and dia not in fer:
-            contados += 1
-            if contados == mp.du_passados:
-                corte = dia
-                break
-        dia += timedelta(days=1)
+    corte = corte_anterior(conn, ctx, mp)
     total = sum(novos_anterior.values())
     ate_corte = sum(n for d, n in novos_anterior.items() if d <= corte)
     if not total or not ate_corte:

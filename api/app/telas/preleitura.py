@@ -7,9 +7,16 @@ juntas (app.core.db.em_uma_ida), e fontes, feriados, parâmetros e plano ficam n
 requisição (app.core.cache.memo) com as mesmas chaves que as seções usam: ninguém lê de
 novo.
 
+As mesmas linhas, mais a assinatura do de-para da DRE, dão a versão do cadastro
+(`Inicio.versao`), que entra na chave do cache das telas: um parâmetro, feriado, fonte ou
+de-para mudado no banco vale na hora, sem esperar o prazo.
+
 Chamar dentro de `por_requisicao()`.
 """
 
+import hashlib
+import json
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
 from uuid import UUID
@@ -39,6 +46,28 @@ class Inicio:
     cliente: Cliente
     # meses do filtro "Período" (como em /api/sessao); None se não foram pedidos
     meses: list[MesComDados] | None = None
+    # assinatura do cadastro do cliente (ver versao_do_cadastro); entra na chave do cache
+    versao: str = ""
+
+
+# o que o cliente cadastra e a tela usa: mudou, a resposta pronta não vale mais
+CADASTRO = ("cliente", "fontes", "feriados", "parametros", "plano", "conta_dre")
+# de-para da DRE (cfg.conta_dre): a assinatura vem pronta do banco, sem trazer as linhas
+SQL_VERSAO_CONTA_DRE = """
+    select md5(coalesce(string_agg(
+               conta || '|' || coalesce(id_descritivo, '') || '|' || coalesce(fora_da_dre, ''),
+               ',' order by conta), '')) as versao
+      from cfg.conta_dre
+     where cliente_id = %s
+"""
+
+
+def versao_do_cadastro(linhas: Mapping[str, Sequence[Mapping[str, Any]]]) -> str:
+    """Assinatura das linhas de cadastro lidas (CADASTRO): muda quando um parâmetro, um
+    feriado, uma fonte, o plano, o de-para da DRE ou o cliente mudam no banco."""
+    cadastro = {nome: [dict(r) for r in linhas.get(nome, [])] for nome in CADASTRO}
+    texto = json.dumps(cadastro, sort_keys=True, default=str, ensure_ascii=False)
+    return hashlib.blake2b(texto.encode(), digest_size=16).hexdigest()
 
 
 def preler(conn: Conexao, cliente_id: UUID, *, com_meses: bool = False) -> Inicio:
@@ -60,6 +89,8 @@ def preler(conn: Conexao, cliente_id: UUID, *, com_meses: bool = False) -> Inici
         consultas["meses"] = (SQL_MESES, p)
     if existe(conn, "cfg.plano_conta"):
         consultas["plano"] = (SQL_PLANO, None)
+    if existe(conn, "cfg.conta_dre"):
+        consultas["conta_dre"] = (SQL_VERSAO_CONTA_DRE, p)
     linhas = em_uma_ida(conn, consultas)
     if "plano" in linhas:
         plano = plano_das_linhas(linhas["plano"])
@@ -82,4 +113,5 @@ def preler(conn: Conexao, cliente_id: UUID, *, com_meses: bool = False) -> Inici
         carga=carga,
         cliente=cliente_da_linha(linhas["cliente"][0] if linhas["cliente"] else None),
         meses=meses,
+        versao=versao_do_cadastro(linhas),
     )

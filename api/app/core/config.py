@@ -40,10 +40,12 @@ class Settings(BaseSettings):
     # Secure no cookie do refresh token; obrigatório fora de dev.
     cookie_seguro: bool = True
     # Max-Age do cookie do refresh token. O Supabase não expira o refresh token (prazo de
-    # sessão e de inatividade são do plano Pro): este é o prazo de fato. Cada renovação troca
-    # o cookie e recomeça a contagem. Se configurar "Inactivity timeout" no Supabase, use o
-    # mesmo valor aqui.
+    # sessão e de inatividade são do plano Pro): este é o prazo máximo. Cada renovação troca
+    # o cookie e recomeça a contagem.
     auth_refresh_segundos: int = 7 * 24 * 3600
+    # Sessão sem uso (pedido autenticado ou renovação) por mais que isto: o renovar responde
+    # 401 e encerra a sessão. Último uso em seg.sessao_uso (ver app/auth/uso.py).
+    auth_inatividade_segundos: int = 30 * 60
     # Padrão seguro: sem AMBIENTE explícito, comporta-se como produção.
     ambiente: Ambiente = Ambiente.PROD
     auth_fake: bool = False
@@ -51,8 +53,10 @@ class Settings(BaseSettings):
     visao_geral_demo: bool = False
     # Cartões "a decidir" dos painéis (ver telas/paineis/router.py), para revisão (só dev).
     paineis_a_decidir: bool = False
-    # Prazo da resposta pronta da Visão geral em memória (0 desliga; ver telas/visao_geral).
-    visao_geral_cache_segundos: int = 900
+    # Prazo da resposta pronta das telas em memória (0 desliga; ver telas/visao_geral). Pode
+    # ser longo: carga nova e cadastro mudado já trocam a chave; o prazo só segura uma
+    # correção feita à mão no mart, sem carga nova.
+    visao_geral_cache_segundos: int = 3600
 
     # Conexões sempre abertas. Abrir uma nova ao pooler custa ~0,4 s (várias idas e voltas):
     # a Visão geral usa até 3 por requisição (seções em paralelo), a Equipe comercial 2, e a
@@ -89,6 +93,8 @@ class Settings(BaseSettings):
             )
         if self.auth_refresh_segundos <= 0:
             raise ValueError("AUTH_REFRESH_SEGUNDOS precisa ser maior que zero.")
+        if self.auth_inatividade_segundos <= 0:
+            raise ValueError("AUTH_INATIVIDADE_SEGUNDOS precisa ser maior que zero.")
         return self
 
     @property

@@ -19,6 +19,12 @@ plano gerencial (Id_Descritivo) em vez de só por grupo:
   contas com competência CO ou CO/CA (as de só caixa, CA, ficam de fora). Lançamento ou
   despesa em conta fora do plano fica fora da DRE e é citado no rodapé. Sem o plano
   cadastrado (antes da migration 17), entram todas as contas dos grupos da DRE;
+- inadimplência: com `dre.inadimplencia` em cfg.parametro_cliente, a provisão taxa ×
+  receita bruta de cada mês entra na conta 110.01.02 (soma ao que já estiver lançado nela),
+  como na Visão geral. Entra no mês em aberto também, e a projeção a leva junto com a
+  receita;
+- contas fora da DRE por escolha do cliente (`dre.contas_fora`, como na Visão geral): não
+  entram no realizado nem no orçado;
 - o Id_Descritivo tem três níveis: 140 (grupo da DRE, nível 1), 140.01 (nível 2) e 140.01.01
   (nível 3);
 - sinal: a Visão geral soma cada grupo em valor absoluto; aqui o grupo entra com o sinal (um
@@ -74,16 +80,13 @@ from decimal import Decimal
 from functools import cached_property
 from typing import Any, Literal
 
-from psycopg import sql
-
-from app.core.cache import existe
 from app.core.db import Conexao, em_uma_ida
 from app.farol.parametro import Farol, farol
 from app.seguranca.acesso import ContextoConsolidado
 from app.telas.calendario import dias_uteis, feriados, ultimo_dia_do_mes
 from app.telas.contrato import Status
 from app.telas.moldura import MESES, UltimaCarga
-from app.telas.paineis.base import Consulta, Conteudo, Opcoes, em_fileiras, escolher, slug
+from app.telas.paineis.base import Conteudo, Opcoes, em_fileiras, escolher, slug
 from app.telas.paineis.contrato import (
     Aviso,
     Cartao,
@@ -119,31 +122,22 @@ from app.telas.plano import Plano, ler_plano, normalizar
 from app.telas.visao_geral.contra_referencia import MESES_CURTOS, rotulo_eixo, rotulos_meses
 from app.telas.visao_geral.contrato import Trecho, Valor
 from app.telas.visao_geral.resultado import (
+    CONTA_INADIMPLENCIA,
     PARAMETRO_CENARIO,
+    ForaDaDre,
     avisar_uma_vez,
     cenario_do_orcamento,
     cenario_escolhido,
-    com_as_colunas,
-    consulta_agrupados,
-    consulta_despesas,
-    consulta_devolucoes,
-    consulta_lancamentos,
+    consultas,
+    fora_da_dre,
     tabelas_agrupados,
-    tabelas_despesas,
-    tabelas_devolucoes,
     tabelas_lancamentos,
-    tabelas_orcamento,
+    taxa_inadimplencia,
 )
 from app.telas.visao_geral.router import recorte
 from app.telas.visao_geral.texto import moeda, numero
 from app.telas.visao_geral.vendas import (
-    COLUNAS_VENDAS,
-    TabelaDoCliente,
-    consulta_resumo_mensal,
-    de_todas,
-    filtro_empresa,
     mes_menos,
-    tabelas_do_cliente,
 )
 
 ZERO = Decimal(0)
@@ -398,53 +392,6 @@ class Nomes:
 # ---------- leitura ----------
 
 
-def _consulta_orcamento(
-    ctx: ContextoConsolidado, tabelas: list[TabelaDoCliente], de: date, ate: date
-) -> Consulta:
-    """Orçado por mês, conta e cenário (minúsculas; '' sem cenário)."""
-    return sql.SQL(
-        """
-        with o as ({linhas})
-        select date_trunc('month', dia)::date as mes, conta,
-               coalesce(lower(trim(cenario)), '') as cenario, sum(valor) as valor
-          from o
-         where conta is not null
-           and dia >= %(de)s and dia < %(ate)s::date + interval '1 month'
-         group by 1, 2, 3
-        """
-    ).format(
-        linhas=de_todas(
-            tabelas,
-            {"dia": "data", "conta": "conta", "valor": "valor", "cenario": "cenario"},
-            filtro_empresa(ctx),
-        )
-    ), {"cliente": ctx.cliente_id, "empresas": list(ctx.empresas), "de": de, "ate": ate}
-
-
-def consultas(
-    conn: Conexao, ctx: ContextoConsolidado, de: date, ate: date, com_agrupados: bool = True
-) -> dict[str, Consulta]:
-    """As leituras da tela, de `de` até o fim do mês de `ate` (uma ida ao banco). Com os
-    lançamentos agrupados do cliente, eles no lugar das fontes da operação."""
-    c: dict[str, Consulta] = {}
-    if com_agrupados and (agrupados := tabelas_agrupados(conn, ctx)):
-        # a view da DRE do cliente já traz vendas, CMV, devoluções e despesas
-        c["agrupados"] = consulta_agrupados(ctx, agrupados, de, ate)
-    else:
-        vendas = tabelas_do_cliente(conn, ctx.cliente_id, "f_vendas_", COLUNAS_VENDAS)
-        if vendas and existe(conn, "mart.resumo_mensal"):
-            c["vendas"] = consulta_resumo_mensal(ctx, vendas, de, ate)
-        if t := tabelas_devolucoes(conn, ctx):
-            c["devolucoes"] = consulta_devolucoes(ctx, t, de, ate)
-        if t := tabelas_lancamentos(conn, ctx):
-            c["lancamentos"] = consulta_lancamentos(ctx, t, de, ate)
-        if t := tabelas_despesas(conn, ctx):
-            c["despesas"] = consulta_despesas(ctx, t, de, ate)
-    if t := com_as_colunas(tabelas_orcamento(conn, ctx)):
-        c["orcamento"] = _consulta_orcamento(ctx, t, de, ate)
-    return c
-
-
 @dataclass(frozen=True)
 class Dados:
     real: dict[date, Contas]
@@ -455,8 +402,18 @@ class Dados:
 
 
 def dados_das_linhas(
-    linhas: Mapping[str, Iterable[Mapping[str, Any]]], plano: Plano | None = None
+    linhas: Mapping[str, Iterable[Mapping[str, Any]]],
+    plano: Plano | None = None,
+    inadimplencia: Callable[[date], Decimal | None] | None = None,
+    fora_da_dre: ForaDaDre | None = None,
 ) -> Dados:
+    """Realizado e orçado por mês e conta. `inadimplencia`: mês → % da receita bruta
+    provisionado em CONTA_INADIMPLENCIA (None: nada). `fora_da_dre`: as contas que o
+    cliente tira da DRE (não entram em nenhum dos dois)."""
+
+    def escolhida_fora(mes: date, conta: str) -> bool:
+        return fora_da_dre is not None and fora_da_dre(mes, conta)
+
     plano = plano or Plano()
     real: dict[date, Contas] = {}
     fora: dict[date, set[str]] = {}
@@ -483,7 +440,7 @@ def dados_das_linhas(
         if not plano.vazio and plano.conta(conta) is None:
             fora.setdefault(r["mes"], set()).add(conta)
             continue
-        if not plano.na_dre(conta):
+        if not plano.na_dre(conta) or escolhida_fora(r["mes"], conta):
             continue
         somar_em(real, r["mes"], conta, -r["valor"] if GRUPOS[grupo(conta)].receita else r["valor"])
 
@@ -492,6 +449,8 @@ def dados_das_linhas(
         conta = codigo_conta(r["conta"])
         if conta is None or not r["valor"] or not plano.na_dre(conta):
             continue
+        if escolhida_fora(r["mes"], conta):
+            continue
         somar_em(soma.setdefault(r["cenario"], {}), r["mes"], conta, r["valor"])
     orcamento: dict[str, dict[date, Contas]] = {}
     for cenario, meses in soma.items():
@@ -499,6 +458,12 @@ def dados_das_linhas(
             orcamento.setdefault(cenario, {})[mes] = {
                 conta: abs(valor) * sentido(conta, plano) for conta, valor in contas.items()
             }
+    if inadimplencia is not None:
+        for mes, contas in real.items():
+            receita = totais(contas).receita_bruta
+            taxa = inadimplencia(mes)
+            if taxa is not None and receita > 0:
+                somar_em(real, mes, CONTA_INADIMPLENCIA, receita * taxa / 100)
     return Dados(real=real, orcamento=orcamento, fora_do_plano=fora)
 
 
@@ -1534,7 +1499,12 @@ def montar(
         # tabela de agrupados vazia (ex.: a carga dela falhou): a regra sem ela
         linhas = em_uma_ida(conn, consultas(conn, ctx, de, ate, com_agrupados=False))
     plano = ler_plano(conn)
-    dados = dados_das_linhas(linhas, plano)
+    dados = dados_das_linhas(
+        linhas,
+        plano,
+        lambda m: taxa_inadimplencia(conn, ctx.cliente_id, m),
+        fora_da_dre(conn, ctx.cliente_id),
+    )
     fechados = sorted(
         m for m, c in dados.real.items() if m <= limite and totais(c).receita_bruta > 0
     )

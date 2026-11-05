@@ -130,14 +130,19 @@ class _Checagem:
         recurso: str,
         empresa_id: UUID | None,
         codigo_tela: str | None = None,
+        detalhe: str | None = None,
     ) -> None:
         self.sessao = sessao
         self.recurso = recurso
         self.empresa_id = empresa_id
+        # vai no motivo do log, permitido ou negado (ex.: os filtros de um pedido de nomes)
+        self.detalhe = detalhe
         self.cliente_id: UUID | None = None
         self.fatos = ler_fatos(sessao, codigo_tela)
 
     def _registrar(self, etapa_negada: int | None = None, motivo: str | None = None) -> None:
+        if self.detalhe is not None:
+            motivo = f"{motivo} ({self.detalhe})" if motivo else self.detalhe
         self.sessao.logs.append(
             (
                 self.fatos.usuario_id,
@@ -222,8 +227,12 @@ def verificar_acesso_consolidado(
     *,
     papeis: frozenset[str] = TODOS_OS_PAPEIS,
     exige_dado_nominal: bool = False,
+    recurso: str | None = None,
+    detalhe: str | None = None,
 ) -> ContextoConsolidado:
-    checagem = _Checagem(sessao, codigo_tela, empresa_id, codigo_tela)
+    """`recurso`: o que vai no log no lugar do código da tela (ex.: "PES-01:<cartão>:nomes");
+    `detalhe`: texto a mais no motivo do log."""
+    checagem = _Checagem(sessao, recurso or codigo_tela, empresa_id, codigo_tela, detalhe)
     vinculo = checagem.vinculo(papeis)
 
     # 4. perfil libera a tela

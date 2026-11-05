@@ -3,6 +3,7 @@
 from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
 from dataclasses import dataclass, field
+from datetime import timedelta
 from typing import Annotated, Any
 from uuid import UUID
 
@@ -12,7 +13,7 @@ from psycopg.rows import DictRow, dict_row
 from psycopg.sql import Composed
 from psycopg_pool import ConnectionPool
 
-from app.core.config import Settings
+from app.core.config import Settings, get_settings
 from app.core.erros import AcessoNegado
 from app.seguranca.auth import UsuarioToken, get_usuario
 
@@ -25,6 +26,8 @@ INSERIR_LOG_ACESSO = """
          resultado, etapa_negada, motivo)
     values (%s, %s, %s, %s, %s, %s, %s, %s)
 """
+# último uso da sessão de login (migration 21; ver app/auth/uso.py)
+USAR_SESSAO = "select seg.usar_sessao(%s, %s, %s)"
 
 
 def criar_pool(settings: Settings) -> Pool:
@@ -57,41 +60,59 @@ class Sessao:
     pool: Pool | None = None
     # linhas de seg.log_acesso da requisição: gravadas junto com o commit (ver get_sessao)
     logs: list[tuple[Any, ...]] = field(default_factory=list)
+    # limite de inatividade da sessão de login: com ele (e o session_id no token), o commit
+    # registra o pedido como uso da sessão. None = não registra (pré-montagem, testes)
+    inatividade: timedelta | None = None
 
 
-def _gravar_logs_e_confirmar(conn: Conexao, logs: list[tuple[Any, ...]]) -> None:
-    """Insere os logs pendentes e faz o commit numa ida ao banco só (pipeline)."""
-    if not logs:
+def _gravar_logs_e_confirmar(sessao: Sessao) -> None:
+    """Insere os logs pendentes, registra o uso da sessão de login e faz o commit numa ida
+    ao banco só (pipeline)."""
+    conn, logs = sessao.conn, sessao.logs
+    sessao_id = sessao.usuario.sessao_id
+    usar = sessao.inatividade is not None and sessao_id is not None
+    if not logs and not usar:
         conn.commit()
         return
     with conn.pipeline():
         with conn.cursor() as cur:
-            cur.executemany(INSERIR_LOG_ACESSO, logs)
+            if logs:
+                cur.executemany(INSERIR_LOG_ACESSO, logs)
+            if usar:
+                cur.execute(
+                    USAR_SESSAO, (sessao_id, sessao.usuario.id_autenticacao, sessao.inatividade)
+                )
         conn.commit()
 
 
 def get_sessao(
     usuario: Annotated[UsuarioToken, Depends(get_usuario)],
     pool: Annotated[Pool, Depends(get_pool)],
+    settings: Annotated[Settings, Depends(get_settings)],
 ) -> Iterator[Sessao]:
     """Abre UMA transação por requisição.
 
-    - sucesso: grava o log de acesso e faz commit;
+    - sucesso: grava o log de acesso e o uso da sessão de login e faz commit;
     - AcessoNegado: idem (grava o log do acesso negado; nada além dele foi escrito);
     - qualquer outro erro: rollback (o log daquela requisição também não fica, como antes).
     """
     with pool.connection() as conn:
-        sessao = Sessao(conn=conn, usuario=usuario, pool=pool)
+        sessao = Sessao(
+            conn=conn,
+            usuario=usuario,
+            pool=pool,
+            inatividade=timedelta(seconds=settings.auth_inatividade_segundos),
+        )
         try:
             yield sessao
         except AcessoNegado:
-            _gravar_logs_e_confirmar(conn, sessao.logs)
+            _gravar_logs_e_confirmar(sessao)
             raise
         except BaseException:
             conn.rollback()
             raise
         else:
-            _gravar_logs_e_confirmar(conn, sessao.logs)
+            _gravar_logs_e_confirmar(sessao)
 
 
 def confirmar_agora(sessao: Sessao) -> None:
@@ -102,7 +123,7 @@ def confirmar_agora(sessao: Sessao) -> None:
     logo depois de receber a resposta chama isto antes de responder. O resto da requisição
     segue em outra transação, sem app.usuario_id.
     """
-    _gravar_logs_e_confirmar(sessao.conn, sessao.logs)
+    _gravar_logs_e_confirmar(sessao)
     sessao.logs.clear()
 
 

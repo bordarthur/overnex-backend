@@ -21,6 +21,7 @@ from pydantic import Field
 from app.auth.cadastro import VerificarCadastro, get_verificar_cadastro
 from app.auth.gotrue import GoTrue, GoTrueErro, GoTrueIndisponivel, SessaoGoTrue, TipoLink
 from app.auth.limite import ENTRAR_FALHAS_POR_EMAIL_IP, Limites
+from app.auth.uso import UsoSessao, get_uso_sessao
 from app.core.config import Settings, get_settings
 from app.seguranca.auth import PREFIXO_FAKE
 from app.telas.moldura import ModeloCamel
@@ -44,6 +45,7 @@ ESPERA_SUPABASE = 60
 MSG_CREDENCIAIS = "E-mail ou senha não conferem. Confira os dois e tente de novo."
 MSG_ACESSO_NEGADO = "Acesso negado."
 MSG_SESSAO = "Sessão expirada. Entre de novo."
+MSG_INATIVIDADE = "Sua sessão terminou por falta de uso. Entre de novo."
 MSG_FALHAS = f"Foram {ENTRAR_FALHAS_POR_EMAIL_IP[0]} tentativas com a senha errada."
 MSG_LIMITE = "Muitas tentativas. Tente de novo em alguns minutos."
 MSG_LINK = "Este link não vale mais."
@@ -251,6 +253,7 @@ def _mensagem_senha(exc: GoTrueErro) -> str:
 Gotrue = Annotated[GoTrue, Depends(get_gotrue)]
 Verificar = Annotated[VerificarCadastro, Depends(get_verificar_cadastro)]
 Config = Annotated[Settings, Depends(get_settings)]
+Uso = Annotated[UsoSessao, Depends(get_uso_sessao)]
 
 _RESPOSTAS_LOGIN: dict[int | str, dict[str, str]] = {
     403: {"description": "Tem login, mas não está ativo no Overnex. Sem cookie."},
@@ -281,6 +284,7 @@ def entrar(
     gotrue: Gotrue,
     verificar: Verificar,
     settings: Config,
+    uso: Uso,
     limites: Annotated[Limites, Depends(get_limites)],
 ) -> RespostaAuth:
     email = _email(corpo.email)
@@ -302,14 +306,19 @@ def entrar(
         limites.entrar_falhas.registrar(chave)
         raise ErroAuth(status.HTTP_401_UNAUTHORIZED, MSG_CREDENCIAIS) from exc
     limites.entrar_falhas.limpar(chave)
-    return _concluir(sessao, "auth:entrar", response, gotrue, verificar, settings)
+    resposta = _concluir(sessao, "auth:entrar", response, gotrue, verificar, settings)
+    uso.iniciar(sessao.sessao_id, sessao.id_autenticacao)
+    return resposta
 
 
 @router.post(
     "/renovar",
     response_model=RespostaAuth,
     responses={
-        401: {"description": MSG_SESSAO + " Cookie apagado."},
+        401: {
+            "description": f"{MSG_SESSAO} (sem cookie ou refresh recusado) ou {MSG_INATIVIDADE} "
+            "(sessão sem uso por mais que AUTH_INATIVIDADE_SEGUNDOS). Cookie apagado."
+        },
         403: {"description": "Usuário desativado no Overnex. Cookie apagado."},
         415: {"description": "Content-Type diferente de application/json."},
         503: {"description": "Supabase Auth fora do ar (ou no limite). O cookie fica."},
@@ -321,6 +330,7 @@ def renovar(
     gotrue: Gotrue,
     verificar: Verificar,
     settings: Config,
+    uso: Uso,
     _corpo: PedidoVazio | None = None,
 ) -> RespostaAuth:
     refresh_token = request.cookies.get(COOKIE_REFRESH)
@@ -335,6 +345,12 @@ def renovar(
             raise ErroAuth(status.HTTP_503_SERVICE_UNAVAILABLE, MSG_INDISPONIVEL) from exc
         logger.info("Renovação recusada pelo GoTrue: %s", exc.codigo)
         raise ErroAuth(status.HTTP_401_UNAUTHORIZED, MSG_SESSAO, apagar_cookie=True) from exc
+    # a sessão só se sabe depois do refresh (vem no access token novo)
+    if not uso.renovar(sessao.sessao_id, sessao.id_autenticacao):
+        # parada há mais que o limite: o refresh token novo também não pode valer
+        logger.info("Renovação recusada por falta de uso da sessão")
+        _encerrar(gotrue, sessao.access_token)
+        raise ErroAuth(status.HTTP_401_UNAUTHORIZED, MSG_INATIVIDADE, apagar_cookie=True)
     return _concluir(
         sessao,
         "auth:renovar",
@@ -358,7 +374,12 @@ def sair(
     credenciais: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer)],
     _corpo: PedidoVazio | None = None,
 ) -> Response:
-    """Encerra a sessão no GoTrue (se veio o access token) e apaga o cookie. Sempre 204."""
+    """Encerra a sessão no GoTrue (se veio o access token) e apaga o cookie. Sempre 204.
+
+    O logout (scope=local) revoga os refresh tokens desta sessão no Supabase, não só o
+    cookie. Com o access token vencido, o GoTrue recusa o logout; o cookie some do mesmo
+    jeito, e a sessão parada não renova (ver app/auth/uso.py).
+    """
     token = credenciais.credentials if credenciais else ""
     if token and not token.startswith(PREFIXO_FAKE):
         _encerrar(gotrue, token)
@@ -416,6 +437,7 @@ def definir_senha(
     gotrue: Gotrue,
     verificar: Verificar,
     settings: Config,
+    uso: Uso,
 ) -> RespostaAuth:
     """Link do convite ou da recuperação: confere o link, grava a senha e já entra."""
     # antes do /verify, que gasta o link: senha recusada aqui pode ser tentada de novo
@@ -435,4 +457,6 @@ def definir_senha(
         logger.info("Senha recusada pelo GoTrue: %s", exc.codigo)
         _encerrar(gotrue, sessao.access_token)
         raise ErroAuth(status.HTTP_400_BAD_REQUEST, _mensagem_senha(exc)) from exc
-    return _concluir(sessao, "auth:definir-senha", response, gotrue, verificar, settings)
+    resposta = _concluir(sessao, "auth:definir-senha", response, gotrue, verificar, settings)
+    uso.iniciar(sessao.sessao_id, sessao.id_autenticacao)
+    return resposta

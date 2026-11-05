@@ -455,3 +455,67 @@ def test_pessoas_antes_da_primeira_carga_vem_vazio(client: TestClient) -> None:
     assert (corpo["dadosAte"], corpo["atualizadoEm"]) == (None, None)
     for campo in ("filtros", "destaques", "kpis", "apoios", "cartoes"):
         assert corpo[campo] == []
+
+
+NOMES = "/api/telas/pessoas/cartoes/cargos-salarios/nomes"
+
+
+def _cargos(client: TestClient) -> dict[str, Any]:
+    corpo = client.get(PESSOAS, headers=auth(OID_B)).json()
+    return next(c for c in corpo["cartoes"] if c["id"] == "cargos-salarios")
+
+
+def _ultimo_log(admin_conn: psycopg.Connection[tuple[Any, ...]]) -> tuple[Any, ...] | None:
+    return admin_conn.execute(
+        """
+        select resultado, etapa_negada, motivo from seg.log_acesso
+         where codigo_tela = 'PES-01:cargos-salarios:nomes' order by id desc limit 1
+        """
+    ).fetchone()
+
+
+@pytest.mark.usefixtures("paineis_do_bruno", "folha_do_bruno")
+def test_pessoas_nomes_so_para_o_perfil_de_rh(
+    client: TestClient, admin_conn: psycopg.Connection[tuple[Any, ...]]
+) -> None:
+    # perfil do Bruno sem dado nominal na PES-01 (diretoria): sem a chave e 403
+    assert "nomes" not in _cargos(client)
+    r = client.get(NOMES, headers=auth(OID_B))
+    assert r.status_code == 403
+    assert r.json() == {"detail": "Você não pode ver os nomes deste cartão."}
+    assert _ultimo_log(admin_conn) == (
+        "negado",
+        6,
+        "tela exige dado nominal e o perfil não permite (filtros: mes=padrão)",
+    )
+
+    # perfil de RH: a chave e a tabela de uma linha por pessoa
+    admin_conn.execute(
+        "update cfg.perfil_tela set ve_dado_nominal = true "
+        "where perfil_id = 'f1000000-0000-4000-8000-00000000000b' and codigo_tela = 'PES-01'"
+    )
+    assert _cargos(client)["nomes"] == {"rotulo": "Mostrar nomes"}
+    r = client.get(NOMES, headers=auth(OID_B))
+    assert r.status_code == 200
+    assert r.headers["cache-control"] == "no-store"
+    linhas = [[c.get("valor") for c in ln["celulas"]] for ln in r.json()["linhas"]]
+    # sem folha em outubro: as pessoas de setembro, do maior salário para o menor
+    assert [x[0] for x in linhas] == ["Diana Lima", "Edu Ramos"]
+    assert linhas[0][2]["valor"] == 3000
+    assert linhas[0][3]["valor"] == 3400
+    # o setor de Edu está "LOGISTICA" em setembro; o rótulo é o do painel
+    assert r.json()["linhas"][1]["celulas"][0]["sub"] == "Logística"
+    assert _ultimo_log(admin_conn) == ("permitido", None, "filtros: mes=padrão")
+
+    # o mês escolhido (da lista de /api/sessao) vai para o log
+    r = client.get(NOMES, headers=auth(OID_B), params={"mes": "2026-09"})
+    assert [ln["celulas"][0]["valor"] for ln in r.json()["linhas"]] == ["Diana Lima", "Edu Ramos"]
+    assert _ultimo_log(admin_conn) == ("permitido", None, "filtros: mes=2026-09")
+
+
+@pytest.mark.usefixtures("folha_do_bruno")
+def test_pessoas_nomes_fora_do_perfil_403(client: TestClient) -> None:
+    # Ana não tem a PES-01: o 403 genérico
+    r = client.get(NOMES, headers=auth(OID_A))
+    assert r.status_code == 403
+    assert r.json() == {"detail": "Acesso negado."}

@@ -20,8 +20,9 @@ from app.seguranca.auth import UsuarioToken
 from app.telas.moldura import Cliente, MesComDados, UltimaCarga
 from app.telas.paineis import router as paineis
 from app.telas.paineis.base import Conteudo, escolher, opcoes
-from app.telas.paineis.contrato import ItemValor
+from app.telas.paineis.contrato import ItemValor, TabelaNomes
 from app.telas.paineis.explicacoes import EXPLICACOES
+from app.telas.paineis.pessoas import COLUNAS_NOMES
 from app.telas.preleitura import Inicio
 from app.telas.visao_geral.contrato import Valor
 
@@ -68,6 +69,7 @@ def estado(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
             carga=e["carga"],
             cliente=Cliente(nome="Alfa", sigla="AL", logo_url=None),
             meses=[MesComDados(date(2026, 10, 1), date(2026, 10, 12))] if com_meses else None,
+            versao=e.get("versao", ""),
         )
 
     monkeypatch.setattr(paineis, "preler", preler)
@@ -99,10 +101,13 @@ def client(estado: dict[str, Any]) -> Iterator[TestClient]:
     settings = get_settings().model_copy(update={"visao_geral_cache_segundos": 0})
 
     def sessao() -> Sessao:
-        return Sessao(
+        s = Sessao(
             conn=ConexaoFalsa(estado["perfis"]),  # type: ignore[arg-type]
             usuario=UsuarioToken(id_autenticacao=UUID(int=1)),
         )
+        # as linhas de seg.log_acesso de cada requisição (aqui ninguém grava)
+        estado.setdefault("sessoes", []).append(s)
+        return s
 
     app.dependency_overrides[get_sessao] = sessao
     app.dependency_overrides[get_settings] = lambda: settings
@@ -295,6 +300,11 @@ def test_demo_devolve_o_mockup_e_confere_os_filtros(
     cartoes = client.get("/api/telas/receber-pagar").json()["cartoes"]
     ciclo = next(c for c in cartoes if c["tipo"] == "ciclo-caixa")
     assert [x["rotulo"] for x in ciclo["linhas"]][-1] == "Dinheiro preso"
+    # idade dos títulos: o a vencer só na barra; nas outras faixas o campo não vem
+    lados = next(c for c in cartoes if c["id"] == "contas-receber-pagar")["lados"]
+    assert [lado["rotuloParticipacao"] for lado in lados] == ["da carteira", "do total"]
+    for lado in lados:
+        assert [f.get("soNaBarra") for f in lado["idade"]] == [True, None, None, None, None]
 
     com_a_decidir = demo.model_copy(update={"paineis_a_decidir": True})
     app.dependency_overrides[get_settings] = lambda: com_a_decidir
@@ -316,6 +326,22 @@ def test_resposta_fica_no_cache_com_a_chave_dos_filtros(
     paineis._respostas.limpar()
 
     assert [c[3]["canal"] for c in estado["chamadas"]] == ["varejo", "atacado"]
+
+
+def test_cadastro_mudado_troca_a_chave_do_cache(client: TestClient, estado: dict[str, Any]) -> None:
+    app: Any = client.app
+    com_cache = get_settings().model_copy(update={"visao_geral_cache_segundos": 3600})
+    app.dependency_overrides[get_settings] = lambda: com_cache
+    paineis._respostas.limpar()
+
+    client.get("/api/telas/vendas")
+    client.get("/api/telas/vendas")
+    # ex.: um parâmetro mudou no banco, sem carga nova
+    estado["versao"] = "outra"
+    client.get("/api/telas/vendas")
+    paineis._respostas.limpar()
+
+    assert len(estado["chamadas"]) == 2
 
 
 def test_openapi_tem_as_rotas_e_os_filtros(client: TestClient) -> None:
@@ -370,3 +396,142 @@ def test_explicacoes_sao_as_da_fixture_do_front() -> None:
         cartoes = {c.id: c for c in paineis.demo(tela).cartoes}
         for id_, texto in textos.items():
             assert cartoes[id_].explicacao == texto, (tela, id_)
+
+
+# ---------- nomes por cartão (Pessoas, "Cargos e salários") ----------
+
+NOMES = "/api/telas/pessoas/cartoes/cargos-salarios/nomes"
+
+
+def _demo(client: TestClient, cache_segundos: int = 0) -> None:
+    app: Any = client.app
+    demo = get_settings().model_copy(
+        update={"visao_geral_demo": True, "visao_geral_cache_segundos": cache_segundos}
+    )
+    app.dependency_overrides[get_settings] = lambda: demo
+
+
+def _cargos(client: TestClient) -> dict[str, Any]:
+    cartoes = client.get("/api/telas/pessoas").json()["cartoes"]
+    return next(c for c in cartoes if c["id"] == "cargos-salarios")
+
+
+def _log(estado: dict[str, Any]) -> tuple[Any, ...]:
+    """A linha de seg.log_acesso da última requisição."""
+    (linha,) = estado["sessoes"][-1].logs
+    return tuple(linha)
+
+
+def test_chave_de_nomes_so_para_quem_ve_dado_nominal(
+    client: TestClient, estado: dict[str, Any]
+) -> None:
+    _demo(client)
+    assert _cargos(client)["nomes"] == {"rotulo": "Mostrar nomes"}
+    # diretoria: vê a tela, mas não o dado nominal; o resto do cartão não muda
+    estado["perfis"] = {str(CLIENTE): False}
+    sem = _cargos(client)
+    assert "nomes" not in sem
+    assert sem["titulo"] == "Cargos e salários"
+
+
+def test_chave_de_nomes_entra_na_chave_do_cache(client: TestClient, estado: dict[str, Any]) -> None:
+    _demo(client, cache_segundos=60)
+    paineis._respostas.limpar()
+    try:
+        assert "nomes" in _cargos(client)
+        estado["perfis"] = {str(CLIENTE): False}
+        # mesmo cliente, empresas e filtros: a resposta do perfil de RH não serve
+        assert "nomes" not in _cargos(client)
+    finally:
+        paineis._respostas.limpar()
+
+
+@pytest.mark.parametrize(
+    "caminho",
+    [
+        "/api/telas/pessoas/cartoes/folha-por-setor/nomes",
+        "/api/telas/vendas/cartoes/cargos-salarios/nomes",
+        "/api/telas/nenhuma/cartoes/cargos-salarios/nomes",
+    ],
+)
+def test_nomes_de_cartao_sem_essa_opcao_404(
+    client: TestClient, estado: dict[str, Any], caminho: str
+) -> None:
+    r = client.get(caminho)
+    assert r.status_code == 404
+    assert r.json() == {"detail": "Este cartão não tem nomes."}
+
+
+def test_nomes_sem_dado_nominal_403(
+    client: TestClient, estado: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    chamadas: list[Any] = []
+    monkeypatch.setitem(paineis.NOMES, ("pessoas", "cargos-salarios"), chamadas.append)
+    # a chave não aparece, mas qualquer um pode chamar a URL
+    estado["perfis"] = {str(CLIENTE): False}
+    r = client.get(NOMES, params={"mes": "2026-10"})
+
+    assert r.status_code == 403
+    assert r.json() == {"detail": "Você não pode ver os nomes deste cartão."}
+    assert chamadas == []
+    assert _log(estado)[4:] == (
+        "PES-01:cargos-salarios:nomes",
+        "negado",
+        6,
+        "tela exige dado nominal e o perfil não permite (filtros: mes=2026-10)",
+    )
+
+
+def test_nomes_sem_a_tela_403_generico(client: TestClient, estado: dict[str, Any]) -> None:
+    estado["perfis"] = {}
+    r = client.get(NOMES)
+    assert r.status_code == 403
+    assert r.json() == {"detail": "Acesso negado."}
+    assert _log(estado)[6] == 4
+
+
+def test_nomes_do_cartao(
+    client: TestClient, estado: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    recebido: list[tuple[Any, ...]] = []
+
+    def montador(ctx: ContextoConsolidado, mes: date | None, carga: Any) -> TabelaNomes:
+        recebido.append((ctx.codigo_tela, ctx.empresas, mes, carga))
+        return TabelaNomes(colunas=COLUNAS_NOMES, linhas=[], vazio="Nenhuma pessoa.")
+
+    monkeypatch.setitem(paineis.NOMES, ("pessoas", "cargos-salarios"), montador)
+    r = client.get(NOMES, params={"mes": "2026-10", "empresa": str(EMPRESA)})
+
+    assert r.status_code == 200
+    assert r.headers["cache-control"] == "no-store"
+    assert r.json()["colunas"][1] == {
+        "rotulo": "Cargo",
+        "alinhar": "esquerda",
+        "ocultarNoCelular": True,
+    }
+    assert recebido == [("PES-01", (EMPRESA,), date(2026, 10, 1), CARGA)]
+    # quem pediu, de qual cliente e empresa, com quais filtros
+    assert _log(estado) == (
+        USUARIO,
+        UUID(int=1),
+        CLIENTE,
+        EMPRESA,
+        "PES-01:cargos-salarios:nomes",
+        "permitido",
+        None,
+        "filtros: mes=2026-10",
+    )
+    assert client.get(NOMES, params={"mes": "2026-09"}).status_code == 422
+
+
+def test_nomes_demo(client: TestClient, estado: dict[str, Any]) -> None:
+    _demo(client)
+    r = client.get(NOMES)
+    assert r.status_code == 200
+    assert r.headers["cache-control"] == "no-store"
+    corpo = r.json()
+    assert [c["rotulo"] for c in corpo["colunas"]] == ["Pessoa", "Cargo", "Salário", "Custo mensal"]
+    assert corpo["linhas"][0]["celulas"][0] == {"valor": "Renato Albuquerque", "sub": "Logística"}
+    # o demo também exige o perfil
+    estado["perfis"] = {str(CLIENTE): False}
+    assert client.get(NOMES).status_code == 403

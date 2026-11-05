@@ -30,6 +30,7 @@ from app.telas.paineis.contrato import (
 )
 from app.telas.paineis.receber_pagar import IndicadoresMensais
 from app.telas.plano import Plano, plano_das_linhas
+from app.telas.visao_geral.contrato import Valor
 
 D = Decimal
 CARGA = UltimaCarga(data_snapshot=date(2026, 10, 13), fim=None)
@@ -142,6 +143,10 @@ def leituras(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
         "lancamentos": True,
         "titulos": None,
         "plano": PLANO,
+        # % da receita bruta provisionado como inadimplência (None: sem o parâmetro)
+        "inadimplencia": None,
+        # contas que o cliente tira da DRE (dre.contas_fora)
+        "contas_fora": [],
     }
     monkeypatch.setattr(
         resultado, "tabelas_lancamentos", lambda c, x: [1] if estado["lancamentos"] else []
@@ -154,6 +159,14 @@ def leituras(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
     monkeypatch.setattr(resultado, "cenario_escolhido", lambda conn, ctx, d: None)
     monkeypatch.setattr(resultado, "ler_plano", lambda conn: estado["plano"])
     monkeypatch.setattr(resultado, "indicadores_mensais", lambda conn, ctx, ate: estado["titulos"])
+    monkeypatch.setattr(
+        resultado, "taxa_inadimplencia", lambda conn, c, mes: estado["inadimplencia"]
+    )
+    monkeypatch.setattr(
+        resultado,
+        "fora_da_dre",
+        lambda conn, c: lambda mes, conta: conta in estado["contas_fora"],
+    )
     return estado
 
 
@@ -220,6 +233,57 @@ def test_dados_com_o_sinal_da_dre_e_orcado_em_valor_absoluto() -> None:
     assert dados.orcamento["base"][SETEMBRO]["100.01.21"] == 1050
     assert dados.orcamento["base"][SETEMBRO]["140.02.04"] == 50
     assert dados.fora_do_plano == {}
+
+
+def test_inadimplencia_provisionada_sobre_a_receita_bruta() -> None:
+    # 0,4% em setembro; outubro sem o parâmetro vigente
+    def taxa(mes: date) -> Decimal | None:
+        return D("0.4") if mes == SETEMBRO else None
+
+    dados = resultado.dados_das_linhas(_linhas(), PLANO, taxa)
+    setembro = dados.real[SETEMBRO]
+
+    # 0,4% de 1.000 nas deduções (110.01.02), além das devoluções
+    assert setembro[resultado.CONTA_INADIMPLENCIA] == D(4)
+    t = resultado.totais(setembro)
+    assert t.receita_liquida == 976
+    assert t.devolucoes == 20
+    assert all(
+        resultado.CONTA_INADIMPLENCIA not in contas
+        for mes, contas in dados.real.items()
+        if mes != SETEMBRO
+    )
+    # sem a taxa, nada muda
+    assert resultado.CONTA_INADIMPLENCIA not in resultado.dados_das_linhas(_linhas()).real[SETEMBRO]
+
+
+def test_inadimplencia_na_dre_do_painel(leituras: dict[str, Any]) -> None:
+    sem = _montar()
+    leituras["inadimplencia"] = D("0.4")
+    com = _montar()
+
+    rl_sem, rl_com = (
+        next(d for d in c.destaques if d.rotulo.startswith("Receita líquida")) for c in (sem, com)
+    )
+    assert isinstance(rl_sem.valor, Valor)
+    assert isinstance(rl_com.valor, Valor)
+    # 0,4% de 1.000 a menos na receita líquida de setembro
+    assert rl_sem.valor.valor - rl_com.valor.valor == 4
+
+
+def test_conta_fora_da_dre_por_escolha_do_cliente() -> None:
+    linhas = _linhas()
+    com = resultado.dados_das_linhas(linhas, PLANO)
+    assert "140.02.04" in com.real[SETEMBRO]
+    assert "140.02.04" in com.orcamento["base"][SETEMBRO]
+
+    sem = resultado.dados_das_linhas(linhas, PLANO, fora_da_dre=lambda mes, c: c == "140.02.04")
+
+    # fora do realizado e do orçado, sem ir para o rodapé de contas fora do plano
+    assert "140.02.04" not in sem.real[SETEMBRO]
+    assert "140.02.04" not in sem.orcamento["base"][SETEMBRO]
+    assert sem.fora_do_plano == {}
+    assert set(com.real[SETEMBRO]) - set(sem.real[SETEMBRO]) == {"140.02.04"}
 
 
 def test_totais_da_dre() -> None:

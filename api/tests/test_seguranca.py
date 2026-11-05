@@ -212,6 +212,7 @@ def test_supabase_token_valido() -> None:
     usuario = validar_token_supabase(_token_supabase(), _settings_supabase(), _obter_chave_ec)
     assert usuario.id_autenticacao == SUB
     assert usuario.email == "ana@alfa.example"
+    assert usuario.sessao_id == uuid.UUID("11111111-0000-4000-8000-000000000001")
 
 
 def test_supabase_expirado_dentro_do_leeway_aceito() -> None:

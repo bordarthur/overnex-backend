@@ -278,7 +278,7 @@ def montar(
     if mes is None or panorama.ultimo_dia is None:
         return Conteudo()
     fechado = mes < carga.data_snapshot.replace(day=1)
-    mp = mes_painel(conn, ctx, mes, panorama.ultimo_dia, fechado)
+    mp = mes_painel(conn, ctx, mes, panorama.ultimo_dia, fechado, panorama.dias_venda)
     limites = limites_faixas(_parametro(conn, ctx, "clientes.faixas_valor", mes))
     dados = ler_dados(conn, ctx, f, mes, limites)
     atual = dados.meses.get(mes)

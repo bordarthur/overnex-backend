@@ -356,6 +356,13 @@ def test_dois_lados(leituras: dict[str, Any]) -> None:
         ("61 a 90", "critico"),
         ("Mais de 90", "critico"),
     ]
+    # o a vencer fica só na barra, nos dois lados; as outras faixas não mandam o campo
+    for lado in (receber, pagar):
+        assert [i.so_na_barra for i in lado.idade] == [True, None, None, None, None]
+    assert (receber.rotulo_participacao, pagar.rotulo_participacao) == (
+        "da carteira",
+        "do total",
+    )
     assert receber.maiores[0].nome == "Mercantil Aurora"
     assert receber.maiores[0].etiqueta == "vencido"
     assert receber.maiores[1].nome == "Cliente 11"
