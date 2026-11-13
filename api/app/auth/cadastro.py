@@ -11,13 +11,23 @@ from uuid import UUID
 
 from fastapi import Depends
 
-from app.core.db import Pool, get_pool
+from app.core.db import Pool, em_uma_ida, get_pool
 
 
 @dataclass(frozen=True)
 class UsuarioCadastrado:
     nome: str | None
     email: str
+    # tempo de sessão parada da pessoa (seg.limite_sessao), para o front contar
+    inatividade_segundos: int
+
+
+SQL_CADASTRO = """
+    select nome, email,
+           extract(epoch from seg.limite_sessao(id_autenticacao))::integer as inatividade
+      from seg.usuario
+     where id = %s
+"""
 
 
 # (id de autenticação, recurso do log) → cadastro, ou None se inexistente ou inativo
@@ -28,9 +38,13 @@ def get_verificar_cadastro(pool: Annotated[Pool, Depends(get_pool)]) -> Verifica
     def verificar(id_autenticacao: UUID, recurso: str) -> UsuarioCadastrado | None:
         with pool.connection() as conn:
             try:
-                linha = conn.execute(
-                    "select id, ativo from seg.resolver_usuario(%s)", (id_autenticacao,)
-                ).fetchone()
+                # em_uma_ida abre a transação (conexão em autocommit): o set_config abaixo
+                # vale até o commit
+                resolvido = em_uma_ida(
+                    conn,
+                    {"u": ("select id, ativo from seg.resolver_usuario(%s)", (id_autenticacao,))},
+                )["u"]
+                linha = resolvido[0] if resolvido else None
                 usuario_id: UUID | None = linha["id"] if linha else None
                 conn.execute(
                     "select set_config('app.usuario_id', %s, true)",
@@ -38,11 +52,13 @@ def get_verificar_cadastro(pool: Annotated[Pool, Depends(get_pool)]) -> Verifica
                 )
                 cadastro = None
                 if linha and linha["ativo"]:
-                    dados = conn.execute(
-                        "select nome, email from seg.usuario where id = %s", (usuario_id,)
-                    ).fetchone()
+                    dados = conn.execute(SQL_CADASTRO, (usuario_id,)).fetchone()
                     if dados:
-                        cadastro = UsuarioCadastrado(nome=dados["nome"], email=dados["email"])
+                        cadastro = UsuarioCadastrado(
+                            nome=dados["nome"],
+                            email=dados["email"],
+                            inatividade_segundos=dados["inatividade"],
+                        )
                 conn.execute(
                     """
                     insert into seg.log_acesso

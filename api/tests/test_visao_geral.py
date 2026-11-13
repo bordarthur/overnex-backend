@@ -177,14 +177,19 @@ def test_sessao_da_ana(client: TestClient) -> None:
     r = client.get(SESSAO, headers=auth(OID_A))
 
     assert r.status_code == 200
+    alfa = {
+        "nome": "Padrão LANN Alfa",
+        "sigla": "PA",
+        "logoUrl": None,
+        "slug": "padrao-lann-alfa",
+    }
     assert r.json() == {
         "usuario": {"nome": "Ana Alfa", "email": "ana@alfa.example"},
-        "cliente": {
-            "nome": "Padrão LANN Alfa",
-            "sigla": "PA",
-            "logoUrl": None,
-            "slug": "padrao-lann-alfa",
-        },
+        "perfil": {"id": "cliente_principal", "rotulo": "Cliente principal"},
+        "gestao": False,
+        # um vínculo só: o cliente dela já vem escolhido
+        "clientes": [alfa],
+        "cliente": alfa,
         "papel": "gestor",
         "empresas": [
             {"id": EMPRESA_A2, "nome": "Alfa Comércio"},
@@ -192,12 +197,14 @@ def test_sessao_da_ana(client: TestClient) -> None:
         ],
         "telas": ["COM-01", "COM-02", "COM-03", "FIN-01", "FIN-02", "FIN-03", "VG-01"],
         "periodos": [{"id": "2026-10", "rotulo": "Outubro de 2026", "dadosAte": "2026-10-12"}],
+        "aviso": None,
     }
 
 
 def test_sessao_do_bruno_so_ve_o_cliente_dele(client: TestClient) -> None:
     corpo = client.get(SESSAO, headers=auth(OID_B)).json()
     assert corpo["cliente"]["slug"] == "padrao-lann-beta"
+    assert [c["slug"] for c in corpo["clientes"]] == ["padrao-lann-beta"]
     assert corpo["empresas"] == [{"id": EMPRESA_B1, "nome": "Beta Serviços"}]
 
 

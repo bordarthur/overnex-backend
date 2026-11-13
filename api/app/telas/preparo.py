@@ -10,7 +10,7 @@ de montar de novo (CacheComPrazo.obter_ou_montar).
 - a checagem de acesso é a mesma da rota (tela no perfil, empresas, dado nominal), mas o
   registro em seg.log_acesso não é gravado: o usuário não abriu a tela. Quando abrir, a
   rota confere e registra como sempre;
-- uma vez por usuário a cada metade do prazo do cache, no máximo a cada 7,5 min
+- uma vez por usuário e cliente escolhido a cada metade do prazo do cache, no máximo a cada 7,5 min
   (INTERVALO_MAXIMO): com o prazo longo, uma carga nova não espera para ser pré-montada, e
   com o cache quente pré-montar custa só a checagem e a pré-leitura; com o cache desligado
   (VISAO_GERAL_CACHE_SEGUNDOS=0), não pré-monta;
@@ -31,6 +31,7 @@ from app.core.erros import AcessoNegado
 from app.seguranca.acesso import ContextoConsolidado, verificar_acesso_consolidado
 from app.seguranca.auth import UsuarioToken
 from app.telas.paineis import router as paineis
+from app.telas.preleitura import consultas_adiantadas
 from app.telas.visao_geral import router as visao_geral
 
 logger = logging.getLogger(__name__)
@@ -63,29 +64,47 @@ _fila = ThreadPoolExecutor(max_workers=2, thread_name_prefix="preparo")
 
 
 def agendar(
-    pool: Pool | None, usuario: UsuarioToken, telas: Sequence[str], settings: Settings
+    pool: Pool | None,
+    usuario: UsuarioToken,
+    telas: Sequence[str],
+    settings: Settings,
+    cliente: str | None = None,
 ) -> list[str]:
-    """Agenda a pré-montagem das `telas` liberadas (códigos); devolve as agendadas."""
+    """Agenda a pré-montagem das `telas` liberadas (códigos) no cliente escolhido (`cliente`
+    = slug; None para quem tem um cliente só); devolve as agendadas."""
     prazo = settings.visao_geral_cache_segundos
     if pool is None or prazo <= 0:
         return []
-    chave: UUID = usuario.id_autenticacao
+    # por cliente: quem troca de empresa tem as telas da nova pré-montadas também
+    chave: tuple[UUID, str | None] = (usuario.id_autenticacao, cliente)
     if _agendados.obter(chave):
         return []
     _agendados.guardar(chave, True, min(prazo / 2, INTERVALO_MAXIMO))
     escolhidas = [t for t in TELAS if t.codigo in telas]
-    _fila.submit(preparar, pool, usuario, escolhidas, settings)
+    _fila.submit(preparar, pool, usuario, escolhidas, settings, cliente)
     return [t.codigo for t in escolhidas]
 
 
-def preparar(pool: Pool, usuario: UsuarioToken, telas: Sequence[Tela], settings: Settings) -> None:
+def preparar(
+    pool: Pool,
+    usuario: UsuarioToken,
+    telas: Sequence[Tela],
+    settings: Settings,
+    cliente: str | None = None,
+) -> None:
     for tela in telas:
         try:
             with pool.connection() as conn:
                 sessao = Sessao(conn=conn, usuario=usuario, pool=pool)
                 try:
                     ctx = verificar_acesso_consolidado(
-                        sessao, tela.codigo, None, exige_dado_nominal=tela.nominal
+                        sessao,
+                        tela.codigo,
+                        None,
+                        exige_dado_nominal=tela.nominal,
+                        cliente=cliente,
+                        # a pré-leitura da tela, na mesma ida ao banco
+                        junto=consultas_adiantadas(conn),
                     )
                     tela.responder(ctx, settings)
                 finally:

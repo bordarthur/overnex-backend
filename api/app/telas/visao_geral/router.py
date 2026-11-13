@@ -20,8 +20,9 @@ chave na hora. Só uma correção feita à mão no mart, sem carga nova, espera 
 que grava uma escolha apaga as respostas do cliente (libera a memória). O acesso continua
 conferido e registrado a cada requisição. Duas requisições da mesma chave
 ao mesmo tempo (ex.: a pré-montagem depois de /api/sessao e o clique) montam uma vez só.
-Ao montar, última carga, cliente, fontes, parâmetros e feriados vêm numa ida ao banco
-(app/telas/preleitura.py), e as seções independentes rodam em paralelo, cada ramo com uma
+Última carga, cliente, fontes, parâmetros e feriados vêm na mesma ida ao banco da checagem
+de acesso (app/telas/preleitura.py): com a resposta pronta, a tela custa essa ida só. Ao
+montar, as seções independentes rodam em paralelo, cada ramo com uma
 conexão própria do mesmo usuário (_em_paralelo): o tempo da tela é o do ramo mais lento.
 """
 
@@ -44,7 +45,7 @@ from app.seguranca.acesso import ContextoConsolidado, exigir_tela_consolidada
 from app.telas.calendario import ultimo_dia_do_mes
 from app.telas.moldura import MesComDados, ModeloCamel
 from app.telas.paralelo import em_paralelo
-from app.telas.preleitura import Inicio, preler
+from app.telas.preleitura import Inicio, exigir_tela_com_inicio, preler
 from app.telas.visao_geral import preferencias
 from app.telas.visao_geral.contrato import Periodo, Secao, VisaoGeralPayload
 from app.telas.visao_geral.custos import secao_custos
@@ -161,7 +162,7 @@ def _secoes(ctx: ContextoConsolidado, r: Recorte) -> list[Secao]:
     },
 )
 def visao_geral(
-    ctx: Annotated[ContextoConsolidado, Depends(exigir_tela_consolidada(CODIGO_TELA))],
+    ctx: Annotated[ContextoConsolidado, Depends(exigir_tela_com_inicio(CODIGO_TELA))],
     settings: Annotated[Settings, Depends(get_settings)],
     mes: Annotated[
         str | None,
@@ -177,7 +178,7 @@ def responder(
     """A resposta da tela: do cache ou montada (também pela pré-montagem, app/telas/preparo.py)."""
     hoje = date.today()
     with por_requisicao():
-        inicio = preler(ctx.sessao.conn, ctx.cliente_id, com_meses=mes is not None)
+        inicio = preler(ctx.sessao, ctx.cliente_id, com_meses=mes is not None)
         # Tudo de que a resposta depende. Os dados só mudam com uma carga nova (sem carga, a
         # tela usa o dia de hoje); as empresas são as que a tela soma, que o RLS já recorta.
         # O cliente vem primeiro: gravar uma escolha apaga as respostas dele (_apagar_cliente).

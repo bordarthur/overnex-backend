@@ -19,6 +19,20 @@ class ProvedorAuth(StrEnum):
     ENTRA = "entra"
 
 
+DOMINIOS_ADMIN_PADRAO = "bordgestao.com.br"
+
+
+def dominios(texto: str) -> frozenset[str]:
+    """Domínios de uma lista separada por vírgula, em minúsculas e sem o @."""
+    return frozenset(d.strip().lower().lstrip("@") for d in texto.split(",") if d.strip())
+
+
+def email_de_admin(email: str, admin_dominios: str) -> bool:
+    """O e-mail é de um dos domínios que podem ter o perfil Admin BORD."""
+    _, _, dominio = email.strip().lower().rpartition("@")
+    return bool(dominio) and dominio in dominios(admin_dominios)
+
+
 class Settings(BaseSettings):
     # hide_input_in_errors: erro de configuração nunca mostra os valores (há segredos)
     model_config = SettingsConfigDict(
@@ -43,9 +57,13 @@ class Settings(BaseSettings):
     # sessão e de inatividade são do plano Pro): este é o prazo máximo. Cada renovação troca
     # o cookie e recomeça a contagem.
     auth_refresh_segundos: int = 7 * 24 * 3600
-    # Sessão sem uso (pedido autenticado ou renovação) por mais que isto: o renovar responde
-    # 401 e encerra a sessão. Último uso em seg.sessao_uso (ver app/auth/uso.py).
-    auth_inatividade_segundos: int = 30 * 60
+    # O tempo de sessão parada não é configuração: sai do cadastro de cada pessoa
+    # (seg.limite_sessao, migration 28; ver app/auth/uso.py).
+    # Domínios de e-mail que podem ter o perfil Admin BORD, separados por vírgula.
+    admin_dominios: str = DOMINIOS_ADMIN_PADRAO
+    # Validade do link do convite, para a Gestão dizer "convite vencido". Precisa ser a
+    # mesma do Supabase Auth (Authentication → Email → Email OTP Expiration, em segundos).
+    auth_convite_horas: int = 24
     # Padrão seguro: sem AMBIENTE explícito, comporta-se como produção.
     ambiente: Ambiente = Ambiente.PROD
     auth_fake: bool = False
@@ -63,6 +81,11 @@ class Settings(BaseSettings):
     # pré-montagem depois de /api/sessao (app/telas/preparo.py) roda junto com a tela aberta.
     db_pool_min: int = 8
     db_pool_max: int = 20
+    # A conexão que sai do pool só é testada (uma ida ao banco) se ficou parada mais que
+    # isto; 0 testa sempre. O pool empresta em rodízio: com pouco movimento, cada conexão
+    # fica parada DB_POOL_MIN vezes o intervalo entre os pedidos. Não passar do tempo em
+    # que a rede ou o pooler fecham conexão parada (no Azure, 4 min).
+    db_teste_parada_segundos: int = 60
 
     @model_validator(mode="after")
     def _validar(self) -> Self:
@@ -93,8 +116,10 @@ class Settings(BaseSettings):
             )
         if self.auth_refresh_segundos <= 0:
             raise ValueError("AUTH_REFRESH_SEGUNDOS precisa ser maior que zero.")
-        if self.auth_inatividade_segundos <= 0:
-            raise ValueError("AUTH_INATIVIDADE_SEGUNDOS precisa ser maior que zero.")
+        if self.auth_convite_horas <= 0:
+            raise ValueError("AUTH_CONVITE_HORAS precisa ser maior que zero.")
+        if not dominios(self.admin_dominios):
+            raise ValueError("ADMIN_DOMINIOS precisa ter pelo menos um domínio.")
         return self
 
     @property
@@ -126,6 +151,8 @@ class ConfigCadastro(BaseSettings):
     front_url: str
     # Conexão como postgres (ignora o RLS): grava seg.usuario e os vínculos.
     database_url_admin: SecretStr
+    # Domínios de e-mail que podem ter o perfil Admin BORD (o mesmo valor da API).
+    admin_dominios: str = DOMINIOS_ADMIN_PADRAO
 
     @model_validator(mode="after")
     def _validar(self) -> Self:

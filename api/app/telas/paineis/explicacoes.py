@@ -90,6 +90,38 @@ EXPLICACOES: Mapping[TelaPainel, Mapping[str, str]] = {
             "Serve para ver tendência, não para ler número a número."
         ),
     },
+    "fluxo-caixa": {
+        "saldo-projetado": (
+            "Quanto vai ter no caixa no fim de cada dia dos próximos 60 dias. Parte do saldo da "
+            "DFC no último dia com caixa e soma o que vence a receber e a pagar. Em “Lançados + "
+            "provisões”, entra também a média do que ainda não foi lançado."
+        ),
+        "origem-projecao": (
+            "De onde vem cada real da projeção: o que já está lançado no sistema e o que é "
+            "estimado pela média. Riscado é o que não entra no saldo da visão escolhida."
+        ),
+        "semana-a-semana": (
+            "Entradas e saídas previstas em cada semana, o saldo no último dia e o menor saldo "
+            "dentro da semana, que mostra o aperto antes de o dinheiro entrar."
+        ),
+        "provisoes": (
+            "O que a empresa costuma receber e pagar por mês, menos o que já está lançado. É o "
+            "que completa a visão “Lançados + provisões”. Quem vê este painel pode mudar, e a "
+            "mudança vale para todos."
+        ),
+        "pago-lancado": (
+            "Compara o que a empresa pagou em cada mês com o que já está lançado para os "
+            "próximos. Pouco lançado nos próximos 30 dias quer dizer que faltam contas no "
+            "sistema, e o caixa “só lançados” parece melhor do que vai ser."
+        ),
+        "geracao-caixa": (
+            "Quanto a operação, os investimentos e os financiamentos geraram ou consumiram de "
+            "caixa em cada mês que já passou."
+        ),
+        "fluxo-realizado": (
+            "O que entrou e saiu de fato, mês a mês, do saldo inicial ao saldo final."
+        ),
+    },
     "receber-pagar": {
         "inadimplencia-safra": (
             "Para cada mês de vencimento, mostra quanto ainda estava em aberto um tempo fixo "

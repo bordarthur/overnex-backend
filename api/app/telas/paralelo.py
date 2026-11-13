@@ -22,7 +22,7 @@ def em_paralelo[T](
     """Roda os ramos ao mesmo tempo e devolve os resultados na ordem.
 
     O primeiro usa a conexão da requisição; cada um dos outros, uma conexão própria do
-    mesmo usuário (app.usuario_id da checagem que passou, o mesmo RLS), só leitura. O cache
+    mesmo usuário e cliente (os da checagem que passou, o mesmo RLS), só leitura. O cache
     por requisição (app/core/cache.py) vai junto: cada thread recebe uma cópia do contexto,
     que aponta para o mesmo dicionário. Sem pool (testes), roda em sequência.
     """
@@ -31,7 +31,7 @@ def em_paralelo[T](
         return [ramo(ctx) for ramo in ramos]
 
     def em_outra_conexao(ramo: Callable[[ContextoConsolidado], T]) -> T:
-        with conexao_paralela(pool, ctx.usuario_id) as conn:
+        with conexao_paralela(pool, ctx.usuario_id, ctx.cliente_id) as conn:
             return ramo(replace(ctx, sessao=replace(ctx.sessao, conn=conn)))
 
     futuros: list[Future[T]] = [

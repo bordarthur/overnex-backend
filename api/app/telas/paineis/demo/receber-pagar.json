@@ -115,14 +115,16 @@
               "valor": {
                 "valor": 1234640,
                 "unidade": "brl"
-              }
+              },
+              "cor": "entra"
             },
             {
               "rotulo": "A pagar",
               "valor": {
                 "valor": -530000,
                 "unidade": "brl"
-              }
+              },
+              "cor": "sai"
             },
             {
               "rotulo": "Sobra no período",
@@ -143,14 +145,16 @@
               "valor": {
                 "valor": 2676680,
                 "unidade": "brl"
-              }
+              },
+              "cor": "entra"
             },
             {
               "rotulo": "A pagar",
               "valor": {
                 "valor": -1010000,
                 "unidade": "brl"
-              }
+              },
+              "cor": "sai"
             },
             {
               "rotulo": "Sobra no período",
@@ -171,14 +175,16 @@
               "valor": {
                 "valor": 5256492,
                 "unidade": "brl"
-              }
+              },
+              "cor": "entra"
             },
             {
               "rotulo": "A pagar",
               "valor": {
                 "valor": -3660000,
                 "unidade": "brl"
-              }
+              },
+              "cor": "sai"
             },
             {
               "rotulo": "Sobra no período",
@@ -517,7 +523,8 @@
           "celulas": [
             {
               "valor": "Mercantil Aurora",
-              "etiqueta": "parou de comprar"
+              "etiqueta": "parou de comprar",
+              "tomEtiqueta": "vermelho"
             },
             {
               "valor": {
@@ -576,7 +583,8 @@
           "celulas": [
             {
               "valor": "Rede Bom Preço Sul",
-              "etiqueta": "parou de comprar"
+              "etiqueta": "parou de comprar",
+              "tomEtiqueta": "vermelho"
             },
             {
               "valor": {
@@ -635,7 +643,8 @@
           "celulas": [
             {
               "valor": "Supermercado Primavera",
-              "etiqueta": "parou de comprar"
+              "etiqueta": "parou de comprar",
+              "tomEtiqueta": "vermelho"
             },
             {
               "valor": {

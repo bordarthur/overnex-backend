@@ -1,5 +1,5 @@
-"""GET /api/telas/vendas, /equipe-comercial, /clientes, /resultado, /receber-pagar e /pessoas
-contra o banco local.
+"""GET /api/telas/vendas, /equipe-comercial, /clientes, /resultado, /receber-pagar,
+/fluxo-caixa e /pessoas contra o banco local.
 
 Dados no formato da PJ Cortes (colunas_modelo com vendedor, linha e quantidade) no cliente
 Beta (Bruno; última carga em 11/10/2026).
@@ -22,6 +22,7 @@ CLIENTES = "/api/telas/clientes"
 RESULTADO = "/api/telas/resultado"
 RECEBER_PAGAR = "/api/telas/receber-pagar"
 PESSOAS = "/api/telas/pessoas"
+FLUXO = "/api/telas/fluxo-caixa"
 SESSAO = "/api/sessao"
 
 CAMINHOS = [
@@ -519,3 +520,193 @@ def test_pessoas_nomes_fora_do_perfil_403(client: TestClient) -> None:
     r = client.get(NOMES, headers=auth(OID_A))
     assert r.status_code == 403
     assert r.json() == {"detail": "Acesso negado."}
+
+
+# ---------- fluxo de caixa (FIN-04) ----------
+
+CAMINHO_FLUXO = "dataflow/dbo_f_fluxo_teste_paineis/dbo_f_fluxo_teste_paineis.parquet"
+
+
+@pytest.fixture
+def fluxo_do_bruno(admin_conn: psycopg.Connection[tuple[Any, ...]]) -> Iterator[None]:
+    """Caixa de setembro e outubro no formato da view f_Fluxo_PJ, saldo de 100 em 01/09 e
+    FIN-04 só no perfil do Bruno. As contas são do plano padrão do seed."""
+    admin_conn.execute(
+        """
+        insert into cfg.fonte_carga
+            (cliente_id, tipo, caminho_bucket, ativo, tabela_destino, contem_dado_nominal)
+        values (%s, 'tabela', %s, false, 'f_fluxo_pj', true)
+        """,
+        (CLIENTE_B, CAMINHO_FLUXO),
+    )
+    # 100.01.01 Aves (FCO, entrada); 400.02.01 amortização (FCF, saída); sem conta (2300)
+    admin_conn.execute(
+        """
+        insert into mart.f_fluxo_pj
+            (_linha, _cliente_id, "Data", "Valor", "Id_Descritivo", "CodConta", "Origem")
+        values (1, %(c)s, '2026-09-10', 1000, '100.01.01', '101', 'Bloco 1'),
+               (2, %(c)s, '2026-09-20', -300, '400.02.01', '301013', 'Bloco 1'),
+               (3, %(c)s, '2026-10-05', 500, '100.01.01', '101', 'Bloco 1'),
+               (4, %(c)s, '2026-10-06', -20, null, '2300', 'Bloco 1')
+        """,
+        {"c": CLIENTE_B},
+    )
+    admin_conn.execute(
+        "insert into cfg.saldo_inicial (cliente_id, data, saldo, origem) "
+        "values (%s, '2026-09-01', 100, 'teste')",
+        (CLIENTE_B,),
+    )
+    admin_conn.execute(
+        "insert into cfg.perfil_tela (perfil_id, codigo_tela, ve_dado_nominal) "
+        "values ('f1000000-0000-4000-8000-00000000000b', 'FIN-04', false)"
+    )
+    yield
+    admin_conn.execute(
+        "delete from cfg.perfil_tela "
+        "where perfil_id = 'f1000000-0000-4000-8000-00000000000b' and codigo_tela = 'FIN-04'"
+    )
+    admin_conn.execute("delete from cfg.saldo_inicial where cliente_id = %s", (CLIENTE_B,))
+    admin_conn.execute("delete from mart.f_fluxo_pj where _cliente_id = %s", (CLIENTE_B,))
+    admin_conn.execute(
+        "delete from cfg.fonte_carga where cliente_id = %s and caminho_bucket = %s",
+        (CLIENTE_B, CAMINHO_FLUXO),
+    )
+
+
+@pytest.mark.usefixtures("fluxo_do_bruno")
+def test_fluxo_caixa(client: TestClient) -> None:
+    r = client.get(FLUXO, headers=auth(OID_B))
+
+    assert r.status_code == 200
+    corpo = r.json()
+    assert corpo["tela"] == "fluxo-caixa"
+    assert [o["id"] for o in corpo["filtros"][0]["opcoes"]] == ["mes", "ano"]
+    saldo = corpo["destaques"][0]
+    # 100 + (1.000 − 300) em setembro + (500 − 20) em outubro
+    assert saldo["rotulo"] == "Saldo final de outubro"
+    assert saldo["valor"]["valor"] == 1280
+    arvore = next(c for c in corpo["cartoes"] if c["id"] == "fluxo-realizado")
+    assert [c["rotulo"] for c in arvore["colunas"]] == ["set-26", "out-26"]
+    linhas = {x["id"]: x["valores"] for x in arvore["linhas"]}
+    assert linhas["saldo-inicial"] == [100, 800]
+    assert linhas["fcf"] == [-300, None]
+    assert linhas["sem-classificacao"] == [None, -20]
+    assert "conta 2300 do ERP" in arvore["rodape"][0]
+
+
+@pytest.mark.usefixtures("fluxo_do_bruno")
+def test_fluxo_caixa_mes_e_acumulado(client: TestClient) -> None:
+    corpo = client.get(FLUXO, params={"mes": "2026-09"}, headers=auth(OID_B)).json()
+    assert corpo["destaques"][0]["valor"]["valor"] == 800
+    ano = client.get(FLUXO, params={"visao": "ano"}, headers=auth(OID_B)).json()
+    arvore = next(c for c in ano["cartoes"] if c["id"] == "fluxo-realizado")
+    assert arvore["colunas"][-1] == {"rotulo": "Acumulado 2026", "total": True}
+    linhas = {x["id"]: x["valores"] for x in arvore["linhas"]}
+    assert linhas["saldo-inicial"][-1] == 100
+    assert linhas["saldo-final"][-1] == 1280
+
+
+def _cartao(corpo: dict[str, Any], id_: str) -> dict[str, Any]:
+    cartao: dict[str, Any] = next(c for c in corpo["cartoes"] if c["id"] == id_)
+    return cartao
+
+
+@pytest.mark.usefixtures("fluxo_do_bruno")
+def test_fluxo_caixa_projecao(client: TestClient) -> None:
+    corpo = client.get(FLUXO, headers=auth(OID_B)).json()
+    assert corpo["filtros"][1]["id"] == "projecao"
+    assert corpo["filtros"][1]["cartao"] == "saldo-projetado"
+    assert [c["id"] for c in corpo["cartoes"]][:2] == ["saldo-projetado", "origem-projecao"]
+    # D0 = 06/10 (último dia com caixa); sem títulos, o saldo só lançado fica parado
+    serie = _cartao(corpo, "saldo-projetado")["graficos"][0]["grafico"]["series"][0]
+    assert serie["valores"][0] == 1280
+    assert serie["valores"][-1] == 1280
+    # a média de 6 meses só tem setembro: recebimentos 1.000 e empréstimos 300
+    provisoes = {g["id"]: g for g in _cartao(corpo, "provisoes")["grupos"]}
+    assert provisoes["recebimentos"]["media"] == 1000
+    assert provisoes["emprestimos"]["media"] == 300
+    assert provisoes["recebimentos"]["personalizado"] is None
+    com = client.get(FLUXO, params={"projecao": "provisoes"}, headers=auth(OID_B)).json()
+    serie = _cartao(com, "saldo-projetado")["graficos"][0]["grafico"]["series"][0]
+    # + 1.000 em cada janela, − 300 em cada janela
+    assert serie["valores"][-1] == 2680
+    assert client.get(FLUXO, params={"projecao": "x"}, headers=auth(OID_B)).status_code == 422
+
+
+@pytest.fixture
+def sem_provisoes_do_bruno(admin_conn: psycopg.Connection[tuple[Any, ...]]) -> Iterator[None]:
+    yield
+    admin_conn.execute(
+        "delete from cfg.parametro_cliente where cliente_id = %s and chave like %s",
+        (CLIENTE_B, "preferencia.provisao.%"),
+    )
+
+
+@pytest.mark.usefixtures("fluxo_do_bruno", "sem_provisoes_do_bruno")
+def test_provisoes_gravam_e_mudam_a_tela(
+    client: TestClient, admin_conn: psycopg.Connection[tuple[Any, ...]]
+) -> None:
+    rota = "/api/telas/fluxo-caixa/cartoes/provisoes"
+    r = client.put(f"{rota}/periodo", json={"periodo": "ultimo-mes"}, headers=auth(OID_B))
+    assert r.status_code == 204
+    r = client.put(
+        f"{rota}/grupos/emprestimos", json={"ligado": False, "valor": None}, headers=auth(OID_B)
+    )
+    assert r.status_code == 204
+    r = client.put(
+        f"{rota}/grupos/recebimentos", json={"ligado": True, "valor": 500}, headers=auth(OID_B)
+    )
+    assert r.status_code == 204
+
+    corpo = client.get(FLUXO, params={"projecao": "provisoes"}, headers=auth(OID_B)).json()
+    cartao = _cartao(corpo, "provisoes")
+    assert cartao["periodo"] == "ultimo-mes"
+    grupos = {g["id"]: g for g in cartao["grupos"]}
+    assert grupos["emprestimos"]["ligado"] is False
+    assert grupos["recebimentos"]["usado"] == 500
+    assert grupos["recebimentos"]["personalizado"].startswith("personalizado por ")
+    # recebimentos: 500 em J1 e 500 + 0 − 0 em J2; empréstimos desligado
+    serie = _cartao(corpo, "saldo-projetado")["graficos"][0]["grafico"]["series"][0]
+    assert serie["valores"][-1] == 2280
+
+    linhas = admin_conn.execute(
+        "select chave from cfg.parametro_cliente where cliente_id = %s and chave like %s",
+        (CLIENTE_B, "preferencia.provisao.%"),
+    ).fetchall()
+    assert {r[0] for r in linhas} == {
+        "preferencia.provisao.todas.periodo",
+        "preferencia.provisao.todas.grupo.emprestimos",
+        "preferencia.provisao.todas.grupo.recebimentos",
+    }
+    log = admin_conn.execute(
+        "select count(*) from seg.log_alteracao "
+        "where tabela = 'cfg.parametro_cliente' and registro_id like %s",
+        (f"{CLIENTE_B}/preferencia.provisao.%",),
+    ).fetchone()
+    assert log is not None
+    assert log[0] >= 3
+
+
+@pytest.mark.usefixtures("fluxo_do_bruno")
+def test_fluxo_caixa_fora_do_perfil_403(client: TestClient) -> None:
+    assert client.get(FLUXO, headers=auth(OID_A)).status_code == 403
+    assert "FIN-04" in client.get(SESSAO, headers=auth(OID_B)).json()["telas"]
+
+
+@pytest.mark.usefixtures("fluxo_do_bruno")
+def test_fluxo_caixa_nao_vaza_para_outro_cliente(
+    client: TestClient, admin_conn: psycopg.Connection[tuple[Any, ...]]
+) -> None:
+    # Ana com a FIN-04, mas o caixa e o saldo são do Bruno: nada a mostrar
+    admin_conn.execute(
+        "insert into cfg.perfil_tela (perfil_id, codigo_tela, ve_dado_nominal) "
+        "values ('f1000000-0000-4000-8000-00000000000a', 'FIN-04', false)"
+    )
+    try:
+        corpo = client.get(FLUXO, headers=auth(OID_A)).json()
+        assert corpo["cartoes"] == []
+    finally:
+        admin_conn.execute(
+            "delete from cfg.perfil_tela "
+            "where perfil_id = 'f1000000-0000-4000-8000-00000000000a' and codigo_tela = 'FIN-04'"
+        )

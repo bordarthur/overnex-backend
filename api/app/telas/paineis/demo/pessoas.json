@@ -384,7 +384,8 @@
                 ]
               }
             ]
-          }
+          },
+          "cor": 0
         },
         {
           "titulo": "Comercial",
@@ -526,7 +527,8 @@
                 ]
               }
             ]
-          }
+          },
+          "cor": 1
         },
         {
           "titulo": "Administrativo",
@@ -668,7 +670,8 @@
                 ]
               }
             ]
-          }
+          },
+          "cor": 2
         },
         {
           "titulo": "Expedição",
@@ -810,7 +813,8 @@
                 ]
               }
             ]
-          }
+          },
+          "cor": 3
         },
         {
           "titulo": "Estoque",
@@ -952,7 +956,8 @@
                 ]
               }
             ]
-          }
+          },
+          "cor": 4
         },
         {
           "titulo": "Financeiro",
@@ -1094,7 +1099,8 @@
                 ]
               }
             ]
-          }
+          },
+          "cor": 5
         }
       ]
     },
@@ -1531,11 +1537,11 @@
       "legenda": [
         {
           "nome": "Admissões",
-          "marca": "quadrado-escuro"
+          "marca": "quadrado-azul"
         },
         {
           "nome": "Desligamentos",
-          "marca": "quadrado-claro"
+          "marca": "quadrado-laranja"
         }
       ],
       "graficos": [],
@@ -1559,12 +1565,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 2,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 9,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -1575,12 +1581,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 2,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 3,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -1591,12 +1597,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 4,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 1,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -1607,12 +1613,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 3,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 2,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -1623,12 +1629,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 2,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 1,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -1639,12 +1645,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 1,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 5,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -1655,12 +1661,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 4,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 1,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -1671,12 +1677,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 5,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 1,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -1687,12 +1693,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 1,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 9,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -1703,12 +1709,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 4,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 1,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -1719,12 +1725,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 2,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 2,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -1735,12 +1741,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 2,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 2,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   }
@@ -1841,12 +1847,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 1,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 6,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -1857,12 +1863,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 1,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 2,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -1873,12 +1879,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 3,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 1,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -1889,12 +1895,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 2,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 1,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -1905,12 +1911,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 2,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 1,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -1921,12 +1927,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 1,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 3,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -1937,12 +1943,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 3,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 1,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -1953,12 +1959,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 4,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 1,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -1969,12 +1975,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 1,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 7,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -1985,12 +1991,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 2,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 1,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -2001,12 +2007,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 1,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 1,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -2017,12 +2023,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 1,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 1,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   }
@@ -2123,12 +2129,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 1,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 2,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -2139,12 +2145,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 1,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 1,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -2155,12 +2161,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -2171,12 +2177,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 1,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 1,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -2187,12 +2193,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -2203,12 +2209,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 1,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -2219,12 +2225,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 1,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -2235,12 +2241,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -2251,12 +2257,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 1,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -2267,12 +2273,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 1,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -2283,12 +2289,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 1,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 1,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -2299,12 +2305,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 1,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 1,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   }
@@ -2405,12 +2411,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 1,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -2421,12 +2427,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -2437,12 +2443,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 1,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -2453,12 +2459,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -2469,12 +2475,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -2485,12 +2491,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -2501,12 +2507,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -2517,12 +2523,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 1,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -2533,12 +2539,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -2549,12 +2555,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 1,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -2565,12 +2571,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -2581,12 +2587,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   }
@@ -2687,12 +2693,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -2703,12 +2709,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -2719,12 +2725,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -2735,12 +2741,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -2751,12 +2757,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -2767,12 +2773,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -2783,12 +2789,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -2799,12 +2805,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -2815,12 +2821,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 1,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -2831,12 +2837,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -2847,12 +2853,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -2863,12 +2869,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   }
@@ -2969,12 +2975,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -2985,12 +2991,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -3001,12 +3007,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -3017,12 +3023,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -3033,12 +3039,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -3049,12 +3055,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 1,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -3065,12 +3071,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -3081,12 +3087,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -3097,12 +3103,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -3113,12 +3119,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -3129,12 +3135,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -3145,12 +3151,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   }
@@ -3251,12 +3257,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -3267,12 +3273,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -3283,12 +3289,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -3299,12 +3305,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -3315,12 +3321,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -3331,12 +3337,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -3347,12 +3353,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -3363,12 +3369,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -3379,12 +3385,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -3395,12 +3401,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -3411,12 +3417,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   },
@@ -3427,12 +3433,12 @@
                       {
                         "nome": "Admissões",
                         "valor": 0,
-                        "estilo": "serie"
+                        "estilo": "serie-azul"
                       },
                       {
                         "nome": "Desligamentos",
                         "valor": 0,
-                        "estilo": "serie-clara"
+                        "estilo": "serie-laranja"
                       }
                     ]
                   }

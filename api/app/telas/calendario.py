@@ -67,7 +67,7 @@ def dias_uteis(
     return total
 
 
-def mais_dias_uteis(dia: date, n: int, feriados: set[date]) -> date:
+def mais_dias_uteis(dia: date, n: int, feriados: AbstractSet[date]) -> date:
     """O n-ésimo dia útil depois de `dia` (D+n), sem contar o próprio `dia`."""
     while n > 0:
         dia += timedelta(days=1)

@@ -37,7 +37,9 @@ O script faz o seguinte:
 4. Adiciona a coluna `_data_snapshot`, com a data da execução (`AAAA-MM-DD`).
 5. Gera um Parquet com compressão zstd e o envia ao Supabase com upsert (`x-upsert: true`).
 
-Se uma tabela falhar (por exemplo, nome errado ou falta de permissão), o script segue com as demais e, no final, termina com erro listando as que falharam.
+Se uma tabela falhar (por exemplo, nome errado ou falta de permissão), o script segue com as demais e, no final, termina com erro listando as que falharam. Com o snapshot em erro, o job `carga` do `diario.yml` não roda (nenhuma tabela é atualizada no dia): rode o workflow de novo à mão.
+
+**Erro 5xx no envio** (ex.: `HTTP 520 supabase.co | 520: Web server is returning an unknown error`, do Cloudflare na frente do Storage): costuma ser passageiro. O envio tenta mais duas vezes, depois de 10 s e de 30 s (`ESPERAS_REENVIO` na seção Supabase do script); queda de conexão e tempo esgotado também. Erro 4xx (chave, bucket, caminho) falha na hora.
 
 ## 2. Pré-requisitos
 

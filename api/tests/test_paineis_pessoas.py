@@ -458,3 +458,11 @@ def test_nomes_sem_folha_ou_sem_carga_vem_vazio(leitura: dict[str, Any]) -> None
     leitura["tabelas"] = []
     tabela = pessoas.nomes_cargos(_ctx(), None, CARGA)
     assert (tabela.linhas, tabela.vazio) == ([], "Nenhuma pessoa com esses filtros.")
+
+
+def test_cor_de_cada_setor_e_a_da_serie_no_empilhado() -> None:
+    # até 7 setores, cada um na sua cor; com mais, o resto fica na cor de "Outros" (a 7ª)
+    poucos = [f"S{i}" for i in range(3)]
+    assert [pessoas.cor_do_setor(i, poucos) for i in range(3)] == [0, 1, 2]
+    muitos = [f"S{i}" for i in range(9)]
+    assert [pessoas.cor_do_setor(i, muitos) for i in range(9)] == [0, 1, 2, 3, 4, 5, 6, 6, 6]

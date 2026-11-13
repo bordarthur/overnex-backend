@@ -17,6 +17,7 @@ from app.core.db import Sessao, get_sessao
 from app.main import create_app
 from app.seguranca.acesso import ContextoConsolidado
 from app.seguranca.auth import UsuarioToken
+from app.telas import preleitura
 from app.telas.moldura import Cliente, MesComDados, UltimaCarga
 from app.telas.paineis import router as paineis
 from app.telas.paineis.base import Conteudo, escolher, opcoes
@@ -55,6 +56,8 @@ class ConexaoFalsa:
                 "vinculos": [{"cliente_id": str(CLIENTE), "papel": "gestor"}],
                 "perfis_tela": self.perfis_tela,
                 "empresas": [{"cliente_id": str(CLIENTE), "empresa_id": str(EMPRESA)}],
+                "perfil": "cliente_principal",
+                "cliente_id": CLIENTE,
             }
         )
 
@@ -64,7 +67,7 @@ def estado(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
     """Moldura e conteúdo trocados; guarda o que cada tela recebeu."""
     e: dict[str, Any] = {"carga": CARGA, "perfis": {str(CLIENTE): True}, "chamadas": []}
 
-    def preler(conn: Any, cliente_id: Any, *, com_meses: bool = False) -> Inicio:
+    def preler(sessao: Any, cliente_id: Any, *, com_meses: bool = False) -> Inicio:
         return Inicio(
             carga=e["carga"],
             cliente=Cliente(nome="Alfa", sigla="AL", logo_url=None),
@@ -73,6 +76,9 @@ def estado(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
         )
 
     monkeypatch.setattr(paineis, "preler", preler)
+    # nada vai junto com a checagem de acesso: a conexão falsa só responde a ela
+    for modulo in (paineis, preleitura):
+        monkeypatch.setattr(modulo, "consultas_adiantadas", lambda conn, **_: {})
 
     def montador(
         ctx: ContextoConsolidado,
@@ -115,7 +121,16 @@ def client(estado: dict[str, Any]) -> Iterator[TestClient]:
 
 
 @pytest.mark.parametrize(
-    "tela", ["vendas", "equipe-comercial", "clientes", "resultado", "receber-pagar", "pessoas"]
+    "tela",
+    [
+        "vendas",
+        "equipe-comercial",
+        "clientes",
+        "resultado",
+        "receber-pagar",
+        "fluxo-caixa",
+        "pessoas",
+    ],
 )
 def test_painel_200_com_a_moldura(client: TestClient, estado: dict[str, Any], tela: str) -> None:
     r = client.get(f"/api/telas/{tela}")
@@ -163,7 +178,7 @@ def test_mes_fora_da_lista_ou_do_formato_422(client: TestClient, mes: str) -> No
         assert r.json() == {"detail": "Mês sem dados."}
 
 
-@pytest.mark.parametrize("tela", ["vendas", "resultado", "receber-pagar", "pessoas"])
+@pytest.mark.parametrize("tela", ["vendas", "resultado", "receber-pagar", "fluxo-caixa", "pessoas"])
 def test_tela_fora_do_perfil_403(client: TestClient, estado: dict[str, Any], tela: str) -> None:
     estado["perfis"] = {}
     r = client.get(f"/api/telas/{tela}")
@@ -181,11 +196,12 @@ def test_equipe_exige_dado_nominal(client: TestClient, estado: dict[str, Any]) -
     assert client.get("/api/telas/vendas").status_code == 200
     assert client.get("/api/telas/clientes").status_code == 200
     assert client.get("/api/telas/resultado").status_code == 200
+    assert client.get("/api/telas/fluxo-caixa").status_code == 200
     # Pessoas tem folha, mas sem nomes: quem libera é o perfil (diretoria e RH)
     assert client.get("/api/telas/pessoas").status_code == 200
 
 
-@pytest.mark.parametrize("tela", ["vendas", "resultado", "receber-pagar", "pessoas"])
+@pytest.mark.parametrize("tela", ["vendas", "resultado", "receber-pagar", "fluxo-caixa", "pessoas"])
 def test_empresa_fora_do_vinculo_403(client: TestClient, tela: str) -> None:
     r = client.get(f"/api/telas/{tela}", params={"empresa": str(UUID(int=9))})
     assert r.status_code == 403
@@ -353,10 +369,12 @@ def test_openapi_tem_as_rotas_e_os_filtros(client: TestClient) -> None:
         ("/api/telas/resultado", {"mes", "empresa", "visao", "cenario", "comparar"}),
         ("/api/telas/receber-pagar", {"mes", "empresa", "vendedor", "atraso"}),
         # o setor se escolhe dentro do cartão; `comparar` não vale aqui
+        ("/api/telas/fluxo-caixa", {"mes", "empresa", "visao", "projecao"}),
         ("/api/telas/pessoas", {"mes", "empresa"}),
     ):
         parametros = esquema["paths"][caminho]["get"]["parameters"]
-        assert {p["name"] for p in parametros} == filtros
+        # `cliente` (slug do cliente escolhido) vale em toda tela
+        assert {p["name"] for p in parametros} == filtros | {"cliente"}
         assert all(p["required"] is False for p in parametros)
     assert "PainelPayload" in esquema["components"]["schemas"]
 
@@ -530,7 +548,12 @@ def test_nomes_demo(client: TestClient, estado: dict[str, Any]) -> None:
     assert r.status_code == 200
     assert r.headers["cache-control"] == "no-store"
     corpo = r.json()
-    assert [c["rotulo"] for c in corpo["colunas"]] == ["Pessoa", "Cargo", "Salário", "Custo mensal"]
+    assert [c["rotulo"] for c in corpo["colunas"]] == [
+        "Pessoa",
+        "Cargo",
+        "Salário",
+        "Custo mensal",
+    ]
     assert corpo["linhas"][0]["celulas"][0] == {"valor": "Renato Albuquerque", "sub": "Logística"}
     # o demo também exige o perfil
     estado["perfis"] = {str(CLIENTE): False}

@@ -952,9 +952,9 @@ def cartao_janelas(c: Calculo) -> CartaoJanelas | None:
         entra = receber.carteira.proximos(dias) if receber else ZERO
         sai = pagar.carteira.proximos(dias) if pagar else ZERO
         if receber is not None:
-            linhas.append(LinhaJanela(rotulo="A receber", valor=brl(entra)))
+            linhas.append(LinhaJanela(rotulo="A receber", valor=brl(entra), cor="entra"))
         if pagar is not None:
-            linhas.append(LinhaJanela(rotulo="A pagar", valor=brl(-sai)))
+            linhas.append(LinhaJanela(rotulo="A pagar", valor=brl(-sai), cor="sai"))
         if receber is not None and pagar is not None:
             linhas.append(
                 LinhaJanela(
@@ -1199,7 +1199,11 @@ def cartao_quem_cobrar(
         atraso = p.atraso or 0
         parou = p.ultima is None or p.ultima < hoje - timedelta(days=DIAS_SEM_COMPRA)
         celulas = [
-            Celula(valor=p.exibicao("Cliente"), etiqueta="parou de comprar" if parou else None),
+            Celula(
+                valor=p.exibicao("Cliente"),
+                etiqueta="parou de comprar" if parou else None,
+                tom_etiqueta="vermelho" if parou else None,
+            ),
             Celula(valor=brl(p.vencido)),
             Celula(
                 valor=Valor(valor=Decimal(atraso), unidade="dias", casas=0),
