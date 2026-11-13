@@ -1,6 +1,7 @@
 """Último uso da sessão de login: o commit de cada pedido autenticado e seg.sessao_uso.
 
-Os testes `db` rodam contra o Supabase local (migration 21).
+O limite é o da pessoa (seg.limite_sessao, migration 28): a Ana do seed é Cliente
+principal, com 4 h. Os testes `db` rodam contra o Supabase local.
 """
 
 from collections.abc import Iterator
@@ -19,7 +20,7 @@ from app.seguranca.auth import UsuarioToken
 from tests.conftest import OID_A
 
 SESSAO_ID = UUID("5e000000-0000-4000-8000-0000000000a1")
-TRINTA_MIN = timedelta(minutes=30)
+LIMITE_ANA = timedelta(hours=4)
 
 
 class _Cursor:
@@ -60,11 +61,11 @@ class _Conexao:
 
 
 def _sessao(
-    sessao_id: UUID | None = SESSAO_ID, inatividade: timedelta | None = TRINTA_MIN
+    sessao_id: UUID | None = SESSAO_ID, registrar_uso: bool = True
 ) -> tuple[Sessao, _Conexao]:
     conn = _Conexao()
     usuario = UsuarioToken(id_autenticacao=UUID(OID_A), sessao_id=sessao_id)
-    return Sessao(conn=conn, usuario=usuario, inatividade=inatividade), conn  # type: ignore[arg-type]
+    return Sessao(conn=conn, usuario=usuario, registrar_uso=registrar_uso), conn  # type: ignore[arg-type]
 
 
 def test_commit_registra_o_uso_da_sessao_na_mesma_ida() -> None:
@@ -75,7 +76,7 @@ def test_commit_registra_o_uso_da_sessao_na_mesma_ida() -> None:
 
     assert conn.chamadas == [
         (INSERIR_LOG_ACESSO, [("log",)]),
-        (USAR_SESSAO, (SESSAO_ID, UUID(OID_A), TRINTA_MIN)),
+        (USAR_SESSAO, (SESSAO_ID, UUID(OID_A))),
     ]
     assert (conn.pipelines, conn.commits) == (1, 1)
 
@@ -85,23 +86,23 @@ def test_commit_sem_log_registra_o_uso() -> None:
 
     _gravar_logs_e_confirmar(sessao)
 
-    assert conn.chamadas == [(USAR_SESSAO, (SESSAO_ID, UUID(OID_A), TRINTA_MIN))]
+    assert conn.chamadas == [(USAR_SESSAO, (SESSAO_ID, UUID(OID_A)))]
     assert conn.commits == 1
 
 
 @pytest.mark.parametrize(
-    ("sessao_id", "inatividade"),
+    ("sessao_id", "registrar_uso"),
     [
         # token sem session_id (fake, Entra)
-        (None, TRINTA_MIN),
+        (None, True),
         # pré-montagem em segundo plano: não é uso do usuário
-        (SESSAO_ID, None),
+        (SESSAO_ID, False),
     ],
 )
 def test_commit_sem_sessao_de_login_nao_registra(
-    sessao_id: UUID | None, inatividade: timedelta | None
+    sessao_id: UUID | None, registrar_uso: bool
 ) -> None:
-    sessao, conn = _sessao(sessao_id, inatividade)
+    sessao, conn = _sessao(sessao_id, registrar_uso)
 
     _gravar_logs_e_confirmar(sessao)
 
@@ -141,13 +142,17 @@ def _idade(admin: psycopg.Connection[Any], sessao_id: UUID) -> timedelta | None:
 def test_db_renovar_logo_depois_de_entrar_e_parada(
     pool: Pool, admin_conn: psycopg.Connection[Any]
 ) -> None:
-    uso = UsoSessao(pool, TRINTA_MIN)
+    uso = UsoSessao(pool)
     sessao_id, id_autenticacao = uuid4(), UUID(OID_A)
 
     uso.iniciar(sessao_id, id_autenticacao)
     assert uso.renovar(sessao_id, id_autenticacao) is True
 
-    _ultimo_uso_ha(admin_conn, sessao_id, 31)
+    # dentro das 4 h da Ana: ainda renova
+    _ultimo_uso_ha(admin_conn, sessao_id, 200)
+    assert uso.renovar(sessao_id, id_autenticacao) is True
+
+    _ultimo_uso_ha(admin_conn, sessao_id, 241)
     assert uso.renovar(sessao_id, id_autenticacao) is False
     assert _idade(admin_conn, sessao_id) is None
     # sem registro: continua recusada
@@ -158,23 +163,23 @@ def test_db_renovar_logo_depois_de_entrar_e_parada(
 def test_db_pedido_autenticado_conta_como_uso(
     pool: Pool, admin_conn: psycopg.Connection[Any]
 ) -> None:
-    uso = UsoSessao(pool, TRINTA_MIN)
+    uso = UsoSessao(pool)
     sessao_id, id_autenticacao = uuid4(), UUID(OID_A)
     uso.iniciar(sessao_id, id_autenticacao)
     usuario = UsuarioToken(id_autenticacao=id_autenticacao, sessao_id=sessao_id)
 
-    _ultimo_uso_ha(admin_conn, sessao_id, 25)
+    _ultimo_uso_ha(admin_conn, sessao_id, 200)
     with pool.connection() as conn:
-        _gravar_logs_e_confirmar(Sessao(conn=conn, usuario=usuario, inatividade=TRINTA_MIN))
+        _gravar_logs_e_confirmar(Sessao(conn=conn, usuario=usuario, registrar_uso=True))
     idade = _idade(admin_conn, sessao_id)
     assert idade is not None
     assert idade < timedelta(minutes=1)
 
     # parada há mais que o limite: o pedido não a revive
-    _ultimo_uso_ha(admin_conn, sessao_id, 40)
+    _ultimo_uso_ha(admin_conn, sessao_id, 300)
     with pool.connection() as conn:
-        _gravar_logs_e_confirmar(Sessao(conn=conn, usuario=usuario, inatividade=TRINTA_MIN))
+        _gravar_logs_e_confirmar(Sessao(conn=conn, usuario=usuario, registrar_uso=True))
     idade = _idade(admin_conn, sessao_id)
     assert idade is not None
-    assert idade > TRINTA_MIN
+    assert idade > LIMITE_ANA
     assert uso.renovar(sessao_id, id_autenticacao) is False

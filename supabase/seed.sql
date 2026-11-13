@@ -2,6 +2,7 @@
 --
 -- Cliente A: Padrão LANN Alfa (2 empresas) — usuária Ana
 -- Cliente B: Padrão LANN Beta (1 empresa)  — usuário Bruno
+-- Dora (Admin BORD) vê os dois; Caio (Consultor por carteira) tem vínculo com os dois.
 --
 -- IDs fixos para os testes (api/tests e supabase/tests) se referirem a eles:
 --   cliente A  c1000000-0000-4000-8000-00000000000a
@@ -11,6 +12,8 @@
 --   empresa B1 e1000000-0000-4000-8000-0000000000b1
 --   usuário A  d1000000-0000-4000-8000-00000000000a  (id_autenticacao 0d000000-0000-4000-8000-00000000000a)
 --   usuário B  d1000000-0000-4000-8000-00000000000b  (id_autenticacao 0d000000-0000-4000-8000-00000000000b)
+--   admin      d1000000-0000-4000-8000-0000000000ad  (id_autenticacao 0d000000-0000-4000-8000-0000000000ad)
+--   consultor  d1000000-0000-4000-8000-0000000000c0  (id_autenticacao 0d000000-0000-4000-8000-0000000000c0)
 --
 -- Os id_autenticacao do seed não existem no Supabase Auth local: servem ao token fake
 -- (AUTH_FAKE=1). Para testar o login de verdade no local, crie o usuário no Studio
@@ -64,9 +67,30 @@ insert into cfg.parametro (empresa_id, chave, valor, vigente_de) values
     ('e1000000-0000-4000-8000-0000000000a2', 'meta_margem', '0.15', '2025-01-01'),
     ('e1000000-0000-4000-8000-0000000000b1', 'meta_margem', '0.22', '2025-01-01');
 
-insert into seg.usuario (id, id_autenticacao, email, nome, tipo) values
-    ('d1000000-0000-4000-8000-00000000000a', '0d000000-0000-4000-8000-00000000000a', 'ana@alfa.example', 'Ana Alfa', 'cliente'),
-    ('d1000000-0000-4000-8000-00000000000b', '0d000000-0000-4000-8000-00000000000b', 'bruno@beta.example', 'Bruno Beta', 'cliente');
+-- Painéis ligados em cada cliente (migration 25): sem a linha, a tela não abre para ninguém.
+-- Todos ligados; quem vê cada um é o perfil (FIN-04 e PES-01 não estão em perfil nenhum do
+-- seed: os testes que precisam põem a tela no perfil).
+insert into cfg.cliente_tela (cliente_id, codigo_tela)
+select c.id, t.codigo
+  from cfg.cliente c
+ cross join (values ('VG-01'), ('FIN-01'), ('COM-01'), ('COM-02'), ('COM-03'), ('FIN-02'),
+                    ('FIN-03'), ('FIN-04'), ('PES-01')) t (codigo);
+
+-- Os 3 perfis fixos de cada cliente nascem com o cliente (trigger da migration 25), sem
+-- telas. Ana e Bruno continuam no perfil livre "Financeiro"; o Consultor fixo vê duas telas.
+insert into cfg.perfil_tela (perfil_id, codigo_tela, ve_dado_nominal)
+select p.id, t.codigo, false
+  from cfg.perfil_acesso p
+ cross join (values ('VG-01'), ('COM-01')) t (codigo)
+ where p.perfil = 'consultor';
+
+-- Ana (Cliente principal de A), Bruno (Cliente usuário de B), Dora (Admin BORD: vê os dois
+-- clientes, sem vínculo) e Caio (Consultor por carteira, com vínculo nos dois).
+insert into seg.usuario (id, id_autenticacao, email, nome, tipo, perfil) values
+    ('d1000000-0000-4000-8000-00000000000a', '0d000000-0000-4000-8000-00000000000a', 'ana@alfa.example', 'Ana Alfa', 'cliente', 'cliente_principal'),
+    ('d1000000-0000-4000-8000-00000000000b', '0d000000-0000-4000-8000-00000000000b', 'bruno@beta.example', 'Bruno Beta', 'cliente', 'cliente_usuario'),
+    ('d1000000-0000-4000-8000-0000000000ad', '0d000000-0000-4000-8000-0000000000ad', 'dora@bordgestao.com.br', 'Dora Admin', 'lann', 'admin'),
+    ('d1000000-0000-4000-8000-0000000000c0', '0d000000-0000-4000-8000-0000000000c0', 'caio@consultoria.example', 'Caio Consultor', 'lann', 'consultor');
 
 insert into seg.usuario_cliente (usuario_id, cliente_id, papel) values
     ('d1000000-0000-4000-8000-00000000000a', 'c1000000-0000-4000-8000-00000000000a', 'gestor'),
@@ -80,6 +104,12 @@ insert into seg.usuario_empresa (usuario_id, cliente_id, empresa_id) values
     ('d1000000-0000-4000-8000-00000000000a', 'c1000000-0000-4000-8000-00000000000a', 'e1000000-0000-4000-8000-0000000000a1'),
     ('d1000000-0000-4000-8000-00000000000a', 'c1000000-0000-4000-8000-00000000000a', 'e1000000-0000-4000-8000-0000000000a2'),
     ('d1000000-0000-4000-8000-00000000000b', 'c1000000-0000-4000-8000-00000000000b', 'e1000000-0000-4000-8000-0000000000b1');
+
+-- Caio: vínculo (gestor), perfil fixo de consultor e todas as empresas dos dois clientes
+select seg.definir_vinculos(
+    'd1000000-0000-4000-8000-0000000000c0',
+    array['c1000000-0000-4000-8000-00000000000a', 'c1000000-0000-4000-8000-00000000000b']::uuid[]
+);
 
 insert into cfg.regra_lancamento
     (empresa_id, fonte, campo, operador, valor, acao, id_descritivo_novo, prioridade, vigente_de, motivo, alterado_por)

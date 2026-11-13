@@ -41,7 +41,10 @@ def _ultimo_log(conn: psycopg.Connection[tuple[Any, ...]], id_autenticacao: str)
 def test_usuario_ativo(pool: Pool, admin_conn: psycopg.Connection[tuple[Any, ...]]) -> None:
     cadastro = get_verificar_cadastro(pool)(UUID(OID_A), RECURSO)
 
-    assert cadastro == UsuarioCadastrado(nome="Ana Alfa", email="ana@alfa.example")
+    # Ana é Cliente principal: 4 h de sessão parada (padrão do perfil)
+    assert cadastro == UsuarioCadastrado(
+        nome="Ana Alfa", email="ana@alfa.example", inatividade_segundos=14400
+    )
     assert _ultimo_log(admin_conn, OID_A) == (USUARIO_A, "permitido", None, None)
 
 

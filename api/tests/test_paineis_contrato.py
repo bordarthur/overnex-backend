@@ -10,7 +10,16 @@ from app.telas.paineis.router import DEMO, demo
 
 
 @pytest.mark.parametrize(
-    "tela", ["vendas", "equipe-comercial", "clientes", "resultado", "receber-pagar", "pessoas"]
+    "tela",
+    [
+        "vendas",
+        "equipe-comercial",
+        "clientes",
+        "resultado",
+        "receber-pagar",
+        "fluxo-caixa",
+        "pessoas",
+    ],
 )
 def test_fixture_do_front_valida_e_volta_igual(tela: str) -> None:
     # demo/<tela>.json é cópia da fixture do front: se o contrato Pydantic divergir do

@@ -5,7 +5,8 @@ Diz, para cada Id_Descritivo, em que demonstrativo a conta entra, com que fator 
 - fator: +1 soma no resultado, −1 subtrai (as redutoras de custo têm +1). O realizado já
   vem com o sinal do lançamento (Tipo E/S, contas a pagar); o fator dá o sinal do orçado,
   que o DW grava sem sinal;
-- nomes: nível 2 (o nome mais comum do id de nível 2) e nível 3 (descritivo).
+- nomes: nível 1 e nível 2 (o nome mais comum de cada id, sem o "(+)" do plano) e nível 3
+  (descritivo).
 
 Lido uma vez por requisição, na pré-leitura (app/telas/preleitura.py). Sem a migration 17
 ou com a tabela vazia, o plano fica vazio e vale a regra antiga: toda conta de um grupo da
@@ -26,7 +27,8 @@ COMPETENCIA_DRE = frozenset({"CO", "CO/CA"})
 COMPETENCIA_CAIXA = frozenset({"CA", "CO/CA"})
 
 SQL_PLANO = """
-    select id_descritivo, descritivo, id_nivel_2, nivel_2, fator, caixa, competencia
+    select id_descritivo, descritivo, id_nivel_1, nivel_1, id_nivel_2, nivel_2, fator, caixa,
+           competencia
       from cfg.plano_conta
 """
 
@@ -56,6 +58,9 @@ class Conta:
     caixa: str | None
     # CO, CA ou CO/CA
     competencia: str | None
+    # grupo ("100.00", "(+) RECEITA BRUTA")
+    id_nivel_1: str = ""
+    nivel_1: str = ""
 
 
 @dataclass(frozen=True)
@@ -93,13 +98,34 @@ class Plano:
             return self.contas[codigo].descritivo
         return self._niveis_2.get(codigo)
 
+    def nome_nivel_1(self, codigo: str) -> str | None:
+        """Nome do grupo (nível 1), sem o sinal do plano: "(+) RECEITA BRUTA" → "RECEITA
+        BRUTA"."""
+        return self._niveis_1.get(codigo)
+
     @cached_property
     def _niveis_2(self) -> dict[str, str]:
-        # o plano repete o nome do nível 2 em cada conta, às vezes diferente: vale o mais comum
-        nomes: dict[str, Counter[str]] = {}
-        for c in self.contas.values():
-            nomes.setdefault(c.id_nivel_2, Counter())[c.nivel_2] += 1
-        return {k: v.most_common(1)[0][0] for k, v in nomes.items()}
+        return _mais_comum((c.id_nivel_2, c.nivel_2) for c in self.contas.values())
+
+    @cached_property
+    def _niveis_1(self) -> dict[str, str]:
+        return _mais_comum(
+            (c.id_nivel_1, SINAL_DO_NOME.sub("", c.nivel_1).strip())
+            for c in self.contas.values()
+            if c.id_nivel_1
+        )
+
+
+# "(+) ", "(-) ", "(=) " no começo do nome do grupo
+SINAL_DO_NOME = re.compile(r"^\s*\([+\-=]\)\s*")
+
+
+def _mais_comum(pares: Iterable[tuple[str, str]]) -> dict[str, str]:
+    # o plano repete o nome do nível em cada conta, às vezes diferente: vale o mais comum
+    nomes: dict[str, Counter[str]] = {}
+    for codigo, nome in pares:
+        nomes.setdefault(codigo, Counter())[nome] += 1
+    return {k: v.most_common(1)[0][0] for k, v in nomes.items()}
 
 
 def plano_das_linhas(linhas: Iterable[Mapping[str, Any]]) -> Plano:
@@ -116,6 +142,9 @@ def plano_das_linhas(linhas: Iterable[Mapping[str, Any]]) -> Plano:
             fator=int(r["fator"]),
             caixa=r["caixa"],
             competencia=r["competencia"],
+            # sem as duas colunas na consulta (linhas antigas, testes): grupo sem nome
+            id_nivel_1=normalizar(r.get("id_nivel_1")) or "",
+            nivel_1=r.get("nivel_1") or "",
         )
     return Plano(contas)
 

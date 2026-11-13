@@ -26,8 +26,16 @@ class ConexaoFalsa:
     consultas: list[tuple[str, Any]] = field(default_factory=list)
     desfeita: bool = False
 
-    def execute(self, sql: str, params: Any = None) -> None:
+    @contextmanager
+    def pipeline(self) -> Iterator[None]:
+        yield
+
+    def execute(self, sql: str, params: Any = None) -> "ConexaoFalsa":
         self.consultas.append((sql, params))
+        return self
+
+    def fetchall(self) -> list[Any]:
+        return []
 
     def rollback(self) -> None:
         self.desfeita = True
@@ -95,9 +103,13 @@ def test_ramos_rodam_ao_mesmo_tempo_cada_um_na_sua_conexao() -> None:
     assert resultados[0] == ["principal"]
     assert sorted(r[0] for r in resultados[1:]) == ["extra-0", "extra-1"]
     for conn in pool.entregues:
-        # o mesmo usuário (RLS) e nada fica gravado
+        # o mesmo usuário e o mesmo cliente escolhido (RLS) e nada fica gravado
         assert conn.consultas == [
-            ("select set_config('app.usuario_id', %s, true)", (str(USUARIO),))
+            (
+                "select set_config('app.usuario_id', %s, true),"
+                " set_config('app.cliente_id', %s, true)",
+                (str(USUARIO), str(UUID(int=2))),
+            )
         ]
         assert conn.desfeita
     assert pool.em_uso == 0

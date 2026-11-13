@@ -904,6 +904,15 @@ def cartao_por_setor(folha: Folha, p: Periodo, setores: list[str]) -> CartaoGraf
     )
 
 
+def cor_do_setor(i: int, setores: list[str]) -> int:
+    """Índice da série do setor no empilhado "Colaboradores por setor" (cartao_por_setor):
+    os SERIES_EMPILHADO − 1 primeiros têm série própria; com mais setores, o resto fica na
+    série "Outros", a última."""
+    if len(setores) <= SERIES_EMPILHADO:
+        return i
+    return min(i, SERIES_EMPILHADO - 1)
+
+
 def cartao_setor_mes(folha: Folha, p: Periodo, setores: list[str]) -> CartaoGraficos | None:
     if not setores:
         return None
@@ -917,6 +926,7 @@ def cartao_setor_mes(folha: Folha, p: Periodo, setores: list[str]) -> CartaoGraf
         graficos=[
             GraficoCartao(
                 titulo=_rotulo_setor(folha, s),
+                cor=cor_do_setor(i, setores),
                 grafico=GraficoBarras(
                     tipo="barras",
                     unidade="qtd",
@@ -937,7 +947,7 @@ def cartao_setor_mes(folha: Folha, p: Periodo, setores: list[str]) -> CartaoGraf
                     ],
                 ),
             )
-            for s in setores
+            for i, s in enumerate(setores)
         ],
     )
 
@@ -1151,12 +1161,12 @@ def _visao_movimento(
                                 Barra(
                                     nome="Admissões",
                                     valor=Decimal(mov.de(m, setor)),
-                                    estilo="serie",
+                                    estilo="serie-azul",
                                 ),
                                 Barra(
                                     nome="Desligamentos",
                                     valor=Decimal(mov.de(m, setor, saidas=True)),
-                                    estilo="serie-clara",
+                                    estilo="serie-laranja",
                                 ),
                             ],
                         )
@@ -1199,8 +1209,8 @@ def cartao_admissoes(
         titulo="Admissões, desligamentos e turnover",
         subtitulo="Entrada e saída de nomes na folha e o turnover de cada mês contra a média",
         legenda=[
-            ItemLegenda(nome="Admissões", marca="quadrado-escuro"),
-            ItemLegenda(nome="Desligamentos", marca="quadrado-claro"),
+            ItemLegenda(nome="Admissões", marca="quadrado-azul"),
+            ItemLegenda(nome="Desligamentos", marca="quadrado-laranja"),
         ],
         graficos=[],
         rotulo_visoes="Setor",

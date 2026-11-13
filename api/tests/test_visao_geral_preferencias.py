@@ -50,6 +50,8 @@ class ConexaoFalsa:
                 "vinculos": [{"cliente_id": str(CLIENTE), "papel": self.estado["papel"]}],
                 "perfis_tela": self.estado["perfis"],
                 "empresas": [{"cliente_id": str(CLIENTE), "empresa_id": str(EMPRESA)}],
+                "perfil": "cliente_principal",
+                "cliente_id": CLIENTE,
             }
         )
 

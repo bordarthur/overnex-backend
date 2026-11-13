@@ -1,5 +1,6 @@
 """Contrato dos painéis por cartões (Vendas, Equipe comercial, Clientes e atendimentos,
-Resultado, Receber e pagar e Pessoas), espelho de src/contracts/painel.ts do overnex-frontend.
+Resultado, Receber e pagar, Fluxo de caixa e Pessoas), espelho de src/contracts/painel.ts
+do overnex-frontend.
 
 Como na Visão geral, o front só desenha: todo número, status, texto, rótulo, média,
 projeção e diferença vem pronto. Mudou aqui, mude lá (ou gere os tipos do front a partir
@@ -21,7 +22,13 @@ from app.telas.moldura import Cliente, ModeloCamel
 from app.telas.visao_geral.contrato import Kpi, Trecho, Unidade, Valor
 
 TelaPainel = Literal[
-    "vendas", "equipe-comercial", "clientes", "resultado", "receber-pagar", "pessoas"
+    "vendas",
+    "equipe-comercial",
+    "clientes",
+    "resultado",
+    "receber-pagar",
+    "fluxo-caixa",
+    "pessoas",
 ]
 
 # número a formatar pela unidade, ou texto já pronto ("2 de 6")
@@ -53,6 +60,9 @@ class FiltroPainel(ModeloCamel):
     opcoes: list[OpcaoFiltro]
     # id da opção padrão ("todos"); com ela, o parâmetro não vem
     padrao: str
+    # id do cartão que mostra este filtro como chave no cabeçalho (a projeção, no saldo
+    # projetado); sem ele, o filtro fica na barra
+    cartao: str | None = None
 
 
 class Aviso(ModeloCamel):
@@ -73,7 +83,17 @@ class Escala(ModeloCamel):
 
 
 EstiloBarra = Literal[
-    "saudavel", "atencao", "critico", "serie", "serie-media", "serie-clara", "fantasma", "projecao"
+    "saudavel",
+    "atencao",
+    "critico",
+    "serie",
+    "serie-media",
+    "serie-clara",
+    "fantasma",
+    "projecao",
+    # cores de série do mockup, fora de status (financiamentos, admissões, desligamentos)
+    "serie-azul",
+    "serie-laranja",
 ]
 
 
@@ -146,6 +166,9 @@ class SerieLinha(ModeloCamel):
 class ReferenciaLinha(ModeloCamel):
     valor: Numero
     rotulo: str
+    # media: cinza, rótulo à direita (padrão); minimo: laranja, rótulo à esquerda (o caixa
+    # mínimo)
+    estilo: Literal["media", "minimo"] | None = None
 
 
 class Marcador(ModeloCamel):
@@ -290,7 +313,18 @@ Grafico = Annotated[
 ]
 
 MarcaLegenda = Literal[
-    "linha", "linha-clara", "pontilhada", "media", "minimo", "quadrado-escuro", "quadrado-claro"
+    "linha",
+    "linha-clara",
+    "pontilhada",
+    "media",
+    "minimo",
+    "quadrado-escuro",
+    # o tom da barra `serie-media`
+    "quadrado-medio",
+    "quadrado-claro",
+    # os tons das barras `serie-azul` e `serie-laranja` (ou `atencao`)
+    "quadrado-azul",
+    "quadrado-laranja",
 ]
 
 # ---------- cartões ----------
@@ -420,6 +454,10 @@ class Celula(ModeloCamel):
     negrito: bool = False
     # etiqueta pequena depois do texto ("rampa")
     etiqueta: str | None = None
+    # cor da etiqueta: azul (padrão, "rampa") ou vermelha ("parou de comprar")
+    tom_etiqueta: Literal["azul", "vermelho"] | None = None
+    # pílula escura antes do texto (o mês, na semana a semana)
+    marca: str | None = None
 
 
 class ColunaTabela(ModeloCamel):
@@ -431,6 +469,8 @@ class ColunaTabela(ModeloCamel):
 class LinhaTabela(ModeloCamel):
     # pinta o fundo da linha
     status: Status | None = None
+    # traço grosso em cima (outro mês começa)
+    separar: bool | None = None
     celulas: list[Celula]
 
 
@@ -441,8 +481,9 @@ class NomesCartao(ModeloCamel):
 class CartaoTabela(CartaoBase):
     tipo: Literal["tabela"]
     # calor: células coloridas e centralizadas (atingimento mês a mês); tendencia: para ler a
-    # tendência, não número a número (números curtos e farol claro, sem negrito)
-    variante: Literal["padrao", "compacta", "calor", "tendencia"] | None = None
+    # tendência, não número a número (números curtos e farol claro, sem negrito); listrada:
+    # linhas alternadas em cinza (semana a semana)
+    variante: Literal["padrao", "compacta", "calor", "tendencia", "listrada"] | None = None
     colunas: list[ColunaTabela]
     linhas: list[LinhaTabela]
     vazio: str | None = None
@@ -479,6 +520,20 @@ class GraficoCartao(ModeloCamel):
     titulo: str | None = None
     nota: str | None = None
     grafico: Grafico
+    # índice da paleta das séries (0 a 6, a do empilhado): cada setor na cor dele
+    cor: int | None = None
+    # gráfico mais alto que o padrão (o saldo projetado)
+    alto: bool | None = None
+
+
+class QuadroCartao(ModeloCamel):
+    """Quadro embaixo dos gráficos ("Próximos 30 dias: 58% da média paga"); sem status,
+    cinza."""
+
+    rotulo: str
+    titulo: str
+    texto: str
+    status: Status | None = None
 
 
 class VisaoGraficos(ModeloCamel):
@@ -501,6 +556,10 @@ class CartaoGraficos(CartaoBase):
     rotulo_visoes: str | None = None
     # a primeira é a padrão
     visoes: list[VisaoGraficos] | None = None
+    # quadros lado a lado embaixo dos gráficos
+    quadros: list[QuadroCartao] | None = None
+    # texto com destaques no fim do cartão, antes da nota
+    rodape: list[Trecho] | None = None
 
 
 class LinhaFaixa(ModeloCamel):
@@ -604,6 +663,47 @@ class CartaoDre(CartaoBase):
     rodape: list[str] | None = None
 
 
+class ColunaArvore(ModeloCamel):
+    # "abr-26"
+    rotulo: str
+    # "Abril de 2026"
+    titulo: str | None = None
+    # a coluna do período inteiro (acumulado), separada dos meses
+    total: bool = False
+
+
+class LinhaArvoreMensal(ModeloCamel):
+    id: str
+    nome: str
+    # 0 = subtotal (Saldo inicial, geração de cada seção, Saldo final); 1 a 4 = níveis da
+    # árvore (no fluxo de caixa: 1 = Entradas e Saídas da seção; 2 a 4 = níveis do plano)
+    nivel: Literal[0, 1, 2, 3, 4]
+    # id da linha de cima na árvore
+    pai: str | None = None
+    # a última linha (Saldo final), em destaque escuro
+    final: bool = False
+    # um por coluna, na ordem de `colunas`; None: mês sem movimento (célula vazia)
+    valores: list[Numero | None]
+    # fundo de farol de cada célula, na ordem de `colunas`
+    fundos: list[Status | None] | None = None
+
+
+class CartaoArvoreMensal(CartaoBase):
+    """Árvore de contas com uma coluna por mês (fluxo de caixa realizado): abre por nível."""
+
+    tipo: Literal["arvore-mensal"]
+    # cabeçalho da primeira coluna ("Conta (R$)")
+    rotulo_conta: str
+    colunas: list[ColunaArvore]
+    escala: Escala
+    nivel_inicial: Literal[1, 2, 3, 4]
+    # níveis que a chave oferece
+    niveis: list[Literal[1, 2, 3, 4]]
+    # na ordem de exibição, com os subtotais
+    linhas: list[LinhaArvoreMensal]
+    rodape: list[str] | None = None
+
+
 class ParteBarra(ModeloCamel):
     rotulo: str
     # proporções da barra somam 1
@@ -649,6 +749,8 @@ class LinhaJanela(ModeloCamel):
     rotulo: str
     valor: Valor
     tom: Status | None = None
+    # cor do número fora de status: azul o que entra, vermelho o que sai
+    cor: Literal["entra", "sai"] | None = None
     com_sinal: bool = False
     # total: com linha em cima; saldo: com o fundo do status da janela
     tipo: Literal["total", "saldo"] | None = None
@@ -800,6 +902,100 @@ class CartaoCicloCaixa(CartaoBase):
     grafico: GraficoLinhas | None = None
 
 
+class EtiquetaOrigem(ModeloCamel):
+    rotulo: str
+    # lancado cinza; nao-lancado e futuro (V2) em bege
+    estilo: Literal["lancado", "nao-lancado", "futuro"]
+
+
+class ItemOrigem(ModeloCamel):
+    nome: str
+    # com sinal: saída negativa
+    valor: Valor
+    etiqueta: EtiquetaOrigem
+    # fora do saldo da visão escolhida: linha apagada e número riscado
+    riscado: bool | None = None
+
+
+class GrupoOrigem(ModeloCamel):
+    titulo: str
+    itens: list[ItemOrigem]
+
+
+class ParteOrigem(ModeloCamel):
+    rotulo: str
+    # as proporções somam 1
+    proporcao: Numero
+    estilo: Literal["lancado", "nao-lancado"]
+
+
+class CartaoOrigemProjecao(CartaoBase):
+    """De onde vem a projeção de caixa: o lançado contra o que falta lançar, e uma linha por
+    origem (títulos e cada provisão), em entradas e saídas."""
+
+    tipo: Literal["origem-projecao"]
+    barra: list[ParteOrigem]
+    texto: list[Trecho] | None = None
+    grupos: list[GrupoOrigem]
+
+
+class LinhaProvisao(ModeloCamel):
+    """Um grupo das provisões pelo histórico. Valores em reais."""
+
+    id: str
+    nome: str
+    # segunda linha, menor ("não recorrente: desligado")
+    detalhe: str | None = None
+    ligado: bool
+    # média por mês no período escolhido
+    media: Numero
+    # lançado nos próximos 30 dias; None: nada lançado
+    lancado: Numero | None
+    # média − lançado, nunca abaixo de zero
+    sugerida: Numero
+    # o que a projeção usa nos próximos 30 dias: o valor digitado ou o sugerido
+    usado: Numero
+    # "personalizado por Ana em 05/11"; None (sai como null): usa o sugerido
+    personalizado: str | None
+
+
+class ColunasProvisoes(ModeloCamel):
+    usar: str
+    grupo: str
+    media: str
+    lancado: str
+    sugerida: str
+    usado: str
+
+
+class CartaoProvisoes(CartaoBase):
+    """Provisões pelo histórico: completa o que ainda não foi lançado com a média do
+    período. Cada mudança vai por PUT e vale para o cliente."""
+
+    tipo: Literal["provisoes"]
+    periodos: list[OpcaoFiltro]
+    periodo: str
+    colunas: ColunasProvisoes
+    grupos: list[LinhaProvisao]
+    # False: só leitura
+    editavel: bool
+
+
+class MudancaPeriodoProvisoes(ModeloCamel):
+    """Corpo de PUT /api/telas/fluxo-caixa/cartoes/provisoes/periodo."""
+
+    periodo: str
+
+
+class MudancaGrupoProvisao(ModeloCamel):
+    """Corpo de PUT /api/telas/fluxo-caixa/cartoes/provisoes/grupos/{grupo}. `valor` em
+    reais; None volta ao sugerido. Número conferido na rota (negativo ou não numérico →
+    422 com a mensagem própria)."""
+
+    ligado: bool
+    valor: object = Field(default=None, json_schema_extra={"type": ["number", "null"]})
+
+
 Cartao = Annotated[
     CartaoAndamentoMes
     | CartaoFatores
@@ -811,6 +1007,7 @@ Cartao = Annotated[
     | CartaoCurvaAbc
     | CartaoMatriz
     | CartaoDre
+    | CartaoArvoreMensal
     | CartaoBarraPartes
     | CartaoDesvios
     | CartaoJanelas
@@ -818,7 +1015,9 @@ Cartao = Annotated[
     | CartaoBarrasHorizontais
     | CartaoNumeroGrafico
     | CartaoListaDetalhe
-    | CartaoCicloCaixa,
+    | CartaoCicloCaixa
+    | CartaoOrigemProjecao
+    | CartaoProvisoes,
     Field(discriminator="tipo"),
 ]
 

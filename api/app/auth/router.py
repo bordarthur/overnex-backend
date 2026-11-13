@@ -144,6 +144,9 @@ class RespostaAuth(ModeloCamel):
     # quando o access token vence (ISO 8601, UTC); renovar um pouco antes
     expira_em: datetime
     usuario: UsuarioAuth
+    # tempo sem uso até a sessão cair, o da pessoa (padrão do perfil ou o da Gestão): o
+    # front conta a inatividade com este valor
+    inatividade_segundos: int
 
 
 # --- dependências ------------------------------------------------------------------
@@ -233,6 +236,7 @@ def _concluir(
         access_token=sessao.access_token,
         expira_em=sessao.expira_em,
         usuario=UsuarioAuth(nome=cadastro.nome, email=cadastro.email),
+        inatividade_segundos=cadastro.inatividade_segundos,
     )
 
 
@@ -317,7 +321,7 @@ def entrar(
     responses={
         401: {
             "description": f"{MSG_SESSAO} (sem cookie ou refresh recusado) ou {MSG_INATIVIDADE} "
-            "(sessão sem uso por mais que AUTH_INATIVIDADE_SEGUNDOS). Cookie apagado."
+            "(sessão sem uso por mais que o tempo da pessoa). Cookie apagado."
         },
         403: {"description": "Usuário desativado no Overnex. Cookie apagado."},
         415: {"description": "Content-Type diferente de application/json."},

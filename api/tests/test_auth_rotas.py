@@ -52,6 +52,8 @@ ESPERADO = {
     "accessToken": ACCESS,
     "expiraEm": "2030-01-01T00:00:00Z",
     "usuario": {"nome": "Ana Alfa", "email": "ana@alfa.example"},
+    # o tempo de sessão parada da pessoa (4 h: padrão do Cliente principal)
+    "inatividadeSegundos": 14400,
 }
 
 Resposta = httpx.Response | Exception
@@ -95,7 +97,9 @@ class GoTrueFalso:
 class CadastroFalso:
     ativos: dict[UUID, UsuarioCadastrado] = field(
         default_factory=lambda: {
-            ID_ANA: UsuarioCadastrado(nome="Ana Alfa", email="ana@alfa.example")
+            ID_ANA: UsuarioCadastrado(
+                nome="Ana Alfa", email="ana@alfa.example", inatividade_segundos=14400
+            )
         }
     )
     chamadas: list[tuple[UUID, str]] = field(default_factory=list)
@@ -632,12 +636,26 @@ def test_renovar_depois_de_sair_401(client: TestClient, gotrue: GoTrueFalso) -> 
     _confere_cookie_apagado(r)
 
 
-def test_limite_de_inatividade_vem_da_configuracao(settings: Settings) -> None:
-    config = settings.model_copy(update={"auth_inatividade_segundos": 600})
-    uso = get_uso_sessao(pool=object(), settings=config)  # type: ignore[arg-type]
-    assert uso.limite == timedelta(minutes=10)
-    with pytest.raises(ValueError, match="AUTH_INATIVIDADE_SEGUNDOS"):
-        Settings(**{**settings.model_dump(), "auth_inatividade_segundos": 0})
+def test_limite_de_inatividade_nao_e_configuracao(settings: Settings) -> None:
+    """O limite sai do cadastro da pessoa (seg.limite_sessao): a API não o passa."""
+    pool = object()
+    uso = get_uso_sessao(pool=pool)  # type: ignore[arg-type]
+    assert uso.pool is pool
+    assert not hasattr(settings, "auth_inatividade_segundos")
+
+
+@pytest.mark.parametrize(
+    ("mudanca", "variavel"),
+    [
+        ({"auth_convite_horas": 0}, "AUTH_CONVITE_HORAS"),
+        ({"admin_dominios": " , "}, "ADMIN_DOMINIOS"),
+    ],
+)
+def test_configuracao_da_gestao_invalida(
+    settings: Settings, mudanca: dict[str, Any], variavel: str
+) -> None:
+    with pytest.raises(ValueError, match=variavel):
+        Settings(**{**settings.model_dump(), **mudanca})
 
 
 # --- sair --------------------------------------------------------------------------

@@ -1,4 +1,4 @@
--- PJ Cortes — cliente, empresa, mapa de empresas, fontes das 25 tabelas, janela de datas e
+-- PJ Cortes — cliente, empresa, mapa de empresas, fontes das 23 tabelas, janela de datas e
 -- parâmetros (produção).
 --
 -- NÃO é migration: rode uma vez no SQL Editor do Supabase, DEPOIS de aplicar as migrations
@@ -17,6 +17,11 @@
 -- isso a Agile fica vazia no mart e o histórico dela continua na Visão geral). Metas, orçamentos, compras e dimensões entram inteiras, e os
 -- títulos a receber e a pagar (f_receitas_pj, f_despesas_pj) também: a seção Financeiro
 -- precisa dos títulos antigos ainda em aberto e de 12 meses de histórico.
+--
+-- Sem a 645 e o borderô desde 06/11/2026 (migration 24): o fluxo de caixa vem da view
+-- f_Fluxo_PJ (pj_cortes_fluxo_caixa.sql). As fontes do fluxo e dos lançamentos agrupados
+-- têm scripts próprios; a conferência do fim conta só as 23 deste script (rode-o antes
+-- deles).
 
 begin;
 
@@ -65,8 +70,6 @@ select c.id,
         ('d_custo_pj',                       null,           false,   '{}'),
         ('d_fornecedor_pj',                  'EMPRESA',      true,    '{}'),
         ('d_vendedor_pj',                    'EMPRESA',      true,    '{}'),  -- nome, CPF
-        ('f_645_pj',                         null,           true,    '{}'),  -- Historico
-        ('f_bordero_pj',                     'Empresa',      true,    '{}'),  -- Descricao
         ('f_compras_pj',                     'EMPRESA',      true,    '{}'),  -- en_observacao
         ('f_despesas_pj',                    'EMPRESA',      true,    '{}'),  -- en_observacao
         ('f_devolucao_pj',                   'EMPRESA',      true,    '{}'),  -- en_codigocliente
@@ -109,8 +112,6 @@ update cfg.fonte_carga f
         ('f_vendas_agile_pj_cortes',    'en_dataemissao',     3),   -- só tem até 03/2025: fica vazia
         ('f_recebidas_pj',              'en_datarecebimento', 3),
         ('f_pagas_pj',                  'en_datpag',          3),
-        ('f_bordero_pj',                'Data',               3),
-        ('f_645_pj',                    'Data',               3),
         ('f_folha_pj_cortes',           'Data',               3)
        ) v (tabela, coluna_data, meses)
  where c.id = f.cliente_id
@@ -140,8 +141,8 @@ begin
       from cfg.fonte_carga f
       join cfg.cliente c on c.id = f.cliente_id
      where c.slug = 'pj-cortes' and f.tipo = 'tabela';
-    if fontes <> 25 or janelas <> 7 or modelos <> 4 then
-        raise exception 'esperava 25 fontes, 7 com janela e 4 com colunas_modelo; veio %, % e %',
+    if fontes <> 23 or janelas <> 5 or modelos <> 4 then
+        raise exception 'esperava 23 fontes, 5 com janela e 4 com colunas_modelo; veio %, % e %',
             fontes, janelas, modelos;
     end if;
     if (select count(*) from cfg.mapa_empresa m

@@ -1,0 +1,1627 @@
+{
+  "tela": "fluxo-caixa",
+  "versaoContrato": "1.0",
+  "cliente": {
+    "nome": "Cliente Demo",
+    "sigla": "CD",
+    "logoUrl": null
+  },
+  "dadosAte": "2026-09-30",
+  "atualizadoEm": "2026-10-13T12:02:00Z",
+  "filtros": [
+    {
+      "id": "visao",
+      "rotulo": "Visão",
+      "opcoes": [
+        {
+          "id": "mes",
+          "rotulo": "Setembro"
+        },
+        {
+          "id": "ano",
+          "rotulo": "Acumulado de 2026"
+        }
+      ],
+      "padrao": "mes"
+    },
+    {
+      "id": "projecao",
+      "rotulo": "Projeção",
+      "opcoes": [
+        {
+          "id": "lancados",
+          "rotulo": "Só lançados"
+        },
+        {
+          "id": "provisoes",
+          "rotulo": "Lançados + provisões"
+        }
+      ],
+      "padrao": "lancados",
+      "cartao": "saldo-projetado"
+    }
+  ],
+  "aviso": {
+    "tom": "info",
+    "texto": [
+      {
+        "texto": "Caixa realizado, pela data de compensação. "
+      },
+      {
+        "texto": "R$ 6 mil de setembro",
+        "destaque": true
+      },
+      {
+        "texto": " entraram ou saíram sem conta no plano e aparecem em “Sem classificação”, para o saldo final bater com o banco. Depreciação, PDD e outras contas só de resultado ficam fora."
+      }
+    ]
+  },
+  "destaques": [
+    {
+      "rotulo": "Saldo final de setembro",
+      "valor": {
+        "valor": 1474000,
+        "unidade": "brl"
+      },
+      "contexto": "começou o mês em R$ 1,62 mi"
+    },
+    {
+      "rotulo": "Geração operacional (FCO)",
+      "valor": {
+        "valor": 30000,
+        "unidade": "brl"
+      },
+      "contexto": "−R$ 20 mil em agosto; lucro de R$ 421 mil no mês",
+      "status": "atencao"
+    },
+    {
+      "rotulo": "Variação do caixa",
+      "valor": {
+        "valor": -144000,
+        "unidade": "brl"
+      },
+      "contexto": "−R$ 181 mil em agosto",
+      "status": "critico"
+    }
+  ],
+  "kpis": [],
+  "apoios": [
+    {
+      "rotulo": "Entradas operacionais",
+      "valor": {
+        "valor": 6412000,
+        "unidade": "brl"
+      }
+    },
+    {
+      "rotulo": "Saídas operacionais",
+      "valor": {
+        "valor": -6382000,
+        "unidade": "brl"
+      }
+    },
+    {
+      "rotulo": "Financiamentos (FCF)",
+      "valor": {
+        "valor": -120000,
+        "unidade": "brl"
+      }
+    },
+    {
+      "rotulo": "Investimentos (FCI)",
+      "valor": {
+        "valor": -48000,
+        "unidade": "brl"
+      }
+    },
+    {
+      "rotulo": "Sem classificação",
+      "valor": {
+        "valor": -6000,
+        "unidade": "brl"
+      }
+    }
+  ],
+  "cartoes": [
+    {
+      "id": "saldo-projetado",
+      "tipo": "graficos",
+      "largura": 12,
+      "titulo": "Saldo projetado dia a dia, 60 dias",
+      "subtitulo": "Só títulos a receber e a pagar já lançados no sistema. Como faltam saídas (veja o alerta), a linha tende a subir.",
+      "explicacao": "Quanto vai ter no caixa no fim de cada dia dos próximos 60 dias. Parte do saldo da DFC no último dia com caixa e soma o que vence a receber e a pagar. Em “Lançados + provisões”, entra também a média do que ainda não foi lançado.",
+      "chamada": {
+        "status": "atencao",
+        "texto": [
+          {
+            "texto": "Contas a pagar incompletas: ",
+            "destaque": true
+          },
+          {
+            "texto": "só 58% da média paga está lançada para os próximos 30 dias. Em “Só lançados”, o caixa parece melhor do que vai ser; “Lançados + provisões” completa com a média."
+          }
+        ]
+      },
+      "graficos": [
+        {
+          "alto": true,
+          "grafico": {
+            "tipo": "linhas",
+            "unidade": "brl",
+            "rotulos": [
+              "13/10",
+              "14/10",
+              "15/10",
+              "16/10",
+              "17/10",
+              "18/10",
+              "19/10",
+              "20/10",
+              "21/10",
+              "22/10",
+              "23/10",
+              "24/10",
+              "25/10",
+              "26/10",
+              "27/10",
+              "28/10",
+              "29/10",
+              "30/10",
+              "31/10",
+              "01/11",
+              "02/11",
+              "03/11",
+              "04/11",
+              "05/11",
+              "06/11",
+              "07/11",
+              "08/11",
+              "09/11",
+              "10/11",
+              "11/11",
+              "12/11",
+              "13/11",
+              "14/11",
+              "15/11",
+              "16/11",
+              "17/11",
+              "18/11",
+              "19/11",
+              "20/11",
+              "21/11",
+              "22/11",
+              "23/11",
+              "24/11",
+              "25/11",
+              "26/11",
+              "27/11",
+              "28/11",
+              "29/11",
+              "30/11",
+              "01/12",
+              "02/12",
+              "03/12",
+              "04/12",
+              "05/12",
+              "06/12",
+              "07/12",
+              "08/12",
+              "09/12",
+              "10/12",
+              "11/12"
+            ],
+            "titulos": [
+              "13/10 · ter",
+              "14/10 · qua",
+              "15/10 · qui",
+              "16/10 · sex",
+              "17/10 · sáb",
+              "18/10 · dom",
+              "19/10 · seg",
+              "20/10 · ter",
+              "21/10 · qua",
+              "22/10 · qui",
+              "23/10 · sex",
+              "24/10 · sáb",
+              "25/10 · dom",
+              "26/10 · seg",
+              "27/10 · ter",
+              "28/10 · qua",
+              "29/10 · qui",
+              "30/10 · sex",
+              "31/10 · sáb",
+              "01/11 · dom",
+              "02/11 · seg",
+              "03/11 · ter",
+              "04/11 · qua",
+              "05/11 · qui",
+              "06/11 · sex",
+              "07/11 · sáb",
+              "08/11 · dom",
+              "09/11 · seg",
+              "10/11 · ter",
+              "11/11 · qua",
+              "12/11 · qui",
+              "13/11 · sex",
+              "14/11 · sáb",
+              "15/11 · dom",
+              "16/11 · seg",
+              "17/11 · ter",
+              "18/11 · qua",
+              "19/11 · qui",
+              "20/11 · sex",
+              "21/11 · sáb",
+              "22/11 · dom",
+              "23/11 · seg",
+              "24/11 · ter",
+              "25/11 · qua",
+              "26/11 · qui",
+              "27/11 · sex",
+              "28/11 · sáb",
+              "29/11 · dom",
+              "30/11 · seg",
+              "01/12 · ter",
+              "02/12 · qua",
+              "03/12 · qui",
+              "04/12 · sex",
+              "05/12 · sáb",
+              "06/12 · dom",
+              "07/12 · seg",
+              "08/12 · ter",
+              "09/12 · qua",
+              "10/12 · qui",
+              "11/12 · sex"
+            ],
+            "series": [
+              {
+                "nome": "Saldo projetado",
+                "valores": [
+                  1590000, 1770000, 1790000, 1950000, 1950000, 1950000, 2120000, 2280000, 2430000, 2600000,
+                  2770000, 2770000, 2770000, 2920000, 3100000, 3280000, 3450000, 3350000, 3350000, 3350000,
+                  3350000, 3000000, 2770000, 2580000, 2460000, 2460000, 2460000, 2640000, 2830000, 3020000,
+                  3300000, 3300000, 3300000, 3300000, 3170000, 3170000, 3170000, 3170000, 3170000, 3170000,
+                  3170000, 3170000, 3170000, 3170000, 3170000, 3170000, 3170000, 3170000, 3170000, 3170000,
+                  3170000, 3170000, 3170000, 3170000, 3170000, 3170000, 3170000, 3170000, 3170000, 3170000
+                ],
+                "estilo": "principal",
+                "area": true
+              }
+            ],
+            "referencia": {
+              "valor": 500000,
+              "rotulo": "Caixa mínimo R$ 500 mil",
+              "estilo": "minimo"
+            },
+            "marcadores": [
+              {
+                "serie": 0,
+                "i": 0,
+                "rotulo": "R$ 1,59 mi em 13/10"
+              }
+            ],
+            "piso": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "origem-projecao",
+      "tipo": "origem-projecao",
+      "largura": 5,
+      "titulo": "De onde vem a projeção",
+      "subtitulo": "Próximos 60 dias. Só lançados: o que ainda não foi lançado aparece riscado.",
+      "explicacao": "De onde vem cada real da projeção: o que já está lançado no sistema e o que é estimado pela média. Riscado é o que não entra no saldo da visão escolhida.",
+      "barra": [
+        {
+          "rotulo": "Lançado",
+          "proporcao": 0.361,
+          "estilo": "lancado"
+        },
+        {
+          "rotulo": "Ainda não lançado",
+          "proporcao": 0.639,
+          "estilo": "nao-lancado"
+        }
+      ],
+      "texto": [
+        {
+          "texto": "Ainda não lançado: "
+        },
+        {
+          "texto": "−R$ 1,95 mi",
+          "destaque": true
+        },
+        {
+          "texto": " de efeito líquido pela média. Por isso o caixa “só lançados” sobe; a visão com provisões completa esse valor."
+        }
+      ],
+      "grupos": [
+        {
+          "titulo": "Entradas",
+          "itens": [
+            {
+              "nome": "Títulos a receber já emitidos",
+              "valor": {
+                "valor": 5536000,
+                "unidade": "brl"
+              },
+              "etiqueta": {
+                "rotulo": "lançado",
+                "estilo": "lancado"
+              }
+            },
+            {
+              "nome": "Inadimplência esperada, pelo histórico (7,4%)",
+              "valor": {
+                "valor": -410000,
+                "unidade": "brl"
+              },
+              "etiqueta": {
+                "rotulo": "V2",
+                "estilo": "futuro"
+              },
+              "riscado": true
+            },
+            {
+              "nome": "Vendas ainda não faturadas, pela média recebida",
+              "valor": {
+                "valor": 7264000,
+                "unidade": "brl"
+              },
+              "etiqueta": {
+                "rotulo": "não lançado",
+                "estilo": "nao-lancado"
+              },
+              "riscado": true
+            }
+          ]
+        },
+        {
+          "titulo": "Saídas",
+          "itens": [
+            {
+              "nome": "Títulos a pagar e compras lançados",
+              "valor": {
+                "valor": -3530000,
+                "unidade": "brl"
+              },
+              "etiqueta": {
+                "rotulo": "lançado",
+                "estilo": "lancado"
+              }
+            },
+            {
+              "nome": "Parcelas de empréstimos",
+              "valor": {
+                "valor": -260000,
+                "unidade": "brl"
+              },
+              "etiqueta": {
+                "rotulo": "lançado",
+                "estilo": "lancado"
+              }
+            },
+            {
+              "nome": "Fornecedores ainda não lançados, pela média",
+              "valor": {
+                "valor": -4790000,
+                "unidade": "brl"
+              },
+              "etiqueta": {
+                "rotulo": "não lançado",
+                "estilo": "nao-lancado"
+              },
+              "riscado": true
+            },
+            {
+              "nome": "Folha e encargos, pela média",
+              "valor": {
+                "valor": -1640000,
+                "unidade": "brl"
+              },
+              "etiqueta": {
+                "rotulo": "não lançado",
+                "estilo": "nao-lancado"
+              },
+              "riscado": true
+            },
+            {
+              "nome": "Impostos, pela média",
+              "valor": {
+                "valor": -1000000,
+                "unidade": "brl"
+              },
+              "etiqueta": {
+                "rotulo": "não lançado",
+                "estilo": "nao-lancado"
+              },
+              "riscado": true
+            },
+            {
+              "nome": "Despesas fixas, pela média",
+              "valor": {
+                "valor": -1000000,
+                "unidade": "brl"
+              },
+              "etiqueta": {
+                "rotulo": "não lançado",
+                "estilo": "nao-lancado"
+              },
+              "riscado": true
+            },
+            {
+              "nome": "Despesas variáveis, pela média",
+              "valor": {
+                "valor": -660000,
+                "unidade": "brl"
+              },
+              "etiqueta": {
+                "rotulo": "não lançado",
+                "estilo": "nao-lancado"
+              },
+              "riscado": true
+            },
+            {
+              "nome": "Empréstimos e juros ainda não lançados",
+              "valor": {
+                "valor": -120000,
+                "unidade": "brl"
+              },
+              "etiqueta": {
+                "rotulo": "não lançado",
+                "estilo": "nao-lancado"
+              },
+              "riscado": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "semana-a-semana",
+      "tipo": "tabela",
+      "largura": 7,
+      "variante": "listrada",
+      "titulo": "Semana a semana",
+      "subtitulo": "Entradas e saídas previstas e o saldo no fim de cada semana",
+      "explicacao": "Entradas e saídas previstas em cada semana, o saldo no último dia e o menor saldo dentro da semana, que mostra o aperto antes de o dinheiro entrar.",
+      "colunas": [
+        {
+          "rotulo": "Semana",
+          "alinhar": "esquerda"
+        },
+        {
+          "rotulo": "Entradas",
+          "ocultarNoCelular": true
+        },
+        {
+          "rotulo": "Saídas",
+          "ocultarNoCelular": true
+        },
+        {
+          "rotulo": "Saldo no fim"
+        },
+        {
+          "rotulo": "Menor saldo"
+        }
+      ],
+      "linhas": [
+        {
+          "celulas": [
+            {
+              "valor": "13/10 a 18/10",
+              "marca": "out"
+            },
+            {
+              "valor": {
+                "valor": 976000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": -450000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 1950000,
+                "unidade": "brl"
+              },
+              "negrito": true
+            },
+            {
+              "valor": {
+                "valor": 1590000,
+                "unidade": "brl"
+              },
+              "negrito": true,
+              "fundo": "saudavel"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "19/10 a 25/10"
+            },
+            {
+              "valor": {
+                "valor": 1220000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": -400000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 2770000,
+                "unidade": "brl"
+              },
+              "negrito": true
+            },
+            {
+              "valor": {
+                "valor": 2120000,
+                "unidade": "brl"
+              },
+              "negrito": true,
+              "fundo": "saudavel"
+            }
+          ]
+        },
+        {
+          "separar": true,
+          "celulas": [
+            {
+              "valor": "26/10 a 01/11",
+              "marca": "nov"
+            },
+            {
+              "valor": {
+                "valor": 1220000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": -640000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 3350000,
+                "unidade": "brl"
+              },
+              "negrito": true
+            },
+            {
+              "valor": {
+                "valor": 2920000,
+                "unidade": "brl"
+              },
+              "negrito": true,
+              "fundo": "saudavel"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "02/11 a 08/11"
+            },
+            {
+              "valor": {
+                "valor": 1050000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": -1940000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 2460000,
+                "unidade": "brl"
+              },
+              "negrito": true
+            },
+            {
+              "valor": {
+                "valor": 2460000,
+                "unidade": "brl"
+              },
+              "negrito": true,
+              "fundo": "saudavel"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "09/11 a 15/11"
+            },
+            {
+              "valor": {
+                "valor": 1070000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": -230000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 3300000,
+                "unidade": "brl"
+              },
+              "negrito": true
+            },
+            {
+              "valor": {
+                "valor": 2640000,
+                "unidade": "brl"
+              },
+              "negrito": true,
+              "fundo": "saudavel"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "16/11 a 22/11"
+            },
+            {
+              "valor": {
+                "valor": 0,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": -130000,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 3170000,
+                "unidade": "brl"
+              },
+              "negrito": true
+            },
+            {
+              "valor": {
+                "valor": 3170000,
+                "unidade": "brl"
+              },
+              "negrito": true,
+              "fundo": "saudavel"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "23/11 a 29/11"
+            },
+            {
+              "valor": {
+                "valor": 0,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 0,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 3170000,
+                "unidade": "brl"
+              },
+              "negrito": true
+            },
+            {
+              "valor": {
+                "valor": 3170000,
+                "unidade": "brl"
+              },
+              "negrito": true,
+              "fundo": "saudavel"
+            }
+          ]
+        },
+        {
+          "separar": true,
+          "celulas": [
+            {
+              "valor": "30/11 a 06/12",
+              "marca": "dez"
+            },
+            {
+              "valor": {
+                "valor": 0,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 0,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 3170000,
+                "unidade": "brl"
+              },
+              "negrito": true
+            },
+            {
+              "valor": {
+                "valor": 3170000,
+                "unidade": "brl"
+              },
+              "negrito": true,
+              "fundo": "saudavel"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "07/12 a 11/12"
+            },
+            {
+              "valor": {
+                "valor": 0,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 0,
+                "unidade": "brl"
+              }
+            },
+            {
+              "valor": {
+                "valor": 3170000,
+                "unidade": "brl"
+              },
+              "negrito": true
+            },
+            {
+              "valor": {
+                "valor": 3170000,
+                "unidade": "brl"
+              },
+              "negrito": true,
+              "fundo": "saudavel"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "provisoes",
+      "tipo": "provisoes",
+      "largura": 12,
+      "titulo": "Provisões pelo histórico",
+      "subtitulo": "Completa o que ainda não está lançado com a média do período escolhido. Vale na visão “Lançados + provisões”.",
+      "explicacao": "O que a empresa costuma receber e pagar por mês, menos o que já está lançado. É o que completa a visão “Lançados + provisões”. Quem vê este painel pode mudar, e a mudança vale para todos.",
+      "nota": "Mesma lógica da planilha de provisões do comitê de caixa: provisão = média do período − o que já está lançado. Nos dias 31 a 60, vale a mesma conta com o lançado daquela janela. Investimentos começam desligados porque não se repetem. Digite um valor para personalizar; apague para voltar ao sugerido.",
+      "periodos": [
+        {
+          "id": "ultimo-mes",
+          "rotulo": "Último mês"
+        },
+        {
+          "id": "3-meses",
+          "rotulo": "3 meses"
+        },
+        {
+          "id": "6-meses",
+          "rotulo": "6 meses"
+        },
+        {
+          "id": "12-meses",
+          "rotulo": "12 meses"
+        }
+      ],
+      "periodo": "6-meses",
+      "colunas": {
+        "usar": "Usar",
+        "grupo": "Grupo",
+        "media": "Média por mês",
+        "lancado": "Lançado em 30 dias",
+        "sugerida": "Provisão sugerida",
+        "usado": "Valor usado"
+      },
+      "editavel": true,
+      "grupos": [
+        {
+          "id": "recebimentos",
+          "nome": "Recebimentos de vendas ainda não faturadas",
+          "detalhe": "média recebida menos o que já está a receber",
+          "ligado": true,
+          "media": 6400000,
+          "lancado": 5256000,
+          "sugerida": 1144000,
+          "usado": 1144000,
+          "personalizado": null
+        },
+        {
+          "id": "fornecedores",
+          "nome": "Fornecedores",
+          "ligado": true,
+          "media": 4160000,
+          "lancado": 3530000,
+          "sugerida": 630000,
+          "usado": 630000,
+          "personalizado": null
+        },
+        {
+          "id": "folha",
+          "nome": "Folha e encargos",
+          "ligado": true,
+          "media": 820000,
+          "lancado": null,
+          "sugerida": 820000,
+          "usado": 820000,
+          "personalizado": null
+        },
+        {
+          "id": "impostos",
+          "nome": "Impostos",
+          "ligado": true,
+          "media": 500000,
+          "lancado": null,
+          "sugerida": 500000,
+          "usado": 500000,
+          "personalizado": null
+        },
+        {
+          "id": "despesas-fixas",
+          "nome": "Despesas fixas",
+          "ligado": true,
+          "media": 500000,
+          "lancado": null,
+          "sugerida": 500000,
+          "usado": 500000,
+          "personalizado": null
+        },
+        {
+          "id": "despesas-variaveis",
+          "nome": "Despesas variáveis",
+          "ligado": true,
+          "media": 330000,
+          "lancado": null,
+          "sugerida": 330000,
+          "usado": 330000,
+          "personalizado": null
+        },
+        {
+          "id": "investimentos",
+          "nome": "Investimentos",
+          "detalhe": "não recorrente: desligado",
+          "ligado": false,
+          "media": 210000,
+          "lancado": null,
+          "sugerida": 210000,
+          "usado": 210000,
+          "personalizado": null
+        },
+        {
+          "id": "emprestimos",
+          "nome": "Empréstimos e juros",
+          "ligado": true,
+          "media": 190000,
+          "lancado": 130000,
+          "sugerida": 60000,
+          "usado": 60000,
+          "personalizado": null
+        }
+      ]
+    },
+    {
+      "id": "pago-lancado",
+      "tipo": "graficos",
+      "largura": 6,
+      "status": "atencao",
+      "titulo": "Pago contra lançado",
+      "subtitulo": "Quanto a empresa pagou por mês e quanto já está lançado para os próximos meses",
+      "explicacao": "Compara o que a empresa pagou em cada mês com o que já está lançado para os próximos. Pouco lançado nos próximos 30 dias quer dizer que faltam contas no sistema, e o caixa “só lançados” parece melhor do que vai ser.",
+      "legenda": [
+        {
+          "nome": "Pago",
+          "marca": "quadrado-escuro"
+        },
+        {
+          "nome": "Lançado",
+          "marca": "quadrado-laranja"
+        },
+        {
+          "nome": "Média paga",
+          "marca": "minimo"
+        }
+      ],
+      "graficos": [
+        {
+          "grafico": {
+            "tipo": "barras",
+            "unidade": "brl",
+            "grupos": [
+              {
+                "rotulo": "abr",
+                "titulo": "Abril de 2026",
+                "barras": [
+                  {
+                    "nome": "Pago",
+                    "valor": 6110000,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "mai",
+                "titulo": "Maio de 2026",
+                "barras": [
+                  {
+                    "nome": "Pago",
+                    "valor": 6270000,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "jun",
+                "titulo": "Junho de 2026",
+                "barras": [
+                  {
+                    "nome": "Pago",
+                    "valor": 6400000,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "jul",
+                "titulo": "Julho de 2026",
+                "barras": [
+                  {
+                    "nome": "Pago",
+                    "valor": 6230000,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "ago",
+                "titulo": "Agosto de 2026",
+                "barras": [
+                  {
+                    "nome": "Pago",
+                    "valor": 6330000,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "set",
+                "titulo": "Setembro de 2026",
+                "barras": [
+                  {
+                    "nome": "Pago",
+                    "valor": 6520000,
+                    "estilo": "serie"
+                  }
+                ]
+              },
+              {
+                "rotulo": "30 d",
+                "titulo": "Próximos 30 dias (13/10 a 11/11)",
+                "barras": [
+                  {
+                    "nome": "Lançado",
+                    "valor": 3660000,
+                    "estilo": "atencao"
+                  }
+                ]
+              },
+              {
+                "rotulo": "60 d",
+                "titulo": "31 a 60 dias (12/11 a 11/12)",
+                "barras": [
+                  {
+                    "nome": "Lançado",
+                    "valor": 130000,
+                    "estilo": "critico"
+                  }
+                ]
+              }
+            ],
+            "referencias": [
+              {
+                "nome": "Média paga",
+                "valor": 6310000,
+                "estilo": "minimo"
+              }
+            ]
+          }
+        }
+      ],
+      "quadros": [
+        {
+          "rotulo": "Próximos 30 dias",
+          "titulo": "58% da média paga",
+          "texto": "Atenção: abaixo de 80% o caixa tende a parecer melhor do que é",
+          "status": "atencao"
+        },
+        {
+          "rotulo": "31 a 60 dias",
+          "titulo": "2% da média paga",
+          "texto": "Normal estar baixo: as contas ainda não chegaram"
+        }
+      ],
+      "rodape": [
+        {
+          "texto": "Lançado para os próximos 30 dias: "
+        },
+        {
+          "texto": "R$ 3,66 mi",
+          "destaque": true
+        },
+        {
+          "texto": ", 58% da média paga (R$ 6,31 mi). Para 31 a 60 dias: "
+        },
+        {
+          "texto": "R$ 130 mil",
+          "destaque": true
+        },
+        {
+          "texto": ", 2%. É normal o mês seguinte estar menos lançado; abaixo de 80% nos próximos 30 dias, o painel avisa."
+        }
+      ]
+    },
+    {
+      "id": "para-onde-vai",
+      "tipo": "barras-horizontais",
+      "largura": 6,
+      "titulo": "Para onde vai o caixa em 30 dias",
+      "subtitulo": "Saídas previstas de 13/10 a 11/11, lançadas e provisionadas",
+      "escala": {
+        "unidade": "brl"
+      },
+      "itens": [
+        {
+          "rotulo": "Fornecedores",
+          "valor": 4160000
+        },
+        {
+          "rotulo": "Folha e encargos",
+          "valor": 820000
+        },
+        {
+          "rotulo": "Impostos",
+          "valor": 500000
+        },
+        {
+          "rotulo": "Despesas fixas",
+          "valor": 500000
+        },
+        {
+          "rotulo": "Despesas variáveis",
+          "valor": 330000
+        },
+        {
+          "rotulo": "Empréstimos e juros",
+          "valor": 190000
+        }
+      ]
+    },
+    {
+      "id": "saldo-cascata",
+      "tipo": "graficos",
+      "largura": 7,
+      "titulo": "Do saldo inicial ao saldo final",
+      "subtitulo": "Setembro. O que a operação, os financiamentos e os investimentos fizeram com o caixa",
+      "nota": "Escala a partir de R$ 1,3 mi para mostrar as diferenças.",
+      "graficos": [
+        {
+          "grafico": {
+            "tipo": "cascata",
+            "unidade": "brl",
+            "piso": 1300000,
+            "passos": [
+              {
+                "rotulo": "Saldo inicial",
+                "de": 0,
+                "ate": 1618000,
+                "valor": 1618000,
+                "estilo": "total"
+              },
+              {
+                "rotulo": "Operação",
+                "de": 1618000,
+                "ate": 1648000,
+                "valor": 30000,
+                "estilo": "positivo"
+              },
+              {
+                "rotulo": "Financiamentos",
+                "de": 1648000,
+                "ate": 1528000,
+                "valor": -120000,
+                "estilo": "negativo"
+              },
+              {
+                "rotulo": "Investimentos",
+                "de": 1528000,
+                "ate": 1480000,
+                "valor": -48000,
+                "estilo": "negativo"
+              },
+              {
+                "rotulo": "Sem classificação",
+                "de": 1480000,
+                "ate": 1474000,
+                "valor": -6000,
+                "estilo": "negativo"
+              },
+              {
+                "rotulo": "Saldo final",
+                "de": 0,
+                "ate": 1474000,
+                "valor": 1474000,
+                "estilo": "total"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "geracao-caixa",
+      "tipo": "graficos",
+      "largura": 5,
+      "titulo": "Geração de caixa realizada",
+      "subtitulo": "Operação, financiamentos e investimentos nos últimos 6 meses",
+      "explicacao": "Quanto a operação, os investimentos e os financiamentos geraram ou consumiram de caixa em cada mês que já passou.",
+      "legenda": [
+        {
+          "nome": "Operação",
+          "marca": "quadrado-escuro"
+        },
+        {
+          "nome": "Financiamentos",
+          "marca": "quadrado-azul"
+        },
+        {
+          "nome": "Investimentos",
+          "marca": "quadrado-claro"
+        }
+      ],
+      "graficos": [
+        {
+          "grafico": {
+            "tipo": "barras",
+            "unidade": "brl",
+            "grupos": [
+              {
+                "rotulo": "abr",
+                "titulo": "Abril de 2026",
+                "barras": [
+                  {
+                    "nome": "Operação (FCO)",
+                    "valor": 80000,
+                    "estilo": "serie"
+                  },
+                  {
+                    "nome": "Financiamentos (FCF)",
+                    "valor": -150000,
+                    "estilo": "serie-azul"
+                  },
+                  {
+                    "nome": "Investimentos (FCI)",
+                    "valor": -60000,
+                    "estilo": "serie-clara"
+                  }
+                ]
+              },
+              {
+                "rotulo": "mai",
+                "titulo": "Maio de 2026",
+                "barras": [
+                  {
+                    "nome": "Operação (FCO)",
+                    "valor": -60000,
+                    "estilo": "serie"
+                  },
+                  {
+                    "nome": "Financiamentos (FCF)",
+                    "valor": -160000,
+                    "estilo": "serie-azul"
+                  },
+                  {
+                    "nome": "Investimentos (FCI)",
+                    "valor": -35000,
+                    "estilo": "serie-clara"
+                  }
+                ]
+              },
+              {
+                "rotulo": "jun",
+                "titulo": "Junho de 2026",
+                "barras": [
+                  {
+                    "nome": "Operação (FCO)",
+                    "valor": 110000,
+                    "estilo": "serie"
+                  },
+                  {
+                    "nome": "Financiamentos (FCF)",
+                    "valor": -140000,
+                    "estilo": "serie-azul"
+                  },
+                  {
+                    "nome": "Investimentos (FCI)",
+                    "valor": -120000,
+                    "estilo": "serie-clara"
+                  }
+                ]
+              },
+              {
+                "rotulo": "jul",
+                "titulo": "Julho de 2026",
+                "barras": [
+                  {
+                    "nome": "Operação (FCO)",
+                    "valor": -40000,
+                    "estilo": "serie"
+                  },
+                  {
+                    "nome": "Financiamentos (FCF)",
+                    "valor": -130000,
+                    "estilo": "serie-azul"
+                  },
+                  {
+                    "nome": "Investimentos (FCI)",
+                    "valor": -20000,
+                    "estilo": "serie-clara"
+                  }
+                ]
+              },
+              {
+                "rotulo": "ago",
+                "titulo": "Agosto de 2026",
+                "barras": [
+                  {
+                    "nome": "Operação (FCO)",
+                    "valor": -20000,
+                    "estilo": "serie"
+                  },
+                  {
+                    "nome": "Financiamentos (FCF)",
+                    "valor": -125000,
+                    "estilo": "serie-azul"
+                  },
+                  {
+                    "nome": "Investimentos (FCI)",
+                    "valor": -45000,
+                    "estilo": "serie-clara"
+                  }
+                ]
+              },
+              {
+                "rotulo": "set",
+                "titulo": "Setembro de 2026",
+                "barras": [
+                  {
+                    "nome": "Operação (FCO)",
+                    "valor": 30000,
+                    "estilo": "serie"
+                  },
+                  {
+                    "nome": "Financiamentos (FCF)",
+                    "valor": -120000,
+                    "estilo": "serie-azul"
+                  },
+                  {
+                    "nome": "Investimentos (FCI)",
+                    "valor": -48000,
+                    "estilo": "serie-clara"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "fluxo-realizado",
+      "tipo": "arvore-mensal",
+      "largura": 12,
+      "titulo": "Fluxo de caixa realizado",
+      "subtitulo": "O que de fato entrou e saiu, mês a mês. Em setembro a operação gerou só R$ 30 mil com lucro de R$ 421 mil: clientes pagando mais tarde e compras acima da meta.",
+      "explicacao": "O que entrou e saiu de fato, mês a mês, do saldo inicial ao saldo final.",
+      "rotuloConta": "Conta (R$)",
+      "colunas": [
+        {
+          "rotulo": "abr-26",
+          "titulo": "Abril de 2026"
+        },
+        {
+          "rotulo": "mai-26",
+          "titulo": "Maio de 2026"
+        },
+        {
+          "rotulo": "jun-26",
+          "titulo": "Junho de 2026"
+        },
+        {
+          "rotulo": "jul-26",
+          "titulo": "Julho de 2026"
+        },
+        {
+          "rotulo": "ago-26",
+          "titulo": "Agosto de 2026"
+        },
+        {
+          "rotulo": "set-26",
+          "titulo": "Setembro de 2026"
+        }
+      ],
+      "escala": {
+        "unidade": "qtd",
+        "casas": 0
+      },
+      "nivelInicial": 2,
+      "niveis": [1, 2, 3],
+      "linhas": [
+        {
+          "id": "saldo-inicial",
+          "nome": "Saldo inicial",
+          "nivel": 0,
+          "valores": [2530000, 2412000, 2149000, 2004000, 1799000, 1618000]
+        },
+        {
+          "id": "fco-ent",
+          "nome": "Entradas operacionais",
+          "nivel": 1,
+          "valores": [6431000, 6322000, 6590000, 6301000, 6671000, 6412000]
+        },
+        {
+          "id": "fco-receb",
+          "nome": "Recebimentos de clientes",
+          "nivel": 2,
+          "pai": "fco-ent",
+          "valores": [6420000, 6310000, 6580000, 6290000, 6660000, 6400000]
+        },
+        {
+          "id": "fco-receb-vendas",
+          "nome": "Venda de produtos",
+          "nivel": 3,
+          "pai": "fco-receb",
+          "valores": [6328000, 6222000, 6485000, 6200000, 6564000, 6302000]
+        },
+        {
+          "id": "fco-receb-fretes",
+          "nome": "Fretes de retorno",
+          "nivel": 3,
+          "pai": "fco-receb",
+          "valores": [92000, 88000, 95000, 90000, 96000, 98000]
+        },
+        {
+          "id": "fco-rend",
+          "nome": "Rendimentos de aplicação",
+          "nivel": 2,
+          "pai": "fco-ent",
+          "valores": [11000, 12000, 10000, 11000, 11000, 12000]
+        },
+        {
+          "id": "fco-sai",
+          "nome": "Saídas operacionais",
+          "nivel": 1,
+          "valores": [-6351000, -6382000, -6480000, -6341000, -6691000, -6382000]
+        },
+        {
+          "id": "fco-forn",
+          "nome": "Fornecedores",
+          "nivel": 2,
+          "pai": "fco-sai",
+          "valores": [-4191000, -4211000, -4278000, -4186000, -4416000, -4211000]
+        },
+        {
+          "id": "fco-forn-merc",
+          "nome": "Compra de mercadorias",
+          "nivel": 3,
+          "pai": "fco-forn",
+          "valores": [-4164000, -4185000, -4250000, -4159000, -4388000, -4183000]
+        },
+        {
+          "id": "fco-forn-frete",
+          "nome": "Frete sobre compras",
+          "nivel": 3,
+          "pai": "fco-forn",
+          "valores": [-27000, -26000, -28000, -27000, -28000, -28000]
+        },
+        {
+          "id": "fco-folha",
+          "nome": "Folha e encargos",
+          "nivel": 2,
+          "pai": "fco-sai",
+          "valores": [-826000, -830000, -842000, -824000, -870000, -830000]
+        },
+        {
+          "id": "fco-folha-sal",
+          "nome": "Salários",
+          "nivel": 3,
+          "pai": "fco-folha",
+          "valores": [-595000, -598000, -606000, -593000, -626000, -598000]
+        },
+        {
+          "id": "fco-folha-enc",
+          "nome": "INSS e FGTS",
+          "nivel": 3,
+          "pai": "fco-folha",
+          "valores": [-231000, -232000, -236000, -231000, -244000, -232000]
+        },
+        {
+          "id": "fco-imp",
+          "nome": "Impostos",
+          "nivel": 2,
+          "pai": "fco-sai",
+          "valores": [-508000, -511000, -518000, -507000, -535000, -511000]
+        },
+        {
+          "id": "fco-fix",
+          "nome": "Despesas fixas",
+          "nivel": 2,
+          "pai": "fco-sai",
+          "valores": [-508000, -511000, -518000, -507000, -535000, -511000]
+        },
+        {
+          "id": "fco-var",
+          "nome": "Despesas variáveis",
+          "nivel": 2,
+          "pai": "fco-sai",
+          "valores": [-318000, -319000, -324000, -317000, -335000, -319000]
+        },
+        {
+          "id": "fco",
+          "nome": "Geração operacional (FCO)",
+          "nivel": 0,
+          "valores": [80000, -60000, 110000, -40000, -20000, 30000],
+          "fundos": ["saudavel", "critico", "saudavel", "critico", "critico", "saudavel"]
+        },
+        {
+          "id": "fcf-ent",
+          "nome": "Entradas de financiamento",
+          "nivel": 1,
+          "valores": [null, null, 200000, null, null, null]
+        },
+        {
+          "id": "fcf-capt",
+          "nome": "Captação de empréstimos",
+          "nivel": 2,
+          "pai": "fcf-ent",
+          "valores": [null, null, 200000, null, null, null]
+        },
+        {
+          "id": "fcf-sai",
+          "nome": "Saídas de financiamento",
+          "nivel": 1,
+          "valores": [-150000, -160000, -340000, -130000, -125000, -120000]
+        },
+        {
+          "id": "fcf-amort",
+          "nome": "Amortização de empréstimos",
+          "nivel": 2,
+          "pai": "fcf-sai",
+          "valores": [-42000, -50000, -228000, -18000, -13000, -8000]
+        },
+        {
+          "id": "fcf-juros",
+          "nome": "Juros de empréstimos",
+          "nivel": 2,
+          "pai": "fcf-sai",
+          "valores": [-48000, -50000, -52000, -52000, -52000, -52000]
+        },
+        {
+          "id": "fcf-ret",
+          "nome": "Retirada de sócios",
+          "nivel": 2,
+          "pai": "fcf-sai",
+          "valores": [-60000, -60000, -60000, -60000, -60000, -60000]
+        },
+        {
+          "id": "fcf",
+          "nome": "Financiamentos (FCF)",
+          "nivel": 0,
+          "valores": [-150000, -160000, -140000, -130000, -125000, -120000]
+        },
+        {
+          "id": "fci-ent",
+          "nome": "Entradas de investimento",
+          "nivel": 1,
+          "valores": [null, null, 15000, null, null, null]
+        },
+        {
+          "id": "fci-venda",
+          "nome": "Venda de imobilizado",
+          "nivel": 2,
+          "pai": "fci-ent",
+          "valores": [null, null, 15000, null, null, null]
+        },
+        {
+          "id": "fci-sai",
+          "nome": "Saídas de investimento",
+          "nivel": 1,
+          "valores": [-60000, -35000, -135000, -20000, -45000, -48000]
+        },
+        {
+          "id": "fci-maq",
+          "nome": "Veículos e máquinas",
+          "nivel": 2,
+          "pai": "fci-sai",
+          "valores": [-48000, -25000, -110000, -12000, -35000, -37000]
+        },
+        {
+          "id": "fci-obras",
+          "nome": "Obras e instalações",
+          "nivel": 2,
+          "pai": "fci-sai",
+          "valores": [-12000, -10000, -25000, -8000, -10000, -11000]
+        },
+        {
+          "id": "fci",
+          "nome": "Investimentos (FCI)",
+          "nivel": 0,
+          "valores": [-60000, -35000, -120000, -20000, -45000, -48000]
+        },
+        {
+          "id": "sem-classificacao",
+          "nome": "Sem classificação",
+          "nivel": 1,
+          "valores": [12000, -8000, 5000, -15000, 9000, -6000]
+        },
+        {
+          "id": "variacao",
+          "nome": "Variação do caixa (FCO + FCF + FCI)",
+          "nivel": 0,
+          "valores": [-118000, -263000, -145000, -205000, -181000, -144000],
+          "fundos": ["critico", "critico", "critico", "critico", "critico", "critico"]
+        },
+        {
+          "id": "saldo-final",
+          "nome": "Saldo final",
+          "nivel": 0,
+          "final": true,
+          "valores": [2412000, 2149000, 2004000, 1799000, 1618000, 1474000]
+        }
+      ],
+      "rodape": [
+        "Sem classificação: caixa de contas sem de-para no plano (2300 Adiantamentos diversos, 2415 Acertos de caixa).",
+        "Fora do fluxo de caixa, por não mexerem no caixa: depreciação, PDD e transferências entre contas."
+      ]
+    }
+  ]
+}
