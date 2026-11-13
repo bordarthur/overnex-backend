@@ -322,3 +322,312 @@ def test_matriz_e_feriado_pela_gestao(
     ]
     assert client.delete(f"{base}/feriados/2026-08-15", headers=cabecalho).status_code == 204
     assert client.delete(f"{base}/feriados/2026-08-15", headers=cabecalho).status_code == 404
+
+
+# ---------- convite pela Gestão (migration 29) ----------
+
+EMAIL_NOVO = "carla@alfa.example"
+ID_AUTH_NOVO = "5b000000-0000-4000-8000-0000000000c1"
+
+
+@pytest.fixture
+def sem_carla(admin_conn: psycopg.Connection[tuple[object, ...]]) -> Iterator[None]:
+    yield
+    admin_conn.execute("delete from seg.usuario where lower(email) = %s", (EMAIL_NOVO,))
+    admin_conn.execute("delete from seg.log_alteracao where depois ->> 'convite' = 'fila'")
+
+
+def _carla(client: TestClient) -> Any:
+    pessoas = client.get("/api/admin/usuarios", headers=auth(OID_ADMIN)).json()["usuarios"]
+    return next(p for p in pessoas if p["email"] == EMAIL_NOVO)
+
+
+def _convite_na_fila(admin_conn: psycopg.Connection[tuple[object, ...]], usuario_id: str) -> int:
+    linha = admin_conn.execute(
+        "select id from seg.convite_fila where usuario_id = %s and estado = 'fila'", (usuario_id,)
+    ).fetchone()
+    assert linha is not None
+    return int(str(linha[0]))
+
+
+@pytest.mark.usefixtures("sem_carla")
+def test_convite_pela_gestao_da_fila_ao_login(
+    client: TestClient, admin_conn: psycopg.Connection[tuple[object, ...]]
+) -> None:
+    novo = {
+        "email": " Carla@Alfa.example ",
+        "nome": "Carla Alfa",
+        "perfil": "cliente_usuario",
+        "clientes": [SLUG_A],
+    }
+    cabecalho = auth(OID_ADMIN)
+
+    # só o admin convida
+    assert client.post("/api/admin/usuarios", json=novo, headers=auth(OID_A)).status_code == 403
+
+    r = client.post("/api/admin/usuarios", json=novo, headers=cabecalho)
+    assert r.status_code == 202
+    usuario_id = r.json()["id"]
+    assert r.json()["mensagem"].startswith("Convite na fila")
+
+    # a pessoa já aparece na lista, sem login ainda
+    carla = _carla(client)
+    assert (carla["id"], carla["situacao"]["id"], carla["convite"]) == (usuario_id, "fila", None)
+    assert [c["slug"] for c in carla["clientes"]] == [SLUG_A]
+    assert admin_conn.execute(
+        "select id_autenticacao, convidado_em, perfil from seg.usuario where id = %s",
+        (usuario_id,),
+    ).fetchone() == (None, None, "cliente_usuario")
+    assert admin_conn.execute(
+        "select count(*) from seg.log_alteracao where tabela = 'seg.usuario' and registro_id = %s",
+        (usuario_id,),
+    ).fetchone() == (1,)
+
+    # o e-mail é o login: um por pessoa; e um pedido pendente por vez
+    repetido = client.post("/api/admin/usuarios", json=novo, headers=cabecalho)
+    assert (repetido.status_code, repetido.json()) == (
+        422,
+        {"detail": "Este e-mail já tem cadastro no Overnex."},
+    )
+    de_novo = client.post(f"/api/admin/usuarios/{usuario_id}/convite", headers=cabecalho)
+    assert (de_novo.status_code, de_novo.json()) == (
+        422,
+        {"detail": "O convite desta pessoa já está na fila."},
+    )
+
+    # o job não conseguiu mandar: a situação mostra o motivo e oferece tentar de novo
+    admin_conn.execute(
+        "select seg.concluir_convite(%s, null, 'O limite de e-mails do Supabase foi atingido.')",
+        (_convite_na_fila(admin_conn, usuario_id),),
+    )
+    carla = _carla(client)
+    assert (carla["situacao"]["id"], carla["situacao"]["detalhe"], carla["convite"]) == (
+        "nao-enviado",
+        "O limite de e-mails do Supabase foi atingido.",
+        {"rotulo": "Tentar de novo"},
+    )
+
+    # tenta de novo; desta vez o job manda e grava o id do Supabase Auth
+    assert (
+        client.post(f"/api/admin/usuarios/{usuario_id}/convite", headers=cabecalho).status_code
+        == 202
+    )
+    assert _carla(client)["situacao"]["id"] == "fila"
+    admin_conn.execute(
+        "select seg.concluir_convite(%s, %s, null)",
+        (_convite_na_fila(admin_conn, usuario_id), ID_AUTH_NOVO),
+    )
+    carla = _carla(client)
+    assert (carla["situacao"]["id"], carla["convite"]) == (
+        "convite",
+        {"rotulo": "Reenviar convite"},
+    )
+
+    # com o login ligado ao cadastro, a pessoa entra e abre o cliente dela
+    sessao = _sessao(client, ID_AUTH_NOVO)
+    assert sessao.status_code == 200
+    assert sessao.json()["cliente"]["slug"] == SLUG_A
+
+
+@pytest.mark.usefixtures("sem_carla")
+def test_convite_sem_empresa_fica_sem_empresa_depois_de_enviado(
+    client: TestClient, admin_conn: psycopg.Connection[tuple[object, ...]]
+) -> None:
+    r = client.post(
+        "/api/admin/usuarios",
+        json={"email": EMAIL_NOVO, "nome": "Carla Alfa", "perfil": "consultor", "clientes": []},
+        headers=auth(OID_ADMIN),
+    )
+    assert r.status_code == 202
+    usuario_id = r.json()["id"]
+    assert admin_conn.execute(
+        "select tipo from seg.usuario where id = %s", (usuario_id,)
+    ).fetchone() == ("lann",)
+
+    admin_conn.execute(
+        "select seg.concluir_convite(%s, %s, null)",
+        (_convite_na_fila(admin_conn, usuario_id), ID_AUTH_NOVO),
+    )
+
+    carla = _carla(client)
+    # enviado, mas falta marcar a empresa; o botão de reenviar continua
+    assert (carla["situacao"]["id"], carla["aoEntrar"]["rotulo"], carla["convite"]) == (
+        "sem-empresa",
+        "Não vê nada",
+        {"rotulo": "Reenviar convite"},
+    )
+
+
+@pytest.mark.usefixtures("sem_carla")
+def test_convite_recusa_o_que_a_edicao_recusa(client: TestClient) -> None:
+    base = {"email": EMAIL_NOVO, "nome": "Carla Alfa", "perfil": "cliente_usuario"}
+    casos = [
+        ({"perfil": "admin"}, "Admin BORD só com e-mail da BORD."),
+        ({"sessaoMinutos": 1440}, "Mais de 12 h, só Admin BORD."),
+        ({"clientes": ["nao-existe"]}, "Empresa não encontrada: nao-existe."),
+        ({"email": "ANA@alfa.example"}, "Este e-mail já tem cadastro no Overnex."),
+        ({"email": "sem-arroba"}, "E-mail inválido."),
+    ]
+    for mudanca, detalhe in casos:
+        r = client.post("/api/admin/usuarios", json=base | mudanca, headers=auth(OID_ADMIN))
+        assert (r.status_code, r.json()) == (422, {"detail": detalhe})
+    pessoas = client.get("/api/admin/usuarios", headers=auth(OID_ADMIN)).json()["usuarios"]
+    assert EMAIL_NOVO not in {p["email"] for p in pessoas}
+
+
+# ---------- empresa nova pela Gestão (migrations 30 e 31) ----------
+
+
+@pytest.fixture
+def beta_de_volta(admin_conn: psycopg.Connection[tuple[object, ...]]) -> Iterator[None]:
+    yield
+    admin_conn.execute(
+        "update cfg.cliente set nome = 'Padrão LANN Beta', segmento = null where id = %s",
+        (CLIENTE_B,),
+    )
+    admin_conn.execute(
+        "delete from seg.log_alteracao where tabela = 'cfg.cliente' and registro_id = %s",
+        (CLIENTE_B,),
+    )
+
+
+@pytest.mark.usefixtures("beta_de_volta")
+def test_admin_troca_nome_e_setor_de_uma_empresa_que_ja_existe(
+    client: TestClient, admin_conn: psycopg.Connection[tuple[object, ...]]
+) -> None:
+    rota = f"/api/admin/clientes/{SLUG_B}"
+    cabecalho = auth(OID_ADMIN)
+
+    r = client.put(
+        rota, json={"nome": " Beta  Distribuidora ", "segmento": "Distribuidora"}, headers=cabecalho
+    )
+    assert (r.status_code, r.content) == (204, b"")
+
+    assert admin_conn.execute(
+        "select nome, segmento, slug from cfg.cliente where id = %s", (CLIENTE_B,)
+    ).fetchone() == ("Beta Distribuidora", "Distribuidora", SLUG_B)
+    assert admin_conn.execute(
+        "select antes ->> 'nome', depois ->> 'segmento' from seg.log_alteracao"
+        " where tabela = 'cfg.cliente' and registro_id = %s",
+        (CLIENTE_B,),
+    ).fetchall() == [("Padrão LANN Beta", "Distribuidora")]
+    # o nome novo aparece para quem é do cliente
+    assert _sessao(client, OID_B).json()["cliente"]["nome"] == "Beta Distribuidora"
+
+    # setor em branco volta a "não informado"; nome em branco não passa
+    assert (
+        client.put(rota, json={"nome": "Beta", "segmento": " "}, headers=cabecalho).status_code
+        == 204
+    )
+    assert admin_conn.execute(
+        "select nome, segmento from cfg.cliente where id = %s", (CLIENTE_B,)
+    ).fetchone() == ("Beta", None)
+    vazio = client.put(rota, json={"nome": "  "}, headers=cabecalho)
+    assert (vazio.status_code, vazio.json()) == (422, {"detail": "Informe o nome da empresa."})
+
+    # 404 só para slug que não existe; e quem não é admin, 403
+    fora = client.put("/api/admin/clientes/nao-existe", json={"nome": "X"}, headers=cabecalho)
+    assert (fora.status_code, fora.json()) == (404, {"detail": "Empresa não encontrada."})
+    assert client.put(rota, json={"nome": "X"}, headers=auth(OID_B)).status_code == 403
+
+
+SLUG_NOVO = "nova-gama"
+
+
+@pytest.fixture
+def sem_empresa_nova(admin_conn: psycopg.Connection[tuple[object, ...]]) -> Iterator[None]:
+    yield
+    admin_conn.execute("delete from seg.usuario where lower(email) = %s", (EMAIL_NOVO,))
+    for tabela in ("cfg.empresa", "cfg.perfil_acesso"):
+        admin_conn.execute(
+            f"delete from {tabela} where cliente_id in"  # noqa: S608
+            " (select id from cfg.cliente where slug = %s)",
+            (SLUG_NOVO,),
+        )
+    admin_conn.execute("delete from cfg.cliente where slug = %s", (SLUG_NOVO,))
+    admin_conn.execute(
+        "delete from seg.log_alteracao where tabela = 'cfg.cliente'"
+        " or depois ->> 'convite' = 'fila'"
+    )
+
+
+@pytest.mark.usefixtures("sem_empresa_nova")
+def test_empresa_nova_pela_gestao_do_cadastro_ao_primeiro_cnpj(
+    client: TestClient, admin_conn: psycopg.Connection[tuple[object, ...]]
+) -> None:
+    cabecalho = auth(OID_ADMIN)
+    nova = {"nome": "Nova Gama", "segmento": "Distribuição de alimentos"}
+
+    # só o admin cria empresa
+    assert client.post("/api/admin/clientes", json=nova, headers=auth(OID_A)).status_code == 403
+
+    r = client.post("/api/admin/clientes", json=nova, headers=cabecalho)
+    assert r.status_code == 201
+    assert (r.json()["slug"], r.json()["nome"]) == (SLUG_NOVO, "Nova Gama")
+
+    # aparece na barra lateral, com o setor e tudo desligado, e abre
+    gestao = client.get("/api/admin/gestao", headers=cabecalho).json()
+    gama = next(c for c in gestao["clientes"] if c["slug"] == SLUG_NOVO)
+    assert gama["segmento"] == "Distribuição de alimentos"
+    assert {c["estado"] for c in gama["camadas"]} == {"desligada"}
+    aberta = client.get(f"/api/admin/clientes/{SLUG_NOVO}", headers=cabecalho).json()
+    assert aberta["cliente"]["segmento"] == "Distribuição de alimentos"
+    assert (aberta["usuarios"], aberta["fontes"]) == ([], [])
+    assert len(aberta["acesso"]["perfis"]) == 4
+
+    # nome e setor mudam pela tela; o slug fica
+    mudou = client.put(
+        f"/api/admin/clientes/{SLUG_NOVO}",
+        json={"nome": "Nova Gama Ltda", "segmento": "Atacado"},
+        headers=cabecalho,
+    )
+    assert mudou.status_code == 204
+    aberta = client.get(f"/api/admin/clientes/{SLUG_NOVO}", headers=cabecalho).json()
+    assert aberta["cliente"] == {
+        "slug": SLUG_NOVO,
+        "nome": "Nova Gama Ltda",
+        "segmento": "Atacado",
+        "logoUrl": None,
+    }
+    assert (
+        client.put(
+            f"/api/admin/clientes/{SLUG_NOVO}", json={"nome": "X"}, headers=auth(OID_A)
+        ).status_code
+        == 403
+    )
+
+    # o mesmo identificador não se repete
+    repetida = client.post("/api/admin/clientes", json=nova, headers=cabecalho)
+    assert (repetida.status_code, repetida.json()) == (
+        422,
+        {"detail": "Já existe uma empresa com o identificador nova-gama."},
+    )
+
+    # já dá para convidar alguém para ela, antes de existir CNPJ
+    convite = client.post(
+        "/api/admin/usuarios",
+        json={
+            "email": EMAIL_NOVO,
+            "nome": "Carla Alfa",
+            "perfil": "cliente_principal",
+            "clientes": [SLUG_NOVO],
+        },
+        headers=cabecalho,
+    )
+    assert convite.status_code == 202
+    usuario_id = convite.json()["id"]
+    admin_conn.execute(
+        "select seg.concluir_convite(%s, %s, null)",
+        (_convite_na_fila(admin_conn, usuario_id), ID_AUTH_NOVO),
+    )
+    antes = _sessao(client, ID_AUTH_NOVO).json()
+    assert (antes["cliente"]["slug"], antes["empresas"]) == (SLUG_NOVO, [])
+
+    # o CNPJ chega depois, por script: entra sozinho no vínculo de quem já foi convidado
+    admin_conn.execute(
+        "insert into cfg.empresa (cliente_id, nome)"
+        " select id, 'Nova Gama Matriz' from cfg.cliente where slug = %s",
+        (SLUG_NOVO,),
+    )
+    depois = _sessao(client, ID_AUTH_NOVO).json()
+    assert [e["nome"] for e in depois["empresas"]] == ["Nova Gama Matriz"]

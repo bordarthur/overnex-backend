@@ -1,8 +1,9 @@
 """Pessoas na Gestão: a lista, a situação de cada uma e as mudanças de perfil, empresas,
 sessão e acesso.
 
-Quem cria o login é o CLI (app/cli/convidar_usuario.py): o convite precisa da chave secreta
-do Supabase, que não entra no ambiente da API. Aqui a BORD edita quem já existe.
+Aqui a BORD edita quem já existe. O convite de gente nova e o reenvio ficam em
+app/admin/convites.py: a API grava o pedido numa fila e um job manda (a chave secreta do
+Supabase não entra no ambiente da API). A situação de cada pessoa leva o estado desse pedido.
 
 Regras (mockup Gestão M2.1.0), todas conferidas aqui, com o texto pronto no erro:
 - Admin BORD só com e-mail de um domínio de ADMIN_DOMINIOS, e sem vínculos (vê todas);
@@ -24,6 +25,7 @@ from uuid import UUID
 
 from app.admin import textos
 from app.admin.contrato import (
+    AcaoConvite,
     Acessos,
     AoEntrar,
     FiltroUsuarios,
@@ -49,9 +51,11 @@ MSG_ADMIN_EMAIL = "Admin BORD só com e-mail da BORD."
 MSG_ULTIMO_ADMIN = "O Overnex precisa de pelo menos um Admin BORD ativo."
 MSG_PROPRIO = "Você não pode tirar o próprio acesso de Admin BORD. Peça a outro Admin BORD."
 MSG_CLIENTE = "Empresa não encontrada: {}."
+# situações do filtro "Convites pendentes"
+SITUACOES_PENDENTES = ("fila", "nao-enviado", "convite", "vencido")
 NOTA_CONVITE = (
-    "Novos acessos são criados pela equipe BORD, pelo comando de cadastro: a pessoa recebe o "
-    "convite por e-mail e cria a própria senha. Aqui se edita quem já tem acesso."
+    "A pessoa recebe o convite por e-mail e cria a própria senha. O convite entra numa fila "
+    "e sai em cerca de um minuto; se o envio falhar, a situação da pessoa mostra o motivo."
 )
 
 
@@ -76,9 +80,18 @@ SQL_USUARIOS = """
                 where uc.usuario_id = u.id
            ), '[]'::jsonb) as clientes,
            coalesce(a.entradas_30d, 0) as entradas_30d,
-           a.ultimo_acesso
+           a.ultimo_acesso,
+           f.estado as convite_estado, f.em as convite_em, f.motivo as convite_motivo
       from seg.usuario u
       left join seg.resumo_acessos() a on a.usuario_id = u.id
+      -- o último pedido de convite feito pela Gestão (migration 29)
+      left join lateral (
+          select cf.estado, cf.motivo, coalesce(cf.processado_em, cf.pedido_em) as em
+            from seg.convite_fila cf
+           where cf.usuario_id = u.id
+           order by cf.id desc
+           limit 1
+      ) f on true
      order by lower(coalesce(u.nome, u.email)), u.id
 """
 SQL_ADMINS_ATIVOS = "select count(*) as total from seg.usuario where perfil = 'admin' and ativo"
@@ -101,10 +114,28 @@ class Pessoa:
     clientes: tuple[ItemCliente, ...]
     entradas_30d: int
     ultimo_acesso: datetime | None
+    # último pedido de convite pela Gestão: fila, enviado ou falhou; None = nunca houve
+    convite_estado: str | None = None
+    # quando foi pedido (na fila) ou processado (enviado ou falhou)
+    convite_em: datetime | None = None
+    convite_motivo: str | None = None
 
     @property
     def admin(self) -> bool:
         return self.perfil == perfis.ADMIN
+
+    @property
+    def na_fila(self) -> bool:
+        return self.convite_estado == "fila" and self.convite_em is not None
+
+    @property
+    def envio_falhou(self) -> bool:
+        """O último pedido não saiu, e ninguém mandou o convite depois (pelo comando)."""
+        return (
+            self.convite_estado == "falhou"
+            and self.convite_em is not None
+            and (self.convidado_em is None or self.convidado_em < self.convite_em)
+        )
 
 
 def pessoa_da_linha(linha: Mapping[str, Any]) -> Pessoa:
@@ -121,23 +152,34 @@ def pessoa_da_linha(linha: Mapping[str, Any]) -> Pessoa:
         clientes=tuple(ItemCliente(slug=c["slug"], nome=c["nome"]) for c in linha["clientes"]),
         entradas_30d=linha["entradas_30d"],
         ultimo_acesso=linha["ultimo_acesso"],
+        convite_estado=linha["convite_estado"],
+        convite_em=linha["convite_em"],
+        convite_motivo=linha["convite_motivo"],
     )
 
 
 def situacao(p: Pessoa, agora: datetime, convite_horas: int) -> Situacao:
-    """Desativado, convite enviado ou vencido (ainda não entrou), sem empresa ou ativo."""
+    """A situação que mais pede ação. Nesta ordem: desativado; de quem ainda não entrou, o
+    convite que precisa de alguém (na fila, não enviado ou vencido); sem empresa; convite
+    enviado; ativo."""
 
-    def feita(id_: str, rotulo: str, quando: str, status: Status) -> Situacao:
-        return Situacao(id=id_, rotulo=rotulo, quando=quando, status=status)
+    def feita(
+        id_: str, rotulo: str, quando: str, status: Status, detalhe: str | None = None
+    ) -> Situacao:
+        return Situacao(id=id_, rotulo=rotulo, quando=quando, status=status, detalhe=detalhe)
 
     if not p.ativo:
         quando = f"desativado {textos.quando(p.desativado_em, agora)}" if p.desativado_em else ""
         return feita("inativo", "Desativado", quando, "neutro")
-    if p.primeiro_acesso_em is None and p.convidado_em is not None:
-        vence = p.convidado_em + timedelta(hours=convite_horas)
-        if agora < vence:
-            enviado = f"enviado {textos.quando(p.convidado_em, agora)}"
-            return feita("convite", "Convite enviado", enviado, "atencao")
+    pendente = p.primeiro_acesso_em is None
+    vence = p.convidado_em + timedelta(hours=convite_horas) if p.convidado_em else None
+    if pendente and p.na_fila and p.convite_em:
+        pedido = f"pedido {textos.quando(p.convite_em, agora)}"
+        return feita("fila", "Convite na fila", pedido, "atencao")
+    if pendente and p.envio_falhou and p.convite_em:
+        tentativa = f"tentativa {textos.quando(p.convite_em, agora)}"
+        return feita("nao-enviado", "Convite não enviado", tentativa, "critico", p.convite_motivo)
+    if pendente and vence is not None and agora >= vence:
         return feita(
             "vencido", "Convite vencido", f"venceu {textos.quando(vence, agora)}", "critico"
         )
@@ -148,7 +190,18 @@ def situacao(p: Pessoa, agora: datetime, convite_horas: int) -> Situacao:
     )
     if not p.admin and not p.clientes:
         return feita("sem-empresa", "Sem empresa", entrou, "critico")
+    if pendente and p.convidado_em is not None:
+        enviado = f"enviado {textos.quando(p.convidado_em, agora)}"
+        return feita("convite", "Convite enviado", enviado, "atencao")
     return feita("ativo", "Ativo", entrou, "saudavel")
+
+
+def acao_convite(p: Pessoa) -> AcaoConvite | None:
+    """O botão de mandar o convite de novo: só para quem está ativo, ainda não entrou e não
+    tem pedido na fila."""
+    if not p.ativo or p.primeiro_acesso_em is not None or p.na_fila:
+        return None
+    return AcaoConvite(rotulo="Tentar de novo" if p.envio_falhou else "Reenviar convite")
 
 
 def ao_entrar(p: Pessoa, total_clientes: int) -> AoEntrar:
@@ -184,6 +237,7 @@ def usuario(
             ultimo=textos.quando(p.ultimo_acesso, agora) if p.ultimo_acesso else None,
         ),
         pode_desativar=p.ativo and not (p.admin and admins_ativos < 2),
+        convite=acao_convite(p),
     )
 
 
@@ -207,7 +261,7 @@ def filtros(usuarios: Sequence[Usuario]) -> list[FiltroUsuarios]:
         FiltroUsuarios(
             id="pendentes",
             rotulo="Convites pendentes",
-            total=total(lambda u: u.situacao.id in ("convite", "vencido")),
+            total=total(lambda u: u.situacao.id in SITUACOES_PENDENTES),
             atencao=True,
         ),
         FiltroUsuarios(
@@ -295,7 +349,7 @@ def _atual(
     return dict(linha)
 
 
-def _conferir_sessao(minutos: int, perfil: str) -> None:
+def conferir_sessao(minutos: int, perfil: str) -> None:
     if minutos not in SESSOES:
         raise RegraInvalida(MSG_SESSAO)
     if minutos > SESSAO_MAXIMA_COMUM and perfil != perfis.ADMIN:
@@ -332,7 +386,7 @@ def mudar(
     if faltam:
         raise RegraInvalida(MSG_CLIENTE.format(", ".join(faltam)))
     if sessao_minutos is not None:
-        _conferir_sessao(sessao_minutos, perfil)
+        conferir_sessao(sessao_minutos, perfil)
     # igual ao padrão do perfil = sem valor próprio
     sessao = None if sessao_minutos == atual["padrao"] else sessao_minutos
 
@@ -364,7 +418,7 @@ def mudar(
 def mudar_sessao(conn: Conexao, autor: UUID, usuario_id: UUID, minutos: int) -> None:
     """Troca só o tempo de sessão da pessoa. Não confirma a transação."""
     atual = _atual(conn, usuario_id)
-    _conferir_sessao(minutos, atual["perfil"])
+    conferir_sessao(minutos, atual["perfil"])
     # igual ao padrão do perfil = sem valor próprio
     sessao = None if minutos == atual["padrao"] else minutos
     conn.execute(SQL_SESSAO, {"id": usuario_id, "sessao": sessao})

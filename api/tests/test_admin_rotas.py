@@ -13,7 +13,7 @@ from uuid import UUID
 import pytest
 from fastapi.testclient import TestClient
 
-from app.admin import clientes, textos, usuarios
+from app.admin import clientes, convites, textos, usuarios
 from app.admin import router as admin_router
 from app.admin.usuarios import NaoEncontrado, RegraInvalida
 from app.core.config import get_settings
@@ -83,6 +83,9 @@ def _pessoa(id_: UUID, nome: str, perfil: str, slugs: list[str], **mudancas: Any
         "clientes": [{"slug": s, "nome": s.title()} for s in slugs],
         "entradas_30d": 3,
         "ultimo_acesso": AGORA - timedelta(hours=1),
+        "convite_estado": None,
+        "convite_em": None,
+        "convite_motivo": None,
     }
     return base | mudancas
 
@@ -92,8 +95,13 @@ def _linhas() -> dict[str, list[dict[str, Any]]]:
     return {
         # barra lateral
         "clientes": [
-            {"id": CLIENTE_A, "nome": "Padrão LANN Alfa", "slug": SLUG},
-            {"id": CLIENTE_B, "nome": "Padrão LANN Beta", "slug": "padrao-lann-beta"},
+            {"id": CLIENTE_A, "nome": "Padrão LANN Alfa", "slug": SLUG, "segmento": "Atacado"},
+            {
+                "id": CLIENTE_B,
+                "nome": "Padrão LANN Beta",
+                "slug": "padrao-lann-beta",
+                "segmento": None,
+            },
         ],
         "ligadas": [
             {"cliente_id": CLIENTE_A, "codigo_tela": c}
@@ -110,7 +118,15 @@ def _linhas() -> dict[str, list[dict[str, Any]]]:
             {"perfil": "cliente_usuario", "minutos": 240, "pessoas": 1},
         ],
         # abas de uma empresa
-        "cliente": [{"id": CLIENTE_A, "nome": "Padrão LANN Alfa", "slug": SLUG, "logo_url": None}],
+        "cliente": [
+            {
+                "id": CLIENTE_A,
+                "nome": "Padrão LANN Alfa",
+                "slug": SLUG,
+                "logo_url": None,
+                "segmento": "Atacado",
+            }
+        ],
         "telas": [
             {"codigo_tela": "VG-01", "ligada": True},
             {"codigo_tela": "COM-01", "ligada": True},
@@ -220,13 +236,21 @@ def _no_cliente(estado: dict[str, Any]) -> None:
 
 ROTAS = [
     ("GET", "/api/admin/gestao", None),
+    ("POST", "/api/admin/clientes", {"nome": "Nova Empresa"}),
     ("GET", f"/api/admin/clientes/{SLUG}", None),
+    ("PUT", f"/api/admin/clientes/{SLUG}", {"nome": "Alfa", "segmento": "Atacado"}),
     ("PUT", f"/api/admin/clientes/{SLUG}/paineis/VG-01", {"ligado": False}),
     ("PUT", f"/api/admin/clientes/{SLUG}/perfis/consultor/paineis/VG-01", {"ve": True}),
     ("PUT", f"/api/admin/clientes/{SLUG}/preferencias/linhas-custo", {"valor": "3"}),
     ("PUT", f"/api/admin/clientes/{SLUG}/feriados/2026-08-15", {"nome": "Padroeira"}),
     ("DELETE", f"/api/admin/clientes/{SLUG}/feriados/2026-08-15", None),
     ("GET", "/api/admin/usuarios", None),
+    (
+        "POST",
+        "/api/admin/usuarios",
+        {"email": "carla@alfa.example", "nome": "Carla", "perfil": "cliente_usuario"},
+    ),
+    ("POST", f"/api/admin/usuarios/{BRUNO}/convite", None),
     (
         "PUT",
         f"/api/admin/usuarios/{BRUNO}",
@@ -281,6 +305,7 @@ def test_gestao_lista_as_empresas_com_as_camadas_os_perfis_e_as_sessoes(
     assert estado["slug_pedido"] is None
     alfa, beta = corpo["clientes"]
     assert (alfa["slug"], alfa["nome"]) == (SLUG, "Padrão LANN Alfa")
+    assert (alfa["segmento"], beta["segmento"]) == ("Atacado", None)
     assert [(c["id"], c["estado"], c["estadoRotulo"], c["status"]) for c in alfa["camadas"]] == [
         ("comercial", "ativa", "Ativa", "saudavel"),
         ("pessoas", "desligada", "Desligada", "neutro"),
@@ -320,7 +345,12 @@ def test_cliente_devolve_todas_as_abas(client: TestClient, estado: dict[str, Any
     corpo = r.json()
     # o cliente da rota vira o cliente escolhido da transação (RLS)
     assert estado["slug_pedido"] == SLUG
-    assert corpo["cliente"] == {"slug": SLUG, "nome": "Padrão LANN Alfa", "logoUrl": None}
+    assert corpo["cliente"] == {
+        "slug": SLUG,
+        "nome": "Padrão LANN Alfa",
+        "segmento": "Atacado",
+        "logoUrl": None,
+    }
     assert corpo["resumo"] == [
         {"rotulo": "0 de 4 camadas ativas", "status": "atencao"},
         {"rotulo": "2 usuários", "status": "neutro"},
@@ -445,9 +475,12 @@ def test_usuarios_lista_todos_com_os_filtros(client: TestClient, estado: dict[st
             "rotulo": "Ativo",
             "quando": "último acesso hoje, 13h30",
             "status": "saudavel",
+            "detalhe": None,
         },
         "acessos": {"entradas30d": 3, "ultimo": "hoje, 13h30"},
         "podeDesativar": True,
+        # já entrou: sem botão de convite
+        "convite": None,
     }
     # a única admin ativa não pode ser desativada
     assert (dora["todosOsClientes"], dora["podeDesativar"]) == (True, False)
@@ -461,8 +494,35 @@ def test_usuarios_lista_todos_com_os_filtros(client: TestClient, estado: dict[st
         ("pendentes", 0),
         ("sem-empresa", 0),
     ]
-    assert corpo["notaConvite"].startswith("Novos acessos são criados pela equipe BORD")
+    assert corpo["notaConvite"].startswith("A pessoa recebe o convite por e-mail")
     assert bruno["clientes"][1]["slug"] == "padrao-lann-beta"
+
+
+def test_usuarios_mostra_o_convite_que_nao_saiu(client: TestClient, estado: dict[str, Any]) -> None:
+    estado["linhas"]["usuarios"] = [
+        _pessoa(
+            BRUNO,
+            "Bruno Beta",
+            "cliente_usuario",
+            [SLUG],
+            primeiro_acesso_em=None,
+            ultimo_acesso=None,
+            convite_estado="falhou",
+            convite_em=AGORA - timedelta(minutes=5),
+            convite_motivo="O limite de e-mails do Supabase foi atingido.",
+        )
+    ]
+
+    (bruno,) = client.get("/api/admin/usuarios").json()["usuarios"]
+
+    assert bruno["situacao"] == {
+        "id": "nao-enviado",
+        "rotulo": "Convite não enviado",
+        "quando": "tentativa hoje, 14h25",
+        "status": "critico",
+        "detalhe": "O limite de e-mails do Supabase foi atingido.",
+    }
+    assert bruno["convite"] == {"rotulo": "Tentar de novo"}
 
 
 # ---------- gravações ----------
@@ -674,6 +734,268 @@ def test_sessao_e_acesso_do_usuario(
     assert estado["confirmadas"] == 2
 
 
+def test_criar_empresa_monta_o_slug_grava_e_confirma(
+    client: TestClient, estado: dict[str, Any]
+) -> None:
+    r = client.post(
+        "/api/admin/clientes",
+        json={"nome": "  Nilo  Maia Distribuição ", "segmento": " Distribuição de alimentos "},
+    )
+
+    assert r.status_code == 201
+    assert r.json() == {
+        "slug": "nilo-maia-distribuicao",
+        "nome": "Nilo Maia Distribuição",
+        "mensagem": clientes.MSG_CRIADA,
+    }
+    assert [g[0] for g in estado["gravacoes"]] == [clientes.SQL_CRIAR, usuarios.SQL_LOG]
+    assert estado["gravacoes"][0][1] == {
+        "nome": "Nilo Maia Distribuição",
+        "slug": "nilo-maia-distribuicao",
+        "segmento": "Distribuição de alimentos",
+    }
+    assert estado["gravacoes"][1][1]["autor"] == ADMIN
+    assert estado["confirmadas"] == 1
+
+
+def test_criar_empresa_com_o_slug_escolhido_e_sem_setor(
+    client: TestClient, estado: dict[str, Any]
+) -> None:
+    r = client.post(
+        "/api/admin/clientes", json={"nome": "PJ Cortes", "slug": "pj", "segmento": "  "}
+    )
+
+    assert (r.status_code, r.json()["slug"]) == (201, "pj")
+    assert estado["gravacoes"][0][1] == {"nome": "PJ Cortes", "slug": "pj", "segmento": None}
+
+
+@pytest.mark.parametrize(
+    ("corpo", "detalhe"),
+    [
+        ({"nome": "   "}, "Informe o nome da empresa."),
+        ({"nome": "PJ Cortes", "slug": "PJ Cortes"}, clientes.MSG_SLUG),
+        ({"nome": "PJ Cortes", "slug": "pj--cortes"}, clientes.MSG_SLUG),
+        # nome só com símbolos não dá identificador
+        ({"nome": "***"}, clientes.MSG_SLUG),
+    ],
+)
+def test_criar_empresa_recusada_nao_grava(
+    client: TestClient, estado: dict[str, Any], corpo: dict[str, Any], detalhe: str
+) -> None:
+    r = client.post("/api/admin/clientes", json=corpo)
+
+    assert (r.status_code, r.json()) == (422, {"detail": detalhe})
+    assert estado["gravacoes"] == []
+    assert estado["confirmadas"] == 0
+
+
+def test_mudar_empresa_troca_nome_e_setor_e_apaga_as_respostas_prontas(
+    client: TestClient, estado: dict[str, Any]
+) -> None:
+    _no_cliente(estado)
+    estado["devolve"] = {"nome_antes": "Padrão LANN Alfa", "segmento_antes": None}
+
+    r = client.put(
+        f"/api/admin/clientes/{SLUG}", json={"nome": " PJ  Cortes ", "segmento": " Atacado "}
+    )
+
+    assert r.status_code == 204
+    assert [g[0] for g in estado["gravacoes"]] == [clientes.SQL_MUDAR_EMPRESA, usuarios.SQL_LOG]
+    assert estado["gravacoes"][0][1] == {
+        "cliente": CLIENTE_A,
+        "nome": "PJ Cortes",
+        "segmento": "Atacado",
+    }
+    log = estado["gravacoes"][1][1]
+    assert (log["autor"], log["operacao"]) == (ADMIN, "update")
+    assert '"segmento": null' in log["antes"]
+    assert estado["confirmadas"] == 1
+    # o nome aparece nas telas
+    assert estado["apagadas"] == [("VG", CLIENTE_A), ("paineis", CLIENTE_A)]
+
+
+def test_mudar_empresa_sem_setor_e_nome_em_branco(
+    client: TestClient, estado: dict[str, Any]
+) -> None:
+    _no_cliente(estado)
+    estado["devolve"] = {"nome_antes": "Padrão LANN Alfa", "segmento_antes": "Atacado"}
+
+    assert client.put(f"/api/admin/clientes/{SLUG}", json={"nome": "Alfa"}).status_code == 204
+    assert estado["gravacoes"][0][1]["segmento"] is None
+
+    estado["gravacoes"].clear()
+    r = client.put(f"/api/admin/clientes/{SLUG}", json={"nome": "   "})
+    assert (r.status_code, r.json()) == (422, {"detail": "Informe o nome da empresa."})
+    assert estado["gravacoes"] == []
+    assert estado["confirmadas"] == 1
+
+
+def test_mudar_empresa_barrado_pelo_banco_e_erro_de_servidor(
+    estado: dict[str, Any], caplog: pytest.LogCaptureFixture
+) -> None:
+    # sem a migration 31, o RLS não deixa o update achar a linha: não é "não encontrada"
+    _no_cliente(estado)
+    app = create_app()
+    app.dependency_overrides[get_sessao] = lambda: Sessao(
+        conn=ConexaoFalsa(estado),  # type: ignore[arg-type]
+        usuario=UsuarioToken(id_autenticacao=UUID(int=1)),
+    )
+    cliente_http = TestClient(app, raise_server_exceptions=False)
+
+    r = cliente_http.put(f"/api/admin/clientes/{SLUG}", json={"nome": "PJ Cortes"})
+
+    assert (r.status_code, r.json()) == (500, {"detail": "Erro interno."})
+    assert "migration 31" in caplog.text
+    assert estado["confirmadas"] == 0
+    # só o update tentado: nada no log de alterações
+    assert [g[0] for g in estado["gravacoes"]] == [clientes.SQL_MUDAR_EMPRESA]
+
+
+def test_slug_do_nome() -> None:
+    assert clientes.slug_do_nome("Açaí & Cia. Ltda") == "acai-cia-ltda"
+    assert clientes.slug_do_nome("  PJ   Cortes  ") == "pj-cortes"
+    assert clientes.slug_do_nome("***") == ""
+
+
+NOVA = UUID("d1000000-0000-4000-8000-0000000000c1")
+
+
+def test_convidar_grava_o_pedido_confirma_e_aciona_o_job(
+    client: TestClient, estado: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    pedidos: list[Any] = []
+    ordem: list[str] = []
+
+    def pedir(conn: Any, *a: Any, **k: Any) -> UUID:
+        pedidos.append((a, k))
+        return NOVA
+
+    def confirmar(sessao: Any) -> None:
+        ordem.append("commit")
+
+    monkeypatch.setattr(convites, "pedir", pedir)
+    monkeypatch.setattr(admin_router, "confirmar_agora", confirmar)
+    monkeypatch.setattr(convites, "acionar_envio", lambda settings: ordem.append("job"))
+
+    r = client.post(
+        "/api/admin/usuarios",
+        json={
+            "email": "carla@alfa.example",
+            "nome": "Carla Alfa",
+            "perfil": "cliente_usuario",
+            "clientes": [SLUG],
+            "sessaoMinutos": 480,
+        },
+    )
+
+    assert r.status_code == 202
+    # sem o token do GitHub (ambiente de teste), o texto diz que espera a rodada
+    assert r.json() == {
+        "id": str(NOVA),
+        "mensagem": "Convite na fila: sai na próxima rodada de envio, em até uma hora.",
+    }
+    assert pedidos == [
+        (
+            (ADMIN,),
+            {
+                "email": "carla@alfa.example",
+                "nome": "Carla Alfa",
+                "perfil": "cliente_usuario",
+                "clientes": [SLUG],
+                "sessao_minutos": 480,
+                "admin_dominios": get_settings().admin_dominios,
+            },
+        )
+    ]
+    # o job só é acionado depois do commit: antes, ele não acharia o pedido
+    assert ordem == ["commit", "job"]
+
+
+def test_convidar_sem_empresa_e_sem_sessao(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    pedidos: list[Any] = []
+
+    def pedir(conn: Any, *a: Any, **k: Any) -> UUID:
+        pedidos.append(k)
+        return NOVA
+
+    monkeypatch.setattr(convites, "pedir", pedir)
+
+    r = client.post(
+        "/api/admin/usuarios",
+        json={"email": "carla@alfa.example", "nome": "Carla", "perfil": "cliente_principal"},
+    )
+
+    assert r.status_code == 202
+    assert (pedidos[0]["clientes"], pedidos[0]["sessao_minutos"]) == ([], None)
+
+
+def test_reenviar_convite(
+    client: TestClient, estado: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    chamadas: list[tuple[Any, ...]] = []
+    acionados: list[Any] = []
+    monkeypatch.setattr(convites, "repedir", lambda conn, *a: chamadas.append(a))
+    monkeypatch.setattr(convites, "acionar_envio", acionados.append)
+
+    r = client.post(f"/api/admin/usuarios/{BRUNO}/convite")
+
+    assert r.status_code == 202
+    assert r.json()["id"] == str(BRUNO)
+    assert chamadas == [(ADMIN, BRUNO)]
+    assert estado["confirmadas"] == 1
+    assert len(acionados) == 1
+
+
+@pytest.mark.parametrize(
+    ("erro", "status"),
+    [
+        (RegraInvalida("Este e-mail já tem cadastro no Overnex."), 422),
+        (NaoEncontrado("Pessoa não encontrada."), 404),
+    ],
+)
+def test_convite_recusado_nao_confirma_nem_aciona_o_job(
+    client: TestClient,
+    estado: dict[str, Any],
+    monkeypatch: pytest.MonkeyPatch,
+    erro: Exception,
+    status: int,
+) -> None:
+    def recusar(*a: Any, **k: Any) -> None:
+        raise erro
+
+    acionados: list[Any] = []
+    monkeypatch.setattr(convites, "pedir", recusar)
+    monkeypatch.setattr(convites, "repedir", recusar)
+    monkeypatch.setattr(convites, "acionar_envio", acionados.append)
+    novo = {"email": "carla@alfa.example", "nome": "Carla", "perfil": "cliente_usuario"}
+
+    for rota, corpo in (("", novo), (f"/{BRUNO}/convite", None)):
+        r = client.post(f"/api/admin/usuarios{rota}", json=corpo)
+        assert (r.status_code, r.json()) == (status, {"detail": str(erro)})
+    assert estado["confirmadas"] == 0
+    assert acionados == []
+
+
+@pytest.mark.parametrize(
+    "corpo",
+    [
+        {"nome": "Carla", "perfil": "cliente_usuario"},
+        {"email": "carla@alfa.example", "perfil": "cliente_usuario"},
+        {"email": "carla@alfa.example", "nome": "", "perfil": "cliente_usuario"},
+        {"email": "carla@alfa.example", "nome": "Carla"},
+        {"email": "carla@alfa.example", "nome": "Carla", "perfil": "admin", "clientes": "alfa"},
+    ],
+)
+def test_convite_fora_do_formato_422(
+    client: TestClient, estado: dict[str, Any], corpo: dict[str, Any]
+) -> None:
+    assert client.post("/api/admin/usuarios", json=corpo).status_code == 422
+    assert estado["gravacoes"] == []
+    assert estado["confirmadas"] == 0
+
+
 def test_openapi_tem_as_rotas_da_gestao(client: TestClient) -> None:
     esquema = client.app.openapi()  # type: ignore[attr-defined]
     rotas = {
@@ -684,16 +1006,20 @@ def test_openapi_tem_as_rotas_da_gestao(client: TestClient) -> None:
     }
     assert rotas == {
         ("GET", "/api/admin/gestao"),
+        ("POST", "/api/admin/clientes"),
         ("GET", "/api/admin/clientes/{slug}"),
+        ("PUT", "/api/admin/clientes/{slug}"),
         ("PUT", "/api/admin/clientes/{slug}/paineis/{codigo}"),
         ("PUT", "/api/admin/clientes/{slug}/perfis/{perfil}/paineis/{codigo}"),
         ("PUT", "/api/admin/clientes/{slug}/preferencias/{id}"),
         ("PUT", "/api/admin/clientes/{slug}/feriados/{data}"),
         ("DELETE", "/api/admin/clientes/{slug}/feriados/{data}"),
         ("GET", "/api/admin/usuarios"),
+        ("POST", "/api/admin/usuarios"),
+        ("POST", "/api/admin/usuarios/{id}/convite"),
         ("PUT", "/api/admin/usuarios/{id}"),
         ("PUT", "/api/admin/usuarios/{id}/sessao"),
         ("PUT", "/api/admin/usuarios/{id}/acesso"),
     }
-    for nome in ("GestaoPayload", "ClientePayload", "UsuariosPayload"):
+    for nome in ("GestaoPayload", "ClientePayload", "UsuariosPayload", "ConvitePedido"):
         assert nome in esquema["components"]["schemas"]

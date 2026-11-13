@@ -36,7 +36,7 @@ select throws_ok(
 select throws_ok(
     $$insert into seg.usuario (id_autenticacao, email, tipo)
       values ('0d000000-0000-4000-8000-0000000000ee', 'novo@beta.example', 'cliente')$$,
-    '42501', null, 'a API não cria usuário (é o CLI)');
+    '42501', null, 'a API não insere usuário direto (só por seg.pedir_convite, migration 29)');
 select throws_ok(
     $$delete from seg.usuario where id = 'd1000000-0000-4000-8000-00000000000b'$$,
     '42501', null, 'a API não apaga usuário');

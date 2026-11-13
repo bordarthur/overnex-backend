@@ -1,0 +1,50 @@
+# Manda os convites que a Gestão pôs na fila (seg.convite_fila). A API não tem a chave secreta
+# do Supabase: ela grava o pedido e aciona este job, que já tem a chave nos Secrets.
+#
+# Roda de duas formas:
+#   - na hora, acionado pela API (workflow_dispatch) logo depois de gravar o pedido;
+#   - de hora em hora em dia útil, como rede de segurança (se o acionamento falhar).
+#
+# Usa os mesmos Secrets e Variables do diario.yml e mais a variável FRONT_URL (a URL do front,
+# igual à da API: o link do e-mail leva a {FRONT_URL}/definir-senha).
+#
+# O schedule e o acionamento pela API só valem com este arquivo na branch padrão (main).
+name: convites
+
+on:
+  schedule:
+    - cron: "17 11-21 * * 1-5"   # 8h17 às 18h17 em Fortaleza (UTC-3), de segunda a sexta
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Um envio por vez. Pedido que chega durante uma execução aciona outra, que espera a atual.
+concurrency:
+  group: convites
+  cancel-in-progress: false
+
+jobs:
+  enviar:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: api
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+          enable-cache: true
+          cache-dependency-glob: api/uv.lock
+      - name: Instalar dependências
+        run: uv sync --locked --no-dev
+      - name: Enviar convites
+        run: uv run --no-sync python -m app.cli.enviar_convites
+        env:
+          # Role carga: em seg, só executa seg.convites_na_fila e seg.concluir_convite.
+          DATABASE_URL_CARGA: ${{ secrets.DATABASE_URL_CARGA }}
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          FRONT_URL: ${{ vars.FRONT_URL }}

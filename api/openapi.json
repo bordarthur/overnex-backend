@@ -2028,6 +2028,55 @@
         ]
       }
     },
+    "/api/admin/clientes": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Criar Cliente",
+        "description": "Cria uma empresa, com tudo desligado: já aparece na Gestão e no convite. Sem `slug`,\na API monta um a partir do nome.",
+        "operationId": "criar_cliente_api_admin_clientes_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NovaEmpresa"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmpresaCriada"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autenticado."
+          },
+          "403": {
+            "description": "Acesso negado (só o Admin BORD)."
+          },
+          "404": {
+            "description": "\"Empresa não encontrada.\" ou item da rota não encontrado."
+          },
+          "422": {
+            "description": "Regra da Gestão quebrada; o texto vem pronto em `detail`."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/admin/clientes/{slug}": {
       "get": {
         "tags": [
@@ -2085,6 +2134,61 @@
                 }
               }
             }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Mudar Cliente",
+        "description": "Troca o nome e o setor da empresa. O slug não muda.",
+        "operationId": "mudar_cliente_api_admin_clientes__slug__put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 80,
+              "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+              "description": "Slug do cliente.",
+              "title": "Slug"
+            },
+            "description": "Slug do cliente."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MudancaEmpresa"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Não autenticado."
+          },
+          "403": {
+            "description": "Acesso negado (só o Admin BORD)."
+          },
+          "404": {
+            "description": "\"Empresa não encontrada.\" ou item da rota não encontrado."
+          },
+          "422": {
+            "description": "Regra da Gestão quebrada; o texto vem pronto em `detail`."
           }
         }
       }
@@ -2472,6 +2576,106 @@
             "HTTPBearer": []
           }
         ]
+      },
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Convidar Usuario",
+        "description": "Cria a pessoa e põe o convite na fila. O e-mail sai pelo job de convites, em cerca de\num minuto; se o envio falhar, a situação da pessoa mostra o motivo.",
+        "operationId": "convidar_usuario_api_admin_usuarios_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NovoUsuario"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConvitePedido"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autenticado."
+          },
+          "403": {
+            "description": "Acesso negado (só o Admin BORD)."
+          },
+          "404": {
+            "description": "\"Empresa não encontrada.\" ou item da rota não encontrado."
+          },
+          "422": {
+            "description": "Regra da Gestão quebrada; o texto vem pronto em `detail`."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/admin/usuarios/{id}/convite": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Reenviar Convite",
+        "description": "Põe na fila mais um convite para quem ainda não entrou: reenvio (o link vence) ou\nnova tentativa depois de um envio que falhou.",
+        "operationId": "reenviar_convite_api_admin_usuarios__id__convite_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "`id` da pessoa.",
+              "title": "Id"
+            },
+            "description": "`id` da pessoa."
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConvitePedido"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autenticado."
+          },
+          "403": {
+            "description": "Acesso negado (só o Admin BORD)."
+          },
+          "404": {
+            "description": "\"Empresa não encontrada.\" ou item da rota não encontrado."
+          },
+          "422": {
+            "description": "Regra da Gestão quebrada; o texto vem pronto em `detail`."
+          }
+        }
       }
     },
     "/api/admin/usuarios/{id}": {
@@ -2645,6 +2849,20 @@
   },
   "components": {
     "schemas": {
+      "AcaoConvite": {
+        "properties": {
+          "rotulo": {
+            "type": "string",
+            "title": "Rotulo"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rotulo"
+        ],
+        "title": "AcaoConvite"
+      },
       "Acessos": {
         "properties": {
           "entradas30d": {
@@ -6691,6 +6909,17 @@
             "type": "string",
             "title": "Nome"
           },
+          "segmento": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Segmento"
+          },
           "logoUrl": {
             "anyOf": [
               {
@@ -6721,6 +6950,17 @@
           "nome": {
             "type": "string",
             "title": "Nome"
+          },
+          "segmento": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Segmento"
           },
           "camadas": {
             "items": {
@@ -6987,6 +7227,26 @@
         ],
         "title": "ColunasProvisoes"
       },
+      "ConvitePedido": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "mensagem": {
+            "type": "string",
+            "title": "Mensagem"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "mensagem"
+        ],
+        "title": "ConvitePedido"
+      },
       "DadosPayload": {
         "properties": {
           "tabela": {
@@ -7205,6 +7465,30 @@
           "nome"
         ],
         "title": "Empresa"
+      },
+      "EmpresaCriada": {
+        "properties": {
+          "slug": {
+            "type": "string",
+            "title": "Slug"
+          },
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "mensagem": {
+            "type": "string",
+            "title": "Mensagem"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "slug",
+          "nome",
+          "mensagem"
+        ],
+        "title": "EmpresaCriada"
       },
       "Escala": {
         "properties": {
@@ -10206,6 +10490,34 @@
         ],
         "title": "MudancaAcessoPerfil"
       },
+      "MudancaEmpresa": {
+        "properties": {
+          "nome": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Nome"
+          },
+          "segmento": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 80
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Segmento"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "nome"
+        ],
+        "title": "MudancaEmpresa"
+      },
       "MudancaFeriado": {
         "properties": {
           "nome": {
@@ -10393,6 +10705,94 @@
           "valor"
         ],
         "title": "NomesCombo"
+      },
+      "NovaEmpresa": {
+        "properties": {
+          "nome": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Nome"
+          },
+          "segmento": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 80
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Segmento"
+          },
+          "slug": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 80
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slug"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "nome"
+        ],
+        "title": "NovaEmpresa"
+      },
+      "NovoUsuario": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "maxLength": 254,
+            "minLength": 3,
+            "title": "Email"
+          },
+          "nome": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Nome"
+          },
+          "perfil": {
+            "type": "string",
+            "maxLength": 40,
+            "title": "Perfil"
+          },
+          "clientes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 200,
+            "title": "Clientes"
+          },
+          "sessaoMinutos": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sessaominutos"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "email",
+          "nome",
+          "perfil"
+        ],
+        "title": "NovoUsuario"
       },
       "NumeroDestaque": {
         "properties": {
@@ -12132,6 +12532,17 @@
               "neutro"
             ],
             "title": "Status"
+          },
+          "detalhe": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detalhe"
           }
         },
         "additionalProperties": false,
@@ -12504,6 +12915,16 @@
           "podeDesativar": {
             "type": "boolean",
             "title": "Podedesativar"
+          },
+          "convite": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AcaoConvite"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "outrosClientes": {
             "items": {
@@ -12943,6 +13364,16 @@
           "podeDesativar": {
             "type": "boolean",
             "title": "Podedesativar"
+          },
+          "convite": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AcaoConvite"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "additionalProperties": false,

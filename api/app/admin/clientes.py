@@ -6,6 +6,11 @@ feriados e cargas), mais as gravações de painel ligado, matriz e feriado.
 (app.cliente_id, pela checagem do admin); a barra lateral lê todos pelas políticas do admin
 (migration 27). Nada aqui lê dado de negócio: só cadastro e controle da carga.
 
+Empresa nova (migration 30): a Gestão cria o cfg.cliente com nome, slug e setor, e já dá
+para convidar pessoas para ela. Nasce com tudo desligado; CNPJs (cfg.empresa), fontes da
+carga e de-para de contas continuam por script. Nome e setor mudam pela tela; o slug não
+(está nas URLs), e a empresa não se desativa nem se apaga por aqui.
+
 Regras:
 - painel disponível = alguma fonte ativa que ele exige já teve carga `ok` (catalogo.py);
   painel sem dado não liga (pode desligar);
@@ -17,10 +22,15 @@ Regras:
   e pagar); o dado nominal de Pessoas (nomes de Cargos e salários) continua por SQL.
 """
 
+import logging
+import re
+import unicodedata
 from collections.abc import Mapping, Sequence
 from datetime import date, datetime
 from typing import Any
 from uuid import UUID
+
+from psycopg import errors
 
 from app.admin import textos, usuarios
 from app.admin.catalogo import CAMADAS, PAINEIS, POR_CODIGO, Painel, tem_dado, usada_por
@@ -62,6 +72,23 @@ MSG_SEM_DADO = "Este painel ainda não tem dado nesta empresa."
 MSG_PREFERENCIA = "Preferência não encontrada."
 MSG_OPCAO = "Opção inválida."
 MSG_FERIADO = "Feriado não encontrado."
+MSG_NOME = "Informe o nome da empresa."
+
+logger = logging.getLogger(__name__)
+
+
+class GravacaoBarrada(RuntimeError):
+    """O banco não deixou gravar o que a checagem de acesso já tinha liberado (política ou
+    grant faltando, em geral migration não aplicada). Vira 500, com o motivo no log."""
+
+
+MSG_SLUG = "O identificador só aceita letras minúsculas, números e hífen (ex.: pj-cortes)."
+MSG_SLUG_EM_USO = "Já existe uma empresa com o identificador {}."
+MSG_CRIADA = (
+    "Empresa criada. Já dá para convidar as pessoas; os painéis ligam quando a primeira "
+    "carga de dados chegar."
+)
+SLUG = re.compile(r"[a-z0-9]+(-[a-z0-9]+)*")
 
 ESTADOS: dict[str, tuple[str, Status]] = {
     "ativa": ("Ativa", "saudavel"),
@@ -73,7 +100,7 @@ OBSERVACAO_MAXIMA = 200
 
 # ---------- consultas ----------
 
-SQL_CLIENTES = "select id, nome, slug from cfg.cliente where ativo order by nome, id"
+SQL_CLIENTES = "select id, nome, slug, segmento from cfg.cliente where ativo order by nome, id"
 SQL_LIGADAS = "select cliente_id, codigo_tela from cfg.cliente_tela where ligada"
 # tabelas de fontes ativas que já tiveram carga ok
 SQL_COM_CARGA = """
@@ -91,7 +118,7 @@ SQL_PERFIS = """
       from unnest(%s::text[]) as p (perfil)
 """
 
-SQL_CLIENTE = "select id, nome, slug, logo_url from cfg.cliente where id = %s"
+SQL_CLIENTE = "select id, nome, slug, logo_url, segmento from cfg.cliente where id = %s"
 SQL_TELAS = "select codigo_tela, ligada from cfg.cliente_tela where cliente_id = %s"
 SQL_FONTES = """
     select coalesce(f.tabela_destino, 'lançamentos (formato antigo)') as tabela,
@@ -142,6 +169,19 @@ SQL_CARGAS = """
 
 # ---------- gravações ----------
 
+# sem returning: a linha nova ainda não passa pela política de leitura deste comando
+SQL_CRIAR = """
+    insert into cfg.cliente (nome, slug, segmento)
+    values (%(nome)s, %(slug)s, %(segmento)s)
+"""
+# uma ida: troca e devolve como estava, para o log
+SQL_MUDAR_EMPRESA = """
+    update cfg.cliente c
+       set nome = %(nome)s, segmento = %(segmento)s
+      from (select nome, segmento from cfg.cliente where id = %(cliente)s) antes
+     where c.id = %(cliente)s
+    returning antes.nome as nome_antes, antes.segmento as segmento_antes
+"""
 SQL_LIGAR = """
     insert into cfg.cliente_tela (cliente_id, codigo_tela, ligada)
     values (%(cliente)s, %(codigo)s, %(ligada)s)
@@ -171,6 +211,71 @@ SQL_GRAVAR_FERIADO = """
 SQL_APAGAR_FERIADO = """
     delete from cfg.feriado where cliente_id = %(cliente)s and data = %(data)s returning nome
 """
+
+
+# ---------- empresa nova ----------
+
+
+def slug_do_nome(nome: str) -> str:
+    """Identificador a partir do nome: sem acento, minúsculas, o resto vira hífen."""
+    sem_acento = unicodedata.normalize("NFKD", nome).encode("ascii", "ignore").decode()
+    return re.sub(r"[^a-z0-9]+", "-", sem_acento.lower()).strip("-")
+
+
+def criar(conn: Conexao, autor: UUID, *, nome: str, segmento: str | None, slug: str | None) -> str:
+    """Cria a empresa (cfg.cliente) e devolve o slug. Não confirma a transação."""
+    nome = " ".join(nome.split())
+    if not nome:
+        raise RegraInvalida(MSG_NOME)
+    segmento = " ".join((segmento or "").split()) or None
+    slug = (slug or "").strip() or slug_do_nome(nome)
+    if not SLUG.fullmatch(slug):
+        # nome só com símbolos não dá identificador
+        raise RegraInvalida(MSG_SLUG)
+    try:
+        conn.execute(SQL_CRIAR, {"nome": nome, "slug": slug, "segmento": segmento})
+    except errors.UniqueViolation as exc:
+        raise RegraInvalida(MSG_SLUG_EM_USO.format(slug)) from exc
+    registrar(
+        conn,
+        autor,
+        "cfg.cliente",
+        slug,
+        "insert",
+        None,
+        {"nome": nome, "slug": slug, "segmento": segmento},
+    )
+    return slug
+
+
+def mudar(conn: Conexao, autor: UUID, cliente_id: UUID, *, nome: str, segmento: str | None) -> None:
+    """Troca o nome e o setor da empresa. Não confirma a transação."""
+    nome = " ".join(nome.split())
+    if not nome:
+        raise RegraInvalida(MSG_NOME)
+    segmento = " ".join((segmento or "").split()) or None
+    antes = conn.execute(
+        SQL_MUDAR_EMPRESA, {"cliente": cliente_id, "nome": nome, "segmento": segmento}
+    ).fetchone()
+    if antes is None:
+        # o slug já foi achado na checagem do admin: se o update não devolveu a linha, foi o
+        # RLS (ou o grant) que barrou, não a empresa que não existe
+        logger.error(
+            "UPDATE em cfg.cliente não alcançou a linha do cliente %s: confira se a migration "
+            "31 (política api_site_admin_update e grant de update em nome e segmento) está "
+            "aplicada neste banco",
+            cliente_id,
+        )
+        raise GravacaoBarrada("update em cfg.cliente barrado pelo banco")
+    registrar(
+        conn,
+        autor,
+        "cfg.cliente",
+        str(cliente_id),
+        "update",
+        {"nome": antes["nome_antes"], "segmento": antes["segmento_antes"]},
+        {"nome": nome, "segmento": segmento},
+    )
 
 
 # ---------- camadas e painéis ----------
@@ -258,6 +363,7 @@ def gestao(conn: Conexao) -> GestaoPayload:
             ClienteDaLista(
                 slug=c["slug"],
                 nome=c["nome"],
+                segmento=c["segmento"],
                 camadas=[
                     CamadaResumo(
                         id=k.id,
@@ -442,7 +548,12 @@ def cliente(conn: Conexao, cliente_id: UUID, convite_horas: int) -> ClientePaylo
         lista_preferencias = _preferencias(conn, cliente_id)
 
     return ClientePayload(
-        cliente=ClienteDaGestao(slug=dados["slug"], nome=base.nome, logo_url=base.logo_url),
+        cliente=ClienteDaGestao(
+            slug=dados["slug"],
+            nome=base.nome,
+            segmento=dados["segmento"],
+            logo_url=base.logo_url,
+        ),
         resumo=resumo,
         camadas=lista_camadas,
         fontes=[_fonte(r) for r in linhas["fontes"]],
