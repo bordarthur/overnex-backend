@@ -9,7 +9,8 @@ select plan(9);
 
 select has_column('seg', 'usuario', 'id_autenticacao', 'seg.usuario.id_autenticacao');
 select hasnt_column('seg', 'usuario', 'object_id_entra', 'object_id_entra saiu de seg.usuario');
-select col_not_null('seg', 'usuario', 'id_autenticacao', 'id_autenticacao continua not null');
+-- desde a migration 29: quem foi convidado pela Gestão fica sem id até o convite sair
+select col_is_null('seg', 'usuario', 'id_autenticacao', 'id_autenticacao aceita null');
 select col_is_unique('seg', 'usuario', 'id_autenticacao', 'id_autenticacao é único');
 select has_column('seg', 'usuario', 'nome', 'seg.usuario.nome');
 select has_column('seg', 'log_acesso', 'id_autenticacao', 'seg.log_acesso.id_autenticacao');

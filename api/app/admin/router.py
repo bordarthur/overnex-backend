@@ -1,12 +1,16 @@
 """Gestão (Interno BORD): /api/admin/*, só para o perfil Admin BORD.
 
 - GET  /api/admin/gestao                       empresas (com as camadas), perfis e sessões
+- POST /api/admin/clientes                     cria uma empresa (nome, setor e slug)
 - GET  /api/admin/clientes/{slug}              tudo das abas de uma empresa, numa resposta
+- PUT  /api/admin/clientes/{slug}              nome e setor da empresa
 - PUT  /api/admin/clientes/{slug}/paineis/{codigo}                  liga ou desliga o painel
 - PUT  /api/admin/clientes/{slug}/perfis/{perfil}/paineis/{codigo}  matriz perfil × painel
 - PUT  /api/admin/clientes/{slug}/preferencias/{id}                 escolha salva do cliente
 - PUT e DELETE /api/admin/clientes/{slug}/feriados/{data}           feriado do cliente
 - GET  /api/admin/usuarios                     todas as pessoas e a contagem dos filtros
+- POST /api/admin/usuarios                     convida uma pessoa nova (o convite vai para a fila)
+- POST /api/admin/usuarios/{id}/convite        manda o convite de novo (fila)
 - PUT  /api/admin/usuarios/{id}                nome, perfil, empresas e sessão
 - PUT  /api/admin/usuarios/{id}/sessao         só o tempo de sessão
 - PUT  /api/admin/usuarios/{id}/acesso         desativa ou reativa
@@ -15,27 +19,33 @@ Quem não é admin recebe o 403 genérico (negado na etapa 3, com log `admin:<ro
 que não existe: 404. Regra quebrada: 422 com o texto pronto em `detail`. As gravações
 respondem 204, confirmam antes de responder e vão para seg.log_alteracao.
 
-Não há rota de convite: criar login precisa da chave secreta do Supabase, que fica fora da
-API (ver app/cli/convidar_usuario.py). "Empresa" na tela é o cfg.cliente.
+O convite não sai daqui: criar login precisa da chave secreta do Supabase, que fica fora da
+API. As duas rotas de convite gravam o pedido numa fila (202, com o texto do passo final) e
+acionam o job que manda (ver app/admin/convites.py). "Empresa" na tela é o cfg.cliente.
 """
 
 from datetime import date
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Path, Response, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Path, Response, status
 
-from app.admin import clientes, textos, usuarios
+from app.admin import clientes, convites, textos, usuarios
 from app.admin.contrato import (
     ClientePayload,
+    ConvitePedido,
+    EmpresaCriada,
     GestaoPayload,
     MudancaAcesso,
     MudancaAcessoPerfil,
+    MudancaEmpresa,
     MudancaFeriado,
     MudancaPainel,
     MudancaPreferencia,
     MudancaSessao,
     MudancaUsuario,
+    NovaEmpresa,
+    NovoUsuario,
     UsuariosPayload,
 )
 from app.admin.usuarios import NaoEncontrado, RegraInvalida
@@ -107,6 +117,27 @@ def gestao(ctx: Annotated[ContextoAdmin, Depends(exigir_admin("gestao"))]) -> Ge
     return clientes.gestao(ctx.sessao.conn)
 
 
+@router.post("/clientes", status_code=status.HTTP_201_CREATED, responses=RESPOSTAS_GRAVAR)
+def criar_cliente(
+    ctx: Annotated[ContextoAdmin, Depends(exigir_admin("cliente-novo"))],
+    corpo: NovaEmpresa,
+) -> EmpresaCriada:
+    """Cria uma empresa, com tudo desligado: já aparece na Gestão e no convite. Sem `slug`,
+    a API monta um a partir do nome."""
+    try:
+        slug = clientes.criar(
+            ctx.sessao.conn,
+            ctx.usuario_id,
+            nome=corpo.nome,
+            segmento=corpo.segmento,
+            slug=corpo.slug,
+        )
+    except (NaoEncontrado, RegraInvalida) as exc:
+        raise _erro(exc) from exc
+    confirmar_agora(ctx.sessao)
+    return EmpresaCriada(slug=slug, nome=" ".join(corpo.nome.split()), mensagem=clientes.MSG_CRIADA)
+
+
 @router.get("/clientes/{slug}", responses=RESPOSTAS_CLIENTE)
 def cliente(
     ctx: Annotated[ContextoAdmin, Depends(exigir_admin_no_cliente("cliente"))],
@@ -115,6 +146,31 @@ def cliente(
     """Tudo das abas de uma empresa: camadas, fontes, painéis, matriz de acesso, pessoas,
     preferências, feriados e últimas cargas."""
     return clientes.cliente(ctx.sessao.conn, _cliente(ctx), settings.auth_convite_horas)
+
+
+@router.put(
+    "/clientes/{slug}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    response_class=Response,
+    responses=RESPOSTAS_GRAVAR,
+)
+def mudar_cliente(
+    ctx: Annotated[ContextoAdmin, Depends(exigir_admin_no_cliente("cliente-dados"))],
+    corpo: MudancaEmpresa,
+) -> Response:
+    """Troca o nome e o setor da empresa. O slug não muda."""
+    try:
+        clientes.mudar(
+            ctx.sessao.conn,
+            ctx.usuario_id,
+            _cliente(ctx),
+            nome=corpo.nome,
+            segmento=corpo.segmento,
+        )
+    except (NaoEncontrado, RegraInvalida) as exc:
+        raise _erro(exc) from exc
+    # o nome aparece nas telas do cliente
+    return _gravado(ctx, telas_do_cliente=True)
 
 
 @router.put(
@@ -245,6 +301,54 @@ def listar_usuarios(
 
 
 UsuarioUrl = Annotated[UUID, Path(alias="id", description="`id` da pessoa.")]
+
+
+@router.post("/usuarios", status_code=status.HTTP_202_ACCEPTED, responses=RESPOSTAS_GRAVAR)
+def convidar_usuario(
+    ctx: Annotated[ContextoAdmin, Depends(exigir_admin("usuario-convite"))],
+    settings: Config,
+    corpo: NovoUsuario,
+    tarefas: BackgroundTasks,
+) -> ConvitePedido:
+    """Cria a pessoa e põe o convite na fila. O e-mail sai pelo job de convites, em cerca de
+    um minuto; se o envio falhar, a situação da pessoa mostra o motivo."""
+    try:
+        usuario_id = convites.pedir(
+            ctx.sessao.conn,
+            ctx.usuario_id,
+            email=corpo.email,
+            nome=corpo.nome,
+            perfil=corpo.perfil,
+            clientes=corpo.clientes,
+            sessao_minutos=corpo.sessao_minutos,
+            admin_dominios=settings.admin_dominios,
+        )
+    except (NaoEncontrado, RegraInvalida) as exc:
+        raise _erro(exc) from exc
+    # o job só acha o pedido depois do commit
+    confirmar_agora(ctx.sessao)
+    tarefas.add_task(convites.acionar_envio, settings)
+    return ConvitePedido(id=usuario_id, mensagem=convites.mensagem(settings))
+
+
+@router.post(
+    "/usuarios/{id}/convite", status_code=status.HTTP_202_ACCEPTED, responses=RESPOSTAS_GRAVAR
+)
+def reenviar_convite(
+    ctx: Annotated[ContextoAdmin, Depends(exigir_admin("usuario-convite"))],
+    settings: Config,
+    id_: UsuarioUrl,
+    tarefas: BackgroundTasks,
+) -> ConvitePedido:
+    """Põe na fila mais um convite para quem ainda não entrou: reenvio (o link vence) ou
+    nova tentativa depois de um envio que falhou."""
+    try:
+        convites.repedir(ctx.sessao.conn, ctx.usuario_id, id_)
+    except (NaoEncontrado, RegraInvalida) as exc:
+        raise _erro(exc) from exc
+    confirmar_agora(ctx.sessao)
+    tarefas.add_task(convites.acionar_envio, settings)
+    return ConvitePedido(id=id_, mensagem=convites.mensagem(settings))
 
 
 @router.put(

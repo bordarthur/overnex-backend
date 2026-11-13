@@ -1,3 +1,4 @@
+import re
 from enum import StrEnum
 from functools import lru_cache
 from typing import Self
@@ -64,6 +65,17 @@ class Settings(BaseSettings):
     # Validade do link do convite, para a Gestão dizer "convite vencido". Precisa ser a
     # mesma do Supabase Auth (Authentication → Email → Email OTP Expiration, em segundos).
     auth_convite_horas: int = 24
+    # Convite pela Gestão: a API só grava o pedido na fila; quem manda é o job
+    # .github/workflows/convites.yml. Com o token, a API aciona o job na hora (o convite sai
+    # em cerca de um minuto); sem ele, o pedido espera a rodada de hora em hora. O token é
+    # um fine-grained do GitHub só com "Actions: read and write" neste repositório: aciona
+    # workflows, não lê segredos nem código.
+    github_convites_token: SecretStr = SecretStr("")
+    # "dono/repositorio"
+    github_convites_repo: str = ""
+    github_convites_workflow: str = "convites.yml"
+    # o workflow precisa existir nesta branch
+    github_convites_ref: str = "main"
     # Padrão seguro: sem AMBIENTE explícito, comporta-se como produção.
     ambiente: Ambiente = Ambiente.PROD
     auth_fake: bool = False
@@ -120,7 +132,21 @@ class Settings(BaseSettings):
             raise ValueError("AUTH_CONVITE_HORAS precisa ser maior que zero.")
         if not dominios(self.admin_dominios):
             raise ValueError("ADMIN_DOMINIOS precisa ter pelo menos um domínio.")
+        # entram numa URL do GitHub: só o formato esperado
+        if self.github_convites_repo and not re.fullmatch(
+            r"[\w.-]+/[\w.-]+", self.github_convites_repo
+        ):
+            raise ValueError("GITHUB_CONVITES_REPO precisa ser dono/repositorio.")
+        if not re.fullmatch(r"[\w.-]+\.ya?ml", self.github_convites_workflow):
+            raise ValueError("GITHUB_CONVITES_WORKFLOW precisa ser o nome de um arquivo .yml.")
+        if not re.fullmatch(r"[\w./-]+", self.github_convites_ref):
+            raise ValueError("GITHUB_CONVITES_REF inválido.")
         return self
+
+    @property
+    def convites_na_hora(self) -> bool:
+        """A API consegue acionar o job de convites logo depois de gravar o pedido."""
+        return bool(self.github_convites_token.get_secret_value() and self.github_convites_repo)
 
     @property
     def entra_configurado(self) -> bool:
@@ -162,6 +188,36 @@ class ConfigCadastro(BaseSettings):
             raise ValueError("SUPABASE_URL e FRONT_URL são obrigatórios.")
         if not self.supabase_service_role_key.get_secret_value():
             raise ValueError("SUPABASE_SERVICE_ROLE_KEY é obrigatória.")
+        return self
+
+
+class ConfigConvites(BaseSettings):
+    """Configuração do job de convites (app/cli/enviar_convites.py), que roda no GitHub
+    Actions. Fora de Settings pelo mesmo motivo de ConfigCadastro: a chave secreta não entra
+    no ambiente da API publicada."""
+
+    # hide_input_in_errors: erro de configuração nunca mostra os valores (há segredos)
+    model_config = SettingsConfigDict(
+        env_file=".env", env_file_encoding="utf-8", extra="ignore", hide_input_in_errors=True
+    )
+
+    supabase_url: str
+    # Chave secreta (sb_secret_…) ou service_role legada: convida usuários no Auth.
+    supabase_service_role_key: SecretStr
+    front_url: str
+    # Conexão do role carga: só chama seg.convites_na_fila e seg.concluir_convite.
+    database_url_carga: SecretStr
+
+    @model_validator(mode="after")
+    def _validar(self) -> Self:
+        self.supabase_url = self.supabase_url.rstrip("/")
+        self.front_url = self.front_url.rstrip("/")
+        if not (self.supabase_url and self.front_url):
+            raise ValueError("SUPABASE_URL e FRONT_URL são obrigatórios.")
+        if not self.supabase_service_role_key.get_secret_value():
+            raise ValueError("SUPABASE_SERVICE_ROLE_KEY é obrigatória.")
+        if not self.database_url_carga.get_secret_value():
+            raise ValueError("DATABASE_URL_CARGA é obrigatória.")
         return self
 
 

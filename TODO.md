@@ -1,8 +1,26 @@
 # TODO — Overnex backend
 
-Última atualização: 11/11/2026.
+Última atualização: 13/11/2026.
 
 ## A fazer
+
+### Convite pela Gestão (fila + job)
+
+Decidido e feito em 13/11/2026 (código; nada aplicado em produção, ver "Concluído"). Para funcionar em produção, nesta ordem:
+
+- [ ] **Aplicar as migrations 29, 30 e 31 em produção, antes de subir a API** com o código de 13/11/2026 (`supabase db push`; depois das 25 a 28). A API antiga continua funcionando depois delas; a nova responde 500 na Gestão sem a 29 e a 30 (lê `seg.convite_fila` e `cfg.cliente.segmento`) e 500 na edição de nome e setor sem a 31.
+- [ ] **Conferir no banco que a API local usa se a 30 entrou na primeira versão** (sem a política de update): em 13/11/2026 o `PUT /api/admin/clientes/pj-cortes` respondeu 404 com o GET funcionando, o que bate com isso. A edição foi separada na migration 31; `supabase migration list` mostra o que falta.
+- [ ] **Variable `FRONT_URL` no GitHub** (Settings → Secrets and variables → Actions → Variables): a URL do front, igual à da API. O job de convites usa também `DATABASE_URL_CARGA`, `SUPABASE_SECRET_KEY` e `SUPABASE_URL`, que já existem.
+- [ ] **Levar o `convites.yml` até a `main`:** o acionamento pela API e a rodada de hora em hora só valem com o arquivo na branch padrão.
+- [ ] **Token do GitHub na API publicada:** criar um fine-grained personal access token só deste repositório, com *Actions: Read and write*, e pôr em `GITHUB_CONVITES_TOKEN`, com `GITHUB_CONVITES_REPO=<dono>/<repositório>`. Sem ele, o convite não sai na hora: espera a rodada de hora em hora. O token vence: anotar a data.
+- [ ] **SMTP próprio no Supabase Auth** (item de "Login com e-mail e senha"): sem ele, o convite pela tela dá "Convite não enviado" para quem não é do time do projeto, ou esbarra no limite de 2 e-mails por hora.
+- [ ] **Conferir a cota de minutos do GitHub Actions:** a rodada de hora em hora (11 por dia útil) gasta cerca de 240 minutos por mês, mais 1 por convite acionado na hora. Se pesar, espaçar o `cron` do `convites.yml`.
+- [ ] **Front:** botão "Convidar" (e "Convidar para <empresa>"), gaveta de convite, botão `convite.rotulo` em cada pessoa e as situações novas (`fila`, `nao-enviado` com `detalhe`). Prompt entregue em 13/11/2026 (em `C:\Users\arthur bord\.claude\plans\prompt-front-convite-gestao.md`).
+- [ ] **Rodar o pgTAP de verdade** (`supabase test db`, precisa de Docker): `20_convite_fila`, `21_empresa_pela_gestao` e os `10` e `18` ajustados. As 27 asserções do `20` e as 18 do `21` passaram num Postgres local com um substituto mínimo do pgTAP, não com o pgTAP.
+- [ ] **Front, empresa nova:** botão "Nova empresa" na Gestão (nome e setor; o slug é opcional), edição de nome e setor na empresa aberta e o `segmento` na barra lateral e no cabeçalho. No mesmo prompt do convite.
+- [ ] **Preencher o setor das empresas que já existem** (PJ Cortes e as outras estão sem): pela Gestão, quando o front tiver a edição, ou `update cfg.cliente set segmento = '…' where slug = '…'` no SQL Editor.
+- [ ] **Testar o envio de ponta a ponta em produção** depois dos passos acima: convidar um e-mail de teste pela Gestão, ver o job rodar no GitHub e o e-mail chegar. A chamada ao Supabase Auth e a chamada ao GitHub só foram testadas com respostas simuladas.
+- [ ] **Teste `db` que já falhava antes:** `tests/test_paineis.py::test_fluxo_caixa_mes_e_acumulado` (`KeyError: 'destaques'` com `mes=2026-09`) falha também no commit `3e7df6c`, sem relação com o convite. Investigar.
 
 ### Gestão (Interno BORD), administrador e cliente escolhido
 
@@ -14,10 +32,8 @@ Feito em 10/11/2026 (código; nada aplicado em produção, ver "Concluído"). Mo
 - [ ] **Supabase Auth: "Email OTP Expiration" em 86400 s (24 h)**, para o link do convite valer o que a Gestão diz (`AUTH_CONVITE_HORAS`, padrão 24). Hoje o padrão do Supabase é 1 h.
 - [ ] **Front:** escolha de empresa (`?cliente=<slug>` em toda chamada e nas query keys), menu pelas `telas` da sessão, inatividade por `inatividadeSegundos` e a área Gestão. Prompt entregue em 10/11/2026 (em `C:\Users\arthur bord\.claude\plans\estou-com-plano-de-ethereal-nautilus.md`).
 - [ ] **Conferir os prefixos de fonte de cada painel** em [api/app/admin/catalogo.py](api/app/admin/catalogo.py) (`exige`): é o que diz se o painel "tem dado" e pode ser ligado. Regra provisória, tirada dos montadores; com um prefixo errado, a Gestão trava a chave de um painel que funcionaria (ou libera um que abre vazio).
-- [ ] **Convite e reenvio pela tela.** Hoje só pelo CLI (`python -m app.cli.convidar_usuario`, com `--reenviar`), porque o convite precisa da chave secreta do Supabase. Ver "A decidir".
 - [ ] **Remover as funções de sessão de 3 argumentos** (`seg.iniciar_sessao`, `seg.usar_sessao`, `seg.renovar_sessao` da migration 21) numa migration nova, depois que a API de 10/11/2026 estiver no ar.
-- [ ] **Empresa nova num cliente não entra sozinha nos vínculos que já existem** (`seg.usuario_empresa` é gravado na hora do vínculo, com as empresas daquele momento). Depois de cadastrar uma empresa, regravar os vínculos (salvar a pessoa de novo na Gestão) ou trocar o modelo para "todas as empresas do cliente".
-- [ ] **Fora da Gestão por falta de dado no back:** horas de implantação e checklist, "% concluído" de cada camada, segmento e ERP do cliente, "colunas obrigatórias" de cada tabela, e os painéis Carteira de clientes, Estoque e Compras (camada "Estoque e compras").
+- [ ] **Fora da Gestão por falta de dado no back:** horas de implantação e checklist, "% concluído" de cada camada, ERP do cliente, "colunas obrigatórias" de cada tabela, e os painéis Carteira de clientes, Estoque e Compras (camada "Estoque e compras").
 
 ### Login com e-mail e senha (em andamento)
 
@@ -312,7 +328,16 @@ O front (`overnex-frontend`) já desenha a Visão geral a partir de um JSON fixo
 - [ ] **Microsoft Entra ID.** O login agora é por e-mail e senha no Supabase Auth; a validação do Entra continua em [api/app/seguranca/auth.py](api/app/seguranca/auth.py) (`validar_token_entra`), desligada por configuração (`AUTH_PROVEDOR=entra` liga). Decidir se volta (por exemplo, para os consultores da LANN) e como: app registration da API (`ENTRA_TENANT_ID`, `ENTRA_AUDIENCE`), usuários dos clientes como convidados no tenant ou o app aceitando vários tenants (pede ajuste na validação do token), e se os dois provedores convivem (hoje é um ou outro; `seg.usuario.id_autenticacao` guarda o id de um só).
 - [ ] **IP do cliente para o Supabase Auth (`Sb-Forwarded-For`).** Com o header, o Supabase conta os limites por IP de cada usuário em vez de somar tudo no IP da API. Exige uma chave secreta na API (não aceita a publishable nem as legadas) e ligar a opção em Authentication → Rate Limits. Hoje a chave secreta fica só no CLI de cadastro, por decisão; ligar isso põe uma chave com poder de administrador no ambiente da API.
 - [ ] **Gestão M2.1.0, pontos abertos** (decididos por padrão em 10/11/2026; o usuário confirma ou corrige):
-  - **convite pela tela:** fica no CLI porque a chave secreta do Supabase não entra no ambiente da API (decisão do usuário em 10/11/2026). Para ter "Convidar" e "Reenviar convite" na Gestão, é preciso aceitar a chave na API, ou outro caminho (fila que um job envia, função no banco com a chave no Vault);
+  - **convite pela tela, pontos decididos por padrão em 13/11/2026** (a opção em si, fila + job, e o convite sem empresa foram decisão do usuário):
+    - o job fala com o banco pelo role `carga` (ganhou duas funções em `seg`), para não levar a conexão administrativa ao GitHub. Se for melhor um role só para isso, é uma migration e um Secret novos;
+    - envio que falha não tenta de novo sozinho: fica "Convite não enviado", com o motivo, e o Admin BORD clica em "Tentar de novo";
+    - convite a quem não tem empresa aparece como "Sem empresa" depois de enviado (antes mostrava "Convite enviado"); na fila, não enviado e vencido vêm antes;
+    - pessoa convidada com o e-mail errado não se apaga pela tela: desativar e convidar o e-mail certo (o cadastro errado fica na lista, desativado);
+    - sem limite de convites por administrador;
+  - **empresa nova pela tela, pontos decididos por padrão em 13/11/2026:**
+    - o setor é texto livre e opcional (se for melhor uma lista fixa, vira um check e as opções saem da API);
+    - nome e setor se editam pela tela; o slug não muda, e desativar ou apagar empresa é só por SQL;
+    - o trigger põe a empresa (CNPJ) nova em todos os vínculos do cliente, mas não regrava os vínculos das empresas que já existem (em produção, quem ficou sem uma empresa antiga continua assim até ser salvo de novo na Gestão);
   - **nome na tela:** os textos dizem "BORD" e "Admin BORD", como o mockup; o resto do projeto (docs, `seg.usuario.tipo = 'lann'`) diz LANN. Domínio do admin: `bordgestao.com.br` (`ADMIN_DOMINIOS`); incluir `lannconsult.com.br`?
   - **"empresa" × "cliente":** na Gestão, "empresa" é o `cfg.cliente`; dentro do app, o filtro "Empresa" continua sendo o `cfg.empresa` (os CNPJs do cliente). O mockup não tem escolha de `cfg.empresa` por pessoa: o vínculo leva todas;
   - **4 perfis fixos:** duas pessoas "Cliente usuário" do mesmo cliente veem sempre os mesmos painéis. Não dá para ter um perfil de RH (Pessoas) e outro comercial; se precisar, voltar a ter perfis por cliente na matriz;
@@ -326,6 +351,14 @@ O front (`overnex-frontend`) já desenha a Visão geral a partir de um JSON fixo
   - **preferências do mockup que não entraram** (mudam regra de indicador em todos os painéis): período padrão dos cartões (Mês/Acumulado), dias úteis "seg a sáb" e "todos os dias", comparação padrão e histórico exibido. Entraram "Linhas de custo" e os feriados do cliente.
 
 ## Concluído
+
+- **13/11/2026 — Empresa nova pela Gestão, com o setor:** para dar login a quem é de uma empresa que ainda não está no banco. [Migration 30](supabase/migrations/20261113000030_empresa_pela_gestao.sql): `cfg.cliente.segmento`, o admin insere em `cfg.cliente` pela API e a `cfg.empresa` nova entra sozinha nos vínculos do cliente (resolve o item "empresa nova não entra nos vínculos"). `POST /api/admin/clientes` (`criar`, em [clientes.py](api/app/admin/clientes.py)): 201 com o slug, montado do nome se não vier; `segmento` na barra lateral e na empresa aberta; `PUT /api/admin/clientes/{slug}` troca nome e setor ([migration 31](supabase/migrations/20261113000031_empresa_nome_e_setor.sql): política de update do admin, e o `api_site` só tem update nessas duas colunas). A edição tinha sido posta dentro da migration 30 depois de ela já estar aplicada num banco; voltou para uma migration própria, e update barrado pelo banco passou a ser 500 com log, não "Empresa não encontrada.". Nada aplicado em produção. **Testado:** ruff, mypy, os testes sem banco e, no Postgres local, o teste `db` novo (cria a empresa, convida, o CNPJ chega depois e entra no vínculo) e as 18 asserções do `21_empresa_pela_gestao` com o substituto do pgTAP. **Não testado:** o pgTAP de verdade.
+- **13/11/2026 — Convite e reenvio pela Gestão, por fila:** decisão do usuário pela opção E de [docs/convite-pela-gestao-opcoes.md](docs/convite-pela-gestao-opcoes.md) (a chave secreta do Supabase continua fora da API) e por aceitar convite sem empresa. Nada aplicado em produção.
+  - **banco:** [migration 29](supabase/migrations/20261113000029_convite_fila.sql): `seg.usuario.id_autenticacao` aceita null (convidado ainda sem login), `seg.convite_fila`, `seg.pedir_convite` (só o admin) e, para o job, `seg.convites_na_fila` e `seg.concluir_convite` (role `carga`);
+  - **API:** `POST /api/admin/usuarios` e `POST /api/admin/usuarios/{id}/convite` ([app/admin/convites.py](api/app/admin/convites.py)), 202 com o texto do passo final; situações `fila` e `nao-enviado` (com `detalhe`), `convite` (botão) em cada pessoa e `notaConvite` com texto novo; depois do commit, a API aciona o workflow pelo GitHub (`GITHUB_CONVITES_TOKEN`, opcional);
+  - **job:** [app/cli/enviar_convites.py](api/app/cli/enviar_convites.py) e [.github/workflows/convites.yml](.github/workflows/convites.yml) (acionado pela API e de hora em hora em dia útil);
+  - **CLI:** `--reenviar` passou a gravar também o id do Supabase Auth (quem veio da fila pode estar sem ele);
+  - **testado:** ruff, mypy e os 808 testes sem banco; os testes `db` num Postgres local (pgserver) com as 29 migrations e o seed: 121 passaram, inclusive os novos (convite da fila ao login, sem empresa, regras, fila pelo role `carga`), e 1 falhou, que já falhava antes (Fluxo de caixa, ver "A fazer"); as 27 asserções do `20_convite_fila` com um substituto do pgTAP. **Não testado:** o pgTAP de verdade, o envio real pelo Supabase Auth, o acionamento real do GitHub e o workflow rodando.
 
 - **11/11/2026 — Tela em cache com uma ida ao banco:** medido contra um Postgres local atrás de um proxy com 50 ms por ida e volta, a tela já em cache fazia 5 idas antes de responder (teste da conexão, `BEGIN`, `seg.contexto_acesso` e 2 da pré-leitura) e agora faz 1: de 288 para 89 ms na Visão geral e de 290 para 86 ms em Vendas. A Visão geral sem cache foi de 15 para 5 idas (562 para 195 ms) e `/api/sessao`, de 5 para 2 (301 para 134 ms). O que mudou:
   - **`begin` junto com a primeira consulta:** as conexões do pool ficam em `autocommit` e o `em_uma_ida` manda o `begin` no mesmo pipeline quando ainda não há transação ([db.py](api/app/core/db.py)). Antes o psycopg mandava o `BEGIN` sozinho e esperava a resposta. `commit()` e `rollback()` não mudam. Fora de transação cada comando vale sozinho: `auth/cadastro.py` passou a abrir a transação pelo `em_uma_ida`, e `auth/uso.py` chama a função direto;

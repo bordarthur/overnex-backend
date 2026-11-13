@@ -100,7 +100,7 @@ docker build -t overnex-api api/
 docker run --rm -p 8000:8000 --env-file api/.env overnex-api
 ```
 
-Sem `AMBIENTE` definido, a API sobe como `prod`: exige `SUPABASE_URL`, `SUPABASE_ANON_KEY` e `FRONT_URL`, e recusa `AUTH_FAKE` e `COOKIE_SEGURO=false`. Não passe `SUPABASE_SERVICE_ROLE_KEY` nem `DATABASE_URL_ADMIN` para o contêiner: só o CLI de cadastro usa.
+Sem `AMBIENTE` definido, a API sobe como `prod`: exige `SUPABASE_URL`, `SUPABASE_ANON_KEY` e `FRONT_URL`, e recusa `AUTH_FAKE` e `COOKIE_SEGURO=false`. Não passe `SUPABASE_SERVICE_ROLE_KEY` nem `DATABASE_URL_ADMIN` para o contêiner: só o CLI de cadastro e o job de convites usam a chave secreta. Para o convite pela Gestão sair na hora, a API recebe `GITHUB_CONVITES_TOKEN` e `GITHUB_CONVITES_REPO` (ver [Convite pela Gestão](#convite-pela-gestão-fila--job)).
 
 Atrás de proxy (Azure Container Apps, Static Web Apps), o limite de tentativas usa o IP do cliente que o uvicorn lê do `X-Forwarded-For`. O `--proxy-headers` do Dockerfile só confia no proxy de `127.0.0.1`: defina `FORWARDED_ALLOW_IPS` com o IP (ou a faixa) do proxy, ou `*` se a API só for alcançável por ele. Sem isso, todos os usuários aparecem com o IP do proxy e dividem o mesmo limite por IP.
 
@@ -109,8 +109,9 @@ Atrás de proxy (Azure Container Apps, Static Web Apps), o limite de tentativas 
 ```
 app/
   main.py              cria o app; sem CORS; erros sem detalhe interno; GET /health
-  core/config.py       Settings (DATABASE_URL, AUTH_PROVEDOR, SUPABASE_*, FRONT_URL, COOKIE_SEGURO, ENTRA_*, AMBIENTE, AUTH_FAKE…)
-                       e ConfigCadastro (só o CLI: chave secreta e DATABASE_URL_ADMIN)
+  core/config.py       Settings (DATABASE_URL, AUTH_PROVEDOR, SUPABASE_*, FRONT_URL, COOKIE_SEGURO, ENTRA_*, AMBIENTE, AUTH_FAKE…),
+                       ConfigCadastro (só o CLI: chave secreta e DATABASE_URL_ADMIN) e
+                       ConfigConvites (só o job de convites: chave secreta e DATABASE_URL_CARGA)
   core/db.py           pool psycopg (prepare_threshold=None, autocommit; o begin vai junto com
                        a primeira consulta) + uma transação por requisição
   seguranca/auth.py    get_usuario: valida o JWT do Supabase (JWKS ES256, iss, aud, exp, sub, role)
@@ -120,12 +121,14 @@ app/
   auth/limite.py       limite de tentativas em memória (e-mail + IP e só IP)
   auth/cadastro.py     depois do login, confere o usuário ativo em seg.usuario (+ seg.log_acesso)
   cli/convidar_usuario.py  cadastro de usuário pela LANN (convite no Supabase + seg.*)
+  cli/enviar_convites.py   job do GitHub Actions: manda os convites que a Gestão pôs na fila
   seguranca/acesso.py  checagem em 6 etapas (com o cliente escolhido) + seg.log_acesso
   seguranca/perfis.py  os 4 perfis fixos (Admin BORD, Consultor, Cliente principal e usuário)
   sessao/router.py     GET /api/sessao: usuário, perfil, clientes que a pessoa pode abrir e,
                        do cliente escolhido, empresas, telas e períodos
   admin/               Gestão (/api/admin/*, só o Admin BORD): empresas, painéis ligados,
-                       matriz perfil × painel, pessoas, preferências, feriados e cargas
+                       matriz perfil × painel, pessoas, preferências, feriados e cargas;
+                       convites.py grava o pedido de convite na fila e aciona o job
   telas/contrato.py    ScreenPayload, Hero, Apoio, Visual, Alerta, Status
   telas/moldura.py     base camelCase, cliente e última carga (sessão e Visão geral)
   telas/fin_01.py      GET /api/telas/fin-01 (exemplo, sem regra de negócio)
@@ -232,7 +235,7 @@ Não dá para fazer por código daqui. No painel do projeto (`ddpicszgihwekcvyev
    Os links valem pelo prazo de *Email OTP Expiration* (Authentication → Providers → Email; padrão 1 h, máximo 24 h). **Ponha 86400 s (24 h)**: é o prazo que a Gestão usa para dizer "Convite vencido" (`AUTH_CONVITE_HORAS`, padrão 24); com outro valor no painel, mude a variável junto.
 4. **SMTP próprio** (Authentication → Emails → SMTP Settings): **obrigatório antes de convidar clientes.** O SMTP padrão do Supabase só entrega para e-mails do time do projeto e só 2 por hora. Depois de configurar, ajuste o limite de e-mails em Authentication → Rate Limits.
 5. **Política de senha** (Authentication → Providers → Email → Password): *Minimum password length* = 8 e *Password requirements* = **No required characters**. O Supabase não tem a combinação do front (maiúscula e número, sem exigir minúscula): "Lowercase, uppercase letters and digits" recusaria `ABCDEFG1`, que o front aceita, e "Letters and digits" só conta letras sem acento (recusaria `Á1234567`). Nos dois casos a recusa viria depois do `/verify`, com o link já gasto. Por isso a regra de verdade fica na API, conferida antes do `/verify`, e o Supabase só garante o mínimo de 8. Senha posta pelo painel ou pela API administrativa não passa pela regra da API.
-6. **Chaves:** a API usa a chave **publishable** (`SUPABASE_ANON_KEY`); o CLI de cadastro usa a **secreta** (`SUPABASE_SERVICE_ROLE_KEY`), só na máquina de quem cadastra. Os JWTs são assinados com chave assimétrica ES256 (Project Settings → JWT Keys); a API valida pelo JWKS público, sem segredo. Se um dia girar a chave, crie a nova como *standby* e espere 1 h (cache do JWKS na API) antes de torná-la a atual.
+6. **Chaves:** a API usa a chave **publishable** (`SUPABASE_ANON_KEY`); o CLI de cadastro e o job de convites usam a **secreta** (`SUPABASE_SERVICE_ROLE_KEY`), só na máquina de quem cadastra e nos Secrets do GitHub. Os JWTs são assinados com chave assimétrica ES256 (Project Settings → JWT Keys); a API valida pelo JWKS público, sem segredo. Se um dia girar a chave, crie a nova como *standby* e espere 1 h (cache do JWKS na API) antes de torná-la a atual.
 7. **Usuário de desenvolvimento** (`diretoria@lannconsult.com.br`): crie-o em Authentication → Users (*Send invitation*, ou *Create new user* com *Auto Confirm User*) e rode [supabase/producao/usuario_dev_supabase_auth.sql](../supabase/producao/usuario_dev_supabase_auth.sql), que troca o `id_autenticacao` provisório pelo id do Supabase Auth. Se o front continuar usando o token fake, ponha esse id novo em `VITE_AUTH_FAKE_OBJECT_ID` (o script mostra o id no fim).
 8. **Admin BORD** (`arthur.duarte@bordgestao.com.br`): crie-o do mesmo jeito em Authentication → Users e rode [supabase/producao/admin_bord.sql](../supabase/producao/admin_bord.sql), que o cadastra com o perfil `admin` (sem vínculo: vê todos os clientes). Depois das migrations 25 a 28.
 
@@ -259,27 +262,50 @@ Cada pessoa tem **um perfil** (`seg.usuario.perfil`, o mesmo em todas as empresa
 | Rota | O que faz |
 |---|---|
 | `GET /api/admin/gestao` | Barra lateral: `clientes` (com o estado das `camadas`), os 4 `perfis` (descrição, sessão padrão, pessoas ativas) e as `sessoes` (opções de tempo, com `soAdmin`) |
+| `POST /api/admin/clientes` | Cria uma empresa (`cfg.cliente`): `{"nome", "segmento": string \| null, "slug": string \| null}`. Sem `slug`, a API monta um a partir do nome (sem acento, minúsculas, hífen). 201 `{"slug", "nome", "mensagem"}`. 422 "Informe o nome da empresa.", "O identificador só aceita letras minúsculas, números e hífen (ex.: pj-cortes)." ou "Já existe uma empresa com o identificador …." |
+| `PUT /api/admin/clientes/{slug}` | `{"nome", "segmento": string \| null}`: troca o nome e o setor da empresa (204). O slug não muda. 422 "Informe o nome da empresa."; 404 só para slug que não existe. Precisa da migration 31: sem ela, o banco barra o update e a rota responde 500, com o motivo no log da API |
 | `GET /api/admin/clientes/{slug}` | Tudo das abas da empresa, numa resposta: `resumo`, `camadas` (Implantação), `fontes` (Prontidão dos dados), `paineis`, `acesso` (matriz perfil × painel, só os ligados), `usuarios` da empresa, `preferencias`, `feriados`, `cargas` (as 10 últimas) e `menu` (como o Cliente principal vê) |
 | `PUT /api/admin/clientes/{slug}/paineis/{codigo}` | `{"ligado": true}`. Painel sem dado não liga: 422 "Este painel ainda não tem dado nesta empresa.". Ligado pela primeira vez, os perfis fixos recebem a matriz padrão |
 | `PUT /api/admin/clientes/{slug}/perfis/{perfil}/paineis/{codigo}` | `{"ve": true}`. `admin` não muda: 422 "Admin BORD vê tudo e não pode ser alterado." |
 | `PUT /api/admin/clientes/{slug}/preferencias/{id}` | `{"valor": "3"}`: a mesma escolha salva do seletor da Visão geral (hoje, `linhas-custo`) |
 | `PUT` e `DELETE /api/admin/clientes/{slug}/feriados/{data}` | `{"nome": "Padroeira"}`: feriado da empresa (`cfg.feriado`), para os dias úteis |
-| `GET /api/admin/usuarios` | Todas as pessoas (`perfil`, `clientes`, `aoEntrar`, `sessaoMinutos`, `situacao`, `acessos`, `podeDesativar`), os `filtros` com a contagem e `notaConvite` |
+| `GET /api/admin/usuarios` | Todas as pessoas (`perfil`, `clientes`, `aoEntrar`, `sessaoMinutos`, `situacao`, `acessos`, `podeDesativar`, `convite`), os `filtros` com a contagem e `notaConvite` (texto da gaveta de convite) |
+| `POST /api/admin/usuarios` | Convida uma pessoa nova: `{"email", "nome", "perfil", "clientes": [slug], "sessaoMinutos": 240 \| null}` (`clientes` pode vir vazio). 202 `{"id", "mensagem": "Convite na fila: sai em instantes."}`. O e-mail não sai daqui: o pedido entra na fila |
+| `POST /api/admin/usuarios/{id}/convite` | Sem corpo. Manda o convite de novo a quem ainda não entrou (reenvio ou nova tentativa). 202 com o mesmo corpo |
 | `PUT /api/admin/usuarios/{id}` | `{"nome", "perfil", "clientes": [slug], "sessaoMinutos": 240 \| null}` |
 | `PUT /api/admin/usuarios/{id}/sessao` | `{"minutos": 480}` |
 | `PUT /api/admin/usuarios/{id}/acesso` | `{"ativo": false}`; desativar encerra as sessões abertas da pessoa |
 
+- **Empresa nova** (migration 30): nasce com tudo desligado e já aparece na barra lateral e no convite; `segmento` (o setor, texto livre) vem em `clientes[]` de `/gestao` e em `cliente` de `/clientes/{slug}`. Nome e setor se editam depois (`PUT /api/admin/clientes/{slug}`); o slug não muda (está nas URLs), e a empresa não se desativa nem se apaga pela tela. CNPJs (`cfg.empresa`), fontes da carga e de-para de contas continuam por script; o CNPJ cadastrado depois entra sozinho nos vínculos de quem já foi convidado. Até lá, a pessoa entra e não vê tela nenhuma.
 - **Catálogo fechado** ([app/admin/catalogo.py](app/admin/catalogo.py)): só os 8 painéis que existem na API (Visão geral, Vendas, Equipe comercial, Clientes e atendimentos, Receber e pagar, Pessoas, Resultado e Fluxo de caixa), em 4 camadas (Comercial, Pessoas, Receber e pagar e Universal Completo). Carteira de clientes, Estoque e Compras do mockup ainda não têm tela.
 - **Painel disponível** = alguma fonte ativa do prefixo que ele exige (`f_vendas_*`, `f_folha_*`…) já teve carga `ok` (regra provisória, no catálogo). Camada **ativa** = todos os painéis ligados e com dado; **em implantação** = parte; **desligada** = nenhum ligado.
 - **Matriz padrão** (ao ligar um painel pela primeira vez): Cliente principal vê tudo; Consultor não vê Pessoas; Cliente usuário não vê Pessoas, Resultado nem Fluxo de caixa. Linha nova vê dado nominal só em Equipe comercial e Receber e pagar (a tela exige); os nomes de "Cargos e salários" (dado nominal de `PES-01`) continuam por SQL.
 - **Regras das pessoas** ([app/admin/usuarios.py](app/admin/usuarios.py)), com o texto no 422: "Admin BORD só com e-mail da BORD." (`ADMIN_DOMINIOS`, padrão `bordgestao.com.br`); "O Overnex precisa de pelo menos um Admin BORD ativo."; ninguém tira o próprio perfil de admin nem desativa a si mesmo; "Mais de 12 h, só Admin BORD."; sessão igual ao padrão do perfil fica sem valor próprio; o e-mail é o login e não muda (o `api_site` nem tem permissão de trocá-lo); o perfil admin fica sem vínculos.
-- **Situação** de cada pessoa: `ativo`, `convite` (convidada há menos de `AUTH_CONVITE_HORAS` e ainda não entrou), `vencido`, `inativo` ou `sem-empresa`, com `status` no vocabulário de cor do front (`saudavel`, `atencao`, `critico`, `neutro`).
-- **Sem rota de convite:** criar login precisa da chave secreta do Supabase, que não entra no ambiente da API. Quem cria é o CLI abaixo; `notaConvite` traz o texto para o lugar do botão.
+- **Situação** de cada pessoa, a que mais pede ação, nesta ordem: `inativo`; de quem ainda não entrou, `fila` (convite pedido, ainda não saiu), `nao-enviado` (o envio falhou; `situacao.detalhe` traz o motivo) e `vencido` (convidada há mais de `AUTH_CONVITE_HORAS`); `sem-empresa`; `convite` (enviado, dentro do prazo); `ativo`. Com `status` no vocabulário de cor do front (`saudavel`, `atencao`, `critico`, `neutro`). O filtro `pendentes` conta `fila`, `nao-enviado`, `convite` e `vencido`.
+- **Botão de convite:** `convite` em cada pessoa é `{"rotulo": "Reenviar convite"}` (ou `"Tentar de novo"`, depois de um envio que falhou) quando ela está ativa, ainda não entrou e não tem pedido na fila; senão, `null` (o front não mostra o botão).
 - O que a Gestão lê e grava no banco está nas políticas `seg.eh_admin()` da migration 27: cadastro e controle da carga de todos os clientes, nunca dado de negócio (as tabelas de dados só abrem com o cliente escolhido). Os logs seguem sem leitura direta: o registro de acessos vem de `seg.resumo_acessos()`.
+
+### Convite pela Gestão (fila + job)
+
+Decisão de 13/11/2026 (opção E de [docs/convite-pela-gestao-opcoes.md](../docs/convite-pela-gestao-opcoes.md)): criar login no Supabase Auth exige a chave secreta, e ela **não entra no ambiente da API**. A tela grava o pedido e um job manda.
+
+1. `POST /api/admin/usuarios` confere o pedido ([app/admin/convites.py](app/admin/convites.py)) e chama `seg.pedir_convite` (migration 29), que cria a pessoa **sem login** (`id_autenticacao` nulo), os vínculos e uma linha em `seg.convite_fila`. A pessoa já aparece na lista, como "Convite na fila". O reenvio (`POST .../{id}/convite`) só insere outra linha na fila.
+2. Depois do commit, a API aciona o workflow [convites.yml](../.github/workflows/convites.yml) pela API do GitHub (em segundo plano: não atrasa a resposta nem a derruba se falhar). Sem o token configurado, ou se o acionamento falhar, o pedido espera a rodada do próprio workflow (de hora em hora, das 8h às 18h de Fortaleza, em dia útil).
+3. O job ([app/cli/enviar_convites.py](app/cli/enviar_convites.py)) lê os pedidos pendentes, manda o convite pelo Supabase Auth (o mesmo e-mail do CLI, com o link para `{FRONT_URL}/definir-senha`) e grava o resultado: **enviado** (a pessoa ganha o id do Supabase Auth e `convidado_em`: "Convite enviado") ou **falhou**, com o motivo em texto pronto ("Convite não enviado"). Não há nova tentativa automática: quem decide é o Admin BORD, pelo botão "Tentar de novo".
+
+- **Erros na hora (422, texto pronto):** "E-mail inválido.", "Este e-mail já tem cadastro no Overnex.", as regras da edição (perfil, "Admin BORD só com e-mail da BORD.", "Mais de 12 h, só Admin BORD.", "Empresa não encontrada: …") e, no reenvio, "O acesso desta pessoa está desativado. Reative antes de mandar o convite.", "Esta pessoa já entrou no Overnex. Para trocar a senha, ela usa "Esqueci a senha"." e "O convite desta pessoa já está na fila.". 404 "Pessoa não encontrada.".
+- **Erros do envio (aparecem depois, em `situacao.detalhe`):** limite de e-mails do Supabase, serviço de login fora do ar, e-mail que já tem login criado fora do Overnex, e-mail recusado, acesso desativado antes de o convite sair.
+- **Convite sem empresa é aceito:** a pessoa fica "Sem empresa" (depois de o convite sair) até alguém marcar uma; se entrar antes, vê o aviso para falar com a BORD.
+- **`mensagem` do 202:** "Convite na fila: sai em instantes." com o acionamento configurado; sem ele, "Convite na fila: sai na próxima rodada de envio, em até uma hora.".
+- **Configuração da API:** `GITHUB_CONVITES_TOKEN` (fine-grained personal access token do GitHub, só deste repositório, com a permissão *Actions: Read and write*; ele aciona e cancela workflows do repositório, e não lê segredos, código nem dados) e `GITHUB_CONVITES_REPO` (`dono/repositorio`). Opcionais: `GITHUB_CONVITES_WORKFLOW` (padrão `convites.yml`) e `GITHUB_CONVITES_REF` (padrão `main`). O token vence: anote a data e troque antes.
+- **Configuração do job** (GitHub → Settings → Secrets and variables → Actions): usa os Secrets `DATABASE_URL_CARGA` e `SUPABASE_SECRET_KEY` e a Variable `SUPABASE_URL`, que o `diario.yml` já usa, e mais a **Variable `FRONT_URL`** (a URL do front, igual à da API). O acionamento pela API e a rodada de hora em hora só funcionam com o `convites.yml` na branch padrão (`main`).
+- **Banco do job:** o role `carga`, que em `seg` só executa `seg.convites_na_fila()` e `seg.concluir_convite()`. Ele não lê nem grava mais nada do schema.
+- **Saída do job:** só o número do pedido e o resultado; nunca e-mail, nome ou chave.
+- **Para rodar à mão:** GitHub → Actions → convites → Run workflow. Ou, de uma máquina com a chave secreta e `DATABASE_URL_CARGA` no `.env`: `uv run python -m app.cli.enviar_convites`.
 
 ### Cadastro de usuários pela LANN
 
-Ninguém cria conta sozinho. O CLI convida no Supabase Auth (o e-mail leva a `{FRONT_URL}/definir-senha`) e grava `seg.usuario` e os vínculos numa transação só. Depois de criada, a pessoa é editada pela Gestão.
+Ninguém cria conta sozinho. O Admin BORD convida pela Gestão (acima). O CLI continua valendo, para quem tem a chave secreta na máquina: convida no Supabase Auth (o e-mail leva a `{FRONT_URL}/definir-senha`) e grava `seg.usuario` e os vínculos numa transação só, sem passar pela fila. Depois de criada, a pessoa é editada pela Gestão.
 
 ```bash
 cd api
@@ -297,7 +323,7 @@ uv run python -m app.cli.convidar_usuario --email ana@pjcortes.com.br --reenviar
 - `--perfil` é um dos 4 (`admin`, `consultor`, `cliente_principal`, `cliente_usuario`); `--cliente` é o `slug` de `cfg.cliente` (pode repetir; obrigatório fora do admin, proibido nele). `--sessao` (minutos: 30, 60, 240, 480, 720 ou 1440; acima de 720, só admin) é opcional: sem ele, vale o padrão do perfil.
 - O vínculo leva o papel do perfil, o perfil fixo do cliente e todas as empresas dele (`seg.definir_vinculos`).
 - Confere tudo antes de convidar. Se o e-mail já existe em `seg.usuario` ou no Supabase Auth, avisa e para. Se o convite falhar, nada é gravado. Se a gravação falhar depois do convite, o usuário criado no Supabase Auth é apagado (se nem isso der, o comando mostra o id para apagar à mão).
-- `--reenviar` só vale para quem está ativo e ainda não entrou; para quem já entrou, o caminho é "Esqueci a senha".
+- `--reenviar` só vale para quem está ativo e ainda não entrou; para quem já entrou, o caminho é "Esqueci a senha". Serve também para quem ficou com "Convite não enviado" na Gestão: grava o id do Supabase Auth junto com a data do convite.
 - Precisa, no `.env` de quem roda (nunca no da API publicada): `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (chave secreta), `FRONT_URL` e `DATABASE_URL_ADMIN` (conexão como `postgres`; em produção, a connection string de Project Settings → Database, com a senha do banco). `ADMIN_DOMINIOS` é opcional (padrão `bordgestao.com.br`).
 - Enquanto o Supabase Auth não tiver SMTP próprio, o convite só chega a e-mails do time do projeto. Para o primeiro Admin BORD há o caminho sem e-mail: crie o usuário em Authentication → Users e rode [supabase/producao/admin_bord.sql](../supabase/producao/admin_bord.sql).
 - Desativar e reativar alguém é pela Gestão (`PUT /api/admin/usuarios/{id}/acesso`). A pessoa perde o acesso na hora: toda requisição confere `seg.usuario.ativo` (403), as sessões abertas são apagadas e a renovação seguinte apaga o cookie. Para tirar também o login do Supabase, apague o usuário em Authentication → Users.

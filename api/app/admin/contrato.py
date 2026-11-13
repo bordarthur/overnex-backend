@@ -41,6 +41,8 @@ class CamadaResumo(ModeloCamel):
 class ClienteDaLista(ModeloCamel):
     slug: str
     nome: str
+    # setor da empresa, ex.: "Distribuição de alimentos"; null = não informado
+    segmento: str | None = None
     camadas: list[CamadaResumo]
 
 
@@ -79,12 +81,20 @@ class AoEntrar(ModeloCamel):
 
 
 class Situacao(ModeloCamel):
-    # ativo, convite, vencido, inativo ou sem-empresa
+    # ativo, fila (convite pedido, ainda não saiu), nao-enviado (o envio falhou), convite
+    # (enviado), vencido, inativo ou sem-empresa
     id: str
     rotulo: str
     # ex.: "último acesso hoje, 9h14", "enviado ontem, 16h10", "ainda não entrou"
     quando: str
     status: Status
+    # só em nao-enviado: por que o convite não saiu; nas outras, null
+    detalhe: str | None = None
+
+
+class AcaoConvite(ModeloCamel):
+    # texto do botão: "Reenviar convite" ou "Tentar de novo"
+    rotulo: str
 
 
 class Acessos(ModeloCamel):
@@ -109,10 +119,14 @@ class Usuario(ModeloCamel):
     acessos: Acessos
     # false = não oferecer "Desativar acesso" (já desativado, ou o último Admin BORD ativo)
     pode_desativar: bool
+    # botão que manda o convite de novo (POST /api/admin/usuarios/{id}/convite); null = não
+    # oferecer (já entrou, está desativado ou o convite já está na fila)
+    convite: AcaoConvite | None = None
 
 
 class FiltroUsuarios(ModeloCamel):
-    # todos, um perfil (admin, consultor, …), pendentes (convite ou vencido) ou sem-empresa
+    # todos, um perfil (admin, consultor, …), pendentes (fila, nao-enviado, convite ou
+    # vencido) ou sem-empresa
     id: str
     rotulo: str
     total: int
@@ -123,7 +137,7 @@ class FiltroUsuarios(ModeloCamel):
 class UsuariosPayload(ModeloCamel):
     usuarios: list[Usuario]
     filtros: list[FiltroUsuarios]
-    # por que não há botão de convidar: o cadastro de login é pelo comando da BORD
+    # texto da gaveta de convite: como o convite chega e em quanto tempo sai
     nota_convite: str
 
 
@@ -139,6 +153,8 @@ class UsuarioDoCliente(Usuario):
 class ClienteDaGestao(ModeloCamel):
     slug: str
     nome: str
+    # setor da empresa; null = não informado
+    segmento: str | None = None
     # só caminho do próprio domínio (a CSP do front recusa imagem de fora)
     logo_url: str | None
 
@@ -284,6 +300,48 @@ class MudancaUsuario(ModeloCamel):
     clientes: list[str] = Field(max_length=200)
     # null = o padrão do perfil
     sessao_minutos: int | None = None
+
+
+class NovaEmpresa(ModeloCamel):
+    nome: str = Field(min_length=1, max_length=120)
+    # setor, texto livre; null ou vazio = não informado
+    segmento: str | None = Field(default=None, max_length=80)
+    # identificador da empresa nas URLs (minúsculas, números e hífen); null = a API monta
+    # a partir do nome
+    slug: str | None = Field(default=None, max_length=80)
+
+
+class MudancaEmpresa(ModeloCamel):
+    nome: str = Field(min_length=1, max_length=120)
+    # setor, texto livre; null ou vazio = não informado
+    segmento: str | None = Field(default=None, max_length=80)
+
+
+class EmpresaCriada(ModeloCamel):
+    # para abrir a empresa: GET /api/admin/clientes/{slug}
+    slug: str
+    nome: str
+    # texto do passo final
+    mensagem: str
+
+
+class NovoUsuario(ModeloCamel):
+    # o login; não muda depois
+    email: str = Field(min_length=3, max_length=254)
+    nome: str = Field(min_length=1, max_length=120)
+    perfil: str = Field(max_length=40)
+    # slugs das empresas da pessoa; pode vir vazio (fica "Sem empresa"); ignorado no perfil
+    # Admin BORD
+    clientes: list[str] = Field(default_factory=list, max_length=200)
+    # null = o padrão do perfil
+    sessao_minutos: int | None = None
+
+
+class ConvitePedido(ModeloCamel):
+    # a pessoa convidada
+    id: UUID
+    # texto do passo final, ex.: "Convite na fila: sai em instantes."
+    mensagem: str
 
 
 class MudancaSessao(ModeloCamel):

@@ -21,6 +21,10 @@ Se o convite falhar, nada é gravado. Se a gravação falhar depois do convite, 
 criado no Supabase Auth é apagado. --reenviar manda o convite de novo a quem ainda não
 entrou (o link vence; a Gestão mostra "Convite vencido"). Precisa de SUPABASE_URL,
 SUPABASE_SERVICE_ROLE_KEY, FRONT_URL e DATABASE_URL_ADMIN (ver api/README.md).
+
+O Admin BORD também convida pela Gestão (POST /api/admin/usuarios): a tela grava o pedido
+numa fila e o job app/cli/enviar_convites.py manda. Este comando continua valendo, e o
+--reenviar serve também para quem ficou com "Convite não enviado" na Gestão.
 """
 
 import argparse
@@ -85,7 +89,7 @@ class Banco(Protocol):
 
     def pendente(self, email: str) -> Pendente: ...
 
-    def marcar_convite(self, usuario_id: UUID) -> None: ...
+    def marcar_convite(self, usuario_id: UUID, id_autenticacao: UUID) -> None: ...
 
 
 class BancoPostgres:
@@ -169,9 +173,11 @@ class BancoPostgres:
             )
         return Pendente(usuario_id=linha["id"], nome=linha["nome"] or email.split("@")[0])
 
-    def marcar_convite(self, usuario_id: UUID) -> None:
+    def marcar_convite(self, usuario_id: UUID, id_autenticacao: UUID) -> None:
+        # o id também: quem foi convidado pela Gestão e o envio falhou ainda está sem login
         self.conn.execute(
-            "update seg.usuario set convidado_em = now() where id = %s", (usuario_id,)
+            "update seg.usuario set convidado_em = now(), id_autenticacao = %s where id = %s",
+            (id_autenticacao, usuario_id),
         )
 
 
@@ -215,8 +221,8 @@ def convidar(pedido: Pedido, banco: Banco, gotrue: GoTrue, front_url: str) -> tu
 def reenviar(email: str, banco: Banco, gotrue: GoTrue, front_url: str) -> UUID:
     """Manda o convite de novo a quem ainda não entrou. Devolve o seg.usuario.id."""
     pendente = banco.pendente(email)
-    _convidar_no_auth(gotrue, email, pendente.nome, front_url)
-    banco.marcar_convite(pendente.usuario_id)
+    id_autenticacao = _convidar_no_auth(gotrue, email, pendente.nome, front_url)
+    banco.marcar_convite(pendente.usuario_id, id_autenticacao)
     return pendente.usuario_id
 
 

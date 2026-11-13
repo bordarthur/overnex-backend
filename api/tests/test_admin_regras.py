@@ -39,6 +39,10 @@ def _pessoa(**mudancas: Any) -> Pessoa:
     return Pessoa(**(base | mudancas))
 
 
+# quem foi convidado e ainda não entrou
+NOVO: dict[str, Any] = {"primeiro_acesso_em": None, "ultimo_acesso": None}
+
+
 # ---------- textos ----------
 
 
@@ -115,11 +119,97 @@ def test_duracao_e_sessao() -> None:
             {"perfil": "admin", "clientes": ()},
             ("ativo", "Ativo", "último acesso hoje, 9h14", "saudavel"),
         ),
+        # convidado pela Gestão: o pedido ainda está na fila
+        (
+            NOVO | {"convite_estado": "fila", "convite_em": AGORA - timedelta(minutes=1)},
+            ("fila", "Convite na fila", "pedido hoje, 14h29", "atencao"),
+        ),
+        # o job mandou: vale a data do convite
+        (
+            NOVO
+            | {
+                "convite_estado": "enviado",
+                "convite_em": AGORA - timedelta(minutes=1),
+                "convidado_em": AGORA - timedelta(minutes=1),
+            },
+            ("convite", "Convite enviado", "enviado hoje, 14h29", "atencao"),
+        ),
+        (
+            NOVO
+            | {
+                "convite_estado": "falhou",
+                "convite_em": AGORA - timedelta(minutes=1),
+                "convite_motivo": "O limite de e-mails do Supabase foi atingido.",
+            },
+            ("nao-enviado", "Convite não enviado", "tentativa hoje, 14h29", "critico"),
+        ),
+        # o envio falhou, mas o comando mandou o convite depois: vale o convite
+        (
+            NOVO
+            | {
+                "convite_estado": "falhou",
+                "convite_em": AGORA - timedelta(hours=2),
+                "convidado_em": AGORA - timedelta(hours=1),
+            },
+            ("convite", "Convite enviado", "enviado hoje, 13h30", "atencao"),
+        ),
+        # convite enviado a quem não tem empresa: falta marcar a empresa
+        (
+            NOVO | {"convidado_em": AGORA - timedelta(hours=1), "clientes": ()},
+            ("sem-empresa", "Sem empresa", "ainda não entrou", "critico"),
+        ),
+        # mas o convite que precisa de alguém (fila, não enviado, vencido) vem antes
+        (
+            NOVO
+            | {
+                "clientes": (),
+                "convite_estado": "fila",
+                "convite_em": AGORA - timedelta(minutes=1),
+            },
+            ("fila", "Convite na fila", "pedido hoje, 14h29", "atencao"),
+        ),
+        (
+            NOVO
+            | {
+                "clientes": (),
+                "convidado_em": datetime(2026, 11, 2, 9, 0, tzinfo=textos.FORTALEZA),
+            },
+            ("vencido", "Convite vencido", "venceu 03/11, 9h00", "critico"),
+        ),
+        # quem já entrou não volta para a fila
+        (
+            {"convite_estado": "fila", "convite_em": AGORA},
+            ("ativo", "Ativo", "último acesso hoje, 9h14", "saudavel"),
+        ),
     ],
 )
 def test_situacao(mudancas: dict[str, Any], esperado: tuple[str, str, str, str]) -> None:
     s = usuarios.situacao(_pessoa(**mudancas), AGORA, 24)
     assert (s.id, s.rotulo, s.quando, s.status) == esperado
+
+
+def test_situacao_so_traz_o_motivo_quando_o_convite_nao_saiu() -> None:
+    falhou = NOVO | {"convite_estado": "falhou", "convite_em": AGORA, "convite_motivo": "Motivo."}
+    assert usuarios.situacao(_pessoa(**falhou), AGORA, 24).detalhe == "Motivo."
+    assert usuarios.situacao(_pessoa(), AGORA, 24).detalhe is None
+
+
+@pytest.mark.parametrize(
+    ("mudancas", "rotulo"),
+    [
+        # já entrou: o caminho é "Esqueci a senha"
+        ({}, None),
+        (NOVO | {"convidado_em": AGORA}, "Reenviar convite"),
+        (NOVO | {"convidado_em": AGORA - timedelta(days=3)}, "Reenviar convite"),
+        (NOVO | {"convite_estado": "falhou", "convite_em": AGORA}, "Tentar de novo"),
+        # já na fila: sem botão, para não pedir duas vezes
+        (NOVO | {"convite_estado": "fila", "convite_em": AGORA}, None),
+        (NOVO | {"convidado_em": AGORA, "ativo": False}, None),
+    ],
+)
+def test_botao_de_mandar_o_convite_de_novo(mudancas: dict[str, Any], rotulo: str | None) -> None:
+    acao = usuarios.usuario(_pessoa(**mudancas), AGORA, 24, 5, 2).convite
+    assert (acao.rotulo if acao else None) == rotulo
 
 
 @pytest.mark.parametrize(
@@ -167,14 +257,17 @@ def test_usuario_e_filtros() -> None:
         feito(clientes=()),
         feito(primeiro_acesso_em=None, convidado_em=AGORA),
         feito(primeiro_acesso_em=None, convidado_em=AGORA - timedelta(days=3)),
+        # pela Gestão: na fila e não enviado também são convites pendentes
+        feito(primeiro_acesso_em=None, convite_estado="fila", convite_em=AGORA),
+        feito(primeiro_acesso_em=None, convite_estado="falhou", convite_em=AGORA),
     ]
     assert [(f.id, f.total, f.atencao) for f in usuarios.filtros(lista)] == [
-        ("todos", 5, False),
+        ("todos", 7, False),
         ("admin", 1, False),
         ("consultor", 0, False),
         ("cliente_principal", 0, False),
-        ("cliente_usuario", 4, False),
-        ("pendentes", 2, True),
+        ("cliente_usuario", 6, False),
+        ("pendentes", 4, True),
         ("sem-empresa", 1, True),
     ]
 

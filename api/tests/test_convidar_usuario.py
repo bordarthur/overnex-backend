@@ -45,7 +45,7 @@ class BancoFalso:
     erro_gravar: Exception | None = None
     erro_pendente: Exception | None = None
     gravados: list[UUID] = field(default_factory=list)
-    reenviados: list[UUID] = field(default_factory=list)
+    reenviados: list[tuple[UUID, UUID]] = field(default_factory=list)
 
     def planejar(self, pedido: Pedido) -> Plano:
         if self.erro_planejar:
@@ -63,8 +63,8 @@ class BancoFalso:
             raise self.erro_pendente
         return Pendente(usuario_id=USUARIO_NOVO, nome="Carla Alfa")
 
-    def marcar_convite(self, usuario_id: UUID) -> None:
-        self.reenviados.append(usuario_id)
+    def marcar_convite(self, usuario_id: UUID, id_autenticacao: UUID) -> None:
+        self.reenviados.append((usuario_id, id_autenticacao))
 
 
 @dataclass
@@ -175,8 +175,9 @@ def test_reenvia_o_convite_de_quem_ainda_nao_entrou() -> None:
     (pedido,) = admin.pedidos
     assert pedido.url.path == "/auth/v1/invite"
     assert json.loads(pedido.content)["email"] == "carla@alfa.example"
-    # a data do convite recomeça (a Gestão mostra "Convite enviado" de novo)
-    assert banco.reenviados == [USUARIO_NOVO]
+    # a data do convite recomeça (a Gestão mostra "Convite enviado" de novo), com o id do
+    # Supabase Auth (quem veio da fila da Gestão pode estar sem ele)
+    assert banco.reenviados == [(USUARIO_NOVO, ID_NOVO)]
 
 
 def test_nao_reenvia_para_quem_ja_entrou_ou_nao_existe() -> None:
@@ -341,13 +342,14 @@ def test_banco_planeja_e_grava(conn_admin: psycopg.Connection[DictRow]) -> None:
         "update seg.usuario set convidado_em = now() - interval '3 days' where id = %s",
         (usuario_id,),
     )
-    banco.marcar_convite(usuario_id)
+    outro_id = UUID("5b000000-0000-4000-8000-0000000000c2")
+    banco.marcar_convite(usuario_id, outro_id)
     recente = conn_admin.execute(
-        "select convidado_em > now() - interval '1 minute' as recente from seg.usuario"
-        " where id = %s",
+        "select convidado_em > now() - interval '1 minute' as recente, id_autenticacao"
+        " from seg.usuario where id = %s",
         (usuario_id,),
     ).fetchone()
-    assert recente == {"recente": True}
+    assert recente == {"recente": True, "id_autenticacao": outro_id}
 
 
 @pytest.mark.db
