@@ -1,9 +1,10 @@
 """Partes comuns à sessão e às telas no formato do front (camelCase): cliente, última
 carga e meses com dados."""
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from datetime import date, datetime
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
@@ -73,10 +74,14 @@ def rotulo_mes(mes: date) -> str:
     return f"{MESES[mes.month - 1]} de {mes.year}"
 
 
+SQL_CLIENTE = "select nome, logo_url from cfg.cliente where id = %s"
+
+
 def cliente(conn: Conexao, cliente_id: UUID) -> Cliente:
-    linha = conn.execute(
-        "select nome, logo_url from cfg.cliente where id = %s", (cliente_id,)
-    ).fetchone()
+    return cliente_da_linha(conn.execute(SQL_CLIENTE, (cliente_id,)).fetchone())
+
+
+def cliente_da_linha(linha: Mapping[str, Any] | None) -> Cliente:
     if linha is None:  # o vínculo já garantiu o cliente; RLS não deixaria faltar
         raise LookupError("cliente do vínculo não encontrado")
     logo: str | None = linha["logo_url"]
@@ -87,19 +92,22 @@ def cliente(conn: Conexao, cliente_id: UUID) -> Cliente:
     )
 
 
+SQL_ULTIMA_CARGA = """
+    select cf.data_snapshot, cf.fim
+      from mart.carga_fonte cf
+     where cf.cliente_id = %s
+       and cf.status = 'ok'
+     order by cf.inicio desc, cf.id desc
+     limit 1
+"""
+
+
 def ultima_carga(conn: Conexao, cliente_id: UUID) -> UltimaCarga | None:
     """Última fonte com carga 'ok' do cliente, de qualquer tipo; None se nunca houve."""
-    linha = conn.execute(
-        """
-        select cf.data_snapshot, cf.fim
-          from mart.carga_fonte cf
-         where cf.cliente_id = %s
-           and cf.status = 'ok'
-         order by cf.inicio desc, cf.id desc
-         limit 1
-        """,
-        (cliente_id,),
-    ).fetchone()
+    return carga_da_linha(conn.execute(SQL_ULTIMA_CARGA, (cliente_id,)).fetchone())
+
+
+def carga_da_linha(linha: Mapping[str, Any] | None) -> UltimaCarga | None:
     if linha is None:
         return None
     return UltimaCarga(data_snapshot=linha["data_snapshot"], fim=linha["fim"])
@@ -136,16 +144,13 @@ def meses_com_dados(
     do último snapshot (filtro "Período" do front)."""
     meses: list[date] = []
     if existe(conn, "mart.resumo_mensal"):  # sem a migration 8, só o mês do snapshot
-        meses = [
-            r["mes"]
-            for r in conn.execute(
-                """
-                select distinct mes
-                  from mart.resumo_mensal
-                 where cliente_id = %s and medida = 'faturado'
-                   and starts_with(tabela, 'f_vendas_')
-                """,
-                (cliente_id,),
-            )
-        ]
+        meses = [r["mes"] for r in conn.execute(SQL_MESES, (cliente_id,))]
     return meses_disponiveis(meses, carga.data_snapshot if carga else None)
+
+
+SQL_MESES = """
+    select distinct mes
+      from mart.resumo_mensal
+     where cliente_id = %s and medida = 'faturado'
+       and starts_with(tabela, 'f_vendas_')
+"""

@@ -34,8 +34,9 @@ select is((select count(*)::int from cfg.painel
             where cliente_id <> 'c1000000-0000-4000-8000-00000000000a'), 0, 'cfg.painel');
 select is((select count(*)::int from cfg.perfil_acesso
             where cliente_id <> 'c1000000-0000-4000-8000-00000000000a'), 0, 'cfg.perfil_acesso');
+-- só telas de perfis do cliente A (o livre "Financeiro" e os fixos da migration 25)
 select is((select count(*)::int from cfg.perfil_tela
-            where perfil_id <> 'f1000000-0000-4000-8000-00000000000a'), 0, 'cfg.perfil_tela');
+            where perfil_id not in (select id from cfg.perfil_acesso)), 0, 'cfg.perfil_tela');
 select is((select count(*)::int from cfg.parametro
             where empresa_id = 'e1000000-0000-4000-8000-0000000000b1'), 0, 'cfg.parametro');
 select is((select count(*)::int from cfg.regra_lancamento

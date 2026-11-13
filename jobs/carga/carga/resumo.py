@@ -67,28 +67,35 @@ COLUNAS_VENDAS: Mapping[str, str] = {
     # abertura do CMV da seção Custos (Nilo Maia: ramo do cliente; PJ: grupo do produto)
     "abertura": "en_ramo",
 }
+# Papéis sem coluna padrão: só valem quando a fonte informa (colunas_modelo). A API usa
+# todos nos painéis comerciais; a carga, só o vendedor (faturado por vendedor, para a
+# rampa dos vendedores novos, que precisa do histórico inteiro).
+OPCIONAIS_VENDAS = frozenset({"vendedor", "linha", "quantidade"})
 
 
 def _modelo_vendas(c: Mapping[str, str]) -> Modelo:
-    return Modelo(
-        coluna_data=c["data"],
-        medidas=(
-            Medida("faturado", (c["valor"],), "sum"),
-            Medida("pedidos", (c["pedido"],), "count_distinct"),
-            Medida("clientes", (c["cliente"],), "count_distinct"),
-            # pares cliente × produto: ÷ clientes = produtos distintos por cliente
-            Medida("clientes_produtos", (c["cliente"], c["produto"]), "count_distinct"),
-            Medida("custo", (c["custo"],), "sum"),
-            # CMV por abertura (seção Custos); o nome "_ramo" ficou da primeira versão
-            Medida("faturado_ramo", (c["valor"],), "sum", por=c["abertura"]),
-            Medida("custo_ramo", (c["custo"],), "sum", por=c["abertura"]),
-        ),
-    )
+    medidas = [
+        Medida("faturado", (c["valor"],), "sum"),
+        Medida("pedidos", (c["pedido"],), "count_distinct"),
+        Medida("clientes", (c["cliente"],), "count_distinct"),
+        # pares cliente × produto: ÷ clientes = produtos distintos por cliente
+        Medida("clientes_produtos", (c["cliente"], c["produto"]), "count_distinct"),
+        Medida("custo", (c["custo"],), "sum"),
+        # CMV por abertura (seção Custos); o nome "_ramo" ficou da primeira versão
+        Medida("faturado_ramo", (c["valor"],), "sum", por=c["abertura"]),
+        Medida("custo_ramo", (c["custo"],), "sum", por=c["abertura"]),
+    ]
+    if "vendedor" in c:
+        medidas.append(Medida("faturado_vendedor", (c["valor"],), "sum", por=c["vendedor"]))
+    return Modelo(coluna_data=c["data"], medidas=tuple(medidas))
 
 
-# prefixo da tabela → (colunas padrão, construtor do modelo)
-MODELOS: Mapping[str, tuple[Mapping[str, str], Callable[[Mapping[str, str]], Modelo]]] = {
-    "f_vendas_": (COLUNAS_VENDAS, _modelo_vendas),
+# prefixo da tabela → (colunas padrão, papéis opcionais, construtor do modelo)
+MODELOS: Mapping[
+    str,
+    tuple[Mapping[str, str], frozenset[str], Callable[[Mapping[str, str]], Modelo]],
+] = {
+    "f_vendas_": (COLUNAS_VENDAS, OPCIONAIS_VENDAS, _modelo_vendas),
 }
 
 
@@ -108,13 +115,14 @@ SEM_DIMENSAO = "(vazio)"
 
 def modelo_da_tabela(tabela: str, colunas_modelo: Mapping[str, str] | None = None) -> Modelo | None:
     """Modelo pelo prefixo da tabela, com os nomes de `colunas_modelo` no lugar dos padrão."""
-    for prefixo, (padrao, construir) in MODELOS.items():
+    for prefixo, (padrao, opcionais, construir) in MODELOS.items():
         if tabela.startswith(prefixo):
-            desconhecidos = sorted(set(colunas_modelo or {}) - set(padrao))
+            aceitos = set(padrao) | opcionais
+            desconhecidos = sorted(set(colunas_modelo or {}) - aceitos)
             if desconhecidos:
                 raise ErroCarga(
                     f"cfg.fonte_carga.colunas_modelo com papéis desconhecidos {desconhecidos}"
-                    f" (aceitos: {sorted(padrao)})"
+                    f" (aceitos: {sorted(aceitos)})"
                 )
             return construir({**padrao, **(colunas_modelo or {})})
     return None

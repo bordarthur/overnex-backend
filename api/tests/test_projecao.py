@@ -4,7 +4,7 @@ from datetime import date
 from decimal import Decimal
 
 from app.farol.parametro import PADROES
-from app.telas.calendario import dias_uteis, feriados_nacionais, ultimo_dia_do_mes
+from app.telas.calendario import dias_uteis, feriados_nacionais, ultimo_dia_do_mes, util
 from app.telas.visao_geral.contrato import Kpi
 from app.telas.visao_geral.projecao import projetar
 from app.telas.visao_geral.vendas import kpis_vendas
@@ -19,6 +19,36 @@ def test_feriados_nacionais_de_2026() -> None:
     assert date(2026, 11, 20) in FERIADOS_2026  # Consciência Negra
     assert date(2026, 4, 3) in FERIADOS_2026  # Sexta-feira Santa
     assert date(2026, 2, 16) not in FERIADOS_2026  # Carnaval: ponto facultativo
+
+
+def test_dia_com_venda_conta_como_util_menos_o_domingo() -> None:
+    sabado, domingo, finados = date(2026, 10, 31), date(2026, 11, 1), date(2026, 11, 2)
+    com_venda = {sabado, domingo, finados}
+    assert util(sabado, FERIADOS_2026, com_venda)
+    assert util(finados, FERIADOS_2026, com_venda)
+    assert not util(domingo, FERIADOS_2026, com_venda)
+    # sem venda, o calendário de sempre
+    assert not util(sabado, FERIADOS_2026)
+    assert not util(finados, FERIADOS_2026)
+    # dia de semana sem venda continua útil
+    assert util(date(2026, 11, 3), FERIADOS_2026, com_venda)
+    # novembro/2026: 19 dias úteis; com venda em Finados e num sábado, 21
+    novembro = (date(2026, 11, 1), date(2026, 11, 30))
+    assert dias_uteis(*novembro, FERIADOS_2026) == 19
+    sabado_nov = date(2026, 11, 7)
+    assert dias_uteis(*novembro, FERIADOS_2026, {finados, sabado_nov, domingo}) == 21
+
+
+def test_projecao_conta_o_sabado_com_venda() -> None:
+    # até 09/10 (sexta): 7 dias úteis; com o sábado 03/10, 8 de 22
+    sem = projetar(D(700), D(2200), date(2026, 10, 9), FERIADOS_2026)
+    com = projetar(D(800), D(2200), date(2026, 10, 9), FERIADOS_2026, {date(2026, 10, 3)})
+    assert sem is not None
+    assert com is not None
+    assert (sem.du_passados, sem.du_mes) == (7, 21)
+    assert (com.du_passados, com.du_mes) == (8, 22)
+    assert com.ritmo == D(100)
+    assert com.projecao == D(2200)
 
 
 def test_dias_uteis_sem_fim_de_semana_nem_feriado() -> None:

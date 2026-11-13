@@ -135,6 +135,13 @@ PADROES: dict[str, Farol] = {
         maximo=Decimal("2.1"),
         meta=Decimal(0),
     ),
+    # Resultado (painel): margem de segurança, em % da receita líquida (abaixo de 0, prejuízo)
+    "margem_seguranca": Farol(
+        faixa=Faixa(atencao=Decimal(10), critico=Decimal(0)),
+        minimo=Decimal(-20),
+        maximo=Decimal(50),
+        meta=Decimal(20),
+    ),
     # Financeiro: vencido sobre a carteira, em p.p. acima da média de 12 meses (RELATIVO)
     "inadimplencia": Farol(
         faixa=Faixa(atencao=Decimal(0), critico=Decimal(2), maior_melhor=False),
@@ -154,6 +161,13 @@ PADROES: dict[str, Farol] = {
         minimo=Decimal(-16),
         maximo=Decimal(14),
         meta=Decimal(0),
+    ),
+    # Pessoas: desligamentos de 12 meses sobre a média de colaboradores, em %
+    "turnover": Farol(
+        faixa=Faixa(atencao=Decimal(15), critico=Decimal(30), maior_melhor=False),
+        minimo=Decimal(0),
+        maximo=Decimal(60),
+        meta=Decimal(10),
     ),
     # a pagar lançado nos próximos 30 dias, em % da média paga por mês
     "pagar_lancado": Farol(
@@ -199,19 +213,20 @@ def parametros_do_cliente(conn: Conexao, cliente_id: UUID) -> list[Parametro]:
     def ler() -> list[Parametro]:
         if not existe(conn, "cfg.parametro_cliente"):
             return []
-        return [
-            Parametro(r["chave"], r["valor"], r["vigente_de"], r["vigente_ate"])
-            for r in conn.execute(
-                """
-                select chave, valor, vigente_de, vigente_ate
-                  from cfg.parametro_cliente
-                 where cliente_id = %s
-                """,
-                (cliente_id,),
-            )
-        ]
+        return parametros_das_linhas(conn.execute(SQL_PARAMETROS, (cliente_id,)).fetchall())
 
     return memo(("parametros", cliente_id), ler)
+
+
+SQL_PARAMETROS = """
+    select chave, valor, vigente_de, vigente_ate
+      from cfg.parametro_cliente
+     where cliente_id = %s
+"""
+
+
+def parametros_das_linhas(linhas: list[Any]) -> list[Parametro]:
+    return [Parametro(r["chave"], r["valor"], r["vigente_de"], r["vigente_ate"]) for r in linhas]
 
 
 def vigente(parametros: list[Parametro], chave: str, data: date) -> Any | None:

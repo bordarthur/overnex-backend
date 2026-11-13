@@ -37,7 +37,9 @@ O script faz o seguinte:
 4. Adiciona a coluna `_data_snapshot`, com a data da execução (`AAAA-MM-DD`).
 5. Gera um Parquet com compressão zstd e o envia ao Supabase com upsert (`x-upsert: true`).
 
-Se uma tabela falhar (por exemplo, nome errado ou falta de permissão), o script segue com as demais e, no final, termina com erro listando as que falharam.
+Se uma tabela falhar (por exemplo, nome errado ou falta de permissão), o script segue com as demais e, no final, termina com erro listando as que falharam. Com o snapshot em erro, o job `carga` do `diario.yml` não roda (nenhuma tabela é atualizada no dia): rode o workflow de novo à mão.
+
+**Erro 5xx no envio** (ex.: `HTTP 520 supabase.co | 520: Web server is returning an unknown error`, do Cloudflare na frente do Storage): costuma ser passageiro. O envio tenta mais duas vezes, depois de 10 s e de 30 s (`ESPERAS_REENVIO` na seção Supabase do script); queda de conexão e tempo esgotado também. Erro 4xx (chave, bucket, caminho) falha na hora.
 
 ## 2. Pré-requisitos
 
@@ -89,6 +91,12 @@ Variáveis vazias valem o mesmo que não definidas. Por isso, o workflow já rep
 | Lista longa | uma tabela por linha, colada direto no campo Value do GitHub |
 
 O nome da pasta no bucket sai do texto **como você escreveu** em `TABELAS`: tira acentos, passa para minúsculas e troca o que não for letra ou número por `_`. Assim, `dbo.Vendas` vira `dbo_vendas` e `Vendas` vira `vendas`. Escolha um formato e mantenha, para a mesma tabela não acabar em duas pastas.
+
+### Views do Azure (`azure/`)
+
+Algumas fontes são views criadas no Azure SQL, que o snapshot lê como qualquer tabela (`SELECT *`). O SQL delas fica em [azure/](azure/) e é criado à mão no banco (SSMS ou Query editor do portal); depois, a view entra em `TABELAS`.
+
+- [f_lancamentos_agrupados_pj.sql](azure/f_lancamentos_agrupados_pj.sql) — `dbo.f_Lancamentos_Agrupados_PJ`: a DRE da PJ Cortes por conta (Empresa, Data, Id_Descritivo, Valor), a mesma regra do Power BI. Depende de `d_De_Para_PJ_Cortes` e `d_Plano_Contas` no mesmo banco.
 
 ## 4. Como rodar localmente
 

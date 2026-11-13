@@ -7,7 +7,9 @@ grant usage on schema extensions to api_site, carga;
 
 select plan(19);
 
--- preparo padrão aplicado às tabelas das migrations 5 (21, Nilo Maia) e 12 (25, PJ Cortes)
+-- preparo padrão aplicado às tabelas das migrations 5 (21, Nilo Maia), 12 (25, PJ Cortes,
+-- menos a 645 e o borderô, removidos na 24), 18 (lançamentos agrupados da PJ) e 23 (fluxo
+-- de caixa da PJ)
 select is(
     (select count(*)::int
        from pg_class c join pg_namespace n on n.oid = c.relnamespace

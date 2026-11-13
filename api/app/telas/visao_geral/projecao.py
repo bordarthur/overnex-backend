@@ -1,6 +1,6 @@
 """Ritmo e projeção de fechamento do mês, em dias úteis. Função pura.
 
-du_mes        dias úteis do mês
+du_mes        dias úteis do mês (com venda: o sábado ou feriado com venda também conta)
 du_passados   dias úteis do dia 1 até o último dia com venda
 du_restantes  du_mes − du_passados (0 = mês fechado)
 ritmo         faturado / du_passados
@@ -10,6 +10,7 @@ a_realizar    (meta − faturado) / du_restantes, por dia útil (mês fechado: N
 meta_ate_data meta × du_passados / du_mes
 """
 
+from collections.abc import Set as AbstractSet
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
@@ -30,23 +31,32 @@ class Projecao:
     meta_ate_data: Decimal
 
 
-def projetar_faturado(faturado: Decimal, ultimo_dia: date, feriados: set[date]) -> Decimal | None:
+def projetar_faturado(
+    faturado: Decimal,
+    ultimo_dia: date,
+    feriados: set[date],
+    com_venda: AbstractSet[date] = frozenset(),
+) -> Decimal | None:
     """Faturado projetado para o mês inteiro (ritmo × dias úteis); None sem ritmo."""
     inicio = ultimo_dia.replace(day=1)
-    du_mes = dias_uteis(inicio, ultimo_dia_do_mes(inicio), feriados)
-    du_passados = dias_uteis(inicio, ultimo_dia, feriados)
+    du_mes = dias_uteis(inicio, ultimo_dia_do_mes(inicio), feriados, com_venda)
+    du_passados = dias_uteis(inicio, ultimo_dia, feriados, com_venda)
     if du_mes == 0 or du_passados == 0:
         return None
     return faturado / du_passados * du_mes
 
 
 def projetar(
-    faturado: Decimal, meta: Decimal, ultimo_dia: date, feriados: set[date]
+    faturado: Decimal,
+    meta: Decimal,
+    ultimo_dia: date,
+    feriados: set[date],
+    com_venda: AbstractSet[date] = frozenset(),
 ) -> Projecao | None:
     """None se o mês não tem dia útil até a última venda (não há ritmo para projetar)."""
     inicio = ultimo_dia.replace(day=1)
-    du_mes = dias_uteis(inicio, ultimo_dia_do_mes(inicio), feriados)
-    du_passados = dias_uteis(inicio, ultimo_dia, feriados)
+    du_mes = dias_uteis(inicio, ultimo_dia_do_mes(inicio), feriados, com_venda)
+    du_passados = dias_uteis(inicio, ultimo_dia, feriados, com_venda)
     if du_mes == 0 or du_passados == 0:
         return None
     du_restantes = du_mes - du_passados

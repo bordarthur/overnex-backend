@@ -13,6 +13,9 @@ from pathlib import Path
 os.environ.setdefault("DATABASE_URL", "postgresql://export@localhost/export")
 os.environ.setdefault("AMBIENTE", "dev")
 os.environ.setdefault("AUTH_FAKE", "1")
+os.environ.setdefault("SUPABASE_URL", "https://export.supabase.co")
+os.environ.setdefault("SUPABASE_ANON_KEY", "export")
+os.environ.setdefault("FRONT_URL", "https://export")
 
 from app.main import app
 

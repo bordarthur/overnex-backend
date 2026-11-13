@@ -2,18 +2,29 @@
 
 from datetime import date
 from decimal import Decimal
+from types import SimpleNamespace
+from typing import Any
+from uuid import uuid4
 
-from app.farol.parametro import PADROES
+import pytest
+
+from app.farol.parametro import PADROES, Parametro
+from app.telas.plano import Plano
+from app.telas.visao_geral import resultado
 from app.telas.visao_geral.contra_referencia import Mensal, Razao
 from app.telas.visao_geral.relativo import Serie, indicador_relativo
 from app.telas.visao_geral.resultado import (
     DESPESAS_FIXAS_RECEITA,
     MARGEM_EBITDA,
+    Operacao,
     cenario_do_orcamento,
+    com_inadimplencia,
     dre_por_mes,
     grupos_da_operacao,
     kpis_resultado,
     medidas_da_dre,
+    orcado_das_linhas,
+    somar_orcado,
 )
 
 D = Decimal
@@ -110,6 +121,83 @@ def test_despesas_pelo_de_para_com_o_sinal_do_power_bi() -> None:
     assert real[SET]["margem_contribuicao"] == D(385)  # 1040 - 610 - (50 - 5)
     assert real[SET]["ebitda"] == D(285)
     assert real[SET]["folha"] == D(100)  # 20 lançado + 80 do contas a pagar
+
+
+def test_inadimplencia_nas_deducoes_pela_taxa_do_mes() -> None:
+    out = date(2026, 10, 1)
+    op = Operacao(
+        grupos={SET: {"100": D("19072782.05"), "110": D("138044.71")}, out: {"110": D(5)}},
+        folha={SET: D(1)},
+    )
+
+    com = com_inadimplencia(op, lambda mes: D("0.4"))
+
+    # o mesmo da DRE do Power BI da PJ em jan/26: 0,4% da receita bruta
+    assert com.grupos[SET]["110"] - D("138044.71") == D("76291.12820")
+    # deduções de jan/26 no Power BI: 214.335,83
+    assert round(com.grupos[SET]["110"], 2) == D("214335.84")
+    # mês sem receita bruta: nada
+    assert com.grupos[out] == {"110": D(5)}
+    assert com.folha == op.folha
+    # a operação original fica igual
+    assert op.grupos[SET]["110"] == D("138044.71")
+    # sem taxa no mês: nada
+    assert com_inadimplencia(op, lambda mes: None).grupos == op.grupos
+
+
+def test_contas_fora_da_dre_por_parametro(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        resultado,
+        "parametros_do_cliente",
+        lambda conn, c: [
+            Parametro(
+                "dre.contas_fora", {"contas": ["120.03.22", "180.01"]}, date(2026, 1, 1), None
+            )
+        ],
+    )
+    fora = resultado.fora_da_dre(None, None)  # type: ignore[arg-type]
+
+    assert fora(SET, "120.03.22")
+    # um código de nível 2 tira tudo dentro dele
+    assert fora(SET, "180.01.06")
+    assert not fora(SET, "120.03.2")
+    assert not fora(SET, "120.03.01")
+    # antes do vigente_de, nada fica fora
+    assert not fora(date(2025, 12, 1), "120.03.22")
+
+
+def test_grupos_da_operacao_sem_as_contas_fora() -> None:
+    despesas = [
+        (SET, "120.03.22", D(784)),  # Premiações (C)
+        (SET, "120.03.01", D(100)),  # Salários (C)
+    ]
+    op = grupos_da_operacao({}, {}, despesas, fora=lambda mes, conta: conta == "120.03.22")
+    assert op.grupos[SET]["120"] == D(100)
+    assert grupos_da_operacao({}, {}, despesas).grupos[SET]["120"] == D(884)
+
+
+def test_taxa_de_inadimplencia_do_parametro(monkeypatch: pytest.MonkeyPatch) -> None:
+    def parametros(valor: object) -> None:
+        monkeypatch.setattr(
+            resultado,
+            "parametros_do_cliente",
+            lambda conn, c: [Parametro("dre.inadimplencia", valor, date(2020, 1, 1), None)],
+        )
+
+    for valor, esperado in (
+        ({"taxa": 0.4}, D("0.4")),
+        ({"taxa": "0,4"}, None),
+        ({"taxa": "0.4"}, D("0.4")),
+        ({"taxa": 0}, None),
+        ({"taxa": True}, None),
+        ({"outra": 1}, None),
+        (0.4, None),
+    ):
+        parametros(valor)
+        assert resultado.taxa_inadimplencia(None, None, SET) == esperado, valor  # type: ignore[arg-type]
+    # antes do vigente_de: nada
+    parametros({"taxa": 0.4})
+    assert resultado.taxa_inadimplencia(None, None, date(2019, 12, 1)) is None  # type: ignore[arg-type]
 
 
 def test_sem_receita_bruta_nao_ha_dre() -> None:
@@ -211,3 +299,114 @@ def test_kpis_sem_orcado_e_sem_margem_de_contribuicao() -> None:
     # sem margem de contribuição positiva não existe ponto de equilíbrio
     assert [k.rotulo for k in kpis] == ["EBITDA de setembro", "Lucro líquido de setembro"]
     assert kpis[0].contexto == "mês anterior: -R$ 50"
+
+
+# ---------- leitura numa ida: realizado e orçado de `consultas` ----------
+
+AGO = date(2026, 8, 1)
+
+
+def _nada_fora(mes: date, conta: str) -> bool:
+    return False
+
+
+def _orcamento(cenario: str, receita: str, folha: str, mes: date = SET) -> list[dict[str, Any]]:
+    return [
+        {"mes": mes, "conta": "100.01.01", "cenario": cenario, "valor": D(receita)},
+        {"mes": mes, "conta": "140.01.01", "cenario": cenario, "valor": D(folha)},
+    ]
+
+
+def test_orcado_no_cenario_base_no_escolhido_ou_em_tudo_sem_nome() -> None:
+    linhas = [*_orcamento("base", "1000", "-300"), *_orcamento("meta", "1200", "-250")]
+
+    # sem parâmetro: "base"; com ele, o escolhido
+    assert orcado_das_linhas(linhas, None, Plano(), _nada_fora)[SET]["ebitda"] == D(700)
+    assert orcado_das_linhas(linhas, " Meta ", Plano(), _nada_fora)[SET]["ebitda"] == D(950)
+    # orçamento sem cenário: vale tudo
+    sem_nome = orcado_das_linhas(_orcamento("", "1000", "-300"), None, Plano(), _nada_fora)
+    assert sem_nome[SET]["ebitda"] == D(700)
+    assert sem_nome[SET]["folha"] == D(300)
+
+
+def test_orcado_com_varios_cenarios_e_nenhum_escolhido_fica_vazio(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    linhas = [*_orcamento("meta", "1000", "-300"), *_orcamento("otimista", "1200", "-250")]
+
+    assert orcado_das_linhas(linhas, None, Plano(), _nada_fora, uuid4()) == {}
+    assert "sem cenário escolhido" in caplog.text
+
+
+def test_orcado_com_valor_nulo_mantem_o_mes() -> None:
+    linhas = [{"mes": AGO, "conta": "140.02.01", "cenario": "", "valor": None}]
+
+    grupos, folha = somar_orcado(linhas, Plano(), _nada_fora)
+
+    assert grupos == {AGO: {"140": D(0)}}
+    assert folha == {}
+
+
+class _Leituras:
+    """`consultas` e `em_uma_ida` simulados: guarda cada ida e devolve as linhas pedidas."""
+
+    def __init__(self, linhas: dict[str, list[dict[str, Any]]]) -> None:
+        self.linhas = linhas
+        self.idas: list[list[str]] = []
+
+    def consultas(
+        self, conn: Any, ctx: Any, de: date, ate: date, com_agrupados: bool = True
+    ) -> dict[str, Any]:
+        nomes = ["agrupados" if com_agrupados else "lancamentos", "orcamento"]
+        return dict.fromkeys(nomes)
+
+    def em_uma_ida(self, conn: Any, consultas: dict[str, Any]) -> dict[str, list[dict[str, Any]]]:
+        self.idas.append(list(consultas))
+        return {n: self.linhas.get(n, []) for n in consultas}
+
+
+@pytest.fixture
+def leituras(monkeypatch: pytest.MonkeyPatch) -> _Leituras:
+    falso = _Leituras({"orcamento": _orcamento("base", "1000", "-250")})
+    monkeypatch.setattr(resultado, "tabelas_do_cliente", lambda *a: ["f_lancamentos_pj"])
+    monkeypatch.setattr(resultado, "consultas", falso.consultas)
+    monkeypatch.setattr(resultado, "em_uma_ida", falso.em_uma_ida)
+    monkeypatch.setattr(resultado, "ler_plano", lambda conn: Plano())
+    monkeypatch.setattr(resultado, "fora_da_dre", lambda conn, c: _nada_fora)
+    monkeypatch.setattr(resultado, "taxa_inadimplencia", lambda conn, c, mes: None)
+    monkeypatch.setattr(resultado, "cenario_escolhido", lambda conn, ctx, d: None)
+    monkeypatch.setattr(resultado, "farol", lambda conn, c, chave, ref: PADROES[chave])
+    return falso
+
+
+def _secao() -> Any:
+    ctx: Any = SimpleNamespace(sessao=SimpleNamespace(conn=None), cliente_id=uuid4())
+    return resultado.secao_resultado(ctx, SET)
+
+
+def test_secao_le_realizado_e_orcado_numa_ida(leituras: _Leituras) -> None:
+    # agrupados no sinal do resultado: receita positiva, custo negativo
+    leituras.linhas["agrupados"] = [
+        {"mes": SET, "conta": "100.01.01", "valor": D(1000)},
+        {"mes": SET, "conta": "140.01.01", "valor": D(-300)},
+    ]
+
+    s = _secao()
+
+    assert leituras.idas == [["agrupados", "orcamento"]]
+    assert s.secao.kpis[0].valor.valor == D(700)
+    assert s.secao.kpis[0].contexto == "orçado R$ 750"
+
+
+def test_agrupados_sem_valor_le_de_novo_pela_regra_sem_eles(leituras: _Leituras) -> None:
+    leituras.linhas["agrupados"] = [{"mes": SET, "conta": "100.01.01", "valor": D(0)}]
+    # lançamentos no sinal do contas a pagar: entrada negativa, saída positiva
+    leituras.linhas["lancamentos"] = [
+        {"mes": SET, "conta": "100.01.01", "valor": D(-1000)},
+        {"mes": SET, "conta": "140.01.01", "valor": D(300)},
+    ]
+
+    s = _secao()
+
+    assert leituras.idas == [["agrupados", "orcamento"], ["lancamentos", "orcamento"]]
+    assert s.secao.kpis[0].valor.valor == D(700)

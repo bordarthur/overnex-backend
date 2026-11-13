@@ -8,10 +8,14 @@
 --
 -- Mesmo token fake da API local: `Bearer fake:0d000000-0000-4000-8000-0000000001a1`
 -- (AMBIENTE=dev e AUTH_FAKE=1). Se o usuário ainda não existe, ele é criado com esse id.
+--
+-- Depois da migration 15 (id_autenticacao). Para o login com e-mail e senha, troque o id
+-- pelo do Supabase Auth com usuario_dev_supabase_auth.sql.
 
 begin;
 
--- 1. perfil "Desenvolvimento": Visão geral, FIN-01 e todas as tabelas do cliente
+-- 1. perfil "Desenvolvimento": Visão geral, FIN-01, painéis comerciais (COM-01 a 03),
+--    painéis financeiros (FIN-02 e FIN-03) e todas as tabelas do cliente
 insert into cfg.perfil_acesso (cliente_id, nome)
 select c.id, 'Desenvolvimento'
   from cfg.cliente c
@@ -22,7 +26,8 @@ insert into cfg.perfil_tela (perfil_id, codigo_tela, ve_dado_nominal)
 select p.id, t.codigo, true
   from cfg.perfil_acesso p
   join cfg.cliente c on c.id = p.cliente_id and c.slug = 'pj-cortes'
- cross join (values ('VG-01'), ('FIN-01')) t (codigo)
+ cross join (values ('VG-01'), ('FIN-01'), ('COM-01'), ('COM-02'), ('COM-03'), ('FIN-02'), ('FIN-03'))
+       t (codigo)
  where p.nome = 'Desenvolvimento'
 on conflict do nothing;
 
@@ -36,7 +41,7 @@ select p.id, f.tabela_destino, true
 on conflict do nothing;
 
 -- 2. usuário: sai da Nilo Maia (perfis e empresas saem em cascata) e entra na PJ Cortes
-insert into seg.usuario (object_id_entra, email, tipo)
+insert into seg.usuario (id_autenticacao, email, tipo)
 values ('0d000000-0000-4000-8000-0000000001a1', 'diretoria@lannconsult.com.br', 'lann')
 on conflict do nothing;
 

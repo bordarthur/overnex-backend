@@ -1,7 +1,8 @@
 """VG-01 — Visão geral: GET /api/telas/visao-geral.
 
-Os dois períodos (mes e ano) vêm na mesma resposta; o front troca entre eles sem nova
-requisição. Sem `empresa`, a tela soma todas as empresas do vínculo do usuário.
+Os dois períodos (mes e ano) vêm na mesma resposta; cada velocímetro tem a própria chave
+Mês/Acumulado, e o front troca sem nova requisição. Sem `empresa`, a tela soma todas as
+empresas do vínculo do usuário.
 
 `mes` (AAAA-MM, opcional): o mês da tela, um dos que /api/sessao lista. Sem ele, cada seção
 usa o seu mês mais recente (Vendas e Custos, o da última venda; Resultado, o último
@@ -11,35 +12,41 @@ fechado; Financeiro, a posição no snapshot). Com ele (ver Recorte):
 - Resultado: o mês escolhido, se fechado; no mês do snapshot, o último fechado antes dele;
 - Financeiro: a posição dos títulos no último dia do mês (no mês do snapshot, na data dele).
 
-Desempenho: a resposta pronta fica em memória por VISAO_GERAL_CACHE_SEGUNDOS (padrão 15
-min; 0 desliga), com chave no cliente, nas empresas, no mês e na última carga: uma carga
-nova troca a chave. Parâmetros mudados no banco (farol, de-para) valem depois do prazo. O
-acesso continua conferido e registrado a cada requisição. Ao montar, fontes, parâmetros e
-feriados do cliente são lidos uma vez só (app/core/cache.py).
+Desempenho: a resposta pronta fica em memória por VISAO_GERAL_CACHE_SEGUNDOS (padrão 1 h;
+0 desliga), com chave no cliente, nas empresas, no mês, na última carga e na versão do
+cadastro do cliente (parâmetros, como farol e escolhas salvas, feriados, fontes, plano e
+de-para da DRE; app/telas/preleitura.py): uma carga nova ou um cadastro mudado trocam a
+chave na hora. Só uma correção feita à mão no mart, sem carga nova, espera o prazo. A rota
+que grava uma escolha apaga as respostas do cliente (libera a memória). O acesso continua
+conferido e registrado a cada requisição. Duas requisições da mesma chave
+ao mesmo tempo (ex.: a pré-montagem depois de /api/sessao e o clique) montam uma vez só.
+Última carga, cliente, fontes, parâmetros e feriados vêm na mesma ida ao banco da checagem
+de acesso (app/telas/preleitura.py): com a resposta pronta, a tela custa essa ida só. Ao
+montar, as seções independentes rodam em paralelo, cada ramo com uma
+conexão própria do mesmo usuário (_em_paralelo): o tempo da tela é o do ramo mais lento.
 """
 
 import json
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import date
 from functools import cache
-from pathlib import Path
+from pathlib import Path as Caminho
 from typing import Annotated
+from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, Response, status
 from pydantic import TypeAdapter
 
 from app.core.cache import CacheComPrazo, por_requisicao
 from app.core.config import Settings, get_settings
+from app.core.db import confirmar_agora
 from app.seguranca.acesso import ContextoConsolidado, exigir_tela_consolidada
 from app.telas.calendario import ultimo_dia_do_mes
-from app.telas.moldura import (
-    MesComDados,
-    UltimaCarga,
-    cliente,
-    meses_com_dados,
-    rotulo_mes,
-    ultima_carga,
-)
+from app.telas.moldura import MesComDados, ModeloCamel
+from app.telas.paralelo import em_paralelo
+from app.telas.preleitura import Inicio, exigir_tela_com_inicio, preler
+from app.telas.visao_geral import preferencias
 from app.telas.visao_geral.contrato import Periodo, Secao, VisaoGeralPayload
 from app.telas.visao_geral.custos import secao_custos
 from app.telas.visao_geral.financeiro import secao_financeiro
@@ -47,10 +54,15 @@ from app.telas.visao_geral.resultado import secao_resultado
 from app.telas.visao_geral.vendas import SecaoDoMes, mes_menos, secao_vendas
 
 CODIGO_TELA = "VG-01"
-DEMO = Path(__file__).with_name("demo.json")
+DEMO = Caminho(__file__).with_name("demo.json")
 FORMATO_MES = r"^\d{4}-(0[1-9]|1[0-2])$"
 # respostas prontas (VISAO_GERAL_CACHE_SEGUNDOS); a resposta é imutável (modelo frozen)
 _respostas: CacheComPrazo[VisaoGeralPayload] = CacheComPrazo(maximo=256)
+PERIODOS = [Periodo(id="mes", rotulo="Mês"), Periodo(id="ano", rotulo="Acumulado")]
+NOTA = (
+    "Cada cartão tem a própria chave Mês/Acumulado. A comparação é com o orçado ou a meta; "
+    "sem eles, com o mês anterior."
+)
 
 router = APIRouter(prefix="/api/telas", tags=["telas"])
 
@@ -101,21 +113,43 @@ def mes_escolhido(mes: str, disponiveis: list[MesComDados]) -> date:
     return escolhido
 
 
-def _secoes(ctx: ContextoConsolidado, r: Recorte) -> tuple[list[Secao], date | None]:
-    """Seções montadas e o mês de referência mais recente entre elas."""
+type Ramo = Callable[[ContextoConsolidado], list[SecaoDoMes]]
+
+
+def _em_paralelo(ctx: ContextoConsolidado, ramos: Sequence[Ramo]) -> list[list[SecaoDoMes]]:
+    """As seções independentes ao mesmo tempo (app/telas/paralelo.py)."""
+    return em_paralelo(ctx, ramos)
+
+
+def _secoes(ctx: ContextoConsolidado, r: Recorte) -> list[Secao]:
+    """Seções montadas.
+
+    Três ramos independentes, em paralelo: Vendas e Custos (Custos usa a base de Vendas),
+    Resultado e Financeiro.
+    """
     # TODO(regra): Compras e Estoque, e a lista de seções do cliente em cfg.painel. Ver TODO.md.
-    montadas: list[SecaoDoMes] = []
-    vendas = secao_vendas(ctx, r.mes, fechado=r.fechado)
-    if vendas is not None:
+
+    def vendas_e_custos(c: ContextoConsolidado) -> list[SecaoDoMes]:
+        vendas = secao_vendas(c, r.mes, fechado=r.fechado)
+        if vendas is None:
+            return []
         secao, base = vendas
-        montadas.append(secao)
-        custos = secao_custos(ctx, base)
-        if custos is not None:
-            montadas.append(custos)
-    for outra in (secao_resultado(ctx, r.ultimo_fechado), secao_financeiro(ctx, r.posicao)):
-        if outra is not None:
-            montadas.append(outra)
-    return [s.secao for s in montadas], max((s.mes for s in montadas), default=None)
+        custos = secao_custos(c, base)
+        return [secao] if custos is None else [secao, custos]
+
+    def resultado(c: ContextoConsolidado) -> list[SecaoDoMes]:
+        s = secao_resultado(c, r.ultimo_fechado)
+        return [] if s is None else [s]
+
+    def financeiro(c: ContextoConsolidado) -> list[SecaoDoMes]:
+        s = secao_financeiro(c, r.posicao)
+        return [] if s is None else [s]
+
+    return [
+        s.secao
+        for ramo in _em_paralelo(ctx, [vendas_e_custos, resultado, financeiro])
+        for s in ramo
+    ]
 
 
 @router.get(
@@ -128,69 +162,116 @@ def _secoes(ctx: ContextoConsolidado, r: Recorte) -> tuple[list[Secao], date | N
     },
 )
 def visao_geral(
-    ctx: Annotated[ContextoConsolidado, Depends(exigir_tela_consolidada(CODIGO_TELA))],
+    ctx: Annotated[ContextoConsolidado, Depends(exigir_tela_com_inicio(CODIGO_TELA))],
     settings: Annotated[Settings, Depends(get_settings)],
     mes: Annotated[
         str | None,
         Query(pattern=FORMATO_MES, description="Mês da tela (AAAA-MM), um dos de /api/sessao."),
     ] = None,
 ) -> VisaoGeralPayload:
-    carga = ultima_carga(ctx.sessao.conn, ctx.cliente_id)
+    return responder(ctx, settings, mes)
+
+
+def responder(
+    ctx: ContextoConsolidado, settings: Settings, mes: str | None = None
+) -> VisaoGeralPayload:
+    """A resposta da tela: do cache ou montada (também pela pré-montagem, app/telas/preparo.py)."""
     hoje = date.today()
-    # Tudo de que a resposta depende. Os dados só mudam com uma carga nova (sem carga, a
-    # tela usa o dia de hoje); as empresas são as que a tela soma, que o RLS já recorta.
-    chave = (
-        ctx.cliente_id,
-        ctx.empresa_id,
-        ctx.empresas,
-        mes,
-        carga,
-        hoje,
-        settings.visao_geral_demo,
-    )
-    prazo = settings.visao_geral_cache_segundos
-    if prazo > 0 and (pronta := _respostas.obter(chave)) is not None:
-        return pronta
     with por_requisicao():
-        resposta = _montar(ctx, settings, carga, mes, hoje)
-    if prazo > 0:
-        _respostas.guardar(chave, resposta, prazo)
-    return resposta
+        inicio = preler(ctx.sessao, ctx.cliente_id, com_meses=mes is not None)
+        # Tudo de que a resposta depende. Os dados só mudam com uma carga nova (sem carga, a
+        # tela usa o dia de hoje); as empresas são as que a tela soma, que o RLS já recorta.
+        # O cliente vem primeiro: gravar uma escolha apaga as respostas dele (_apagar_cliente).
+        chave = (
+            ctx.cliente_id,
+            ctx.empresa_id,
+            ctx.empresas,
+            mes,
+            inicio.carga,
+            hoje,
+            settings.visao_geral_demo,
+            # da pré-leitura, sem outra ida ao banco; inclui as escolhas salvas
+            inicio.versao,
+        )
+        return _respostas.obter_ou_montar(
+            chave,
+            lambda: _montar(ctx, settings, inicio, mes, hoje),
+            settings.visao_geral_cache_segundos,
+        )
 
 
 def _montar(
     ctx: ContextoConsolidado,
     settings: Settings,
-    carga: UltimaCarga | None,
+    inicio: Inicio,
     mes: str | None,
     hoje: date,
 ) -> VisaoGeralPayload:
-    conn = ctx.sessao.conn
-    escolhido: date | None = None
+    carga = inicio.carga
     if settings.visao_geral_demo:
-        secoes, ref = secoes_demo(), None
+        secoes = secoes_demo()
     else:
-        if mes is not None:
-            escolhido = mes_escolhido(mes, meses_com_dados(conn, ctx.cliente_id, carga))
-        r = recorte(escolhido, carga.data_snapshot if carga else hoje)
-        secoes, ref = _secoes(ctx, r)
-
-    # rótulos do mês escolhido; sem ele, do mês dos números (ex.: mês fechado), ou do
-    # snapshot se não há seção
-    ref = escolhido or ref or (carga.data_snapshot if carga else None)
-    periodos: list[Periodo] = []
-    if ref is not None:
-        periodos = [
-            Periodo(id="mes", rotulo=rotulo_mes(ref)),
-            Periodo(id="ano", rotulo=f"Acumulado de {ref.year}"),
-        ]
+        escolhido = mes_escolhido(mes, inicio.meses or []) if mes is not None else None
+        secoes = _secoes(ctx, recorte(escolhido, carga.data_snapshot if carga else hoje))
 
     return VisaoGeralPayload(
         tela="visao-geral",
         versao_contrato="1.0",
-        cliente=cliente(conn, ctx.cliente_id),
+        cliente=inicio.cliente,
         dados_ate=carga.data_snapshot if carga else None,
         atualizado_em=carga.fim if carga else None,
-        periodos=periodos,
+        periodos=PERIODOS,
+        nota=NOTA,
         secoes=secoes,
     )
+
+
+class EscolhaPreferencia(ModeloCamel):
+    valor: str
+
+
+def apagar_respostas_do_cliente(cliente_id: UUID) -> int:
+    """Apaga as respostas prontas do cliente (todos os meses e empresas)."""
+    return _respostas.apagar_se(lambda chave: isinstance(chave, tuple) and chave[0] == cliente_id)
+
+
+@router.put(
+    "/visao-geral/preferencias/{id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    response_class=Response,
+    responses={
+        401: {"description": "Não autenticado."},
+        403: {"description": "Acesso negado, ou o papel do usuário não pode mudar a escolha."},
+        404: {"description": "Preferência não encontrada."},
+        422: {"description": "Opção inválida."},
+    },
+)
+def gravar_preferencia(
+    ctx: Annotated[ContextoConsolidado, Depends(exigir_tela_consolidada(CODIGO_TELA))],
+    id_: Annotated[str, Path(alias="id", description="Id do seletor (ex.: linhas-custo).")],
+    escolha: EscolhaPreferencia,
+) -> Response:
+    """Grava a escolha de um seletor da Visão geral para o cliente inteiro.
+
+    Confirma antes de responder e apaga as respostas prontas do cliente: o front pede a
+    tela de novo logo depois do 204.
+    """
+    p = preferencias.PREFERENCIAS.get(id_)
+    if p is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Preferência não encontrada."
+        )
+    if ctx.papel not in preferencias.PAPEIS_QUE_MUDAM:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Você não pode mudar esta escolha."
+        )
+    if not p.aceita(escolha.valor):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail="Opção inválida."
+        )
+    preferencias.gravar(
+        ctx.sessao.conn, ctx.cliente_id, ctx.usuario_id, p, escolha.valor, date.today()
+    )
+    confirmar_agora(ctx.sessao)
+    apagar_respostas_do_cliente(ctx.cliente_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

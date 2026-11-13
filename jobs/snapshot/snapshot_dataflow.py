@@ -178,21 +178,52 @@ def para_parquet(tabela):
 
 # ---------------------------------------------------------------- Supabase
 
+# Erro 5xx ou queda de conexão no Storage costuma ser passageiro (ex.: 520 do Cloudflare em
+# 06/11/2026, que derrubou o snapshot inteiro e, com ele, a carga do dia): tenta de novo
+# depois de 10 s e de 30 s. Erro 4xx (chave, bucket, caminho) não melhora com outra tentativa.
+ESPERAS_REENVIO = (10, 30)
+
+
 def enviar_supabase(url_projeto, chave, bucket, caminho, dados):
     destino = f"{url_projeto.rstrip('/')}/storage/v1/object/{bucket}/{quote(caminho)}"
-    resposta = requests.post(
-        destino,
-        headers={
-            "Authorization": f"Bearer {chave}",
-            "apikey": chave,
-            "x-upsert": "true",  # sobrescreve o arquivo do dia se já existir
-            "Content-Type": "application/octet-stream",
-        },
-        data=dados,
-        timeout=600,
-    )
-    if resposta.status_code >= 300:
-        raise RuntimeError(f"Falha ao enviar {caminho}: {resposta.status_code} {resposta.text}")
+    resposta, motivo = None, ""
+    for tentativa in range(len(ESPERAS_REENVIO) + 1):
+        if tentativa:
+            espera = ESPERAS_REENVIO[tentativa - 1]
+            print(f"  nova tentativa de {caminho} em {espera} s ({motivo})", file=sys.stderr)
+            sleep(espera)
+        try:
+            resposta = requests.post(
+                destino,
+                headers={
+                    "Authorization": f"Bearer {chave}",
+                    "apikey": chave,
+                    "x-upsert": "true",  # sobrescreve o arquivo do dia se já existir
+                    "Content-Type": "application/octet-stream",
+                },
+                data=dados,
+                timeout=600,
+            )
+        except (requests.ConnectionError, requests.Timeout) as erro:
+            resposta, motivo = None, type(erro).__name__
+            continue
+        if resposta.status_code < 300:
+            return
+        motivo = f"HTTP {resposta.status_code}"
+        if resposta.status_code < 500:
+            break
+    # a página de erro do Cloudflare tem centenas de linhas de HTML: só o começo
+    raise RuntimeError(f"Falha ao enviar {caminho}: {motivo} {resposta_curta(resposta)}")
+
+
+def resposta_curta(resposta, limite=300):
+    if resposta is None:
+        return ""
+    texto = " ".join(resposta.text.split())
+    titulo = re.search(r"<title>(.*?)</title>", texto, re.IGNORECASE)
+    if titulo:
+        return titulo.group(1)
+    return texto[:limite]
 
 
 # ---------------------------------------------------------------- principal

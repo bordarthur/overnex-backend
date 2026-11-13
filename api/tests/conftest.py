@@ -11,6 +11,11 @@ os.environ.setdefault(
 )
 os.environ["AMBIENTE"] = "dev"
 os.environ["AUTH_FAKE"] = "1"
+# login com e-mail e senha: valores só para o app montar (nenhum teste chama o Supabase)
+os.environ["AUTH_PROVEDOR"] = "supabase"
+os.environ["SUPABASE_URL"] = "https://projeto-teste.supabase.co"
+os.environ["SUPABASE_ANON_KEY"] = "sb_publishable_teste"
+os.environ["FRONT_URL"] = "https://overnex.teste"
 # os testes mudam dados entre uma requisição e outra, sem carga nova
 os.environ["VISAO_GERAL_CACHE_SEGUNDOS"] = "0"
 
@@ -19,6 +24,13 @@ from collections.abc import Iterator
 import psycopg
 import pytest
 from fastapi.testclient import TestClient
+
+from app.core.config import ConfigCadastro, Settings
+
+# Os testes não leem o api/.env de quem roda (que pode ter COOKIE_SEGURO, chaves, o banco de
+# produção…): só o ambiente acima e o de cada teste.
+for _modelo in (Settings, ConfigCadastro):
+    _modelo.model_config["env_file"] = None
 
 # Conexão administrativa (postgres) só para conferir efeitos, como o log de acesso.
 DATABASE_URL_ADMIN = os.environ.get(
@@ -32,9 +44,15 @@ EMPRESA_A1 = "e1000000-0000-4000-8000-0000000000a1"
 EMPRESA_A2 = "e1000000-0000-4000-8000-0000000000a2"
 EMPRESA_B1 = "e1000000-0000-4000-8000-0000000000b1"
 USUARIO_A = "d1000000-0000-4000-8000-00000000000a"
+USUARIO_B = "d1000000-0000-4000-8000-00000000000b"
 OID_A = "0d000000-0000-4000-8000-00000000000a"
 OID_B = "0d000000-0000-4000-8000-00000000000b"
+# Dora, Admin BORD (vê os dois clientes, sem vínculo), e Caio, consultor com vínculo nos dois
+OID_ADMIN = "0d000000-0000-4000-8000-0000000000ad"
+OID_CONSULTOR = "0d000000-0000-4000-8000-0000000000c0"
 OID_DESCONHECIDO = "0d000000-0000-4000-8000-0000000000ff"
+SLUG_A = "padrao-lann-alfa"
+SLUG_B = "padrao-lann-beta"
 
 
 def auth(oid: str) -> dict[str, str]:

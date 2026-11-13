@@ -136,6 +136,25 @@ def test_totais_por_empresa() -> None:
     }
 
 
+def test_papeis_opcionais_aceitos_e_faturado_por_vendedor() -> None:
+    modelo = _modelo("f_vendas_pj", {"vendedor": "en_codven", "linha": "en_ramo"})
+    assert "faturado_vendedor" in {m.nome for m in modelo.medidas}
+    # sem o papel, a medida não existe
+    assert "faturado_vendedor" not in {m.nome for m in VENDAS.medidas}
+
+    dados = _vendas(en_codven=["V1", "V1", "V2", "V2", "V1"])
+    por_vendedor = {
+        (t.mes, t.dimensao): t.valor
+        for t in calcular(dados, modelo, None)
+        if t.medida == "faturado_vendedor"
+    }
+    assert por_vendedor == {
+        (date(2026, 8, 1), "V1"): Decimal("999.00"),
+        (date(2026, 9, 1), "V1"): Decimal("600.10"),
+        (date(2026, 9, 1), "V2"): Decimal("1400.20"),
+    }
+
+
 def test_data_em_formato_desconhecido_falha() -> None:
     dados = _vendas().set_column(
         0, "en_datemicao", pa.array(["set/2026", "x", "y", "z", None], pa.string())

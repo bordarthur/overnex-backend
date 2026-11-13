@@ -1,7 +1,8 @@
 -- PJ Cortes — de-para da conta do Winthor para o plano gerencial da DRE (produção).
 --
 -- NÃO é migration: rode no SQL Editor DEPOIS da migration 14 (cfg.conta_dre). Pode rodar
--- mais de uma vez: troca todas as contas da PJ Cortes.
+-- mais de uma vez: troca todas as contas da PJ Cortes. Isso apaga os grupos de pagamento
+-- (migration 20): depois, rode pj_cortes_grupos_pagamento.sql.
 --
 -- Gerado de dois arquivos do Power BI da PJ: Codigo_Sistema_x_Id_Descritivo (conta do
 -- Winthor → Id_Descritivo antigo, 310.xx…) e Plano_de_Conta (antigo → novo, coluna

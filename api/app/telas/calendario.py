@@ -1,9 +1,12 @@
-"""Calendário de dias úteis: segunda a sexta, fora dos feriados.
+"""Calendário de dias úteis: segunda a sexta, fora dos feriados. Nas contas de venda
+(ritmo, projeção, meta por dia), também o dia que teve venda, menos o domingo: o sábado ou
+o feriado em que a empresa vendeu conta como dia útil (`com_venda`).
 
 Feriados nacionais: biblioteca `holidays` (BR). Feriados do cliente (estaduais,
 municipais, ponto facultativo): cfg.feriado (migration 9).
 """
 
+from collections.abc import Set as AbstractSet
 from datetime import date, timedelta
 from uuid import UUID
 
@@ -33,24 +36,38 @@ def _feriados_do_cliente(conn: Conexao, cliente_id: UUID) -> set[date]:
     """Todos os feriados do cliente (cfg.feriado é pequena); vazio sem a migration 9."""
     if not existe(conn, "cfg.feriado"):
         return set()
-    return {
-        r["data"]
-        for r in conn.execute("select data from cfg.feriado where cliente_id = %s", (cliente_id,))
-    }
+    return {r["data"] for r in conn.execute(SQL_FERIADOS, (cliente_id,))}
 
 
-def dias_uteis(inicio: date, fim: date, feriados: set[date]) -> int:
-    """Dias úteis de `inicio` a `fim`, inclusive."""
+SQL_FERIADOS = "select data from cfg.feriado where cliente_id = %s"
+
+
+def util(
+    dia: date, feriados: AbstractSet[date], com_venda: AbstractSet[date] = frozenset()
+) -> bool:
+    """Segunda a sexta fora dos feriados, ou dia com venda que não é domingo."""
+    if dia.weekday() < 5 and dia not in feriados:
+        return True
+    return dia.weekday() != 6 and dia in com_venda
+
+
+def dias_uteis(
+    inicio: date,
+    fim: date,
+    feriados: AbstractSet[date],
+    com_venda: AbstractSet[date] = frozenset(),
+) -> int:
+    """Dias úteis de `inicio` a `fim`, inclusive (com `com_venda`, ver `util`)."""
     total = 0
     dia = inicio
     while dia <= fim:
-        if dia.weekday() < 5 and dia not in feriados:
+        if util(dia, feriados, com_venda):
             total += 1
         dia += timedelta(days=1)
     return total
 
 
-def mais_dias_uteis(dia: date, n: int, feriados: set[date]) -> date:
+def mais_dias_uteis(dia: date, n: int, feriados: AbstractSet[date]) -> date:
     """O n-ésimo dia útil depois de `dia` (D+n), sem contar o próprio `dia`."""
     while n > 0:
         dia += timedelta(days=1)

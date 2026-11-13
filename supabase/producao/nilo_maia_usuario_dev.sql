@@ -3,10 +3,13 @@
 -- NÃO é migration: rode uma vez no SQL Editor do Supabase. Não muda dado de cliente: só
 -- cria um perfil, um usuário e os vínculos dele com a Nilo Maia.
 --
--- O object_id_entra abaixo é provisório: serve para o token fake da API LOCAL
+-- Histórico: a Nilo Maia saiu do mart em 21/10/2026 (o usuário passou para a PJ Cortes em
+-- pj_cortes_usuario_dev.sql). Ajustado para a migration 15 (id_autenticacao).
+--
+-- O id_autenticacao abaixo é provisório: serve para o token fake da API LOCAL
 -- (`Bearer fake:0d000000-0000-4000-8000-0000000001a1`, com AMBIENTE=dev e AUTH_FAKE=1).
--- Quando o login com o Entra entrar, troque pelo object id real do usuário:
---   update seg.usuario set object_id_entra = '<oid do Entra>' where lower(email) = 'diretoria@lannconsult.com.br';
+-- Para o login com e-mail e senha, troque pelo id do Supabase Auth com
+-- usuario_dev_supabase_auth.sql.
 
 begin;
 
@@ -35,7 +38,7 @@ select p.id, f.tabela_destino, true
 on conflict do nothing;
 
 -- 2. usuário e vínculos (todas as empresas da Nilo Maia)
-insert into seg.usuario (object_id_entra, email, tipo)
+insert into seg.usuario (id_autenticacao, email, tipo)
 values ('0d000000-0000-4000-8000-0000000001a1', 'diretoria@lannconsult.com.br', 'lann')
 on conflict do nothing;
 

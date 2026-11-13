@@ -135,6 +135,8 @@ class MesDeVendas:
     pedidos: int
     # pares cliente × produto distintos
     clientes_produtos: int
+    # dias com venda (menos domingo): contam como dia útil; vazio no mês do resumo mensal
+    dias_venda: frozenset[date] = frozenset()
 
 
 @dataclass(frozen=True)
@@ -203,30 +205,30 @@ def _fontes_do_cliente(conn: Conexao, cliente_id: UUID) -> list[dict[str, Any]]:
     por requisição, para todas as seções."""
 
     def ler() -> list[dict[str, Any]]:
-        # to_jsonb(f): sem a migration 11 a coluna não existe e vale o padrão
-        return conn.execute(
-            """
-            select f.tabela_destino,
-                   coalesce(to_jsonb(f) -> 'colunas_modelo', '{}'::jsonb) as colunas_modelo,
-                   array(select c.column_name::text
-                           from information_schema.columns c
-                          where c.table_schema = 'mart'
-                            and c.table_name = f.tabela_destino
-                            and c.data_type = 'date') as datas,
-                   array(select c.column_name::text
-                           from information_schema.columns c
-                          where c.table_schema = 'mart'
-                            and c.table_name = f.tabela_destino) as existentes
-              from cfg.fonte_carga f
-             where f.cliente_id = %s
-               and f.tipo = 'tabela'
-               and to_regclass('mart.' || quote_ident(f.tabela_destino)) is not null
-             order by f.tabela_destino
-            """,
-            (cliente_id,),
-        ).fetchall()
+        return conn.execute(SQL_FONTES, (cliente_id,)).fetchall()
 
     return memo(("fontes", cliente_id), ler)
+
+
+# to_jsonb(f): sem a migration 11 a coluna não existe e vale o padrão
+SQL_FONTES = """
+    select f.tabela_destino,
+           coalesce(to_jsonb(f) -> 'colunas_modelo', '{}'::jsonb) as colunas_modelo,
+           array(select c.column_name::text
+                   from information_schema.columns c
+                  where c.table_schema = 'mart'
+                    and c.table_name = f.tabela_destino
+                    and c.data_type = 'date') as datas,
+           array(select c.column_name::text
+                   from information_schema.columns c
+                  where c.table_schema = 'mart'
+                    and c.table_name = f.tabela_destino) as existentes
+      from cfg.fonte_carga f
+     where f.cliente_id = %s
+       and f.tipo = 'tabela'
+       and to_regclass('mart.' || quote_ident(f.tabela_destino)) is not null
+     order by f.tabela_destino
+"""
 
 
 def de_todas(
@@ -293,7 +295,9 @@ def _vendas_do_mes(
                    coalesce(sum(v.custo), 0) as custo,
                    count(distinct v.cliente) as clientes,
                    count(distinct v.pedido) as pedidos,
-                   count(distinct (v.cliente, v.produto)) as clientes_produtos
+                   count(distinct (v.cliente, v.produto)) as clientes_produtos,
+                   array_agg(distinct v.dia) filter (where extract(isodow from v.dia) <> 7)
+                       as dias_venda
               from v
               join ref on v.dia >= ref.mes and v.dia < ref.mes + interval '1 month'
              group by ref.mes
@@ -311,6 +315,7 @@ def _vendas_do_mes(
         clientes=linha["clientes"],
         clientes_produtos=linha["clientes_produtos"],
         pedidos=linha["pedidos"],
+        dias_venda=frozenset(linha["dias_venda"] or ()),
     )
 
 
@@ -355,6 +360,30 @@ def _metas(conn: Conexao, ctx: ContextoConsolidado, de: date, ate: date) -> dict
     }
 
 
+type Consulta = tuple[sql.Composed, dict[str, Any]]
+
+
+def consulta_resumo_mensal(
+    ctx: ContextoConsolidado, tabelas: list[TabelaDoCliente], de: date, ate: date
+) -> Consulta:
+    """Totais por mês e medida de mart.resumo_mensal (linhas: mes, medida, valor)."""
+    return sql.SQL(
+        """
+        select mes, medida, sum(valor) as valor
+          from mart.resumo_mensal
+         where cliente_id = %(cliente)s and tabela = any(%(tabelas)s) and {filtro}
+           and mes between %(de)s and %(ate)s
+         group by mes, medida
+        """
+    ).format(filtro=filtro_empresa(ctx, "empresa_id")), {
+        "cliente": ctx.cliente_id,
+        "empresas": list(ctx.empresas),
+        "tabelas": [t.tabela for t in tabelas],
+        "de": de,
+        "ate": ate,
+    }
+
+
 def resumo_mensal(
     conn: Conexao, ctx: ContextoConsolidado, tabelas: list[TabelaDoCliente], de: date, ate: date
 ) -> Mensal:
@@ -362,24 +391,7 @@ def resumo_mensal(
     if not existe(conn, "mart.resumo_mensal"):
         return {}
     mensal: Mensal = {}
-    for r in conn.execute(
-        sql.SQL(
-            """
-            select mes, medida, sum(valor) as valor
-              from mart.resumo_mensal
-             where cliente_id = %(cliente)s and tabela = any(%(tabelas)s) and {filtro}
-               and mes between %(de)s and %(ate)s
-             group by mes, medida
-            """
-        ).format(filtro=filtro_empresa(ctx, "empresa_id")),
-        {
-            "cliente": ctx.cliente_id,
-            "empresas": list(ctx.empresas),
-            "tabelas": [t.tabela for t in tabelas],
-            "de": de,
-            "ate": ate,
-        },
-    ):
+    for r in conn.execute(*consulta_resumo_mensal(ctx, tabelas, de, ate)):
         mensal.setdefault(r["mes"], {})[r["medida"]] = r["valor"]
     return mensal
 
@@ -524,7 +536,7 @@ def secao_vendas(
     feriados_mes = feriados(conn, ctx.cliente_id, v.mes, ultimo_dia_do_mes(v.mes))
     # mês fechado: sem projeção nem "A realizar"; o faturado é o do mês inteiro
     proj = (
-        projetar(v.faturado, meta, v.ultimo_dia, feriados_mes)
+        projetar(v.faturado, meta, v.ultimo_dia, feriados_mes, v.dias_venda)
         if meta is not None and not fechado
         else None
     )

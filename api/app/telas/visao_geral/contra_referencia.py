@@ -38,6 +38,13 @@ def rotulo_eixo(mes: date) -> str:
     return f"{MESES_CURTOS[mes.month - 1]}-{mes.year % 100:02d}"
 
 
+def rotulos_meses(meses: Sequence[date]) -> list[str]:
+    """Rótulos de uma série (ou de colunas) de meses: com o ano ("out-25" … "set-26") quando
+    ela cruza anos; num ano só, só o mês ("mai" … "out"). A decisão é sobre a série inteira."""
+    com_ano = len({m.year for m in meses}) > 1
+    return [rotulo_eixo(m) if com_ano else MESES_CURTOS[m.month - 1] for m in meses]
+
+
 MESES_TENDENCIA = 6
 
 
