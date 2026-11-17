@@ -2732,6 +2732,50 @@
             "description": "Regra da Gestão quebrada; o texto vem pronto em `detail`."
           }
         }
+      },
+      "delete": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Apagar Usuario",
+        "description": "Apaga a pessoa, que precisa estar desativada. O e-mail fica livre para um convite\nnovo; o login dela no Supabase é apagado pelo job de convites.",
+        "operationId": "apagar_usuario_api_admin_usuarios__id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "`id` da pessoa.",
+              "title": "Id"
+            },
+            "description": "`id` da pessoa."
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Não autenticado."
+          },
+          "403": {
+            "description": "Acesso negado (só o Admin BORD)."
+          },
+          "404": {
+            "description": "\"Empresa não encontrada.\" ou item da rota não encontrado."
+          },
+          "422": {
+            "description": "Regra da Gestão quebrada; o texto vem pronto em `detail`."
+          }
+        }
       }
     },
     "/api/admin/usuarios/{id}/sessao": {
@@ -12916,6 +12960,11 @@
             "type": "boolean",
             "title": "Podedesativar"
           },
+          "podeApagar": {
+            "type": "boolean",
+            "title": "Podeapagar",
+            "default": false
+          },
           "convite": {
             "anyOf": [
               {
@@ -13364,6 +13413,11 @@
           "podeDesativar": {
             "type": "boolean",
             "title": "Podedesativar"
+          },
+          "podeApagar": {
+            "type": "boolean",
+            "title": "Podeapagar",
+            "default": false
           },
           "convite": {
             "anyOf": [

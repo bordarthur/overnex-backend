@@ -51,6 +51,14 @@ def _parece_jwt(chave: str) -> bool:
     return chave.startswith("eyJ")
 
 
+def _corpo(resposta: httpx.Response) -> dict[str, Any]:
+    try:
+        corpo = resposta.json() if resposta.content else {}
+    except ValueError:
+        return {}
+    return corpo if isinstance(corpo, dict) else {}
+
+
 def _sessao(dados: dict[str, Any]) -> SessaoGoTrue:
     try:
         if dados.get("expires_at"):
@@ -112,14 +120,20 @@ class GoTrue:
             raise GoTrueIndisponivel(str(type(exc).__name__)) from exc
 
         if resposta.status_code >= 500:
-            logger.error("GoTrue respondeu %s em %s %s", resposta.status_code, metodo, caminho)
+            # error_code, msg e error_id do GoTrue não levam senha nem token; o error_id
+            # acha o pedido nos logs do Auth no painel do Supabase
+            detalhe = _corpo(resposta)
+            logger.error(
+                "GoTrue respondeu %s em %s %s: %s %r (error_id %s)",
+                resposta.status_code,
+                metodo,
+                caminho,
+                detalhe.get("error_code"),
+                str(detalhe.get("msg") or "")[:200],
+                detalhe.get("error_id"),
+            )
             raise GoTrueIndisponivel(f"GoTrue {resposta.status_code}")
-        try:
-            corpo = resposta.json() if resposta.content else {}
-        except ValueError:
-            corpo = {}
-        if not isinstance(corpo, dict):
-            corpo = {}
+        corpo = _corpo(resposta)
         if resposta.status_code >= 400:
             # formato novo: {"code", "error_code", "msg"}; antigo: {"error", "error_description"}
             codigo = corpo.get("error_code") or corpo.get("error")

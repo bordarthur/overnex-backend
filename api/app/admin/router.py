@@ -14,6 +14,7 @@
 - PUT  /api/admin/usuarios/{id}                nome, perfil, empresas e sessão
 - PUT  /api/admin/usuarios/{id}/sessao         só o tempo de sessão
 - PUT  /api/admin/usuarios/{id}/acesso         desativa ou reativa
+- DELETE /api/admin/usuarios/{id}              apaga quem já está desativado
 
 Quem não é admin recebe o 403 genérico (negado na etapa 3, com log `admin:<rota>`). Slug
 que não existe: 404. Regra quebrada: 422 com o texto pronto em `detail`. As gravações
@@ -416,3 +417,27 @@ def mudar_acesso(
     except (NaoEncontrado, RegraInvalida) as exc:
         raise _erro(exc) from exc
     return _gravado(ctx)
+
+
+@router.delete(
+    "/usuarios/{id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    response_class=Response,
+    responses=RESPOSTAS_GRAVAR,
+)
+def apagar_usuario(
+    ctx: Annotated[ContextoAdmin, Depends(exigir_admin("usuario-apagar"))],
+    settings: Config,
+    id_: UsuarioUrl,
+    tarefas: BackgroundTasks,
+) -> Response:
+    """Apaga a pessoa, que precisa estar desativada. O e-mail fica livre para um convite
+    novo; o login dela no Supabase é apagado pelo job de convites."""
+    try:
+        usuarios.apagar(ctx.sessao.conn, ctx.usuario_id, id_)
+    except (NaoEncontrado, RegraInvalida) as exc:
+        raise _erro(exc) from exc
+    resposta = _gravado(ctx)
+    # o job apaga o login no Supabase Auth (ele tem a chave secreta)
+    tarefas.add_task(convites.acionar_envio, settings)
+    return resposta

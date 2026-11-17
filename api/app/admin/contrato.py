@@ -119,6 +119,8 @@ class Usuario(ModeloCamel):
     acessos: Acessos
     # false = não oferecer "Desativar acesso" (já desativado, ou o último Admin BORD ativo)
     pode_desativar: bool
+    # true = oferecer "Apagar" (DELETE /api/admin/usuarios/{id}): só quem já está desativado
+    pode_apagar: bool = False
     # botão que manda o convite de novo (POST /api/admin/usuarios/{id}/convite); null = não
     # oferecer (já entrou, está desativado ou o convite já está na fila)
     convite: AcaoConvite | None = None

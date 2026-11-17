@@ -47,6 +47,7 @@ from app.telas.moldura import MesComDados, ModeloCamel
 from app.telas.paralelo import em_paralelo
 from app.telas.preleitura import Inicio, exigir_tela_com_inicio, preler
 from app.telas.visao_geral import preferencias
+from app.telas.visao_geral.cheios import secoes_cheias
 from app.telas.visao_geral.contrato import Periodo, Secao, VisaoGeralPayload
 from app.telas.visao_geral.custos import secao_custos
 from app.telas.visao_geral.financeiro import secao_financeiro
@@ -222,7 +223,8 @@ def _montar(
         atualizado_em=carga.fim if carga else None,
         periodos=PERIODOS,
         nota=NOTA,
-        secoes=secoes,
+        # KPIs e números grandes em reais sem abreviar (app/telas/visao_geral/cheios.py)
+        secoes=secoes_cheias(secoes),
     )
 
 

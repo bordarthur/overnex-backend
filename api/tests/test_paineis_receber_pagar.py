@@ -300,8 +300,9 @@ def test_tela_completa(leituras: dict[str, Any]) -> None:
         "A pagar em 30 dias",
         "Inadimplência",
     ]
+    assert c.kpis[0].contexto == "títulos emitidos, vencimento de 13/10 a 12/11"
     pagar = c.kpis[1]
-    assert pagar.contexto == "só o que está lançado: 50% da média paga"
+    assert pagar.contexto == "de 13/10 a 12/11, só o que está lançado: 50% da média paga"
     assert pagar.status == "atencao"
     inad = c.kpis[2]
     # 528 de 7.130 em aberto
@@ -330,7 +331,12 @@ def test_janelas_com_o_alerta_de_dado_incompleto(leituras: dict[str, Any]) -> No
     assert isinstance(janelas, CartaoJanelas)
     trinta = janelas.janelas[2]
 
-    assert trinta.titulo == "Próximos 30 dias"
+    # as datas da janela no título: de hoje até hoje + N dias
+    assert [j.titulo for j in janelas.janelas] == [
+        "Próximos 7 dias (13/10 a 20/10)",
+        "Próximos 15 dias (13/10 a 28/10)",
+        "Próximos 30 dias (13/10 a 12/11)",
+    ]
     assert [(x.rotulo, x.valor.valor, x.tipo) for x in trinta.linhas] == [
         ("A receber", 5200, None),
         ("A pagar", -3000, None),
@@ -371,6 +377,47 @@ def test_dois_lados(leituras: dict[str, Any]) -> None:
     assert pagar.maiores[0].nome == "Frigorífico Boi Bom"
     # a pagar sem vencido: a faixa vazia fica sem status
     assert pagar.idade[2].status is None
+
+
+def test_em_compensacao_ganha_faixa_e_quadro_no_a_receber(leituras: dict[str, Any]) -> None:
+    # 400 do a receber e 300 do a pagar venceram há menos de 2 dias úteis (D+2)
+    leituras["receber"][0]["v"] = _carteira(
+        a_vencer=6202, compensando=400, ate_30=320, ate_60=98, ate_90=52, mais_90=58
+    )
+    leituras["pagar"][0]["v"] = _carteira(a_vencer=4574, compensando=300, ate_30=40, prox_30=3000)
+    cartao = _cartao(_montar(), "contas-receber-pagar")
+    receber, pagar = cartao.lados
+
+    # no a receber, sai do a vencer e tem quadro (não é só da barra)
+    assert [(i.rotulo, i.valor.valor, i.status, i.so_na_barra) for i in receber.idade[:3]] == [
+        ("A vencer", 6202, "saudavel", True),
+        ("Em compensação", 400, "saudavel", None),
+        ("1 a 30 dias", 320, "atencao", None),
+    ]
+    assert sum(i.participacao for i in receber.idade) == pytest.approx(D(100), abs=D("0.3"))
+    # o total da carteira não muda
+    assert receber.total == "em aberto: R$ 7 mil"
+    # no a pagar, continua dentro do a vencer
+    assert [(i.rotulo, i.valor.valor) for i in pagar.idade[:2]] == [
+        ("A vencer", 4874),
+        ("1 a 30 dias", 40),
+    ]
+
+
+def test_quem_cobrar_mostra_ate_20_clientes(leituras: dict[str, Any]) -> None:
+    assert rp.QUEM_COBRAR == 20
+    muitos = [
+        _pessoa(str(100 + n), f"Cliente {n}", vencido=D(1000 - n), atraso=10, ordem_cobrar=n)
+        for n in range(1, 26)
+    ]
+    antes = list(CLIENTES)
+    CLIENTES[:] = muitos
+    try:
+        tabela = _cartao(_montar(), "quem-cobrar")
+    finally:
+        CLIENTES[:] = antes
+    assert len(tabela.linhas) == 20
+    assert tabela.linhas[-1].celulas[0].valor == "Cliente 20"
 
 
 def test_quem_cobrar(leituras: dict[str, Any]) -> None:
@@ -444,7 +491,7 @@ def test_filtro_de_vendedor_tira_o_a_pagar_das_janelas(leituras: dict[str, Any])
 
     assert [x.rotulo for x in janelas.janelas[0].linhas] == ["A receber"]
     assert janelas.alerta is None
-    assert c.kpis[0].contexto == "títulos do vendedor"
+    assert c.kpis[0].contexto == "títulos do vendedor, vencimento de 13/10 a 12/11"
     assert _cartao(c, "contas-receber-pagar").lados[0].titulo == "Contas a receber do vendedor"
 
 

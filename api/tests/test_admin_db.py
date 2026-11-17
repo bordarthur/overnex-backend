@@ -631,3 +631,94 @@ def test_empresa_nova_pela_gestao_do_cadastro_ao_primeiro_cnpj(
     )
     depois = _sessao(client, ID_AUTH_NOVO).json()
     assert [e["nome"] for e in depois["empresas"]] == ["Nova Gama Matriz"]
+
+
+# ---------- apagar pessoa (migration 32) ----------
+
+
+@pytest.mark.usefixtures("sem_carla")
+def test_apagar_pessoa_desativada_libera_o_email_e_enfileira_o_login(
+    client: TestClient, admin_conn: psycopg.Connection[tuple[object, ...]]
+) -> None:
+    cabecalho = auth(OID_ADMIN)
+    novo = {
+        "email": EMAIL_NOVO,
+        "nome": "Carla Alfa",
+        "perfil": "cliente_usuario",
+        "clientes": [SLUG_A],
+    }
+    usuario_id = client.post("/api/admin/usuarios", json=novo, headers=cabecalho).json()["id"]
+    admin_conn.execute(
+        "select seg.concluir_convite(%s, %s, null)",
+        (_convite_na_fila(admin_conn, usuario_id), ID_AUTH_NOVO),
+    )
+    rota = f"/api/admin/usuarios/{usuario_id}"
+
+    # ativa: não se apaga, e a lista não oferece
+    assert _carla(client)["podeApagar"] is False
+    ativa = client.delete(rota, headers=cabecalho)
+    assert (ativa.status_code, ativa.json()) == (
+        422,
+        {"detail": "Desative o acesso antes de apagar."},
+    )
+
+    assert client.put(f"{rota}/acesso", json={"ativo": False}, headers=cabecalho).status_code == 204
+    assert _carla(client)["podeApagar"] is True
+    # só o admin apaga
+    assert client.delete(rota, headers=auth(OID_A)).status_code == 403
+
+    assert client.delete(rota, headers=cabecalho).status_code == 204
+
+    pessoas = client.get("/api/admin/usuarios", headers=cabecalho).json()["usuarios"]
+    assert EMAIL_NOVO not in {p["email"] for p in pessoas}
+    assert admin_conn.execute(
+        "select count(*) from seg.usuario_cliente where usuario_id = %s", (usuario_id,)
+    ).fetchone() == (0,)
+    # o login vai para a fila do job, e o registro do que foi apagado fica no log
+    assert admin_conn.execute(
+        "select count(*) from seg.login_a_apagar where id_autenticacao = %s", (ID_AUTH_NOVO,)
+    ).fetchone() == (1,)
+    assert admin_conn.execute(
+        "select antes ->> 'email' from seg.log_alteracao"
+        " where tabela = 'seg.usuario' and registro_id = %s and operacao = 'delete'",
+        (usuario_id,),
+    ).fetchone() == (EMAIL_NOVO,)
+    assert client.delete(rota, headers=cabecalho).status_code == 404
+    # com o login antigo ninguém entra mais
+    assert _sessao(client, ID_AUTH_NOVO).status_code == 403
+
+    # o e-mail ficou livre para um convite novo
+    assert client.post("/api/admin/usuarios", json=novo, headers=cabecalho).status_code == 202
+
+    admin_conn.execute("delete from seg.login_a_apagar")
+    admin_conn.execute(
+        "delete from seg.log_alteracao where tabela = 'seg.usuario' and registro_id = %s",
+        (usuario_id,),
+    )
+
+
+def test_admin_nao_apaga_a_si_mesmo(client: TestClient) -> None:
+    pessoas = client.get("/api/admin/usuarios", headers=auth(OID_ADMIN)).json()["usuarios"]
+    dora = next(u["id"] for u in pessoas if u["email"] == "dora@bordgestao.com.br")
+    r = client.delete(f"/api/admin/usuarios/{dora}", headers=auth(OID_ADMIN))
+    assert r.status_code == 422
+
+
+@pytest.mark.usefixtures("bruno_de_volta")
+def test_quem_tem_registro_que_depende_dele_nao_se_apaga(client: TestClient) -> None:
+    # o Bruno é autor de uma regra de lançamento do seed
+    cabecalho = auth(OID_ADMIN)
+    rota = f"/api/admin/usuarios/{USUARIO_B}"
+    assert client.put(f"{rota}/acesso", json={"ativo": False}, headers=cabecalho).status_code == 204
+
+    r = client.delete(rota, headers=cabecalho)
+
+    assert (r.status_code, r.json()) == (
+        422,
+        {
+            "detail": "Esta pessoa tem registros que dependem dela e não pode ser apagada. "
+            "Ela continua desativada."
+        },
+    )
+    pessoas = client.get("/api/admin/usuarios", headers=cabecalho).json()["usuarios"]
+    assert "bruno@beta.example" in {p["email"] for p in pessoas}
