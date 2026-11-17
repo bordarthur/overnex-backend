@@ -23,6 +23,8 @@ from datetime import datetime, timedelta
 from typing import Any
 from uuid import UUID
 
+from psycopg import errors
+
 from app.admin import textos
 from app.admin.contrato import (
     AcaoConvite,
@@ -51,6 +53,10 @@ MSG_ADMIN_EMAIL = "Admin BORD só com e-mail da BORD."
 MSG_ULTIMO_ADMIN = "O Overnex precisa de pelo menos um Admin BORD ativo."
 MSG_PROPRIO = "Você não pode tirar o próprio acesso de Admin BORD. Peça a outro Admin BORD."
 MSG_CLIENTE = "Empresa não encontrada: {}."
+MSG_APAGAR_ATIVO = "Desative o acesso antes de apagar."
+MSG_APAGAR_EM_USO = (
+    "Esta pessoa tem registros que dependem dela e não pode ser apagada. Ela continua desativada."
+)
 # situações do filtro "Convites pendentes"
 SITUACOES_PENDENTES = ("fila", "nao-enviado", "convite", "vencido")
 NOTA_CONVITE = (
@@ -237,6 +243,7 @@ def usuario(
             ultimo=textos.quando(p.ultimo_acesso, agora) if p.ultimo_acesso else None,
         ),
         pode_desativar=p.ativo and not (p.admin and admins_ativos < 2),
+        pode_apagar=not p.ativo,
         convite=acao_convite(p),
     )
 
@@ -308,6 +315,7 @@ SQL_ACESSO = """
      where id = %(id)s
 """
 SQL_ENCERRAR = "select seg.encerrar_sessoes(%(id)s)"
+SQL_APAGAR = "select seg.apagar_usuario(%(id)s::uuid)"
 SQL_LOG = """
     insert into seg.log_alteracao (usuario_id, tabela, registro_id, operacao, antes, depois)
     values (%(autor)s, %(tabela)s, %(registro)s, %(operacao)s, %(antes)s::jsonb, %(depois)s::jsonb)
@@ -454,4 +462,35 @@ def mudar_acesso(conn: Conexao, autor: UUID, usuario_id: UUID, ativo: bool) -> N
         "update",
         {"ativo": atual["ativo"]},
         {"ativo": ativo},
+    )
+
+
+def apagar(conn: Conexao, autor: UUID, usuario_id: UUID) -> None:
+    """Apaga quem já está desativado: o cadastro, os vínculos e os pedidos de convite. O
+    login do Supabase Auth vai para a fila do job de convites (seg.login_a_apagar, migration
+    32), e o e-mail fica livre para um convite novo. Os logs ficam. Não confirma a
+    transação."""
+    atual = _atual(conn, usuario_id)
+    if usuario_id == autor:
+        raise RegraInvalida(MSG_PROPRIO)
+    if atual["ativo"]:
+        raise RegraInvalida(MSG_APAGAR_ATIVO)
+    try:
+        conn.execute(SQL_APAGAR, {"id": usuario_id})
+    except errors.ForeignKeyViolation as exc:
+        # ex.: regra de lançamento que a pessoa alterou
+        raise RegraInvalida(MSG_APAGAR_EM_USO) from exc
+    registrar(
+        conn,
+        autor,
+        "seg.usuario",
+        str(usuario_id),
+        "delete",
+        {
+            "email": atual["email"],
+            "nome": atual["nome"],
+            "perfil": atual["perfil"],
+            "clientes": atual["clientes"],
+        },
+        None,
     )

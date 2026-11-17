@@ -662,3 +662,41 @@ def test_matriz_nao_muda_o_admin_nem_perfil_ou_painel_desconhecido() -> None:
     with pytest.raises(NaoEncontrado, match="Painel não encontrado"):
         clientes.mudar_matriz(conn, ADMIN, CLIENTE_A, "consultor", "FIN-01", True)  # type: ignore[arg-type]
     assert conn.gravacoes == []
+
+
+# ---------- apagar pessoa ----------
+
+
+def test_apagar_so_quem_esta_desativado() -> None:
+    conn = ConexaoFalsa(_atual(ativo=False))
+
+    usuarios.apagar(conn, ADMIN, BRUNO)  # type: ignore[arg-type]
+
+    (apagou, log) = conn.gravacoes
+    assert apagou == (usuarios.SQL_APAGAR, {"id": BRUNO})
+    assert (log[1]["operacao"], log[1]["registro"], log[1]["depois"]) == (
+        "delete",
+        str(BRUNO),
+        None,
+    )
+    # o log guarda quem era
+    assert '"email": "bruno@beta.example"' in log[1]["antes"]
+    assert usuarios.usuario(_pessoa(ativo=False), AGORA, 24, 5, 2).pode_apagar is True
+    assert usuarios.usuario(_pessoa(), AGORA, 24, 5, 2).pode_apagar is False
+
+
+@pytest.mark.parametrize(
+    ("atual", "autor", "erro", "mensagem"),
+    [
+        (None, ADMIN, NaoEncontrado, "Pessoa não encontrada."),
+        (_atual(), ADMIN, RegraInvalida, "Desative o acesso antes de apagar."),
+        (_atual(ativo=False), BRUNO, RegraInvalida, "Você não pode tirar o próprio acesso"),
+    ],
+)
+def test_apagar_recusado_nao_grava(
+    atual: dict[str, Any] | None, autor: UUID, erro: type[Exception], mensagem: str
+) -> None:
+    conn = ConexaoFalsa(atual)
+    with pytest.raises(erro, match=mensagem):
+        usuarios.apagar(conn, autor, BRUNO)  # type: ignore[arg-type]
+    assert conn.gravacoes == []

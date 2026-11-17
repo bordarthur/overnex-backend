@@ -258,6 +258,7 @@ ROTAS = [
     ),
     ("PUT", f"/api/admin/usuarios/{BRUNO}/sessao", {"minutos": 480}),
     ("PUT", f"/api/admin/usuarios/{BRUNO}/acesso", {"ativo": False}),
+    ("DELETE", f"/api/admin/usuarios/{BRUNO}", None),
 ]
 
 
@@ -479,6 +480,8 @@ def test_usuarios_lista_todos_com_os_filtros(client: TestClient, estado: dict[st
         },
         "acessos": {"entradas30d": 3, "ultimo": "hoje, 13h30"},
         "podeDesativar": True,
+        # só quem já está desativado
+        "podeApagar": False,
         # já entrou: sem botão de convite
         "convite": None,
     }
@@ -996,6 +999,50 @@ def test_convite_fora_do_formato_422(
     assert estado["confirmadas"] == 0
 
 
+def test_apagar_usuario_confirma_e_aciona_o_job(
+    client: TestClient, estado: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    chamadas: list[tuple[Any, ...]] = []
+    acionados: list[Any] = []
+    monkeypatch.setattr(usuarios, "apagar", lambda conn, *a: chamadas.append(a))
+    monkeypatch.setattr(convites, "acionar_envio", acionados.append)
+
+    r = client.delete(f"/api/admin/usuarios/{BRUNO}")
+
+    assert (r.status_code, r.content) == (204, b"")
+    assert chamadas == [(ADMIN, BRUNO)]
+    assert estado["confirmadas"] == 1
+    # o job apaga o login no Supabase Auth
+    assert len(acionados) == 1
+
+
+@pytest.mark.parametrize(
+    ("erro", "status"),
+    [
+        (RegraInvalida("Desative o acesso antes de apagar."), 422),
+        (NaoEncontrado("Pessoa não encontrada."), 404),
+    ],
+)
+def test_apagar_usuario_recusado(
+    client: TestClient,
+    estado: dict[str, Any],
+    monkeypatch: pytest.MonkeyPatch,
+    erro: Exception,
+    status: int,
+) -> None:
+    def recusar(*a: Any, **k: Any) -> None:
+        raise erro
+
+    acionados: list[Any] = []
+    monkeypatch.setattr(usuarios, "apagar", recusar)
+    monkeypatch.setattr(convites, "acionar_envio", acionados.append)
+
+    r = client.delete(f"/api/admin/usuarios/{BRUNO}")
+
+    assert (r.status_code, r.json()) == (status, {"detail": str(erro)})
+    assert (estado["confirmadas"], acionados) == (0, [])
+
+
 def test_openapi_tem_as_rotas_da_gestao(client: TestClient) -> None:
     esquema = client.app.openapi()  # type: ignore[attr-defined]
     rotas = {
@@ -1020,6 +1067,7 @@ def test_openapi_tem_as_rotas_da_gestao(client: TestClient) -> None:
         ("PUT", "/api/admin/usuarios/{id}"),
         ("PUT", "/api/admin/usuarios/{id}/sessao"),
         ("PUT", "/api/admin/usuarios/{id}/acesso"),
+        ("DELETE", "/api/admin/usuarios/{id}"),
     }
     for nome in ("GestaoPayload", "ClientePayload", "UsuariosPayload", "ConvitePedido"):
         assert nome in esquema["components"]["schemas"]

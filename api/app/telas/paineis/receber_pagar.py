@@ -20,13 +20,15 @@ d_fornecedor_* e d_vendedor_*.
   fechados (farol.inadimplencia, em p.p.). O a pagar sai em % da média paga por mês nos 6
   meses fechados (farol.pagar_lancado). Sem saldo bancário, ficam fora "Saldo em caixa
   hoje", "Saldo em 30 dias" e o "Saldo no fim" das janelas;
-- janelas de 7, 15 e 30 dias: o que vence a receber e a pagar e a sobra; alerta "Dado
+- janelas de 7, 15 e 30 dias, com as datas no título ("Próximos 30 dias (16/11 a 16/12)",
+  também no contexto dos KPIs): o que vence a receber e a pagar e a sobra; alerta "Dado
   incompleto" com o a pagar de 30 dias fora do saudável de farol.pagar_lancado;
-- carteira: idade em 5 faixas (a vencer inclui o que está em compensação), os 6 maiores
+- carteira: idade em 5 faixas; no a receber, o que está em compensação sai do a vencer e
+  ganha faixa e quadro próprios (no a pagar, continua dentro do a vencer); os 6 maiores
   saldos (etiqueta "vencido" com algum título vencido), prazo médio do último mês fechado
   contra a média de 12 meses (farol.prazo_recebimento e farol.prazo_pagamento, em dias).
   Sem PDD: falta a regra;
-- quem cobrar: os 8 clientes com mais vencido. Chance de receber: a parte do valor dos
+- quem cobrar: os 20 clientes com mais vencido. Chance de receber: a parte do valor dos
   títulos do cliente com vencimento entre 12 meses e 30 dias atrás que foi paga até 30 dias
   depois do vencimento (Alta a partir de 90%, Média a partir de 70%, Baixa abaixo; sem
   título nesse período, "sem histórico"). "Parou de comprar": nenhum título emitido nos
@@ -146,7 +148,8 @@ MESES_SAFRA = 6
 DIAS_SAFRA = (15, 30, 60, 90)
 JANELAS = (7, 15, 30)
 SEMANAS = 4
-QUEM_COBRAR = 8
+# pedido da demonstração (16/11/2026): eram 8
+QUEM_COBRAR = 20
 MAIORES = 6
 LIMITES = 10
 # chance de receber: pago até este número de dias depois do vencimento
@@ -898,14 +901,21 @@ class Calculo:
 # ---------- topo ----------
 
 
+def _periodo(hoje: date, dias: int) -> str:
+    """As datas de uma janela de vencimento, de hoje até hoje + `dias`: "16/11 a 16/12"."""
+    return f"{hoje:%d/%m} a {hoje + timedelta(days=dias):%d/%m}"
+
+
 def kpis(c: Calculo) -> list[Kpi]:
     itens: list[Kpi] = []
+    periodo = _periodo(c.pos.hoje, 30)
     if c.receber is not None:
         itens.append(
             Kpi(
                 rotulo="A receber em 30 dias",
                 valor=brl(c.receber.carteira.proximos(30)),
-                contexto="títulos do vendedor" if c.por_vendedor else "títulos emitidos",
+                contexto=("títulos do vendedor, " if c.por_vendedor else "títulos emitidos, ")
+                + f"vencimento de {periodo}",
             )
         )
     if c.pagar is not None:
@@ -915,9 +925,9 @@ def kpis(c: Calculo) -> list[Kpi]:
                 rotulo="A pagar em 30 dias",
                 valor=brl(c.pagar.carteira.proximos(30)),
                 contexto=(
-                    f"só o que está lançado: {numero(cob)}% da média paga"
+                    f"de {periodo}, só o que está lançado: {numero(cob)}% da média paga"
                     if cob is not None
-                    else "só o que está lançado"
+                    else f"de {periodo}, só o que está lançado"
                 ),
                 status=c.farois.pagar_lancado.status(cob) if cob is not None else None,
             )
@@ -964,7 +974,9 @@ def cartao_janelas(c: Calculo) -> CartaoJanelas | None:
                     tipo="total",
                 )
             )
-        janelas.append(Janela(titulo=f"Próximos {dias} dias", linhas=linhas))
+        janelas.append(
+            Janela(titulo=f"Próximos {dias} dias ({_periodo(c.pos.hoje, dias)})", linhas=linhas)
+        )
     alerta = None
     cob = c.cobertura
     if pagar is not None and cob is not None and c.lancado_incompleto:
@@ -1001,23 +1013,29 @@ def cartao_janelas(c: Calculo) -> CartaoJanelas | None:
     )
 
 
-def _status_idade(i: int, valor: Decimal) -> Status | None:
+A_VENCER = "A vencer"
+EM_COMPENSACAO = "Em compensação"
+
+
+def _status_idade(rotulo: str, valor: Decimal) -> Status | None:
     if not valor:
         return None
-    if i == 0:
+    if rotulo in (A_VENCER, EM_COMPENSACAO):
         return "saudavel"
-    return "atencao" if i == 1 else "critico"
+    return "atencao" if rotulo == "1 a 30 dias" else "critico"
 
 
-def _idade(carteira: Carteira) -> list[FaixaIdade]:
-    """5 faixas; a vencer inclui o que está em compensação (D+2) e fica só na barra (sem
-    quadro), como na inadimplência da Visão geral."""
-    faixas = list(
-        zip(
-            ("A vencer", "1 a 30 dias", "31 a 60", "61 a 90", "Mais de 90"),
-            (carteira.a_vencer, *carteira.faixas_vencidas),
-            strict=True,
-        )
+def _idade(carteira: Carteira, compensacao: bool = False) -> list[FaixaIdade]:
+    """5 faixas; o a vencer fica só na barra (sem quadro), como na inadimplência da Visão
+    geral. Com `compensacao` (o a receber), o que está em compensação (D+2: venceu há menos
+    de 2 dias úteis) sai do a vencer e ganha faixa e quadro próprios, só quando tem valor;
+    sem ela (o a pagar), continua dentro do a vencer."""
+    compensando = carteira.valores["compensando"] if compensacao else ZERO
+    faixas: list[tuple[str, Decimal]] = [(A_VENCER, carteira.a_vencer - compensando)]
+    if compensando:
+        faixas.append((EM_COMPENSACAO, compensando))
+    faixas += zip(
+        ("1 a 30 dias", "31 a 60", "61 a 90", "Mais de 90"), carteira.faixas_vencidas, strict=True
     )
     total = carteira.total
     return [
@@ -1025,10 +1043,10 @@ def _idade(carteira: Carteira) -> list[FaixaIdade]:
             rotulo=rotulo,
             valor=brl(valor),
             participacao=q(valor / total * CEM, 1) if total else ZERO,
-            status=_status_idade(i, valor),
-            so_na_barra=True if i == 0 else None,
+            status=_status_idade(rotulo, valor),
+            so_na_barra=True if rotulo == A_VENCER else None,
         )
-        for i, (rotulo, valor) in enumerate(faixas)
+        for rotulo, valor in faixas
     ]
 
 
@@ -1103,7 +1121,7 @@ def cartao_dois_lados(c: Calculo) -> CartaoDoisLados | None:
                 titulo="Contas a receber do vendedor" if c.por_vendedor else "Contas a receber",
                 total=f"em aberto: {moeda(cart.total)}",
                 kpis=kpis_r,
-                idade=_idade(cart),
+                idade=_idade(cart, compensacao=True),
                 rotulo_participacao="da carteira",
                 maiores=_maiores(c.leitura.clientes, cart.total, "Cliente"),
             )

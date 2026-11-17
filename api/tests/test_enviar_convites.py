@@ -22,6 +22,7 @@ from app.cli.enviar_convites import (
     MSG_LIMITE,
     FilaPostgres,
     Pedido,
+    apagar_logins,
     enviar,
     processar,
 )
@@ -45,8 +46,14 @@ class Auth:
     )
     pedidos: list[httpx.Request] = field(default_factory=list)
 
+    apagar: httpx.Response | Exception = field(default_factory=lambda: httpx.Response(200, json={}))
+
     def __call__(self, pedido: httpx.Request) -> httpx.Response:
         self.pedidos.append(pedido)
+        if pedido.method == "DELETE":
+            if isinstance(self.apagar, Exception):
+                raise self.apagar
+            return self.apagar
         if isinstance(self.convite, Exception):
             raise self.convite
         return self.convite
@@ -61,9 +68,17 @@ class FilaFalsa:
     itens: list[Pedido]
     erros: list[Exception] = field(default_factory=list)
     concluidos: list[tuple[int, UUID | None, str | None]] = field(default_factory=list)
+    logins: list[UUID] = field(default_factory=list)
+    apagados: list[UUID] = field(default_factory=list)
 
     def pendentes(self) -> list[Pedido]:
         return self.itens
+
+    def logins_a_apagar(self) -> list[UUID]:
+        return list(self.logins)
+
+    def login_apagado(self, id_autenticacao: UUID) -> None:
+        self.apagados.append(id_autenticacao)
 
     def concluir(self, convite_id: int, id_autenticacao: UUID | None, motivo: str | None) -> None:
         if self.erros:
@@ -172,6 +187,48 @@ def test_fila_vazia_nao_chama_o_supabase() -> None:
     assert auth.pedidos == []
 
 
+# --- logins de quem foi apagado pela Gestão ---------------------------------------------
+
+
+def test_apaga_o_login_no_supabase_e_tira_da_fila(capsys: pytest.CaptureFixture[str]) -> None:
+    auth = Auth()
+    fila = FilaFalsa([], logins=[ID_NOVO])
+
+    assert apagar_logins(fila, _gotrue(auth)) == (1, 0)
+
+    (pedido,) = auth.pedidos
+    assert (pedido.method, pedido.url.path) == ("DELETE", f"/auth/v1/admin/users/{ID_NOVO}")
+    assert fila.apagados == [ID_NOVO]
+    # a saída do job não leva o id
+    saida = capsys.readouterr()
+    assert str(ID_NOVO) not in saida.out + saida.err
+
+
+def test_login_que_ja_nao_existe_sai_da_fila() -> None:
+    fila = FilaFalsa([], logins=[ID_NOVO])
+    nao_existe = httpx.Response(404, json={"code": 404, "error_code": "user_not_found"})
+
+    assert apagar_logins(fila, _gotrue(Auth(apagar=nao_existe))) == (1, 0)
+    assert fila.apagados == [ID_NOVO]
+
+
+@pytest.mark.parametrize(
+    "resposta",
+    [
+        httpx.Response(403, json={"code": 403, "error_code": "not_admin"}),
+        httpx.Response(500),
+        httpx.ConnectError("recusada"),
+    ],
+)
+def test_login_que_nao_deu_para_apagar_fica_para_a_proxima_rodada(
+    resposta: httpx.Response | Exception,
+) -> None:
+    fila = FilaFalsa([], logins=[ID_NOVO])
+
+    assert apagar_logins(fila, _gotrue(Auth(apagar=resposta))) == (0, 1)
+    assert fila.apagados == []
+
+
 # --- a fila no banco (role carga) --------------------------------------------------------
 
 
@@ -265,3 +322,46 @@ def test_fila_grava_a_falha_com_o_motivo_e_a_pessoa_segue_sem_login(
         "estado": "falhou",
         "motivo": MSG_LIMITE,
     }
+
+
+@pytest.mark.db
+def test_login_de_quem_foi_apagado_vai_para_a_fila_do_job(
+    conn: psycopg.Connection[DictRow],
+) -> None:
+    usuario_id = _pedir_como_admin(conn, [CLIENTE_A])
+    conn.execute(
+        "update seg.usuario set id_autenticacao = %s, ativo = false where id = %s",
+        (ID_NOVO, usuario_id),
+    )
+    # a Dora (admin) apaga, como a rota da Gestão
+    with conn.transaction():
+        conn.execute("set local role api_site")
+        conn.execute("select set_config('app.usuario_id', %s, true)", (ADMIN,))
+        conn.execute("select seg.apagar_usuario(%s)", (usuario_id,))
+    assert conn.execute(
+        "select count(*) as n from seg.usuario where id = %s", (usuario_id,)
+    ).fetchone() == {"n": 0}
+
+    conn.execute("set role carga")
+    fila = FilaPostgres(conn)
+    assert ID_NOVO in fila.logins_a_apagar()
+    with pytest.raises(psycopg.errors.InsufficientPrivilege):
+        conn.execute("select count(*) from seg.login_a_apagar")
+    fila.login_apagado(ID_NOVO)
+    assert ID_NOVO not in fila.logins_a_apagar()
+    conn.execute("reset role")
+
+
+@pytest.mark.db
+def test_login_que_voltou_a_ter_cadastro_nao_se_apaga(
+    conn: psycopg.Connection[DictRow],
+) -> None:
+    # apagada e convidada de novo antes de o job rodar: o convite novo religou o mesmo login
+    usuario_id = _pedir_como_admin(conn, [])
+    conn.execute("update seg.usuario set id_autenticacao = %s where id = %s", (ID_NOVO, usuario_id))
+    conn.execute("insert into seg.login_a_apagar (id_autenticacao) values (%s)", (ID_NOVO,))
+
+    conn.execute("set role carga")
+    assert ID_NOVO not in FilaPostgres(conn).logins_a_apagar()
+    conn.execute("reset role")
+    assert conn.execute("select count(*) as n from seg.login_a_apagar").fetchone() == {"n": 0}
