@@ -17,6 +17,7 @@ from app.auth.router import router as auth_router
 from app.core.config import Ambiente, ProvedorAuth, Settings, get_settings
 from app.core.db import Pool, criar_pool, get_pool
 from app.core.erros import AcessoNegado
+from app.core.proxy import SegredoDoProxy
 from app.dados.router import router as dados_router
 from app.pdf.router import router as pdf_router
 from app.sessao.router import router as sessao_router
@@ -61,6 +62,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     app.state.gotrue = gotrue
     app.state.limites_auth = Limites()
+    # Só o Worker da Cloudflare chama a API publicada (ver app/core/proxy.py).
+    segredo_proxy = settings.proxy_segredo.get_secret_value()
+    if segredo_proxy:
+        app.add_middleware(SegredoDoProxy, segredo=segredo_proxy)
 
     @app.exception_handler(AcessoNegado)
     async def _acesso_negado(request: Request, exc: AcessoNegado) -> JSONResponse:
