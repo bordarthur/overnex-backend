@@ -19,7 +19,8 @@ Regras:
 - ao ligar um painel pela primeira vez no cliente, os perfis fixos recebem a matriz padrão;
 - a matriz só mexe nos 3 perfis fixos do cliente; o Admin BORD vê tudo o que está ligado;
 - linha nova na matriz vê dado nominal só nas telas que exigem (Equipe comercial e Receber
-  e pagar); o dado nominal de Pessoas (nomes de Cargos e salários) continua por SQL.
+  e pagar); nas que abrem sem nomes e têm a chave "Mostrar nomes" (Pessoas), a matriz tem a
+  chave "vê nomes" por perfil (`ve_dado_nominal`), que nasce desligada.
 """
 
 import logging
@@ -68,6 +69,8 @@ from app.telas.visao_geral import preferencias
 MSG_PAINEL = "Painel não encontrado."
 MSG_PERFIL = "Perfil não encontrado."
 MSG_ADMIN_FIXO = "Admin BORD vê tudo e não pode ser alterado."
+MSG_SEM_NOMES = "Este painel não tem nomes para liberar."
+MSG_SEM_PAINEL = "Este perfil não vê o painel."
 MSG_SEM_DADO = "Este painel ainda não tem dado nesta empresa."
 MSG_PREFERENCIA = "Preferência não encontrada."
 MSG_OPCAO = "Opção inválida."
@@ -144,7 +147,7 @@ SQL_FONTES = """
      order by tabela, f.id
 """
 SQL_MATRIZ = """
-    select p.perfil, pt.codigo_tela
+    select p.perfil, pt.codigo_tela, pt.ve_dado_nominal
       from cfg.perfil_acesso p
       join cfg.perfil_tela pt on pt.perfil_id = p.id
      where p.cliente_id = %s
@@ -502,8 +505,11 @@ def cliente(conn: Conexao, cliente_id: UUID, convite_horas: int) -> ClientePaylo
     no_ar = [p for p in PAINEIS if p.codigo in ligadas]
 
     ve: dict[str, set[str]] = {p.id: set() for p in perfis.DO_CLIENTE}
+    ve_nomes: dict[str, set[str]] = {p.id: set() for p in perfis.DO_CLIENTE}
     for r in linhas["matriz"]:
         ve.setdefault(r["perfil"], set()).add(r["codigo_tela"])
+        if r["ve_dado_nominal"]:
+            ve_nomes.setdefault(r["perfil"], set()).add(r["codigo_tela"])
 
     admins = linhas["admins"][0]["total"]
     total_clientes = linhas["total_clientes"][0]["total"]
@@ -571,6 +577,12 @@ def cliente(conn: Conexao, cliente_id: UUID, convite_horas: int) -> ClientePaylo
                         perfis.ADMIN: True,
                         **{p.id: painel.codigo in ve[p.id] for p in perfis.DO_CLIENTE},
                     },
+                    nomes={
+                        perfis.ADMIN: True,
+                        **{p.id: painel.codigo in ve_nomes[p.id] for p in perfis.DO_CLIENTE},
+                    }
+                    if painel.nomes_opcionais
+                    else None,
                 )
                 for painel in no_ar
             ],
@@ -655,6 +667,54 @@ def mudar_matriz(
         "insert" if ve else "delete",
         None,
         {"ve": ve},
+    )
+
+
+# a linha sai e volta com a marca nova: o api_site insere e apaga em cfg.perfil_tela (políticas
+# da migration 27), mas não atualiza, e a linha não tem outras colunas a perder
+SQL_TIRAR_PARA_TROCAR = """
+    delete from cfg.perfil_tela pt
+     using cfg.perfil_acesso p
+     where p.id = pt.perfil_id
+       and p.cliente_id = %(cliente)s
+       and p.perfil = %(perfil)s
+       and pt.codigo_tela = %(codigo)s
+    returning pt.perfil_id, pt.ve_dado_nominal
+"""
+SQL_POR_DE_VOLTA = """
+    insert into cfg.perfil_tela (perfil_id, codigo_tela, ve_dado_nominal)
+    values (%(perfil_id)s, %(codigo)s, %(nominal)s)
+"""
+
+
+def mudar_nomes(
+    conn: Conexao, autor: UUID, cliente_id: UUID, perfil: str, codigo: str, ve_nomes: bool
+) -> None:
+    """Liga ou desliga a chave "vê nomes" do perfil fixo no painel. Só nos painéis com nomes
+    opcionais e onde o perfil já vê o painel. Não confirma a transação."""
+    if perfil == perfis.ADMIN:
+        raise RegraInvalida(MSG_ADMIN_FIXO)
+    if perfil not in {p.id for p in perfis.DO_CLIENTE}:
+        raise NaoEncontrado(MSG_PERFIL)
+    if not _painel(codigo).nomes_opcionais:
+        raise RegraInvalida(MSG_SEM_NOMES)
+    antes = conn.execute(
+        SQL_TIRAR_PARA_TROCAR, {"cliente": cliente_id, "perfil": perfil, "codigo": codigo}
+    ).fetchone()
+    if antes is None:
+        raise RegraInvalida(MSG_SEM_PAINEL)
+    conn.execute(
+        SQL_POR_DE_VOLTA,
+        {"perfil_id": antes["perfil_id"], "codigo": codigo, "nominal": ve_nomes},
+    )
+    registrar(
+        conn,
+        autor,
+        "cfg.perfil_tela",
+        f"{cliente_id}/{perfil}/{codigo}",
+        "update",
+        {"ve_nomes": antes["ve_dado_nominal"]},
+        {"ve_nomes": ve_nomes},
     )
 
 

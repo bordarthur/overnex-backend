@@ -5,7 +5,7 @@ create extension if not exists pgtap with schema extensions;
 
 select plan(3);
 
-select col_default_is('mart', 'resumo_mensal', 'dimensao', '''''::text', 'dimensão vazia por padrão');
+select col_default_is('mart', 'resumo_mensal', 'dimensao', ''::text, 'dimensão vazia por padrão');
 
 insert into mart.resumo_mensal (cliente_id, empresa_id, tabela, medida, dimensao, mes, valor, data_snapshot)
 values

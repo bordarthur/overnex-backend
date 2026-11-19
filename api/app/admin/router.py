@@ -6,6 +6,7 @@
 - PUT  /api/admin/clientes/{slug}              nome e setor da empresa
 - PUT  /api/admin/clientes/{slug}/paineis/{codigo}                  liga ou desliga o painel
 - PUT  /api/admin/clientes/{slug}/perfis/{perfil}/paineis/{codigo}  matriz perfil × painel
+- PUT  /api/admin/clientes/{slug}/perfis/{perfil}/paineis/{codigo}/nomes  chave "vê nomes"
 - PUT  /api/admin/clientes/{slug}/preferencias/{id}                 escolha salva do cliente
 - PUT e DELETE /api/admin/clientes/{slug}/feriados/{data}           feriado do cliente
 - GET  /api/admin/usuarios                     todas as pessoas e a contagem dos filtros
@@ -41,6 +42,7 @@ from app.admin.contrato import (
     MudancaAcessoPerfil,
     MudancaEmpresa,
     MudancaFeriado,
+    MudancaNomesPerfil,
     MudancaPainel,
     MudancaPreferencia,
     MudancaSessao,
@@ -209,6 +211,30 @@ def mudar_matriz(
     try:
         clientes.mudar_matriz(
             ctx.sessao.conn, ctx.usuario_id, _cliente(ctx), perfil, codigo, corpo.ve
+        )
+    except (NaoEncontrado, RegraInvalida) as exc:
+        raise _erro(exc) from exc
+    return _gravado(ctx)
+
+
+@router.put(
+    "/clientes/{slug}/perfis/{perfil}/paineis/{codigo}/nomes",
+    status_code=status.HTTP_204_NO_CONTENT,
+    response_class=Response,
+    responses=RESPOSTAS_GRAVAR,
+)
+def mudar_nomes(
+    ctx: Annotated[ContextoAdmin, Depends(exigir_admin_no_cliente("matriz-nomes"))],
+    perfil: Annotated[str, Path(max_length=40, description="Perfil (ex.: cliente_principal).")],
+    codigo: CodigoUrl,
+    corpo: MudancaNomesPerfil,
+) -> Response:
+    """Define se o perfil vê os nomes do painel nesta empresa (chave "Mostrar nomes" dos
+    cartões; hoje, os de Pessoas). 422 se o painel não tem essa chave, se o perfil não vê o
+    painel ou se é o Admin BORD (que sempre vê)."""
+    try:
+        clientes.mudar_nomes(
+            ctx.sessao.conn, ctx.usuario_id, _cliente(ctx), perfil, codigo, corpo.ve_nomes
         )
     except (NaoEncontrado, RegraInvalida) as exc:
         raise _erro(exc) from exc

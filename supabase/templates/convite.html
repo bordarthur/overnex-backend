@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <meta name="supported-color-schemes" content="light" />
+    <title>Bem-vindo ao Overnex</title>
+  </head>
+  <body style="margin:0; padding:0; background-color:#f5f5f5; -webkit-text-size-adjust:100%;">
+    <!-- texto que aparece na prévia da caixa de entrada -->
+    <div style="display:none; max-height:0; overflow:hidden; opacity:0; color:#f5f5f5;">
+      Seu acesso ao Overnex foi criado. Crie sua senha para entrar.
+    </div>
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f5f5f5;">
+      <tr>
+        <td align="center" style="padding:32px 16px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:520px;">
+            <!-- faixa da marca, com o claim da tela de entrada -->
+            <tr>
+              <td style="background-color:#2f2f2f; border-radius:16px 16px 0 0; padding:26px 36px 30px;">
+                <span style="font-family:Arial, Helvetica, sans-serif; font-size:20px; font-weight:700; letter-spacing:0.08em; color:#f2f2f2;">OVERNEX</span><span style="font-family:Arial, Helvetica, sans-serif; font-size:20px; font-weight:700; color:#00ff6a;">&#8226;</span>
+                <p style="margin:28px 0 0; font-family:Arial, Helvetica, sans-serif; font-size:26px; line-height:1.1; font-weight:700; letter-spacing:-0.015em; color:#f2f2f2;">
+                  Os números de hoje já chegaram.
+                </p>
+                <p style="margin:10px 0 0; font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:1.5; color:#bfbfbf;">
+                  Vendas, resultado, caixa e equipe, atualizados todo dia às 9h.
+                </p>
+              </td>
+            </tr>
+
+            <!-- conteúdo -->
+            <tr>
+              <td style="background-color:#fcfcfb; border:1px solid #e0e0e0; border-top:0; border-radius:0 0 16px 16px; padding:40px 36px 36px;">
+                <h1 style="margin:0; font-family:Arial, Helvetica, sans-serif; font-size:28px; line-height:1.15; font-weight:700; letter-spacing:-0.01em; color:#2f2f2f;">
+                  Bem-vindo ao Overnex
+                </h1>
+                <p style="margin:12px 0 0; font-family:Arial, Helvetica, sans-serif; font-size:15px; line-height:1.55; color:#5c5c5c;">
+                  Seu acesso ao Overnex foi criado! Clique no botão abaixo para criar sua senha.
+                </p>
+
+                <!-- botão -->
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:28px;">
+                  <tr>
+                    <td align="center" bgcolor="#2f2f2f" style="border-radius:12px;">
+                      <a href="{{ .SiteURL }}/definir-senha?token_hash={{ .TokenHash }}&amp;type=invite" target="_blank" style="display:block; padding:16px 24px; font-family:Arial, Helvetica, sans-serif; font-size:15.5px; font-weight:700; line-height:20px; color:#ffffff; text-decoration:none; border-radius:12px;">Criar meu acesso</a>
+                    </td>
+                  </tr>
+                </table>
+
+                <p style="margin:24px 0 0; font-family:Arial, Helvetica, sans-serif; font-size:13.5px; line-height:1.55; color:#5c5c5c;">
+                  O link vale por 24 horas e só pode ser usado uma vez.
+                </p>
+
+                <!-- aviso -->
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:24px;">
+                  <tr>
+                    <td style="background-color:#ededed; border-radius:10px; padding:12px 14px; font-family:Arial, Helvetica, sans-serif; font-size:13.5px; line-height:1.5; color:#5c5c5c;">
+                      Se você não esperava este e-mail, ignore-o.
+                    </td>
+                  </tr>
+                </table>
+
+                <!-- link em texto, para quando o botão não abrir -->
+                <p style="margin:28px 0 0; padding-top:20px; border-top:1px solid #ebebeb; font-family:Arial, Helvetica, sans-serif; font-size:12.5px; line-height:1.5; color:#767676;">
+                  Se o botão não abrir, copie este endereço no navegador:<br />
+                  <a href="{{ .SiteURL }}/definir-senha?token_hash={{ .TokenHash }}&amp;type=invite" target="_blank" style="color:#2f2f2f; text-decoration:underline; word-break:break-all;">{{ .SiteURL }}/definir-senha?token_hash={{ .TokenHash }}&amp;type=invite</a>
+                </p>
+              </td>
+            </tr>
+
+            <!-- rodapé -->
+            <tr>
+              <td style="padding:20px 36px 0; font-family:Arial, Helvetica, sans-serif; font-size:12.5px; line-height:1.5; color:#767676;">
+                Um produto BORD &nbsp;·&nbsp; overnex.app<br />
+                Este e-mail foi enviado automaticamente. Não é preciso responder.
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

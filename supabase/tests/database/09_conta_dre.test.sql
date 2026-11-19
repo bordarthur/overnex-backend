@@ -23,6 +23,8 @@ select throws_ok($$insert into cfg.conta_dre (cliente_id, conta, id_descritivo)
 reset role;
 
 set local role api_site;
+-- o set local do usuário acima vale até o fim da transação: limpar, como no 02
+set local app.usuario_id = '';
 select is((select count(*)::int from cfg.conta_dre), 0, 'sem app.usuario_id, nenhuma conta');
 reset role;
 

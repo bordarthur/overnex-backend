@@ -154,10 +154,10 @@ def _linhas() -> dict[str, list[dict[str, Any]]]:
             },
         ],
         "matriz": [
-            {"perfil": "cliente_principal", "codigo_tela": "VG-01"},
-            {"perfil": "cliente_principal", "codigo_tela": "COM-01"},
-            {"perfil": "cliente_principal", "codigo_tela": "PES-01"},
-            {"perfil": "cliente_usuario", "codigo_tela": "VG-01"},
+            {"perfil": "cliente_principal", "codigo_tela": "VG-01", "ve_dado_nominal": False},
+            {"perfil": "cliente_principal", "codigo_tela": "COM-01", "ve_dado_nominal": False},
+            {"perfil": "cliente_principal", "codigo_tela": "PES-01", "ve_dado_nominal": True},
+            {"perfil": "cliente_usuario", "codigo_tela": "VG-01", "ve_dado_nominal": False},
         ],
         "feriados": [{"data": date(2026, 8, 15), "nome": "Padroeira"}],
         "cargas": [
@@ -401,6 +401,7 @@ def test_cliente_devolve_todas_as_abas(client: TestClient, estado: dict[str, Any
                 "cliente_principal": True,
                 "cliente_usuario": True,
             },
+            "nomes": None,
         },
         {
             "codigo": "COM-01",
@@ -411,11 +412,19 @@ def test_cliente_devolve_todas_as_abas(client: TestClient, estado: dict[str, Any
                 "cliente_principal": True,
                 "cliente_usuario": False,
             },
+            "nomes": None,
         },
         {
             "codigo": "PES-01",
             "nome": "Pessoas",
             "ve": {
+                "admin": True,
+                "consultor": False,
+                "cliente_principal": True,
+                "cliente_usuario": False,
+            },
+            # Pessoas abre sem nomes: a chave "vê nomes" por perfil
+            "nomes": {
                 "admin": True,
                 "consultor": False,
                 "cliente_principal": True,
@@ -561,6 +570,26 @@ def test_ligar_painel_grava_e_confirma(client: TestClient, estado: dict[str, Any
             "Admin BORD vê tudo e não pode ser alterado.",
         ),
         ("perfis/Financeiro/paineis/VG-01", {"ve": True}, 404, "Perfil não encontrado."),
+        (
+            "perfis/admin/paineis/PES-01/nomes",
+            {"veNomes": False},
+            422,
+            "Admin BORD vê tudo e não pode ser alterado.",
+        ),
+        (
+            "perfis/Financeiro/paineis/PES-01/nomes",
+            {"veNomes": True},
+            404,
+            "Perfil não encontrado.",
+        ),
+        ("perfis/consultor/paineis/XX-99/nomes", {"veNomes": True}, 404, "Painel não encontrado."),
+        # Equipe comercial: ver o painel já é ver os nomes
+        (
+            "perfis/consultor/paineis/COM-02/nomes",
+            {"veNomes": True},
+            422,
+            "Este painel não tem nomes para liberar.",
+        ),
         ("preferencias/outra", {"valor": "3"}, 404, "Preferência não encontrada."),
         ("preferencias/linhas-custo", {"valor": "8"}, 422, "Opção inválida."),
     ],
@@ -615,6 +644,44 @@ def test_matriz_grava_no_perfil_fixo(client: TestClient, estado: dict[str, Any])
     )
     assert estado["confirmadas"] == 1
     # a matriz não muda o conteúdo das telas: as respostas prontas ficam
+    assert estado["apagadas"] == []
+
+
+def test_ve_nomes_troca_a_marca_da_linha(client: TestClient, estado: dict[str, Any]) -> None:
+    _no_cliente(estado)
+    rota = f"/api/admin/clientes/{SLUG}/perfis/cliente_principal/paineis/PES-01/nomes"
+
+    # o perfil não tem a PES-01: nada a trocar, nada confirmado
+    r = client.put(rota, json={"veNomes": True})
+    assert (r.status_code, r.json()) == (422, {"detail": "Este perfil não vê o painel."})
+    assert estado["confirmadas"] == 0
+
+    estado["gravacoes"].clear()
+    perfil_id = UUID("f2000000-0000-4000-8000-0000000000a1")
+    estado["devolve"] = {"perfil_id": perfil_id, "ve_dado_nominal": False}
+    r = client.put(rota, json={"veNomes": True})
+
+    assert r.status_code == 204
+    assert [g[0] for g in estado["gravacoes"]] == [
+        clientes.SQL_TIRAR_PARA_TROCAR,
+        clientes.SQL_POR_DE_VOLTA,
+        usuarios.SQL_LOG,
+    ]
+    assert estado["gravacoes"][0][1] == {
+        "cliente": CLIENTE_A,
+        "perfil": "cliente_principal",
+        "codigo": "PES-01",
+    }
+    assert estado["gravacoes"][1][1] == {
+        "perfil_id": perfil_id,
+        "codigo": "PES-01",
+        "nominal": True,
+    }
+    log = estado["gravacoes"][2][1]
+    assert (log["autor"], log["operacao"]) == (ADMIN, "update")
+    assert '"ve_nomes": false' in log["antes"]
+    assert estado["confirmadas"] == 1
+    # o cache dos painéis já separa quem vê nomes: as respostas prontas ficam
     assert estado["apagadas"] == []
 
 
@@ -1058,6 +1125,7 @@ def test_openapi_tem_as_rotas_da_gestao(client: TestClient) -> None:
         ("PUT", "/api/admin/clientes/{slug}"),
         ("PUT", "/api/admin/clientes/{slug}/paineis/{codigo}"),
         ("PUT", "/api/admin/clientes/{slug}/perfis/{perfil}/paineis/{codigo}"),
+        ("PUT", "/api/admin/clientes/{slug}/perfis/{perfil}/paineis/{codigo}/nomes"),
         ("PUT", "/api/admin/clientes/{slug}/preferencias/{id}"),
         ("PUT", "/api/admin/clientes/{slug}/feriados/{data}"),
         ("DELETE", "/api/admin/clientes/{slug}/feriados/{data}"),
