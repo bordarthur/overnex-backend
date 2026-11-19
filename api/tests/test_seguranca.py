@@ -21,6 +21,8 @@ AUDIENCE = "api://overnex"
 OID = uuid.UUID("0d000000-0000-4000-8000-00000000000a")
 SUPABASE_URL = "https://projeto-teste.supabase.co"
 SUB = uuid.UUID("5b000000-0000-4000-8000-00000000000a")
+# AMBIENTE=prod exige o segredo do proxy (ver tests/test_proxy.py)
+PROXY_SEGREDO = "s" * 32
 
 _chave = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 _outra_chave = rsa.generate_private_key(public_exponent=65537, key_size=2048)
@@ -38,6 +40,7 @@ def _settings(**kwargs: Any) -> Settings:
         "entra_audience": AUDIENCE,
         "ambiente": Ambiente.PROD,
         "auth_fake": False,
+        "proxy_segredo": PROXY_SEGREDO,
     }
     return Settings(**(base | kwargs))
 
@@ -51,6 +54,7 @@ def _settings_supabase(**kwargs: Any) -> Settings:
         "front_url": "https://overnex.teste",
         "ambiente": Ambiente.PROD,
         "auth_fake": False,
+        "proxy_segredo": PROXY_SEGREDO,
     }
     return Settings(**(base | kwargs))
 
