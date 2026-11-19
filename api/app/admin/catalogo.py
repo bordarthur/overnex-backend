@@ -23,7 +23,7 @@ Prontidão dos dados.
 from dataclasses import dataclass
 
 from app.seguranca.perfis import CLIENTE_PRINCIPAL, CLIENTE_USUARIO, CONSULTOR
-from app.telas.paineis.router import CODIGOS, NOMINAL
+from app.telas.paineis.router import CODIGOS, NOMES, NOMINAL
 from app.telas.visao_geral.router import CODIGO_TELA as CODIGO_VISAO_GERAL
 
 
@@ -65,6 +65,9 @@ class Painel:
     padrao: frozenset[str] = TODOS
     # a tela mostra nomes de pessoas: quem a tem na matriz precisa ver dado nominal
     nominal: bool = False
+    # a tela abre sem nomes, e algum cartão tem a chave "Mostrar nomes" (NOMES): a matriz
+    # ganha a chave "vê nomes" por perfil
+    nomes_opcionais: bool = False
 
     @property
     def grupo(self) -> str:
@@ -122,6 +125,7 @@ PAINEIS: tuple[Painel, ...] = (
         exige=("f_folha_",),
         usa=("f_folha_", "f_vendas_"),
         padrao=frozenset({CLIENTE_PRINCIPAL}),
+        nomes_opcionais=any(tela == "pessoas" for tela, _ in NOMES),
     ),
     Painel(
         CODIGOS["resultado"],

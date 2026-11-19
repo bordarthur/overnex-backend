@@ -211,6 +211,10 @@ class LinhaDaMatriz(ModeloCamel):
     nome: str
     # perfil.id → vê o painel
     ve: dict[str, bool]
+    # perfil.id → vê os nomes (chave "Mostrar nomes" dos cartões), só nos painéis que abrem
+    # sem nomes e têm essa chave (hoje, Pessoas); null nos outros. O Admin BORD sempre vê.
+    # Só vale onde `ve` é true: tirar o painel do perfil apaga a marca.
+    nomes: dict[str, bool] | None
 
 
 class Matriz(ModeloCamel):
@@ -285,6 +289,10 @@ class MudancaPainel(ModeloCamel):
 
 class MudancaAcessoPerfil(ModeloCamel):
     ve: bool
+
+
+class MudancaNomesPerfil(ModeloCamel):
+    ve_nomes: bool
 
 
 class MudancaPreferencia(ModeloCamel):

@@ -1,6 +1,6 @@
 """PES-01 — Pessoas. REGRAS PROVISÓRIAS: confirmar com o negócio (ver TODO.md).
 
-Painel restrito (dado de folha): o cadastro libera PES-01 só aos perfis de diretoria e RH.
+Painel restrito (dado de folha): abre só para os perfis marcados na matriz da Gestão.
 O painel não mostra nomes; eles nem saem do banco (a pessoa vira o md5 do nome). Os nomes
 só saem na tabela de uma linha por pessoa de "Cargos e salários" (`nomes_cargos`, rota
 GET /api/telas/pessoas/cartoes/cargos-salarios/nomes), para o perfil que vê dado nominal na
@@ -1029,7 +1029,7 @@ def cartao_cargos(folha: Folha, p: Periodo) -> CartaoTabela | None:
     )
 
 
-# ---------- nomes (só o perfil de RH: quem confere é a rota) ----------
+# ---------- nomes (só o perfil com a chave "vê nomes": quem confere é a rota) ----------
 
 SUBTITULO_NOMES = "Uma linha por pessoa, do maior salário para o menor."
 VAZIO_NOMES = "Nenhuma pessoa com esses filtros."

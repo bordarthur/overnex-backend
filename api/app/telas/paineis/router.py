@@ -16,13 +16,13 @@ inválido.". O
 Resultado aceita também `comparar` (orcado ou mes-anterior), que vem do chip global
 "Comparar com" do front e não vai em `filtros`. A Equipe e o Receber e pagar mostram nomes
 de pessoas (vendedores, clientes): exigem um perfil que veja dado nominal (etapa 6).
-Pessoas tem dado de folha, mas sem nomes: o cadastro libera PES-01 só à diretoria e ao RH.
+Pessoas tem dado de folha, mas sem nomes: abre para os perfis marcados na matriz da Gestão.
 
 Cartões "a decidir" (A_DECIDIR): só saem com PAINEIS_A_DECIDIR (dev).
 
 Nomes por cartão (NOMES; hoje só Pessoas, "Cargos e salários"): o cartão traz a chave
-"Mostrar nomes" (`nomes`) só para quem vê dado nominal na tela (o perfil de RH na PES-01);
-por isso o `ve_dado_nominal` entra na chave do cache. Ligada, o front pede
+"Mostrar nomes" (`nomes`) só para quem vê dado nominal na tela (na PES-01, a chave "vê
+nomes" da matriz); por isso o `ve_dado_nominal` entra na chave do cache. Ligada, o front pede
 GET /api/telas/{tela}/cartoes/{id}/nomes, com os mesmos `mes` e `empresa` do painel. A rota
 confere de novo (a chave não vale como permissão: qualquer um pode chamar a URL) e:
 - 404 "Este cartão não tem nomes." para tela ou cartão fora de NOMES;

@@ -19,6 +19,8 @@ select throws_ok($$insert into cfg.feriado (cliente_id, data, nome)
 reset role;
 
 set local role api_site;
+-- o set local do usuário acima vale até o fim da transação: limpar, como no 02
+set local app.usuario_id = '';
 select is((select count(*)::int from cfg.feriado), 0, 'sem app.usuario_id, nenhum feriado');
 reset role;
 

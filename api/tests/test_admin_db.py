@@ -324,6 +324,74 @@ def test_matriz_e_feriado_pela_gestao(
     assert client.delete(f"{base}/feriados/2026-08-15", headers=cabecalho).status_code == 404
 
 
+@pytest.fixture
+def principal_b_sem_paineis(admin_conn: psycopg.Connection[tuple[object, ...]]) -> Iterator[None]:
+    yield
+    admin_conn.execute(
+        "delete from cfg.perfil_tela pt using cfg.perfil_acesso p"
+        " where p.id = pt.perfil_id and p.cliente_id = %s and p.perfil = 'cliente_principal'",
+        (CLIENTE_B,),
+    )
+    admin_conn.execute(
+        "delete from seg.log_alteracao where registro_id like %s", (f"{CLIENTE_B}/%",)
+    )
+
+
+def _nominal_da_pes01(admin_conn: psycopg.Connection[tuple[object, ...]]) -> object:
+    linha = admin_conn.execute(
+        "select pt.ve_dado_nominal from cfg.perfil_tela pt"
+        " join cfg.perfil_acesso p on p.id = pt.perfil_id"
+        " where p.cliente_id = %s and p.perfil = 'cliente_principal'"
+        " and pt.codigo_tela = 'PES-01'",
+        (CLIENTE_B,),
+    ).fetchone()
+    return None if linha is None else linha[0]
+
+
+def _linha_da_matriz(client: TestClient, codigo: str) -> Any:
+    corpo = client.get(f"/api/admin/clientes/{SLUG_B}", headers=auth(OID_ADMIN)).json()
+    return next(x for x in corpo["acesso"]["linhas"] if x["codigo"] == codigo)
+
+
+@pytest.mark.usefixtures("principal_b_sem_paineis")
+def test_ve_nomes_pela_gestao(
+    client: TestClient, admin_conn: psycopg.Connection[tuple[object, ...]]
+) -> None:
+    cabecalho = auth(OID_ADMIN)
+    matriz = f"/api/admin/clientes/{SLUG_B}/perfis/cliente_principal/paineis/PES-01"
+    nomes = f"{matriz}/nomes"
+
+    # o perfil ainda não vê Pessoas: não há nomes a liberar
+    r = client.put(nomes, json={"veNomes": True}, headers=cabecalho)
+    assert (r.status_code, r.json()) == (422, {"detail": "Este perfil não vê o painel."})
+
+    # Pessoas entra sem nomes; os outros painéis não têm a chave
+    assert client.put(matriz, json={"ve": True}, headers=cabecalho).status_code == 204
+    assert _nominal_da_pes01(admin_conn) is False
+    assert _linha_da_matriz(client, "PES-01")["nomes"] == {
+        "admin": True,
+        "consultor": False,
+        "cliente_principal": False,
+        "cliente_usuario": False,
+    }
+    assert _linha_da_matriz(client, "COM-02")["nomes"] is None
+
+    assert client.put(nomes, json={"veNomes": True}, headers=cabecalho).status_code == 204
+    assert _nominal_da_pes01(admin_conn) is True
+    assert _linha_da_matriz(client, "PES-01")["nomes"]["cliente_principal"] is True
+    assert admin_conn.execute(
+        "select operacao, antes, depois from seg.log_alteracao"
+        " where tabela = 'cfg.perfil_tela' and registro_id = %s order by id desc limit 1",
+        (f"{CLIENTE_B}/cliente_principal/PES-01",),
+    ).fetchone() == ("update", {"ve_nomes": False}, {"ve_nomes": True})
+
+    # tirar e pôr Pessoas de volta: volta sem nomes
+    assert client.put(matriz, json={"ve": False}, headers=cabecalho).status_code == 204
+    assert _nominal_da_pes01(admin_conn) is None
+    assert client.put(matriz, json={"ve": True}, headers=cabecalho).status_code == 204
+    assert _nominal_da_pes01(admin_conn) is False
+
+
 # ---------- convite pela Gestão (migration 29) ----------
 
 EMAIL_NOVO = "carla@alfa.example"
