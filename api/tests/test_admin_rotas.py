@@ -154,10 +154,10 @@ def _linhas() -> dict[str, list[dict[str, Any]]]:
             },
         ],
         "matriz": [
-            {"perfil": "cliente_principal", "codigo_tela": "VG-01"},
-            {"perfil": "cliente_principal", "codigo_tela": "COM-01"},
-            {"perfil": "cliente_principal", "codigo_tela": "PES-01"},
-            {"perfil": "cliente_usuario", "codigo_tela": "VG-01"},
+            {"perfil": "cliente_principal", "codigo_tela": "VG-01", "ve_dado_nominal": False},
+            {"perfil": "cliente_principal", "codigo_tela": "COM-01", "ve_dado_nominal": False},
+            {"perfil": "cliente_principal", "codigo_tela": "PES-01", "ve_dado_nominal": True},
+            {"perfil": "cliente_usuario", "codigo_tela": "VG-01", "ve_dado_nominal": False},
         ],
         "feriados": [{"data": date(2026, 8, 15), "nome": "Padroeira"}],
         "cargas": [
@@ -258,6 +258,7 @@ ROTAS = [
     ),
     ("PUT", f"/api/admin/usuarios/{BRUNO}/sessao", {"minutos": 480}),
     ("PUT", f"/api/admin/usuarios/{BRUNO}/acesso", {"ativo": False}),
+    ("DELETE", f"/api/admin/usuarios/{BRUNO}", None),
 ]
 
 
@@ -400,6 +401,7 @@ def test_cliente_devolve_todas_as_abas(client: TestClient, estado: dict[str, Any
                 "cliente_principal": True,
                 "cliente_usuario": True,
             },
+            "nomes": None,
         },
         {
             "codigo": "COM-01",
@@ -410,11 +412,19 @@ def test_cliente_devolve_todas_as_abas(client: TestClient, estado: dict[str, Any
                 "cliente_principal": True,
                 "cliente_usuario": False,
             },
+            "nomes": None,
         },
         {
             "codigo": "PES-01",
             "nome": "Pessoas",
             "ve": {
+                "admin": True,
+                "consultor": False,
+                "cliente_principal": True,
+                "cliente_usuario": False,
+            },
+            # Pessoas abre sem nomes: a chave "vê nomes" por perfil
+            "nomes": {
                 "admin": True,
                 "consultor": False,
                 "cliente_principal": True,
@@ -479,6 +489,8 @@ def test_usuarios_lista_todos_com_os_filtros(client: TestClient, estado: dict[st
         },
         "acessos": {"entradas30d": 3, "ultimo": "hoje, 13h30"},
         "podeDesativar": True,
+        # só quem já está desativado
+        "podeApagar": False,
         # já entrou: sem botão de convite
         "convite": None,
     }
@@ -558,6 +570,26 @@ def test_ligar_painel_grava_e_confirma(client: TestClient, estado: dict[str, Any
             "Admin BORD vê tudo e não pode ser alterado.",
         ),
         ("perfis/Financeiro/paineis/VG-01", {"ve": True}, 404, "Perfil não encontrado."),
+        (
+            "perfis/admin/paineis/PES-01/nomes",
+            {"veNomes": False},
+            422,
+            "Admin BORD vê tudo e não pode ser alterado.",
+        ),
+        (
+            "perfis/Financeiro/paineis/PES-01/nomes",
+            {"veNomes": True},
+            404,
+            "Perfil não encontrado.",
+        ),
+        ("perfis/consultor/paineis/XX-99/nomes", {"veNomes": True}, 404, "Painel não encontrado."),
+        # Equipe comercial: ver o painel já é ver os nomes
+        (
+            "perfis/consultor/paineis/COM-02/nomes",
+            {"veNomes": True},
+            422,
+            "Este painel não tem nomes para liberar.",
+        ),
         ("preferencias/outra", {"valor": "3"}, 404, "Preferência não encontrada."),
         ("preferencias/linhas-custo", {"valor": "8"}, 422, "Opção inválida."),
     ],
@@ -612,6 +644,44 @@ def test_matriz_grava_no_perfil_fixo(client: TestClient, estado: dict[str, Any])
     )
     assert estado["confirmadas"] == 1
     # a matriz não muda o conteúdo das telas: as respostas prontas ficam
+    assert estado["apagadas"] == []
+
+
+def test_ve_nomes_troca_a_marca_da_linha(client: TestClient, estado: dict[str, Any]) -> None:
+    _no_cliente(estado)
+    rota = f"/api/admin/clientes/{SLUG}/perfis/cliente_principal/paineis/PES-01/nomes"
+
+    # o perfil não tem a PES-01: nada a trocar, nada confirmado
+    r = client.put(rota, json={"veNomes": True})
+    assert (r.status_code, r.json()) == (422, {"detail": "Este perfil não vê o painel."})
+    assert estado["confirmadas"] == 0
+
+    estado["gravacoes"].clear()
+    perfil_id = UUID("f2000000-0000-4000-8000-0000000000a1")
+    estado["devolve"] = {"perfil_id": perfil_id, "ve_dado_nominal": False}
+    r = client.put(rota, json={"veNomes": True})
+
+    assert r.status_code == 204
+    assert [g[0] for g in estado["gravacoes"]] == [
+        clientes.SQL_TIRAR_PARA_TROCAR,
+        clientes.SQL_POR_DE_VOLTA,
+        usuarios.SQL_LOG,
+    ]
+    assert estado["gravacoes"][0][1] == {
+        "cliente": CLIENTE_A,
+        "perfil": "cliente_principal",
+        "codigo": "PES-01",
+    }
+    assert estado["gravacoes"][1][1] == {
+        "perfil_id": perfil_id,
+        "codigo": "PES-01",
+        "nominal": True,
+    }
+    log = estado["gravacoes"][2][1]
+    assert (log["autor"], log["operacao"]) == (ADMIN, "update")
+    assert '"ve_nomes": false' in log["antes"]
+    assert estado["confirmadas"] == 1
+    # o cache dos painéis já separa quem vê nomes: as respostas prontas ficam
     assert estado["apagadas"] == []
 
 
@@ -996,6 +1066,50 @@ def test_convite_fora_do_formato_422(
     assert estado["confirmadas"] == 0
 
 
+def test_apagar_usuario_confirma_e_aciona_o_job(
+    client: TestClient, estado: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    chamadas: list[tuple[Any, ...]] = []
+    acionados: list[Any] = []
+    monkeypatch.setattr(usuarios, "apagar", lambda conn, *a: chamadas.append(a))
+    monkeypatch.setattr(convites, "acionar_envio", acionados.append)
+
+    r = client.delete(f"/api/admin/usuarios/{BRUNO}")
+
+    assert (r.status_code, r.content) == (204, b"")
+    assert chamadas == [(ADMIN, BRUNO)]
+    assert estado["confirmadas"] == 1
+    # o job apaga o login no Supabase Auth
+    assert len(acionados) == 1
+
+
+@pytest.mark.parametrize(
+    ("erro", "status"),
+    [
+        (RegraInvalida("Desative o acesso antes de apagar."), 422),
+        (NaoEncontrado("Pessoa não encontrada."), 404),
+    ],
+)
+def test_apagar_usuario_recusado(
+    client: TestClient,
+    estado: dict[str, Any],
+    monkeypatch: pytest.MonkeyPatch,
+    erro: Exception,
+    status: int,
+) -> None:
+    def recusar(*a: Any, **k: Any) -> None:
+        raise erro
+
+    acionados: list[Any] = []
+    monkeypatch.setattr(usuarios, "apagar", recusar)
+    monkeypatch.setattr(convites, "acionar_envio", acionados.append)
+
+    r = client.delete(f"/api/admin/usuarios/{BRUNO}")
+
+    assert (r.status_code, r.json()) == (status, {"detail": str(erro)})
+    assert (estado["confirmadas"], acionados) == (0, [])
+
+
 def test_openapi_tem_as_rotas_da_gestao(client: TestClient) -> None:
     esquema = client.app.openapi()  # type: ignore[attr-defined]
     rotas = {
@@ -1011,6 +1125,7 @@ def test_openapi_tem_as_rotas_da_gestao(client: TestClient) -> None:
         ("PUT", "/api/admin/clientes/{slug}"),
         ("PUT", "/api/admin/clientes/{slug}/paineis/{codigo}"),
         ("PUT", "/api/admin/clientes/{slug}/perfis/{perfil}/paineis/{codigo}"),
+        ("PUT", "/api/admin/clientes/{slug}/perfis/{perfil}/paineis/{codigo}/nomes"),
         ("PUT", "/api/admin/clientes/{slug}/preferencias/{id}"),
         ("PUT", "/api/admin/clientes/{slug}/feriados/{data}"),
         ("DELETE", "/api/admin/clientes/{slug}/feriados/{data}"),
@@ -1020,6 +1135,7 @@ def test_openapi_tem_as_rotas_da_gestao(client: TestClient) -> None:
         ("PUT", "/api/admin/usuarios/{id}"),
         ("PUT", "/api/admin/usuarios/{id}/sessao"),
         ("PUT", "/api/admin/usuarios/{id}/acesso"),
+        ("DELETE", "/api/admin/usuarios/{id}"),
     }
     for nome in ("GestaoPayload", "ClientePayload", "UsuariosPayload", "ConvitePedido"):
         assert nome in esquema["components"]["schemas"]

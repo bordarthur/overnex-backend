@@ -595,8 +595,26 @@ def test_fluxo_caixa(client: TestClient) -> None:
 
 
 @pytest.mark.usefixtures("fluxo_do_bruno")
-def test_fluxo_caixa_mes_e_acumulado(client: TestClient) -> None:
-    corpo = client.get(FLUXO, params={"mes": "2026-09"}, headers=auth(OID_B)).json()
+def test_fluxo_caixa_mes_e_acumulado(
+    client: TestClient, admin_conn: psycopg.Connection[tuple[Any, ...]]
+) -> None:
+    # a lista de meses que se pode escolher vem do faturado das vendas (mais o mês da carga),
+    # não do caixa: sem vendas em setembro, ?mes=2026-09 é 422 "Mês sem dados."
+    admin_conn.execute(
+        """
+        insert into mart.resumo_mensal
+            (cliente_id, empresa_id, tabela, medida, dimensao, mes, valor, data_snapshot)
+        values (%s, null, 'f_vendas_teste_fluxo', 'faturado', '', '2026-09-01', 1, '2026-10-11')
+        """,
+        (CLIENTE_B,),
+    )
+    try:
+        corpo = client.get(FLUXO, params={"mes": "2026-09"}, headers=auth(OID_B)).json()
+    finally:
+        admin_conn.execute(
+            "delete from mart.resumo_mensal where cliente_id = %s and tabela = %s",
+            (CLIENTE_B, "f_vendas_teste_fluxo"),
+        )
     assert corpo["destaques"][0]["valor"]["valor"] == 800
     ano = client.get(FLUXO, params={"visao": "ano"}, headers=auth(OID_B)).json()
     arvore = next(c for c in ano["cartoes"] if c["id"] == "fluxo-realizado")

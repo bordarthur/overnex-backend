@@ -6,6 +6,7 @@
 - PUT  /api/admin/clientes/{slug}              nome e setor da empresa
 - PUT  /api/admin/clientes/{slug}/paineis/{codigo}                  liga ou desliga o painel
 - PUT  /api/admin/clientes/{slug}/perfis/{perfil}/paineis/{codigo}  matriz perfil × painel
+- PUT  /api/admin/clientes/{slug}/perfis/{perfil}/paineis/{codigo}/nomes  chave "vê nomes"
 - PUT  /api/admin/clientes/{slug}/preferencias/{id}                 escolha salva do cliente
 - PUT e DELETE /api/admin/clientes/{slug}/feriados/{data}           feriado do cliente
 - GET  /api/admin/usuarios                     todas as pessoas e a contagem dos filtros
@@ -14,6 +15,7 @@
 - PUT  /api/admin/usuarios/{id}                nome, perfil, empresas e sessão
 - PUT  /api/admin/usuarios/{id}/sessao         só o tempo de sessão
 - PUT  /api/admin/usuarios/{id}/acesso         desativa ou reativa
+- DELETE /api/admin/usuarios/{id}              apaga quem já está desativado
 
 Quem não é admin recebe o 403 genérico (negado na etapa 3, com log `admin:<rota>`). Slug
 que não existe: 404. Regra quebrada: 422 com o texto pronto em `detail`. As gravações
@@ -40,6 +42,7 @@ from app.admin.contrato import (
     MudancaAcessoPerfil,
     MudancaEmpresa,
     MudancaFeriado,
+    MudancaNomesPerfil,
     MudancaPainel,
     MudancaPreferencia,
     MudancaSessao,
@@ -208,6 +211,30 @@ def mudar_matriz(
     try:
         clientes.mudar_matriz(
             ctx.sessao.conn, ctx.usuario_id, _cliente(ctx), perfil, codigo, corpo.ve
+        )
+    except (NaoEncontrado, RegraInvalida) as exc:
+        raise _erro(exc) from exc
+    return _gravado(ctx)
+
+
+@router.put(
+    "/clientes/{slug}/perfis/{perfil}/paineis/{codigo}/nomes",
+    status_code=status.HTTP_204_NO_CONTENT,
+    response_class=Response,
+    responses=RESPOSTAS_GRAVAR,
+)
+def mudar_nomes(
+    ctx: Annotated[ContextoAdmin, Depends(exigir_admin_no_cliente("matriz-nomes"))],
+    perfil: Annotated[str, Path(max_length=40, description="Perfil (ex.: cliente_principal).")],
+    codigo: CodigoUrl,
+    corpo: MudancaNomesPerfil,
+) -> Response:
+    """Define se o perfil vê os nomes do painel nesta empresa (chave "Mostrar nomes" dos
+    cartões; hoje, os de Pessoas). 422 se o painel não tem essa chave, se o perfil não vê o
+    painel ou se é o Admin BORD (que sempre vê)."""
+    try:
+        clientes.mudar_nomes(
+            ctx.sessao.conn, ctx.usuario_id, _cliente(ctx), perfil, codigo, corpo.ve_nomes
         )
     except (NaoEncontrado, RegraInvalida) as exc:
         raise _erro(exc) from exc
@@ -416,3 +443,27 @@ def mudar_acesso(
     except (NaoEncontrado, RegraInvalida) as exc:
         raise _erro(exc) from exc
     return _gravado(ctx)
+
+
+@router.delete(
+    "/usuarios/{id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    response_class=Response,
+    responses=RESPOSTAS_GRAVAR,
+)
+def apagar_usuario(
+    ctx: Annotated[ContextoAdmin, Depends(exigir_admin("usuario-apagar"))],
+    settings: Config,
+    id_: UsuarioUrl,
+    tarefas: BackgroundTasks,
+) -> Response:
+    """Apaga a pessoa, que precisa estar desativada. O e-mail fica livre para um convite
+    novo; o login dela no Supabase é apagado pelo job de convites."""
+    try:
+        usuarios.apagar(ctx.sessao.conn, ctx.usuario_id, id_)
+    except (NaoEncontrado, RegraInvalida) as exc:
+        raise _erro(exc) from exc
+    resposta = _gravado(ctx)
+    # o job apaga o login no Supabase Auth (ele tem a chave secreta)
+    tarefas.add_task(convites.acionar_envio, settings)
+    return resposta

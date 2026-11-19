@@ -119,6 +119,8 @@ class Usuario(ModeloCamel):
     acessos: Acessos
     # false = não oferecer "Desativar acesso" (já desativado, ou o último Admin BORD ativo)
     pode_desativar: bool
+    # true = oferecer "Apagar" (DELETE /api/admin/usuarios/{id}): só quem já está desativado
+    pode_apagar: bool = False
     # botão que manda o convite de novo (POST /api/admin/usuarios/{id}/convite); null = não
     # oferecer (já entrou, está desativado ou o convite já está na fila)
     convite: AcaoConvite | None = None
@@ -209,6 +211,10 @@ class LinhaDaMatriz(ModeloCamel):
     nome: str
     # perfil.id → vê o painel
     ve: dict[str, bool]
+    # perfil.id → vê os nomes (chave "Mostrar nomes" dos cartões), só nos painéis que abrem
+    # sem nomes e têm essa chave (hoje, Pessoas); null nos outros. O Admin BORD sempre vê.
+    # Só vale onde `ve` é true: tirar o painel do perfil apaga a marca.
+    nomes: dict[str, bool] | None
 
 
 class Matriz(ModeloCamel):
@@ -283,6 +289,10 @@ class MudancaPainel(ModeloCamel):
 
 class MudancaAcessoPerfil(ModeloCamel):
     ve: bool
+
+
+class MudancaNomesPerfil(ModeloCamel):
+    ve_nomes: bool
 
 
 class MudancaPreferencia(ModeloCamel):

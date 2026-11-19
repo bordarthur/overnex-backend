@@ -28,6 +28,8 @@ select throws_ok($$update cfg.saldo_inicial set saldo = 0$$,
 reset role;
 
 set local role api_site;
+-- o set local do usuário acima vale até o fim da transação: limpar, como no 02
+set local app.usuario_id = '';
 select is((select count(*)::int from cfg.saldo_inicial), 0, 'sem app.usuario_id, nenhum saldo');
 reset role;
 

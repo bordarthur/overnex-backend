@@ -47,6 +47,8 @@ reset role;
 
 -- sem usuário na sessão: nada
 set local role api_site;
+-- o set local do usuário acima vale até o fim da transação: limpar, como no 02
+set local app.usuario_id = '';
 select is((select count(*)::int from mart.resumo_mensal), 0, 'sem app.usuario_id, nenhum resumo');
 select is((select count(*)::int from cfg.parametro_cliente), 0, 'sem app.usuario_id, nenhum parâmetro');
 reset role;

@@ -12,8 +12,12 @@ Supabase Auth (o mesmo e-mail do comando de cadastro, com o link para
 - não saiu: o pedido fica como falhou, com o motivo em texto pronto para a tela ("Convite
   não enviado"). Quem decide tentar de novo é o Admin BORD, pelo botão da Gestão.
 
-Fala com o banco pelo role carga, que em seg só executa seg.convites_na_fila e
-seg.concluir_convite (migration 29). Precisa de SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
+Antes dos convites, apaga no Supabase Auth o login de quem foi apagado pela Gestão
+(seg.login_a_apagar, migration 32): primeiro, para o e-mail de quem foi apagado e convidado
+de novo já estar livre. O que não der para apagar fica na fila para a próxima rodada.
+
+Fala com o banco pelo role carga, que em seg só executa as funções das duas filas
+(migrations 29 e 32). Precisa de SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
 FRONT_URL e DATABASE_URL_CARGA. Não escreve e-mail, nome nem chave na saída: só o número do
 pedido e o resultado.
 """
@@ -67,9 +71,13 @@ class Fila(Protocol):
         self, convite_id: int, id_autenticacao: UUID | None, motivo: str | None
     ) -> None: ...
 
+    def logins_a_apagar(self) -> list[UUID]: ...
+
+    def login_apagado(self, id_autenticacao: UUID) -> None: ...
+
 
 class FilaPostgres:
-    """A fila pelo role carga: só as duas funções da migration 29."""
+    """As filas pelo role carga: só as funções das migrations 29 e 32."""
 
     def __init__(self, conn: psycopg.Connection[DictRow]) -> None:
         self.conn = conn
@@ -94,6 +102,13 @@ class FilaPostgres:
             "select seg.concluir_convite(%s::bigint, %s::uuid, %s::text)",
             (convite_id, id_autenticacao, motivo),
         )
+
+    def logins_a_apagar(self) -> list[UUID]:
+        linhas = self.conn.execute("select l as id from seg.logins_a_apagar() as l").fetchall()
+        return [r["id"] for r in linhas]
+
+    def login_apagado(self, id_autenticacao: UUID) -> None:
+        self.conn.execute("select seg.login_apagado(%s::uuid)", (id_autenticacao,))
 
 
 def motivo_da_recusa(exc: GoTrueErro) -> str:
@@ -120,6 +135,28 @@ def enviar(pedido: Pedido, gotrue: GoTrue, front_url: str) -> tuple[UUID | None,
         return None, motivo_da_recusa(exc)
     except GoTrueIndisponivel:
         return None, MSG_INDISPONIVEL
+
+
+def apagar_logins(fila: Fila, gotrue: GoTrue) -> tuple[int, int]:
+    """Apaga no Supabase Auth os logins de quem foi apagado pela Gestão. Devolve (apagados,
+    que ficaram para a próxima rodada). A saída não leva o id."""
+    apagados = pendentes = 0
+    for id_autenticacao in fila.logins_a_apagar():
+        try:
+            gotrue.apagar_usuario(id_autenticacao)
+        except GoTrueErro as exc:
+            # 404: o login já não existe (apagado à mão no painel); é o que se queria
+            if exc.status != 404:
+                pendentes += 1
+                print(f"login não apagado (erro {exc.status}, {exc.codigo})", file=sys.stderr)
+                continue
+        except GoTrueIndisponivel:
+            pendentes += 1
+            print("login não apagado (serviço de login fora do ar)", file=sys.stderr)
+            continue
+        fila.login_apagado(id_autenticacao)
+        apagados += 1
+    return apagados, pendentes
 
 
 def processar(fila: Fila, gotrue: GoTrue, front_url: str) -> tuple[int, int, int]:
@@ -178,15 +215,18 @@ def main() -> int:
     gotrue = GoTrue(config.supabase_url, config.supabase_service_role_key.get_secret_value())
     try:
         with conn:
-            enviados, falhas, sem_registro = processar(FilaPostgres(conn), gotrue, config.front_url)
+            fila = FilaPostgres(conn)
+            apagados, logins_pendentes = apagar_logins(fila, gotrue)
+            enviados, falhas, sem_registro = processar(fila, gotrue, config.front_url)
     except psycopg.Error as exc:
         print(f"Erro: a fila não pôde ser lida ({type(exc).__name__}).", file=sys.stderr)
         return 1
     finally:
         gotrue.close()
 
+    print(f"Logins apagados: {apagados}; ficaram para a próxima rodada: {logins_pendentes}.")
     print(f"Convites: {enviados} enviados, {falhas} não enviados.")
-    return 1 if sem_registro else 0
+    return 1 if sem_registro or logins_pendentes else 0
 
 
 if __name__ == "__main__":
