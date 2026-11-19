@@ -21,6 +21,8 @@ class ProvedorAuth(StrEnum):
 
 
 DOMINIOS_ADMIN_PADRAO = "bordgestao.com.br"
+# Tamanho mínimo do PROXY_SEGREDO (secrets.token_urlsafe(32) gera 43 caracteres).
+PROXY_SEGREDO_MINIMO = 32
 
 
 def dominios(texto: str) -> frozenset[str]:
@@ -76,6 +78,10 @@ class Settings(BaseSettings):
     github_convites_workflow: str = "convites.yml"
     # o workflow precisa existir nesta branch
     github_convites_ref: str = "main"
+    # Segredo que o Worker da Cloudflare manda no cabeçalho X-Proxy-Segredo (app/core/proxy.py).
+    # Com ele, todo pedido sem o cabeçalho certo leva 403 (menos /health). Vazio desliga a
+    # checagem (dev, testes, proxy do Vite); com AMBIENTE=prod é obrigatório.
+    proxy_segredo: SecretStr = SecretStr("")
     # Padrão seguro: sem AMBIENTE explícito, comporta-se como produção.
     ambiente: Ambiente = Ambiente.PROD
     auth_fake: bool = False
@@ -112,6 +118,13 @@ class Settings(BaseSettings):
             raise ValueError("PAINEIS_A_DECIDIR só é permitido com AMBIENTE=dev.")
         if not self.cookie_seguro and not dev:
             raise ValueError("COOKIE_SEGURO=false só é permitido com AMBIENTE=dev.")
+        segredo = self.proxy_segredo.get_secret_value()
+        if self.ambiente is Ambiente.PROD and not segredo:
+            raise ValueError("PROXY_SEGREDO é obrigatório com AMBIENTE=prod.")
+        if segredo and len(segredo) < PROXY_SEGREDO_MINIMO:
+            raise ValueError(
+                f"PROXY_SEGREDO precisa ter pelo menos {PROXY_SEGREDO_MINIMO} caracteres."
+            )
         if self.auth_provedor is ProvedorAuth.SUPABASE and not self.supabase_configurado:
             raise ValueError(
                 "SUPABASE_URL, SUPABASE_ANON_KEY e FRONT_URL são obrigatórios com "

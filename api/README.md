@@ -100,9 +100,113 @@ docker build -t overnex-api api/
 docker run --rm -p 8000:8000 --env-file api/.env overnex-api
 ```
 
-Sem `AMBIENTE` definido, a API sobe como `prod`: exige `SUPABASE_URL`, `SUPABASE_ANON_KEY` e `FRONT_URL`, e recusa `AUTH_FAKE` e `COOKIE_SEGURO=false`. Não passe `SUPABASE_SERVICE_ROLE_KEY` nem `DATABASE_URL_ADMIN` para o contêiner: só o CLI de cadastro e o job de convites usam a chave secreta. Para o convite pela Gestão sair na hora, a API recebe `GITHUB_CONVITES_TOKEN` e `GITHUB_CONVITES_REPO` (ver [Convite pela Gestão](#convite-pela-gestão-fila--job)).
+Sem `AMBIENTE` definido, a API sobe como `prod`: exige `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `FRONT_URL` e `PROXY_SEGREDO` (ver [Segredo do proxy](#segredo-do-proxy)), e recusa `AUTH_FAKE` e `COOKIE_SEGURO=false`. Não passe `SUPABASE_SERVICE_ROLE_KEY` nem `DATABASE_URL_ADMIN` para o contêiner: só o CLI de cadastro e o job de convites usam a chave secreta. Para o convite pela Gestão sair na hora, a API recebe `GITHUB_CONVITES_TOKEN` e `GITHUB_CONVITES_REPO` (ver [Convite pela Gestão](#convite-pela-gestão-fila--job)).
 
-Atrás de proxy (Azure Container Apps, Static Web Apps), o limite de tentativas usa o IP do cliente que o uvicorn lê do `X-Forwarded-For`. O `--proxy-headers` do Dockerfile só confia no proxy de `127.0.0.1`: defina `FORWARDED_ALLOW_IPS` com o IP (ou a faixa) do proxy, ou `*` se a API só for alcançável por ele. Sem isso, todos os usuários aparecem com o IP do proxy e dividem o mesmo limite por IP.
+Atrás de proxy, o limite de tentativas usa o IP do cliente que o uvicorn lê do `X-Forwarded-For`. O `--proxy-headers` do Dockerfile só confia no proxy de `127.0.0.1`: defina `FORWARDED_ALLOW_IPS` com o IP (ou a faixa) do proxy, ou `*` se só o proxy passar da API (como no App Service com o segredo do proxy, abaixo). Sem isso, todos os usuários aparecem com o IP do proxy e dividem o mesmo limite por IP.
+
+## Publicar no Azure App Service
+
+O front fica na Cloudflare: um Worker serve o site e repassa `/api/*` ao App Service (`https://<domínio padrão do app>`), com o cabeçalho `X-Proxy-Segredo` e o `X-Forwarded-For` trocado pelo IP de quem acessa (`CF-Connecting-IP`). Para o navegador, front e API continuam no mesmo domínio: o cookie `ovx_refresh` (`Path=/api/auth`, `SameSite=Strict`) fica no domínio do front, e a API segue sem CORS.
+
+### 1. Criar o app (uma vez)
+
+Portal do Azure → Criar um recurso → **Aplicativo Web**:
+
+- **Publicar:** Código. **Pilha de runtime:** Python 3.12. **Sistema operacional:** Linux. **Região:** Brazil South (perto do banco, em São Paulo).
+- **Plano:** **B1** para uso. **F1 só para teste:** não tem Always On (o app dorme depois de uns 20 min parado e o primeiro pedido espera ele subir de novo) e tem 60 min de CPU por dia (passou disso, o app para até o dia seguinte).
+- **Implantação contínua:** desligada. Quem publica é o workflow do repositório; o Centro de Implantação criaria outro workflow.
+- **Nome do host padrão exclusivo:** ligado (o padrão), o endereço fica `<app>-<hash>.brazilsouth-01.azurewebsites.net`, não `<app>.azurewebsites.net`. O Worker usa o **Domínio padrão** que aparece na Visão geral do app.
+
+Depois de criado:
+
+- **Configurações → Configuração → Configurações gerais:** "Somente HTTPS" ligado, TLS mínimo 1.2, FTP desabilitado, autenticação básica do SCM e do FTP desligadas (o login do workflow é por OIDC e não precisa delas) e **Always On** ligado (B1). O comando de inicialização o workflow grava (item 3).
+- **Monitoramento → Verificação de integridade** (opcional): caminho `/health`.
+- **Monitoramento → Logs do Serviço de Aplicativo:** "Log de aplicativo" em Sistema de arquivos, para ver a saída do uvicorn em **Fluxo de log**.
+
+### 2. Variáveis do app
+
+Em **Configurações → Variáveis de ambiente → Configurações de aplicativo**. Aqui só os nomes; os valores ficam no portal. **Crie todas antes da primeira publicação:** sem elas a API não sobe e o workflow falha no `/health`.
+
+| Variável | O que é |
+|---|---|
+| `SCM_DO_BUILD_DURING_DEPLOYMENT` | `true`: o App Service instala o `requirements.txt` do pacote a cada publicação |
+| `AMBIENTE` | `prod` |
+| `DATABASE_URL` | o role `api_site` pelo pooler em modo transação (ver [Conexão em produção](#conexão-em-produção)) |
+| `SUPABASE_URL` | URL do projeto do Supabase |
+| `SUPABASE_ANON_KEY` | a chave **publishable** |
+| `FRONT_URL` | URL do front, igual à Site URL do Supabase Auth |
+| `PROXY_SEGREDO` | o mesmo segredo do Worker, com pelo menos 32 caracteres (`python -c "import secrets; print(secrets.token_urlsafe(48))"`) |
+| `GITHUB_CONVITES_TOKEN` e `GITHUB_CONVITES_REPO` | para o convite pela Gestão sair na hora (ver [Convite pela Gestão](#convite-pela-gestão-fila--job)) |
+
+Opcionais, com padrão no código ([app/core/config.py](app/core/config.py)): `ADMIN_DOMINIOS`, `AUTH_CONVITE_HORAS`, `AUTH_REFRESH_SEGUNDOS`, `GITHUB_CONVITES_REF`, `DB_POOL_MIN`, `DB_POOL_MAX`, `DB_TESTE_PARADA_SEGUNDOS` e `VISAO_GERAL_CACHE_SEGUNDOS`.
+
+**Nunca** ponha no App Service a `SUPABASE_SERVICE_ROLE_KEY` nem a `DATABASE_URL_ADMIN` (são só do CLI de cadastro e dos jobs). `AUTH_FAKE`, `VISAO_GERAL_DEMO`, `PAINEIS_A_DECIDIR` e `COOKIE_SEGURO=false` a API recusa fora de dev. `WEBSITES_PORT` não precisa: nas pilhas Python o App Service espera a porta 8000, a mesma do comando. `FORWARDED_ALLOW_IPS` também não: vai no comando.
+
+### 3. Comando de inicialização
+
+```
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips="*" --no-server-header
+```
+
+É o `CMD` do [Dockerfile](Dockerfile) com duas diferenças: `python -m uvicorn`, porque o App Service põe as dependências instaladas no `PYTHONPATH`, não necessariamente no `PATH`; e `--forwarded-allow-ips="*"` (abaixo). Fica em `COMANDO_INICIAL` no [workflow](../.github/workflows/deploy-api.yml), que o grava no app a cada publicação: mudar no portal só vale até a próxima. Para um teste à mão, cole em Configuração → Configurações gerais → Comando de inicialização.
+
+Um processo só (sem `--workers`) e uma instância só (sem escalar): o limite de tentativas do login é em memória, por processo, e cada processo abriria o seu pool de `DB_POOL_MIN` conexões.
+
+**Por que `*` é seguro aqui.** Com `*`, o uvicorn usa o primeiro IP do `X-Forwarded-For`. O App Service acrescenta no fim da lista o IP de quem conectou a ele (a Cloudflare), e o Worker sobrescreve o cabeçalho com o `CF-Connecting-IP`; então o primeiro é o de quem acessa. Quem chamar o `*.azurewebsites.net` direto pode forjar o cabeçalho, mas sem o segredo leva 403 antes de qualquer rota (só `/health` responde, e ele não usa o IP).
+
+### 4. Segredo do proxy
+
+- A API exige o cabeçalho `X-Proxy-Segredo` igual a `PROXY_SEGREDO` ([app/core/proxy.py](app/core/proxy.py)), comparado em tempo constante. Sem ele, diferente ou repetido: `403 {"detail": "Acesso negado."}`, sem dizer o motivo, inclusive em rota que não existe. `/health` fica livre.
+- `PROXY_SEGREDO` vazio desliga a checagem (dev, testes, proxy do Vite). Com `AMBIENTE=prod`, vazio ou com menos de 32 caracteres, a API não sobe.
+- **Trocar o segredo:** a API aceita um só, então troque no Worker e no App Service em seguida; entre um e outro, os pedidos levam 403.
+
+### 5. Publicação pelo GitHub Actions
+
+[.github/workflows/deploy-api.yml](../.github/workflows/deploy-api.yml), a cada push na `main` que mexa em `api/` (ou em Actions → Publicar API → Run workflow, só a partir da `main`):
+
+1. gera o `requirements.txt` com `uv export --no-dev --no-hashes --frozen` (não fica no repositório; está no `.gitignore`);
+2. monta o pacote só com `app/` e o `requirements.txt`;
+3. entra no Azure por OIDC e publica com `azure/webapps-deploy`, gravando o comando de inicialização;
+4. espera o `/health` responder 200 (até uns 5 min: o App Service instala as dependências e reinicia).
+
+**Autenticação: OIDC** (federated credential). O GitHub troca um token de curta duração por acesso ao Azure a cada execução, e só para o environment `producao` deste repositório; nada que vaze dá acesso depois. O publish profile, a alternativa, é uma senha que não vence e exige ligar a autenticação básica do SCM, que o Azure deixa desligada nos apps novos.
+
+Configurar uma vez, no Cloud Shell do portal (Bash):
+
+```bash
+APP=<nome-do-app>; RG=<grupo-de-recursos>; REPO=<dono>/<repositorio>
+SUB=$(az account show --query id -o tsv)
+TENANT=$(az account show --query tenantId -o tsv)
+CLIENT=$(az ad app create --display-name overnex-deploy-api --query appId -o tsv)
+az ad sp create --id "$CLIENT"
+# só o grupo do app: publica e configura os apps dele, mais nada
+az role assignment create --assignee "$CLIENT" --role "Website Contributor" \
+  --scope "/subscriptions/$SUB/resourceGroups/$RG"
+az ad app federated-credential create --id "$CLIENT" --parameters "{
+  \"name\": \"github-producao\",
+  \"issuer\": \"https://token.actions.githubusercontent.com\",
+  \"subject\": \"repo:$REPO:environment:producao\",
+  \"audiences\": [\"api://AzureADTokenExchange\"]
+}"
+echo "AZURE_CLIENT_ID=$CLIENT  AZURE_TENANT_ID=$TENANT  AZURE_SUBSCRIPTION_ID=$SUB"
+```
+
+Sem permissão para registrar aplicativos no Entra ID, dá para usar uma identidade gerenciada atribuída pelo usuário no lugar (`az identity create` e `az identity federated-credential create`, com o mesmo `subject`); o `AZURE_CLIENT_ID` passa a ser o da identidade.
+
+No GitHub (Settings do repositório):
+
+- **Environments → New environment:** `producao`, com "Deployment branches and tags" só na `main`. O nome entra no `subject` acima.
+- **Secrets** (do environment `producao`): `AZURE_CLIENT_ID`, `AZURE_TENANT_ID` e `AZURE_SUBSCRIPTION_ID`. Não são senhas, mas ficam fora do código.
+- **Variables** (do environment ou do repositório): `AZURE_WEBAPP_NAME` e `AZURE_RESOURCE_GROUP`.
+
+### 6. Ordem de uma publicação
+
+1. **Migrations antes da API.** Se a API nova depende de uma migration, uma pessoa a aplica com `supabase db push` ([supabase/README.md](../supabase/README.md)) antes de o código chegar à `main`. Enquanto isso a API antiga roda contra o banco novo: migrations que só acrescentam não a quebram.
+2. **Código na `main`** (PR `release/X.Y.Z` → `main`, ver [CONTRIBUTING.md](../CONTRIBUTING.md)): o workflow publica.
+3. **Conferir:**
+   - `curl https://<domínio padrão do app>/health` → `{"status":"ok"}`. 200 só com o banco respondendo; 503 "Banco indisponível." aponta para a `DATABASE_URL` ou o pooler. O `/health` não passa pelo Worker (ele só repassa `/api/*`).
+   - Pelo Worker, sem login: `curl -i https://<front>/api/sessao` → 401 quer dizer que o segredo chegou; 403 `{"detail":"Acesso negado."}` quer dizer que o Worker não mandou o `X-Proxy-Segredo` certo.
+   - Se o app não subir: Monitoramento → Fluxo de log. Configuração inválida aparece como `ValidationError`, com o nome da variável e sem o valor.
 
 ## Como está organizada
 

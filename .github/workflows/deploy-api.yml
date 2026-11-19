@@ -1,0 +1,94 @@
+# Publica a API no Azure App Service (Linux, Python 3.12) a cada push na main que mexa na api/,
+# e à mão (Actions → Publicar API → Run workflow, só a partir da main).
+#
+# O requirements.txt sai do uv.lock aqui e não fica no repositório. O pacote leva só o que roda
+# (app/ e o requirements.txt); quem instala as dependências é o próprio App Service (Oryx), com
+# SCM_DO_BUILD_DURING_DEPLOYMENT=true nas configurações do app.
+#
+# Login no Azure por OIDC (federated credential): nenhuma senha guardada no GitHub. Passo a passo
+# e lista de secrets em api/README.md, "Publicar no Azure App Service".
+#
+# Migrations vão antes: se a API nova depende de uma migration, aplique-a (supabase db push)
+# antes de levar o código à main.
+name: Publicar API
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "api/**"
+      - ".github/workflows/deploy-api.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # token OIDC para o azure/login
+
+# Uma publicação por vez; a segunda espera a primeira terminar (não cancela no meio).
+concurrency:
+  group: deploy-api
+  cancel-in-progress: false
+
+env:
+  # O mesmo CMD do api/Dockerfile, mais o --forwarded-allow-ips: só o Worker da Cloudflare
+  # passa do segredo do proxy (PROXY_SEGREDO), e ele sobrescreve o X-Forwarded-For com o IP de
+  # quem acessa. Porta 8000: a que o App Service espera das imagens Python (sem WEBSITES_PORT).
+  # "python -m uvicorn": o App Service põe as dependências no PYTHONPATH, não no PATH.
+  COMANDO_INICIAL: >-
+    python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers
+    --forwarded-allow-ips="*" --no-server-header
+
+jobs:
+  publicar:
+    # workflow_dispatch numa outra branch não publica
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    # O environment "producao" é o subject da federated credential no Azure; crie-o em
+    # Settings → Environments, com "Deployment branches" só na main.
+    environment: producao
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+
+      - name: Gerar o requirements.txt do uv.lock
+        working-directory: api
+        run: uv export --no-dev --no-hashes --frozen -o requirements.txt
+
+      - name: Montar o pacote (app/ e requirements.txt)
+        run: |
+          pacote="$RUNNER_TEMP/pacote"
+          mkdir -p "$pacote"
+          cp -r api/app "$pacote/"
+          cp api/requirements.txt "$pacote/"
+          find "$pacote" -name "__pycache__" -type d -prune -exec rm -rf {} +
+          echo "PACOTE=$pacote" >> "$GITHUB_ENV"
+
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Publicar no App Service
+        id: publicar
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ vars.AZURE_WEBAPP_NAME }}
+          resource-group-name: ${{ vars.AZURE_RESOURCE_GROUP }}
+          package: ${{ env.PACOTE }}
+          # o comando de inicialização fica versionado aqui; mudar no portal não dura
+          startup-command: ${{ env.COMANDO_INICIAL }}
+
+      - name: Conferir o /health
+        env:
+          URL_APP: ${{ steps.publicar.outputs.webapp-url }}
+        run: |
+          # O App Service instala as dependências e reinicia: pode levar alguns minutos.
+          # /health dá 200 só com o banco respondendo, e não pede o segredo do proxy.
+          curl --fail --silent --show-error --max-time 10 \
+            --retry 20 --retry-delay 15 --retry-all-errors \
+            "${URL_APP%/}/health"

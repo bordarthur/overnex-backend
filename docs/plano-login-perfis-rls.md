@@ -88,6 +88,8 @@ Em 26/10/2026 a senha do `postgres` do projeto novo apareceu numa mensagem de er
 
 O front vai para a Cloudflare. A API não roda na Cloudflare (Python com psycopg): continua a recomendação de Azure Container Apps, na região **Brazil South**, perto do banco em São Paulo.
 
+> **Atualização de 19/11/2026:** o usuário escolheu o **Azure App Service** (Aplicativo Web Linux, Python 3.12, Brazil South, modelo "Código") no lugar do Container Apps. O workflow (`.github/workflows/deploy-api.yml`, sem imagem nem registry) e o segredo do proxy estão prontos; o passo a passo está em [api/README.md](../api/README.md#publicar-no-azure-app-service). Os itens 1 e 2 abaixo valem com essa troca; o resto continua.
+
 **Mesmo domínio.** A API não tem CORS e o cookie `ovx_refresh` é do domínio do front, então `/api/*` precisa sair do mesmo domínio. Na Cloudflare, um Worker na rota `<domínio>/api/*` repassa o pedido à API. Uma Origin Rule faz o mesmo, mas sem como mandar o IP de quem acessa (abaixo).
 
 **O que preparar quando o front tiver data:**
@@ -118,6 +120,8 @@ O front vai para a Cloudflare. A API não roda na Cloudflare (Python com psycopg
 Pelo Worker, a API recebe o pedido vindo da Cloudflare. O IP de quem acessa chega ao Worker (`CF-Connecting-IP`), mas não à API, a menos que o Worker o mande. E a API não pode confiar num cabeçalho de IP que qualquer um consiga mandar direto a ela.
 
 ### Desenho
+
+> **Atualização de 19/11/2026:** feito com outro desenho, mais simples. O Worker manda `X-Proxy-Segredo` (o segredo) e **sobrescreve** o `X-Forwarded-For` com o `CF-Connecting-IP`. A API recusa com 403 todo pedido sem o segredo certo (menos `/health`), então o uvicorn pode ler o `X-Forwarded-For` de qualquer origem (`--forwarded-allow-ips="*"`, que usa o primeiro IP da lista; o App Service acrescenta o dele no fim). Não há `X-Overnex-IP` e o IP não depende de código da API; o App Service não precisa limitar a entrada aos IPs da Cloudflare, porque sem o segredo nada passa. O item 4 (regra de limite da Cloudflare) continua. Código em `api/app/core/proxy.py`. O desenho original fica abaixo, para registro.
 
 1. O Worker manda dois cabeçalhos: `X-Overnex-IP` (o `CF-Connecting-IP`) e `X-Overnex-Proxy` (um segredo compartilhado, nos secrets do Worker e da API).
 2. A API ganha `PROXY_SEGREDO` na configuração. Com o segredo certo, o IP do limite vem de `X-Overnex-IP`; sem ele ou com outro, vem da conexão, como hoje. Comparação em tempo constante; nem o segredo nem o IP vão para o log.
