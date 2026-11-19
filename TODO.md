@@ -1,6 +1,6 @@
 # TODO — Overnex backend
 
-Última atualização: 18/11/2026.
+Última atualização: 19/11/2026.
 
 ## A fazer
 
@@ -362,6 +362,8 @@ O front (`overnex-frontend`) já desenha a Visão geral a partir de um JSON fixo
   - **preferências do mockup que não entraram** (mudam regra de indicador em todos os painéis): período padrão dos cartões (Mês/Acumulado), dias úteis "seg a sáb" e "todos os dias", comparação padrão e histórico exibido. Entraram "Linhas de custo" e os feriados do cliente.
 
 ## Concluído
+
+- **19/11/2026 — Branch `release/0.2.0` (dev → main):** leva para a `main` o apagar pessoa (migration 32), os ajustes da demonstração (sprint S3) e a chave "vê nomes" na matriz da Gestão. A 0.1.0 entrou na `main` por squash (`de573fe`, sem tag), com o mesmo conteúdo do `7c6169f` da `dev`; a `main` foi incorporada à release com `merge -s ours`, só para a automação ver a `main` no histórico, sem mudar arquivo. Única migration nova desde a 0.1.0: a 32, que, segundo o usuário (16/11/2026), já está em produção.
 
 - **18/11/2026 — Chave "vê nomes" na matriz da Gestão:** `PUT /api/admin/clientes/{slug}/perfis/{perfil}/paineis/{codigo}/nomes` (`{"veNomes": bool}`) e `nomes` em cada linha de `acesso.linhas` (`null` nos painéis sem a chave; hoje só PES-01 a tem). Grava `cfg.perfil_tela.ve_dado_nominal` com `delete` + `insert` (sem migration: o admin não tem `update` nessa tabela), com log em `seg.log_alteracao`. 422 para painel sem a chave, perfil que não vê o painel e admin. `nomes_opcionais` no catálogo vem do `NOMES` dos painéis. Testes: sem banco em `test_admin_rotas.py` e com banco em `test_admin_db.py::test_ve_nomes_pela_gestao`; `openapi.json`, README, CLAUDE.md e comentários de Pessoas atualizados. Desenho na etapa 2b de [docs/plano-login-perfis-rls.md](docs/plano-login-perfis-rls.md).
 - **18/11/2026 — Testes com banco e pgTAP rodados pela primeira vez juntos (sem Docker):** Postgres 16 local (pgserver) com as 32 migrations, o `seed.sql` e o `plano_contas_padrao.sql` (o `config.toml` põe os dois no seed), e o pgTAP 1.3.3 do PGXN instalado como SQL no schema `extensions`. Resultado: 130 testes `db` da API e os 22 arquivos de pgTAP (342 asserções) passando, inclusive login, sessão, Gestão, convite, cliente escolhido e RLS. As falhas que apareceram eram dos testes, não do código: `test_fluxo_caixa_mes_e_acumulado` pedia setembro sem vendas em setembro (a lista de meses vem do faturado; o teste ganhou a linha de vendas), e os pgTAP 06, 07, 09 e 16 testavam "sem usuário" com o `set local app.usuario_id` do começo do arquivo ainda valendo (agora limpam, como o 02), e o 08 comparava o padrão da coluna com o texto `''::text` em vez do valor `''`.
