@@ -859,6 +859,50 @@ def test_criar_empresa_recusada_nao_grava(
     assert estado["confirmadas"] == 0
 
 
+@pytest.mark.parametrize(
+    ("corpo", "slug"),
+    [
+        # montado a partir do nome
+        ({"nome": "Início"}, "inicio"),
+        ({"nome": "Privacidade"}, "privacidade"),
+        ({"nome": "Esqueci  Senha"}, "esqueci-senha"),
+        # escolhido
+        ({"nome": "Alfa", "slug": "gestao"}, "gestao"),
+        ({"nome": "Alfa", "slug": "entrar"}, "entrar"),
+        ({"nome": "Alfa", "slug": "definir-senha"}, "definir-senha"),
+        ({"nome": "API"}, "api"),
+    ],
+)
+def test_criar_empresa_com_slug_reservado_e_como_slug_em_uso(
+    client: TestClient, estado: dict[str, Any], corpo: dict[str, Any], slug: str
+) -> None:
+    r = client.post("/api/admin/clientes", json=corpo)
+
+    assert (r.status_code, r.json()) == (422, {"detail": clientes.MSG_SLUG_EM_USO.format(slug)})
+    assert estado["gravacoes"] == []
+    assert estado["confirmadas"] == 0
+
+
+def test_slugs_reservados_sao_os_enderecos_do_front() -> None:
+    assert {
+        "inicio",
+        "privacidade",
+        "gestao",
+        "entrar",
+        "esqueci-senha",
+        "definir-senha",
+        "api",
+    } == clientes.SLUGS_RESERVADOS
+
+
+def test_slug_que_so_comeca_com_reservado_e_aceito(
+    client: TestClient, estado: dict[str, Any]
+) -> None:
+    r = client.post("/api/admin/clientes", json={"nome": "Início Alimentos"})
+
+    assert (r.status_code, r.json()["slug"]) == (201, "inicio-alimentos")
+
+
 def test_mudar_empresa_troca_nome_e_setor_e_apaga_as_respostas_prontas(
     client: TestClient, estado: dict[str, Any]
 ) -> None:

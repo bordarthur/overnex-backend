@@ -92,6 +92,12 @@ MSG_CRIADA = (
     "carga de dados chegar."
 )
 SLUG = re.compile(r"[a-z0-9]+(-[a-z0-9]+)*")
+# Endereços de uma palavra só do front: a rota fixa ganha de /:clienteSlug, então uma empresa
+# com um destes slugs ficaria inalcançável. Mudou a lista de rotas do front, muda aqui.
+# "api": o Worker da Cloudflare manda /api/* para a API, não para o front.
+SLUGS_RESERVADOS = frozenset(
+    {"inicio", "privacidade", "gestao", "entrar", "esqueci-senha", "definir-senha", "api"}
+)
 
 ESTADOS: dict[str, tuple[str, Status]] = {
     "ativa": ("Ativa", "saudavel"),
@@ -235,6 +241,9 @@ def criar(conn: Conexao, autor: UUID, *, nome: str, segmento: str | None, slug: 
     if not SLUG.fullmatch(slug):
         # nome só com símbolos não dá identificador
         raise RegraInvalida(MSG_SLUG)
+    if slug in SLUGS_RESERVADOS:
+        # mesma resposta do slug em uso: para quem cadastra, o identificador já está tomado
+        raise RegraInvalida(MSG_SLUG_EM_USO.format(slug))
     try:
         conn.execute(SQL_CRIAR, {"nome": nome, "slug": slug, "segmento": segmento})
     except errors.UniqueViolation as exc:

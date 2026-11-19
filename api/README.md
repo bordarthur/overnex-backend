@@ -134,7 +134,7 @@ Em **Configurações → Variáveis de ambiente → Configurações de aplicativ
 | `DATABASE_URL` | o role `api_site` pelo pooler em modo transação (ver [Conexão em produção](#conexão-em-produção)) |
 | `SUPABASE_URL` | URL do projeto do Supabase |
 | `SUPABASE_ANON_KEY` | a chave **publishable** |
-| `FRONT_URL` | URL do front, igual à Site URL do Supabase Auth |
+| `FRONT_URL` | `https://overnex.app` (o domínio do front; igual à Site URL do Supabase Auth) |
 | `PROXY_SEGREDO` | o mesmo segredo do Worker, com pelo menos 32 caracteres (`python -c "import secrets; print(secrets.token_urlsafe(48))"`) |
 | `GITHUB_CONVITES_TOKEN` e `GITHUB_CONVITES_REPO` | para o convite pela Gestão sair na hora (ver [Convite pela Gestão](#convite-pela-gestão-fila--job)) |
 
@@ -191,6 +191,12 @@ az ad app federated-credential create --id "$CLIENT" --parameters "{
 echo "AZURE_CLIENT_ID=$CLIENT  AZURE_TENANT_ID=$TENANT  AZURE_SUBSCRIPTION_ID=$SUB"
 ```
 
+**O `subject` precisa ser igual ao que o GitHub manda.** Repositórios novos mandam o formato com os ids do dono e do repositório (`repo:<dono>@<id>/<repositorio>@<id>:environment:producao`), não `repo:<dono>/<repositorio>:…`. Se o `azure/login` falhar com `AADSTS700213`, copie o "subject claim" que aparece no log dele e atualize a credencial:
+
+```bash
+az ad app federated-credential update --id "$CLIENT" --federated-credential-id github-producao \n  --parameters '{"name": "github-producao", "issuer": "https://token.actions.githubusercontent.com", "subject": "<subject claim do log>", "audiences": ["api://AzureADTokenExchange"]}'
+```
+
 Sem permissão para registrar aplicativos no Entra ID, dá para usar uma identidade gerenciada atribuída pelo usuário no lugar (`az identity create` e `az identity federated-credential create`, com o mesmo `subject`); o `AZURE_CLIENT_ID` passa a ser o da identidade.
 
 No GitHub (Settings do repositório):
@@ -205,7 +211,7 @@ No GitHub (Settings do repositório):
 2. **Código na `main`** (PR `release/X.Y.Z` → `main`, ver [CONTRIBUTING.md](../CONTRIBUTING.md)): o workflow publica.
 3. **Conferir:**
    - `curl https://<domínio padrão do app>/health` → `{"status":"ok"}`. 200 só com o banco respondendo; 503 "Banco indisponível." aponta para a `DATABASE_URL` ou o pooler. O `/health` não passa pelo Worker (ele só repassa `/api/*`).
-   - Pelo Worker, sem login: `curl -i https://<front>/api/sessao` → 401 quer dizer que o segredo chegou; 403 `{"detail":"Acesso negado."}` quer dizer que o Worker não mandou o `X-Proxy-Segredo` certo.
+   - Pelo Worker, sem login: `curl -i https://overnex.app/api/sessao` → 401 quer dizer que o segredo chegou; 403 `{"detail":"Acesso negado."}` quer dizer que o Worker não mandou o `X-Proxy-Segredo` certo.
    - Se o app não subir: Monitoramento → Fluxo de log. Configuração inválida aparece como `ValidationError`, com o nome da variável e sem o valor.
 
 ## Como está organizada
@@ -324,7 +330,7 @@ O front não usa o supabase-js nem fala com o Supabase: chama estas rotas, e a A
 Não dá para fazer por código daqui. No painel do projeto de produção (`sesculmqiwvtpparxflz`, São Paulo; o antigo `ddpicszgihwekcvyevmd` não vale mais):
 
 1. **Authentication → Sign In / Providers → Email:** desligue "Allow new users to sign up" (ninguém cria conta sozinho; o convite pelo CLI continua funcionando). Deixe "Confirm email" ligado.
-2. **Authentication → URL Configuration:** *Site URL* = a URL do front em produção, igual ao `FRONT_URL` da API. Em *Redirect URLs*, a de produção e a de dev: `https://<front>/definir-senha` e `http://localhost:5173/definir-senha`.
+2. **Authentication → URL Configuration:** *Site URL* = `https://overnex.app`, igual ao `FRONT_URL` da API publicada. Em *Redirect URLs*, a de produção e a de dev: `https://overnex.app/definir-senha` e `http://localhost:5173/definir-senha`.
 3. **Authentication → Emails → Templates** (em português):
    - *Invite user*: assunto "Seu acesso ao Overnex"; link `{{ .SiteURL }}/definir-senha?token_hash={{ .TokenHash }}&type=invite`
    - *Reset password*: assunto "Redefinir sua senha do Overnex"; link `{{ .SiteURL }}/definir-senha?token_hash={{ .TokenHash }}&type=recovery`
@@ -366,7 +372,7 @@ Cada pessoa tem **um perfil** (`seg.usuario.perfil`, o mesmo em todas as empresa
 | Rota | O que faz |
 |---|---|
 | `GET /api/admin/gestao` | Barra lateral: `clientes` (com o estado das `camadas`), os 4 `perfis` (descrição, sessão padrão, pessoas ativas) e as `sessoes` (opções de tempo, com `soAdmin`) |
-| `POST /api/admin/clientes` | Cria uma empresa (`cfg.cliente`): `{"nome", "segmento": string \| null, "slug": string \| null}`. Sem `slug`, a API monta um a partir do nome (sem acento, minúsculas, hífen). 201 `{"slug", "nome", "mensagem"}`. 422 "Informe o nome da empresa.", "O identificador só aceita letras minúsculas, números e hífen (ex.: pj-cortes)." ou "Já existe uma empresa com o identificador …." |
+| `POST /api/admin/clientes` | Cria uma empresa (`cfg.cliente`): `{"nome", "segmento": string \| null, "slug": string \| null}`. Sem `slug`, a API monta um a partir do nome (sem acento, minúsculas, hífen). Os endereços de uma palavra do front (`inicio`, `privacidade`, `gestao`, `entrar`, `esqueci-senha` e `definir-senha`) e `api` (que o Worker manda para a API), em `SLUGS_RESERVADOS` de [app/admin/clientes.py](app/admin/clientes.py), contam como identificador em uso: a rota fixa ganha de `/:clienteSlug`, e a empresa ficaria inalcançável. 201 `{"slug", "nome", "mensagem"}`. 422 "Informe o nome da empresa.", "O identificador só aceita letras minúsculas, números e hífen (ex.: pj-cortes)." ou "Já existe uma empresa com o identificador …." |
 | `PUT /api/admin/clientes/{slug}` | `{"nome", "segmento": string \| null}`: troca o nome e o setor da empresa (204). O slug não muda. 422 "Informe o nome da empresa."; 404 só para slug que não existe. Precisa da migration 31: sem ela, o banco barra o update e a rota responde 500, com o motivo no log da API |
 | `GET /api/admin/clientes/{slug}` | Tudo das abas da empresa, numa resposta: `resumo`, `camadas` (Implantação), `fontes` (Prontidão dos dados), `paineis`, `acesso` (matriz perfil × painel, só os ligados; em cada linha, `ve` e `nomes`, a chave "vê nomes" por perfil, `null` nos painéis sem ela), `usuarios` da empresa, `preferencias`, `feriados`, `cargas` (as 10 últimas) e `menu` (como o Cliente principal vê) |
 | `PUT /api/admin/clientes/{slug}/paineis/{codigo}` | `{"ligado": true}`. Painel sem dado não liga: 422 "Este painel ainda não tem dado nesta empresa.". Ligado pela primeira vez, os perfis fixos recebem a matriz padrão |
