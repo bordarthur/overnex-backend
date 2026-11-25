@@ -13,7 +13,9 @@
 
 `/api/sessao` roda só as etapas 1 a 3 e aceita quem ainda não tem cliente escolhido (o
 admin, quem tem mais de um vínculo e quem não tem nenhum): a moldura do front lista os
-clientes para a pessoa escolher. `/api/admin/*` exige o perfil admin.
+clientes para a pessoa escolher. `/api/admin/*` exige o perfil admin, menos as duas leituras
+da Gestão que o consultor também faz (a barra lateral e as abas de uma empresa da carteira
+dele, em versão reduzida): `exigir_gestao` e `exigir_gestao_no_cliente`.
 
 O cliente e a empresa da requisição são só uma escolha entre o que o banco libera ao
 usuário: o slug e a empresa da query só valem se estiverem no alcance dele. Os fatos vêm de
@@ -43,6 +45,7 @@ PADRAO_TABELA = r"^[a-z][a-z0-9_]{0,62}$"
 # o mesmo de cfg.cliente.slug
 PADRAO_SLUG = r"^[a-z0-9]+(-[a-z0-9]+)*$"
 PERFIL_ADMIN = "admin"
+PERFIL_CONSULTOR = "consultor"
 PAPEL_ADMIN = "admin"
 MSG_CLIENTE_INEXISTENTE = "Empresa não encontrada."
 
@@ -118,11 +121,13 @@ class ContextoTabela:
 
 @dataclass(frozen=True)
 class ContextoAdmin:
-    """Admin BORD numa rota da Gestão; com o cliente da rota, se ela tem um."""
+    """Admin BORD numa rota da Gestão; com o cliente da rota, se ela tem um. `consultor`:
+    o Consultor por carteira numa leitura da Gestão (versão reduzida, só a carteira dele)."""
 
     sessao: Sessao
     usuario_id: UUID
     cliente_id: UUID | None
+    consultor: bool = False
 
 
 @dataclass(frozen=True)
@@ -345,6 +350,39 @@ def verificar_admin(sessao: Sessao, recurso: str, cliente: str | None = None) ->
     return ContextoAdmin(sessao=sessao, usuario_id=usuario_id, cliente_id=checagem.cliente_id)
 
 
+def verificar_gestao(sessao: Sessao, recurso: str, cliente: str | None = None) -> ContextoAdmin:
+    """Leitura da Gestão: o admin (como em verificar_admin) ou o Consultor por carteira.
+
+    O consultor só alcança os clientes dos vínculos dele: com `cliente`, o slug precisa ser
+    de um deles (senão 403, sem dizer se a empresa existe); sem `cliente`, a barra lateral,
+    que o RLS restringe à carteira (migration 33). Outros perfis: 403 (etapa 3)."""
+    # o mesmo recurso do log das rotas só do admin (são rotas de /api/admin)
+    checagem = _Checagem(sessao, f"admin:{recurso}", None, cliente=cliente)
+    usuario_id = checagem.usuario_ativo()
+    if checagem.eh_admin():
+        checagem.cliente_id = checagem.fatos.cliente_id
+        if cliente is not None and checagem.fatos.cliente_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail=MSG_CLIENTE_INEXISTENTE
+            )
+        checagem.permitir()
+        return ContextoAdmin(sessao=sessao, usuario_id=usuario_id, cliente_id=checagem.cliente_id)
+    if checagem.fatos.perfil != PERFIL_CONSULTOR:
+        raise checagem.negar(3, "perfil sem acesso à Gestão")
+    cliente_id: UUID | None = None
+    if cliente is not None:
+        # 2. o slug precisa ser de um vínculo (o banco só escolhe cliente do vínculo)
+        escolhido = checagem.cliente_escolhido()
+        if escolhido is None:
+            raise checagem.negar(2, "cliente pedido fora da carteira")
+        cliente_id = escolhido[0]
+    checagem.cliente_id = cliente_id
+    checagem.permitir()
+    return ContextoAdmin(
+        sessao=sessao, usuario_id=usuario_id, cliente_id=cliente_id, consultor=True
+    )
+
+
 def verificar_acesso_consolidado(
     sessao: Sessao,
     codigo_tela: str,
@@ -565,6 +603,30 @@ def exigir_admin(recurso: str) -> Callable[..., ContextoAdmin]:
 
     def dependencia(sessao: Annotated[Sessao, Depends(get_sessao)]) -> ContextoAdmin:
         return verificar_admin(sessao, recurso)
+
+    return dependencia
+
+
+def exigir_gestao(recurso: str) -> Callable[..., ContextoAdmin]:
+    """Dependência de leitura da Gestão sem cliente: o admin ou o consultor, ou 403."""
+
+    def dependencia(sessao: Annotated[Sessao, Depends(get_sessao)]) -> ContextoAdmin:
+        return verificar_gestao(sessao, recurso)
+
+    return dependencia
+
+
+def exigir_gestao_no_cliente(recurso: str) -> Callable[..., ContextoAdmin]:
+    """Dependência de leitura da Gestão de um cliente (`{slug}` no caminho): o admin (slug
+    que não existe, 404) ou o consultor com vínculo no cliente; senão, 403."""
+
+    def dependencia(
+        sessao: Annotated[Sessao, Depends(get_sessao)],
+        slug: Annotated[
+            str, Path(pattern=PADRAO_SLUG, max_length=80, description="Slug do cliente.")
+        ],
+    ) -> ContextoAdmin:
+        return verificar_gestao(sessao, recurso, slug)
 
     return dependencia
 

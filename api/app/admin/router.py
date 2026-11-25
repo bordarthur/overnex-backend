@@ -1,4 +1,6 @@
-"""Gestão (Interno BORD): /api/admin/*, só para o perfil Admin BORD.
+"""Gestão (Interno BORD): /api/admin/*, só para o perfil Admin BORD. O Consultor por
+carteira também faz as duas primeiras leituras (GET /gestao e GET /clientes/{slug}), em
+versão reduzida e só das empresas da carteira dele; o resto continua só do admin.
 
 - GET  /api/admin/gestao                       empresas (com as camadas), perfis e sessões
 - POST /api/admin/clientes                     cria uma empresa (nome, setor e slug)
@@ -59,6 +61,8 @@ from app.seguranca.acesso import (
     ContextoAdmin,
     exigir_admin,
     exigir_admin_no_cliente,
+    exigir_gestao,
+    exigir_gestao_no_cliente,
 )
 from app.telas.paineis import router as paineis
 from app.telas.visao_geral import router as visao_geral
@@ -73,6 +77,17 @@ RESPOSTAS_CLIENTE: dict[int | str, dict[str, str]] = {
     **RESPOSTAS,
     404: {"description": f'"{MSG_CLIENTE_INEXISTENTE}" ou item da rota não encontrado.'},
 }
+# as duas leituras que o Consultor por carteira também faz
+RESPOSTAS_LEITURA: dict[int | str, dict[str, str]] = {
+    **RESPOSTAS,
+    403: {"description": "Acesso negado (só o Admin BORD e o Consultor por carteira)."},
+}
+RESPOSTAS_CLIENTE_LEITURA: dict[int | str, dict[str, str]] = {
+    **RESPOSTAS_CLIENTE,
+    403: {
+        "description": "Acesso negado (só o Admin BORD e o consultor com a empresa na carteira)."
+    },
+}
 RESPOSTAS_GRAVAR: dict[int | str, dict[str, str]] = {
     **RESPOSTAS_CLIENTE,
     422: {"description": "Regra da Gestão quebrada; o texto vem pronto em `detail`."},
@@ -85,7 +100,7 @@ CodigoUrl = Annotated[
 
 
 def _cliente(ctx: ContextoAdmin) -> UUID:
-    if ctx.cliente_id is None:  # exigir_admin_no_cliente já respondeu 404
+    if ctx.cliente_id is None:  # a dependência do cliente já respondeu 404 ou 403
         raise LookupError("rota de cliente sem cliente escolhido")
     return ctx.cliente_id
 
@@ -113,11 +128,12 @@ def _gravado(ctx: ContextoAdmin, *, telas_do_cliente: bool = False) -> Response:
 # ---------- empresas ----------
 
 
-@router.get("/gestao", responses=RESPOSTAS)
-def gestao(ctx: Annotated[ContextoAdmin, Depends(exigir_admin("gestao"))]) -> GestaoPayload:
-    """Moldura da Gestão: empresas com o estado das camadas, os 4 perfis e as opções de
-    sessão."""
-    return clientes.gestao(ctx.sessao.conn)
+@router.get("/gestao", responses=RESPOSTAS_LEITURA)
+def gestao(ctx: Annotated[ContextoAdmin, Depends(exigir_gestao("gestao"))]) -> GestaoPayload:
+    """Moldura da Gestão: empresas com o estado das camadas, os 4 perfis, as opções de
+    sessão e o que a pessoa pode fazer. Consultor: só as empresas da carteira, sem perfis
+    nem sessões, e só leitura."""
+    return clientes.gestao(ctx.sessao.conn, consultor=ctx.consultor)
 
 
 @router.post("/clientes", status_code=status.HTTP_201_CREATED, responses=RESPOSTAS_GRAVAR)
@@ -141,14 +157,17 @@ def criar_cliente(
     return EmpresaCriada(slug=slug, nome=" ".join(corpo.nome.split()), mensagem=clientes.MSG_CRIADA)
 
 
-@router.get("/clientes/{slug}", responses=RESPOSTAS_CLIENTE)
+@router.get("/clientes/{slug}", responses=RESPOSTAS_CLIENTE_LEITURA)
 def cliente(
-    ctx: Annotated[ContextoAdmin, Depends(exigir_admin_no_cliente("cliente"))],
+    ctx: Annotated[ContextoAdmin, Depends(exigir_gestao_no_cliente("cliente"))],
     settings: Config,
 ) -> ClientePayload:
     """Tudo das abas de uma empresa: camadas, fontes, painéis, matriz de acesso, pessoas,
-    preferências, feriados e últimas cargas."""
-    return clientes.cliente(ctx.sessao.conn, _cliente(ctx), settings.auth_convite_horas)
+    preferências, feriados e últimas cargas. Consultor (só empresa da carteira): só
+    Implantação e Prontidão dos dados; os campos das outras abas vêm vazios."""
+    return clientes.cliente(
+        ctx.sessao.conn, _cliente(ctx), settings.auth_convite_horas, consultor=ctx.consultor
+    )
 
 
 @router.put(

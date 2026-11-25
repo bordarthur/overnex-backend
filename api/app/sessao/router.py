@@ -78,7 +78,8 @@ class PeriodoDisponivel(ModeloCamel):
 class SessaoPayload(ModeloCamel):
     usuario: Usuario
     perfil: PerfilSessao
-    # a pessoa abre a Gestão (/api/admin/*): só o Admin BORD
+    # a pessoa abre a Gestão: o Admin BORD (inteira) e o Consultor por carteira (só leitura,
+    # com as empresas dele; o que ele pode fazer vem em GET /api/admin/gestao, `permissoes`)
     gestao: bool
     # clientes que a pessoa pode abrir, por nome (o seletor de empresa)
     clientes: list[ClienteSessao]
@@ -190,7 +191,7 @@ def sessao(
     return SessaoPayload(
         usuario=Usuario(nome=usuario["nome"], email=usuario["email"]),
         perfil=PerfilSessao(id=ctx.perfil, rotulo=perfis.rotulo(ctx.perfil)),
-        gestao=admin,
+        gestao=admin or ctx.perfil == perfis.CONSULTOR,
         clientes=clientes,
         cliente=escolhido,
         papel=ctx.papel,

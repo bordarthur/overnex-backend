@@ -1,8 +1,27 @@
 # TODO — Overnex backend
 
-Última atualização: 19/11/2026.
+Última atualização: 25/11/2026.
 
 ## A fazer
+
+### Empresa de demonstração (Distribuidora Overnex)
+
+Código pronto em 25/11/2026 (ver "Concluído"). Para ir ao ar, nesta ordem:
+
+- [ ] **Publicar o gerador:** o `diario.yml` agendado roda a versão da `main`; o job `demo` só existe depois da release (`dev` → `main`). Antes disso, dá para rodar `python -m demo` à mão, com o `.env` do `jobs/demo`.
+- [ ] **Rodar `supabase/producao/distribuidora_overnex_cadastro.sql` no SQL Editor** (o cliente `distribuidora-overnex` já foi criado pela Gestão, segundo o usuário). Não depende de migration nova.
+- [ ] **Primeira carga:** Run workflow no `diario.yml` e conferir as 12 fontes com a consulta do fim do script.
+- [ ] **Gestão:** ligar os 8 painéis, conferir a matriz (Pessoas só para o Cliente principal) e cadastrar um usuário só da demonstração (perfil Cliente principal, só neste cliente): logado como admin, o seletor mostra os nomes dos clientes reais.
+- [ ] **Espaço no banco:** a demo ocupa ~45 mil linhas de vendas (13 meses), ~34 mil títulos a receber, ~15 mil a pagar, ~16 mil de fluxo e ~14 mil de folha, e cresce uns 2 mil títulos e 600 linhas de folha por mês (os títulos e o fluxo não têm janela). Conferir o tamanho do banco depois da primeira carga (plano gratuito, ~400 MB).
+- [ ] **Check `demo` no CI:** está no `ci.yml`; decidir se entra nos checks obrigatórios dos rulesets.
+
+### Gestão só de leitura do consultor
+
+Back pronto em 25/11/2026 (ver "Concluído"). Falta:
+
+- [ ] **Front:** prompt entregue em 25/11/2026 (em `C:\Users\arthur bord\.claude\plans\prompt-front-gestao-consultor.md`): o consultor entra na Gestão, sem Usuários e sem Nova empresa, com só Implantação e Prontidão dos dados e sem Convidar e Editar; e a barra lateral para de pedir `GET /api/admin/usuarios` quando `permissoes.usuarios` é falso.
+- [ ] **Produção, nesta ordem:** `supabase db push` da migration 33 e depois a API. Sem a migration, a barra lateral do consultor mostra as camadas como desligadas.
+- [ ] **Publicar o back e o front juntos:** com o back novo e o front antigo, o consultor é levado à Gestão inteira (as gravações e a aba Usuários dão 403, mas os botões aparecem).
 
 ### Sprint S3: ajustes vistos na demonstração (#18025 a #18028)
 
@@ -369,6 +388,8 @@ O front (`overnex-frontend`) já desenha a Visão geral a partir de um JSON fixo
 
 ## Concluído
 
+- **25/11/2026 — Gestão só de leitura do Consultor por carteira (back):** `/api/sessao` devolve `gestao: true` também para o consultor. `GET /api/admin/gestao` e `GET /api/admin/clientes/{slug}` aceitam o consultor (`verificar_gestao`, `exigir_gestao*` em [acesso.py](api/app/seguranca/acesso.py)): só as empresas da carteira (outra: 403, sem dizer se existe), só Implantação e Prontidão dos dados, sem pessoas, matriz, preferências, feriados nem cargas, e `abas` e `permissoes` novos na resposta dizendo ao front o que mostrar (para o admin, as 6 abas e tudo liberado). Gravações e `/api/admin/usuarios` continuam só do admin. [Migration 33](supabase/migrations/20261125000033_gestao_consultor.sql): `seg.eh_consultor()` e leitura de `cfg.cliente_tela`, `cfg.fonte_carga` e `mart.carga_fonte` nos clientes dos vínculos do consultor (a barra lateral). `openapi.json` regenerado; prompt do front entregue. Nada aplicado em produção. **Testado:** ruff, mypy, os 876 testes sem banco e, num Postgres local (pgserver) com as 33 migrations e o seed, os 131 testes `db` (com o novo `test_consultor_le_a_gestao_so_da_carteira`) e os 23 arquivos de pgTAP (com o novo `23_gestao_consultor`, 9 asserções), com o pgTAP 1.3.3 instalado como SQL. **Não testado:** o front e produção.
+- **25/11/2026 — Empresa de demonstração, Distribuidora Overnex (código):** gerador [jobs/demo](jobs/demo/README.md) (atacadista fictício com matriz em Fortaleza e filial em Recife, ~R$ 10 milhões/mês, 12 linhas de produto, ~1.000 clientes ativos, 23 vendedores, ~115 pessoas na folha), que grava os Parquet de 12 tabelas da PJ (vendas, metas, cadastros, títulos, folha, fluxo, DRE agrupada e orçamento) em `demo/distribuidora-overnex/` no Storage. Sorteio com semente fixa por dia, cliente, pessoa e mês: o passado não muda de uma carga para a outra. Job `demo` no [diario.yml](.github/workflows/diario.yml), em paralelo com o snapshot (a carga roda mesmo se a demo falhar), e check `demo` no [ci.yml](.github/workflows/ci.yml). Cadastro de produção em [distribuidora_overnex_cadastro.sql](supabase/producao/distribuidora_overnex_cadastro.sql) (empresas, mapa, fontes, parâmetros, de-para das 36 contas do ERP fictício e saldo inicial). Sem migration e sem mudança na API, na carga ou no front. **Testado:** ruff, mypy e os 41 testes do gerador (colunas contra as migrations, script contra o gerador e o plano de contas, passado estável, DRE contra vendas e folha, faixas plausíveis); e, num Postgres local (pgserver) com as 32 migrations, o seed e o plano: o script de cadastro rodado duas vezes, a carga de verdade (`carga.main.executar`, com os arquivos lidos da pasta) com as 12 fontes `ok` e o resumo mensal gravado, e as 9 rotas da API (`/api/sessao` e as 8 telas) respondendo 200 com dado, como o admin do seed. **Não testado:** o envio ao Storage, o workflow no GitHub e qualquer coisa em produção.
 - **19/11/2026 — Publicação no Azure App Service (código):** workflow [deploy-api.yml](.github/workflows/deploy-api.yml) (push na `main` que mexa em `api/` e `workflow_dispatch`, só da `main`): gera o `requirements.txt` com `uv export --no-dev --no-hashes --frozen` (no `.gitignore`, não versionado), publica só `app/` e o `requirements.txt` com `azure/webapps-deploy@v3` (login por OIDC, environment `producao`), grava o comando de inicialização (`python -m uvicorn … --port 8000 --proxy-headers --forwarded-allow-ips="*" --no-server-header`) e espera o `/health`. Segredo do proxy: `PROXY_SEGREDO` (SecretStr) e o middleware [app/core/proxy.py](api/app/core/proxy.py), que exige `X-Proxy-Segredo` (tempo constante, `hmac.compare_digest`) e responde `403 {"detail":"Acesso negado."}` sem dizer o motivo; `/health` livre; vazio desliga; `AMBIENTE=prod` sem ele (ou com menos de 32 caracteres) não sobe. Substitui o desenho de 18/11/2026 (`X-Overnex-IP`): o Worker sobrescreve o `X-Forwarded-For`, e o uvicorn com `*` usa o primeiro IP da lista (conferido no código do uvicorn 0.54). Seção "Publicar no Azure App Service" no [api/README.md](api/README.md#publicar-no-azure-app-service). Testado: 15 testes sem banco em [test_proxy.py](api/tests/test_proxy.py), a suíte sem banco inteira, ruff e `mypy app`, e o pacote montado como no workflow, instalado num ambiente limpo pelo `requirements.txt` e subido com o comando de inicialização em `AMBIENTE=prod` (sem o segredo não sobe; sem o cabeçalho, 403; com ele, passa; `/health` livre). Não testado: o workflow no GitHub e qualquer coisa no Azure.
 - **19/11/2026 — Branch `release/0.2.0` (dev → main):** leva para a `main` o apagar pessoa (migration 32), os ajustes da demonstração (sprint S3) e a chave "vê nomes" na matriz da Gestão. A 0.1.0 entrou na `main` por squash (`de573fe`, sem tag), com o mesmo conteúdo do `7c6169f` da `dev`; a `main` foi incorporada à release com `merge -s ours`, só para a automação ver a `main` no histórico, sem mudar arquivo. Única migration nova desde a 0.1.0: a 32, que, segundo o usuário (16/11/2026), já está em produção.
 

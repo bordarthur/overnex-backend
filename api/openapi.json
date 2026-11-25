@@ -2001,7 +2001,7 @@
           "admin"
         ],
         "summary": "Gestao",
-        "description": "Moldura da Gestão: empresas com o estado das camadas, os 4 perfis e as opções de\nsessão.",
+        "description": "Moldura da Gestão: empresas com o estado das camadas, os 4 perfis, as opções de\nsessão e o que a pessoa pode fazer. Consultor: só as empresas da carteira, sem perfis\nnem sessões, e só leitura.",
         "operationId": "gestao_api_admin_gestao_get",
         "responses": {
           "200": {
@@ -2018,7 +2018,7 @@
             "description": "Não autenticado."
           },
           "403": {
-            "description": "Acesso negado (só o Admin BORD)."
+            "description": "Acesso negado (só o Admin BORD e o Consultor por carteira)."
           }
         },
         "security": [
@@ -2083,7 +2083,7 @@
           "admin"
         ],
         "summary": "Cliente",
-        "description": "Tudo das abas de uma empresa: camadas, fontes, painéis, matriz de acesso, pessoas,\npreferências, feriados e últimas cargas.",
+        "description": "Tudo das abas de uma empresa: camadas, fontes, painéis, matriz de acesso, pessoas,\npreferências, feriados e últimas cargas. Consultor (só empresa da carteira): só\nImplantação e Prontidão dos dados; os campos das outras abas vêm vazios.",
         "operationId": "cliente_api_admin_clientes__slug__get",
         "security": [
           {
@@ -2120,7 +2120,7 @@
             "description": "Não autenticado."
           },
           "403": {
-            "description": "Acesso negado (só o Admin BORD)."
+            "description": "Acesso negado (só o Admin BORD e o consultor com a empresa na carteira)."
           },
           "404": {
             "description": "\"Empresa não encontrada.\" ou item da rota não encontrado."
@@ -2974,6 +2974,33 @@
   },
   "components": {
     "schemas": {
+      "AbaDaEmpresa": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "enum": [
+              "implantacao",
+              "dados",
+              "paineis",
+              "preferencias",
+              "acesso",
+              "cargas"
+            ],
+            "title": "Id"
+          },
+          "rotulo": {
+            "type": "string",
+            "title": "Rotulo"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "rotulo"
+        ],
+        "title": "AbaDaEmpresa"
+      },
       "AcaoConvite": {
         "properties": {
           "rotulo": {
@@ -7109,6 +7136,16 @@
           "cliente": {
             "$ref": "#/components/schemas/ClienteDaGestao"
           },
+          "abas": {
+            "items": {
+              "$ref": "#/components/schemas/AbaDaEmpresa"
+            },
+            "type": "array",
+            "title": "Abas"
+          },
+          "permissoes": {
+            "$ref": "#/components/schemas/PermissoesEmpresa"
+          },
           "resumo": {
             "items": {
               "$ref": "#/components/schemas/Chip"
@@ -7180,6 +7217,8 @@
         "type": "object",
         "required": [
           "cliente",
+          "abas",
+          "permissoes",
           "resumo",
           "camadas",
           "fontes",
@@ -8132,6 +8171,9 @@
             },
             "type": "array",
             "title": "Sessoes"
+          },
+          "permissoes": {
+            "$ref": "#/components/schemas/PermissoesGestao"
           }
         },
         "additionalProperties": false,
@@ -8139,7 +8181,8 @@
         "required": [
           "clientes",
           "perfis",
-          "sessoes"
+          "sessoes",
+          "permissoes"
         ],
         "title": "GestaoPayload"
       },
@@ -11675,6 +11718,45 @@
           "ano"
         ],
         "title": "PeriodosIndicador"
+      },
+      "PermissoesEmpresa": {
+        "properties": {
+          "editar": {
+            "type": "boolean",
+            "title": "Editar"
+          },
+          "convidar": {
+            "type": "boolean",
+            "title": "Convidar"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "editar",
+          "convidar"
+        ],
+        "title": "PermissoesEmpresa"
+      },
+      "PermissoesGestao": {
+        "properties": {
+          "criarEmpresa": {
+            "type": "boolean",
+            "title": "Criarempresa"
+          },
+          "usuarios": {
+            "type": "boolean",
+            "title": "Usuarios"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "criarEmpresa",
+          "usuarios"
+        ],
+        "title": "PermissoesGestao",
+        "description": "O que a pessoa faz na Gestão: tudo (Admin BORD) ou só ler (Consultor por carteira)."
       },
       "PillComRotulo": {
         "properties": {

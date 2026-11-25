@@ -65,10 +65,22 @@ class OpcaoSessao(ModeloCamel):
     so_admin: bool
 
 
+class PermissoesGestao(ModeloCamel):
+    """O que a pessoa faz na Gestão: tudo (Admin BORD) ou só ler (Consultor por carteira)."""
+
+    # botão "Nova empresa"
+    criar_empresa: bool
+    # aba Usuários (todas as pessoas, convite e edição); sem ela, só a lista de empresas
+    usuarios: bool
+
+
 class GestaoPayload(ModeloCamel):
+    # admin: todas as empresas; consultor: só as da carteira dele
     clientes: list[ClienteDaLista]
+    # vazios para o consultor (servem ao convite e à edição de pessoas)
     perfis: list[PerfilDaGestao]
     sessoes: list[OpcaoSessao]
+    permissoes: PermissoesGestao
 
 
 # ---------- pessoas ----------
@@ -265,8 +277,30 @@ class GrupoDoMenu(ModeloCamel):
     itens: list[ItemDoMenu]
 
 
+AbaId = Literal["implantacao", "dados", "paineis", "preferencias", "acesso", "cargas"]
+
+
+class AbaDaEmpresa(ModeloCamel):
+    # implantacao, dados (Prontidão dos dados), paineis, preferencias, acesso (Usuários e
+    # acesso) ou cargas
+    id: AbaId
+    rotulo: str
+
+
+class PermissoesEmpresa(ModeloCamel):
+    # botão "Editar" (nome e setor) e as gravações das abas (painéis, matriz, preferências,
+    # feriados)
+    editar: bool
+    # botão "Convidar usuário"
+    convidar: bool
+
+
 class ClientePayload(ModeloCamel):
     cliente: ClienteDaGestao
+    # as abas que a pessoa vê, na ordem; consultor: só Implantação e Prontidão dos dados (os
+    # campos das outras vêm vazios)
+    abas: list[AbaDaEmpresa]
+    permissoes: PermissoesEmpresa
     resumo: list[Chip]
     camadas: list[CamadaDoCliente]
     fontes: list[FonteDoCliente]

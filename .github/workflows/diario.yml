@@ -49,11 +49,41 @@ jobs:
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
 
+  # Dados fictícios da Distribuidora Overnex (empresa de demonstração): gera os Parquet com a
+  # data de hoje e envia ao Storage, em paralelo com o snapshot (jobs/demo).
+  demo:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: jobs/demo
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+          enable-cache: true
+          cache-dependency-glob: jobs/demo/uv.lock
+      - name: Instalar dependências
+        run: uv sync --locked --no-dev
+      - name: Gerar e enviar
+        run: uv run --no-sync python -m demo
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_BUCKET: ${{ vars.SUPABASE_BUCKET }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          FUSO: ${{ vars.FUSO }}
+          # rodada manual com data_esperada: os arquivos da demo saem com essa data também
+          DATA_SNAPSHOT: ${{ inputs.data_esperada }}
+
   # Lê os Parquet do snapshot e alimenta o mart. Só roda se o snapshot terminou com sucesso.
+  # A demo não segura a carga: se ela falhar, a carga roda assim mesmo, e as fontes da demo
+  # terminam com erro (arquivo velho), sem mexer no mart dela nem no dos clientes.
   # Sem `environment`, igual ao job snapshot: os dois usam Secrets/Variables do repositório.
-  # Se um environment for criado, coloque o mesmo `environment:` nos dois jobs.
+  # Se um environment for criado, coloque o mesmo `environment:` nos três jobs.
   carga:
-    needs: snapshot
+    needs: [snapshot, demo]
+    if: ${{ !cancelled() && needs.snapshot.result == 'success' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     defaults:

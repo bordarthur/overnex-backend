@@ -78,7 +78,8 @@ def test_admin_so_abre_tela_com_o_cliente_escolhido(client: TestClient) -> None:
 
 def test_consultor_escolhe_entre_os_clientes_da_carteira(client: TestClient) -> None:
     sem_slug = _sessao(client, OID_CONSULTOR).json()
-    assert (sem_slug["gestao"], sem_slug["cliente"]) == (False, None)
+    # a Gestão só de leitura (desde 25/11/2026)
+    assert (sem_slug["gestao"], sem_slug["cliente"]) == (True, None)
     assert [c["slug"] for c in sem_slug["clientes"]] == [SLUG_A, SLUG_B]
 
     em_b = _sessao(client, OID_CONSULTOR, SLUG_B).json()
@@ -127,11 +128,71 @@ def test_log_de_acesso_leva_o_cliente_escolhido(
 
 def test_gestao_so_para_o_admin(client: TestClient) -> None:
     for rota in ("/api/admin/gestao", "/api/admin/usuarios", f"/api/admin/clientes/{SLUG_A}"):
-        for oid in (OID_A, OID_CONSULTOR):
-            assert client.get(rota, headers=auth(oid)).status_code == 403
+        assert client.get(rota, headers=auth(OID_A)).status_code == 403
         assert client.get(rota, headers=auth(OID_ADMIN)).status_code == 200
+    # o consultor só lê a barra e as empresas da carteira (abaixo); pessoas, não
+    assert client.get("/api/admin/usuarios", headers=auth(OID_CONSULTOR)).status_code == 403
     r = client.get("/api/admin/clientes/nao-existe", headers=auth(OID_ADMIN))
     assert (r.status_code, r.json()) == (404, {"detail": "Empresa não encontrada."})
+
+
+SLUG_FORA = "gama-fora"
+
+
+@pytest.fixture
+def cliente_fora_da_carteira(
+    admin_conn: psycopg.Connection[tuple[object, ...]],
+) -> Iterator[None]:
+    """Um terceiro cliente, com painel ligado e fonte, sem vínculo com o Caio."""
+    admin_conn.execute(
+        "insert into cfg.cliente (nome, slug) values ('Gama Fora', %s)", (SLUG_FORA,)
+    )
+    admin_conn.execute(
+        "insert into cfg.cliente_tela (cliente_id, codigo_tela, ligada)"
+        " select id, 'VG-01', true from cfg.cliente where slug = %s",
+        (SLUG_FORA,),
+    )
+    yield
+    for tabela in ("cfg.cliente_tela", "cfg.perfil_acesso"):
+        admin_conn.execute(
+            f"delete from {tabela} where cliente_id in"  # noqa: S608
+            " (select id from cfg.cliente where slug = %s)",
+            (SLUG_FORA,),
+        )
+    admin_conn.execute("delete from cfg.cliente where slug = %s", (SLUG_FORA,))
+
+
+@pytest.mark.usefixtures("cliente_fora_da_carteira")
+def test_consultor_le_a_gestao_so_da_carteira(client: TestClient) -> None:
+    cabecalho = auth(OID_CONSULTOR)
+
+    gestao = client.get("/api/admin/gestao", headers=cabecalho).json()
+    # o admin vê os três; o consultor, só os dois da carteira, com as camadas lidas pelo RLS
+    todos = client.get("/api/admin/gestao", headers=auth(OID_ADMIN)).json()
+    assert {c["slug"] for c in todos["clientes"]} == {SLUG_A, SLUG_B, SLUG_FORA}
+    assert [c["slug"] for c in gestao["clientes"]] == [SLUG_A, SLUG_B]
+    assert [c["camadas"] for c in gestao["clientes"]] == [
+        c["camadas"] for c in todos["clientes"] if c["slug"] != SLUG_FORA
+    ]
+    assert (gestao["perfis"], gestao["sessoes"]) == ([], [])
+    assert gestao["permissoes"] == {"criarEmpresa": False, "usuarios": False}
+
+    empresa = client.get(f"/api/admin/clientes/{SLUG_B}", headers=cabecalho).json()
+    do_admin = client.get(f"/api/admin/clientes/{SLUG_B}", headers=auth(OID_ADMIN)).json()
+    assert [a["id"] for a in empresa["abas"]] == ["implantacao", "dados"]
+    assert empresa["permissoes"] == {"editar": False, "convidar": False}
+    assert (empresa["camadas"], empresa["fontes"]) == (do_admin["camadas"], do_admin["fontes"])
+    assert (empresa["usuarios"], empresa["cargas"], empresa["preferencias"]) == ([], [], [])
+
+    # fora da carteira: 403, sem dizer se a empresa existe
+    for slug in (SLUG_FORA, "nao-existe"):
+        r = client.get(f"/api/admin/clientes/{slug}", headers=cabecalho)
+        assert (r.status_code, r.json()) == (403, {"detail": "Acesso negado."})
+    # e nada de gravar
+    r = client.put(
+        f"/api/admin/clientes/{SLUG_A}/paineis/VG-01", json={"ligado": False}, headers=cabecalho
+    )
+    assert r.status_code == 403
 
 
 def test_gestao_le_o_cadastro_de_todos_os_clientes(client: TestClient) -> None:
