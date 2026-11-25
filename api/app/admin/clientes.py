@@ -2,6 +2,10 @@
 empresa (implantação, prontidão dos dados, painéis, matriz de acesso, pessoas, preferências,
 feriados e cargas), mais as gravações de painel ligado, matriz e feriado.
 
+O Consultor por carteira lê uma versão reduzida (desde 25/11/2026): na barra lateral, só as
+empresas dos vínculos dele; de cada uma, só Implantação e Prontidão dos dados (`abas`), sem
+pessoas, matriz, preferências, feriados nem cargas, e sem gravar nada (`permissoes`).
+
 "Empresa" na tela é o cfg.cliente. As leituras de um cliente rodam com ele escolhido
 (app.cliente_id, pela checagem do admin); a barra lateral lê todos pelas políticas do admin
 (migration 27). Nada aqui lê dado de negócio: só cadastro e controle da carga.
@@ -36,6 +40,7 @@ from psycopg import errors
 from app.admin import textos, usuarios
 from app.admin.catalogo import CAMADAS, PAINEIS, POR_CODIGO, Painel, tem_dado, usada_por
 from app.admin.contrato import (
+    AbaDaEmpresa,
     CamadaDoCliente,
     CamadaResumo,
     CargaDoCliente,
@@ -55,13 +60,15 @@ from app.admin.contrato import (
     PainelDoCliente,
     PerfilDaGestao,
     PerfilDaMatriz,
+    PermissoesEmpresa,
+    PermissoesGestao,
     PreferenciaDoCliente,
     Status,
     UsuarioDoCliente,
 )
 from app.admin.usuarios import NaoEncontrado, RegraInvalida, registrar
 from app.core.cache import por_requisicao
-from app.core.db import Conexao, em_uma_ida
+from app.core.db import Conexao, Consulta, em_uma_ida
 from app.seguranca import perfis
 from app.telas.moldura import cliente_da_linha
 from app.telas.visao_geral import preferencias
@@ -342,24 +349,26 @@ def paineis(ligadas: frozenset[str], com_carga: frozenset[str]) -> list[PainelDo
 # ---------- barra lateral ----------
 
 
-def gestao(conn: Conexao) -> GestaoPayload:
-    """Todas as empresas com o estado das camadas, os 4 perfis e as opções de sessão."""
-    linhas = em_uma_ida(
-        conn,
-        {
-            "clientes": (SQL_CLIENTES, ()),
-            "ligadas": (SQL_LIGADAS, ()),
-            "com_carga": (SQL_COM_CARGA, ()),
-            "perfis": (SQL_PERFIS, ([p.id for p in perfis.PERFIS],)),
-        },
-    )
+def gestao(conn: Conexao, *, consultor: bool = False) -> GestaoPayload:
+    """Todas as empresas com o estado das camadas, os 4 perfis e as opções de sessão.
+
+    `consultor`: só as empresas da carteira (o RLS da migration 33 já restringe as três
+    leituras) e nada de perfis e sessões, que servem ao convite e à edição de pessoas."""
+    consultas: dict[str, Consulta] = {
+        "clientes": (SQL_CLIENTES, ()),
+        "ligadas": (SQL_LIGADAS, ()),
+        "com_carga": (SQL_COM_CARGA, ()),
+    }
+    if not consultor:
+        consultas["perfis"] = (SQL_PERFIS, ([p.id for p in perfis.PERFIS],))
+    linhas = em_uma_ida(conn, consultas)
     ligadas: dict[UUID, set[str]] = {}
     for r in linhas["ligadas"]:
         ligadas.setdefault(r["cliente_id"], set()).add(r["codigo_tela"])
     com_carga: dict[UUID, set[str]] = {}
     for r in linhas["com_carga"]:
         com_carga.setdefault(r["cliente_id"], set()).add(r["tabela_destino"])
-    do_perfil = {r["perfil"]: r for r in linhas["perfis"]}
+    do_perfil = {r["perfil"]: r for r in linhas.get("perfis", [])}
 
     return GestaoPayload(
         clientes=[
@@ -393,13 +402,16 @@ def gestao(conn: Conexao) -> GestaoPayload:
                 pessoas=do_perfil[p.id]["pessoas"],
             )
             for p in perfis.PERFIS
+            if not consultor
         ],
         sessoes=[
             OpcaoSessao(
                 minutos=m, rotulo=textos.sessao(m), so_admin=m > usuarios.SESSAO_MAXIMA_COMUM
             )
             for m in usuarios.SESSOES
+            if not consultor
         ],
+        permissoes=PermissoesGestao(criar_empresa=not consultor, usuarios=not consultor),
     )
 
 
@@ -470,8 +482,99 @@ def _preferencias(conn: Conexao, cliente_id: UUID) -> list[PreferenciaDoCliente]
     ]
 
 
-def cliente(conn: Conexao, cliente_id: UUID, convite_horas: int) -> ClientePayload:
-    """Tudo das abas de uma empresa. O cliente já está escolhido na transação."""
+ABAS: tuple[AbaDaEmpresa, ...] = (
+    AbaDaEmpresa(id="implantacao", rotulo="Implantação"),
+    AbaDaEmpresa(id="dados", rotulo="Prontidão dos dados"),
+    AbaDaEmpresa(id="paineis", rotulo="Painéis"),
+    AbaDaEmpresa(id="preferencias", rotulo="Preferências da empresa"),
+    AbaDaEmpresa(id="acesso", rotulo="Usuários e acesso"),
+    AbaDaEmpresa(id="cargas", rotulo="Cargas"),
+)
+# o consultor só lê: o andamento da implantação e a prontidão dos dados
+ABAS_CONSULTOR = frozenset({"implantacao", "dados"})
+
+
+def _resumo(
+    lista_camadas: Sequence[CamadaDoCliente],
+    ultima: Mapping[str, Any] | None,
+    agora: datetime,
+    usuarios_ativos: int | None,
+) -> list[Chip]:
+    """Chips do topo: camadas ativas, usuários (só para o admin) e a última carga."""
+    ativas = sum(1 for k in lista_camadas if k.estado == "ativa")
+    chips = [
+        Chip(
+            rotulo=f"{ativas} de {len(lista_camadas)} camadas ativas",
+            status="saudavel" if ativas == len(lista_camadas) else "atencao",
+        )
+    ]
+    if usuarios_ativos is not None:
+        plural = "usuário" if usuarios_ativos == 1 else "usuários"
+        chips.append(Chip(rotulo=f"{usuarios_ativos} {plural}", status="neutro"))
+    chips.append(
+        Chip(
+            rotulo=f"Última carga: {textos.quando(ultima['inicio'], agora)}"
+            if ultima
+            else "Sem carga ainda",
+            status=_carga(ultima, agora.date()).status if ultima else "critico",
+        )
+    )
+    return chips
+
+
+def _cliente_consultor(conn: Conexao, cliente_id: UUID) -> ClientePayload:
+    """A empresa para o Consultor por carteira: só Implantação e Prontidão dos dados, sem
+    pessoas, matriz, preferências, feriados nem a lista de cargas, e sem gravar nada."""
+    agora = textos.agora()
+    c = (cliente_id,)
+    linhas = em_uma_ida(
+        conn,
+        {
+            "cliente": (SQL_CLIENTE, c),
+            "telas": (SQL_TELAS, c),
+            "fontes": (SQL_FONTES, c),
+            "cargas": (SQL_CARGAS, (cliente_id, 1)),
+        },
+    )
+    if not linhas["cliente"]:  # a checagem já garantiu o vínculo
+        raise LookupError("cliente da Gestão não encontrado")
+    dados = linhas["cliente"][0]
+    base = cliente_da_linha(dados)
+    ligadas = frozenset(r["codigo_tela"] for r in linhas["telas"] if r["ligada"])
+    com_carga = frozenset(
+        r["tabela"]
+        for r in linhas["fontes"]
+        if r["tipo"] == "tabela" and r["ativo"] and r["data_snapshot"] is not None
+    )
+    lista_camadas = camadas(ligadas, com_carga)
+    return ClientePayload(
+        cliente=ClienteDaGestao(
+            slug=dados["slug"], nome=base.nome, segmento=dados["segmento"], logo_url=base.logo_url
+        ),
+        abas=[a for a in ABAS if a.id in ABAS_CONSULTOR],
+        permissoes=PermissoesEmpresa(editar=False, convidar=False),
+        resumo=_resumo(
+            lista_camadas, linhas["cargas"][0] if linhas["cargas"] else None, agora, None
+        ),
+        camadas=lista_camadas,
+        fontes=[_fonte(r) for r in linhas["fontes"]],
+        paineis=[],
+        acesso=Matriz(perfis=[], linhas=[]),
+        usuarios=[],
+        preferencias=[],
+        feriados=[],
+        cargas=[],
+        menu=[],
+    )
+
+
+def cliente(
+    conn: Conexao, cliente_id: UUID, convite_horas: int, *, consultor: bool = False
+) -> ClientePayload:
+    """Tudo das abas de uma empresa. O cliente já está escolhido na transação.
+    `consultor`: a versão só de leitura (_cliente_consultor)."""
+    if consultor:
+        return _cliente_consultor(conn, cliente_id)
     agora = textos.agora()
     hoje = agora.date()
     c = (cliente_id,)
@@ -528,22 +631,9 @@ def cliente(conn: Conexao, cliente_id: UUID, convite_horas: int) -> ClientePaylo
             )
         )
 
-    ativas = sum(1 for k in lista_camadas if k.estado == "ativa")
     ativos = sum(1 for u in pessoas if u.situacao.id != "inativo")
     ultima = linhas["cargas"][0] if linhas["cargas"] else None
-    resumo = [
-        Chip(
-            rotulo=f"{ativas} de {len(lista_camadas)} camadas ativas",
-            status="saudavel" if ativas == len(lista_camadas) else "atencao",
-        ),
-        Chip(rotulo=f"{ativos} {'usuário' if ativos == 1 else 'usuários'}", status="neutro"),
-        Chip(
-            rotulo=f"Última carga: {textos.quando(ultima['inicio'], agora)}"
-            if ultima
-            else "Sem carga ainda",
-            status=_carga(ultima, hoje).status if ultima else "critico",
-        ),
-    ]
+    resumo = _resumo(lista_camadas, ultima, agora, ativos)
 
     menu: dict[str, list[ItemDoMenu]] = {}
     for painel in no_ar:
@@ -560,6 +650,8 @@ def cliente(conn: Conexao, cliente_id: UUID, convite_horas: int) -> ClientePaylo
             segmento=dados["segmento"],
             logo_url=base.logo_url,
         ),
+        abas=list(ABAS),
+        permissoes=PermissoesEmpresa(editar=True, convidar=True),
         resumo=resumo,
         camadas=lista_camadas,
         fontes=[_fonte(r) for r in linhas["fontes"]],

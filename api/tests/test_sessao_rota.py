@@ -211,7 +211,8 @@ def test_consultor_com_dois_clientes_e_sem_slug_escolhe_depois(
 
     corpo = client.get("/api/sessao").json()
 
-    assert (corpo["gestao"], corpo["cliente"], corpo["telas"]) == (False, None, [])
+    # o consultor abre a Gestão, só de leitura (desde 25/11/2026)
+    assert (corpo["gestao"], corpo["cliente"], corpo["telas"]) == (True, None, [])
     assert corpo["clientes"] == [ALFA, BETA]
     assert corpo["aviso"] is None
 

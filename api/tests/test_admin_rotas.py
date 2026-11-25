@@ -280,9 +280,100 @@ def test_quem_nao_e_admin_recebe_403_generico(
     assert r.json() == {"detail": "Acesso negado."}
     (log,) = estado["sessoes"][0].logs
     assert log[4].startswith("admin:")
-    assert log[5:8] == ("negado", 3, "perfil não é admin")
+    motivo = "perfil sem acesso à Gestão" if (metodo, rota) in LEITURAS else "perfil não é admin"
+    assert log[5:8] == ("negado", 3, motivo)
     assert estado["gravacoes"] == []
     assert estado["confirmadas"] == 0
+
+
+# ---------- consultor: só as duas leituras, da carteira dele ----------
+
+# as rotas que o Consultor por carteira também lê
+LEITURAS = {("GET", "/api/admin/gestao"), ("GET", f"/api/admin/clientes/{SLUG}")}
+CAIO = UUID("d1000000-0000-4000-8000-0000000000c0")
+
+
+def _consultor(**mudancas: Any) -> dict[str, Any]:
+    """Caio, consultor com A e B na carteira."""
+    return _fatos(
+        usuario_id=CAIO,
+        perfil="consultor",
+        vinculos=[
+            {"cliente_id": str(CLIENTE_A), "papel": "gestor"},
+            {"cliente_id": str(CLIENTE_B), "papel": "gestor"},
+        ],
+        **mudancas,
+    )
+
+
+@pytest.mark.parametrize(
+    ("metodo", "rota", "corpo"), [r for r in ROTAS if (r[0], r[1]) not in LEITURAS]
+)
+def test_consultor_nao_grava_nem_ve_pessoas(
+    client: TestClient, estado: dict[str, Any], metodo: str, rota: str, corpo: Any
+) -> None:
+    estado["fatos"] = _consultor(cliente_id=CLIENTE_A)
+
+    r = client.request(metodo, rota, json=corpo)
+
+    assert r.status_code == 403
+    (log,) = estado["sessoes"][0].logs
+    assert log[5:8] == ("negado", 3, "perfil não é admin")
+    assert estado["gravacoes"] == []
+
+
+def test_consultor_ve_a_barra_so_de_leitura(client: TestClient, estado: dict[str, Any]) -> None:
+    estado["fatos"] = _consultor()
+
+    r = client.get("/api/admin/gestao")
+
+    assert r.status_code == 200
+    corpo = r.json()
+    # as empresas são as que o RLS devolve (a carteira, migration 33)
+    assert [c["slug"] for c in corpo["clientes"]] == [SLUG, "padrao-lann-beta"]
+    assert corpo["perfis"] == []
+    assert corpo["sessoes"] == []
+    assert corpo["permissoes"] == {"criarEmpresa": False, "usuarios": False}
+    (log,) = estado["sessoes"][0].logs
+    assert log[5] == "permitido"
+
+
+def test_consultor_ve_so_implantacao_e_prontidao(
+    client: TestClient, estado: dict[str, Any]
+) -> None:
+    estado["fatos"] = _consultor(cliente_id=CLIENTE_A)
+
+    r = client.get(f"/api/admin/clientes/{SLUG}")
+
+    assert r.status_code == 200
+    corpo = r.json()
+    assert [a["id"] for a in corpo["abas"]] == ["implantacao", "dados"]
+    assert [a["rotulo"] for a in corpo["abas"]] == ["Implantação", "Prontidão dos dados"]
+    assert corpo["permissoes"] == {"editar": False, "convidar": False}
+    assert corpo["camadas"]
+    assert [f["tabela"] for f in corpo["fontes"]] == ["f_folha_alfa", "f_vendas_alfa"]
+    # nada das outras abas, nem a contagem de usuários
+    for campo in ("paineis", "usuarios", "preferencias", "feriados", "cargas", "menu"):
+        assert corpo[campo] == [], campo
+    assert corpo["acesso"] == {"perfis": [], "linhas": []}
+    rotulos = [c["rotulo"] for c in corpo["resumo"]]
+    assert len(rotulos) == 2
+    assert rotulos[1].startswith("Última carga")
+    assert estado["slug_pedido"] == SLUG
+
+
+def test_consultor_nao_abre_empresa_fora_da_carteira(
+    client: TestClient, estado: dict[str, Any]
+) -> None:
+    # o banco não escolhe cliente fora do vínculo: o slug pedido fica sem cliente
+    estado["fatos"] = _consultor()
+
+    r = client.get("/api/admin/clientes/gama-fora")
+
+    assert r.status_code == 403
+    assert r.json() == {"detail": "Acesso negado."}
+    (log,) = estado["sessoes"][0].logs
+    assert log[5:7] == ("negado", 2)
 
 
 def test_cliente_que_nao_existe_404(client: TestClient, estado: dict[str, Any]) -> None:
@@ -335,6 +426,21 @@ def test_gestao_lista_as_empresas_com_as_camadas_os_perfis_e_as_sessoes(
         {"minutos": 720, "rotulo": "12 h", "soAdmin": False},
         {"minutos": 1440, "rotulo": "24 h", "soAdmin": True},
     ]
+    assert corpo["permissoes"] == {"criarEmpresa": True, "usuarios": True}
+
+
+def test_admin_ve_as_seis_abas_e_grava(client: TestClient, estado: dict[str, Any]) -> None:
+    _no_cliente(estado)
+    corpo = client.get(f"/api/admin/clientes/{SLUG}").json()
+    assert [a["id"] for a in corpo["abas"]] == [
+        "implantacao",
+        "dados",
+        "paineis",
+        "preferencias",
+        "acesso",
+        "cargas",
+    ]
+    assert corpo["permissoes"] == {"editar": True, "convidar": True}
 
 
 def test_cliente_devolve_todas_as_abas(client: TestClient, estado: dict[str, Any]) -> None:
