@@ -31,6 +31,7 @@ USUARIO = UUID("d1000000-0000-4000-8000-00000000000a")
 CLIENTE = UUID("c1000000-0000-4000-8000-00000000000a")
 OUTRO_CLIENTE = UUID("c1000000-0000-4000-8000-00000000000b")
 EMPRESA = UUID("e1000000-0000-4000-8000-0000000000a1")
+EMPRESA_2 = UUID("e1000000-0000-4000-8000-0000000000a2")
 HOJE = date(2026, 11, 9)
 ROTA = "/api/telas/fluxo-caixa/cartoes/provisoes"
 
@@ -52,21 +53,21 @@ def test_sem_nada_salvo_vale_o_padrao() -> None:
 def test_escolhas_por_empresa_e_a_mais_recente() -> None:
     parametros = [
         _p(chave_periodo(None), "3-meses"),
-        _p(chave_periodo(EMPRESA), "12-meses", date(2026, 10, 1)),
-        _p(chave_periodo(EMPRESA), "ultimo-mes", date(2026, 11, 5)),
+        _p(chave_periodo((EMPRESA,)), "12-meses", date(2026, 10, 1)),
+        _p(chave_periodo((EMPRESA,)), "ultimo-mes", date(2026, 11, 5)),
         _p(
             chave_grupo(None, "folha"),
             {"ligado": True, "valor": 800000, "por": "Ana", "em": "2026-11-05"},
         ),
     ]
     assert ler_escolhas(parametros, None, HOJE).periodo == "3-meses"
-    assert ler_escolhas(parametros, EMPRESA, HOJE).periodo == "ultimo-mes"
+    assert ler_escolhas(parametros, (EMPRESA,), HOJE).periodo == "ultimo-mes"
     folha = ler_escolhas(parametros, None, HOJE).do_grupo("folha")
     assert folha == EscolhaGrupo(
         ligado=True, valor=Decimal(800000), por="Ana", em=date(2026, 11, 5)
     )
     # cada empresa tem as suas
-    assert ler_escolhas(parametros, EMPRESA, HOJE).do_grupo("folha").valor is None
+    assert ler_escolhas(parametros, (EMPRESA,), HOJE).do_grupo("folha").valor is None
 
 
 @pytest.mark.parametrize(
@@ -95,7 +96,15 @@ def test_periodo_salvo_invalido_vira_o_padrao() -> None:
 def test_chaves_ficam_nas_preferencias_do_cliente() -> None:
     # a migration 19 só deixa o api_site gravar chaves "preferencia.*"
     assert chave_periodo(None) == "preferencia.provisao.todas.periodo"
-    assert chave_grupo(EMPRESA, "folha") == f"preferencia.provisao.{EMPRESA}.grupo.folha"
+    assert chave_grupo((EMPRESA,), "folha") == f"preferencia.provisao.{EMPRESA}.grupo.folha"
+
+
+def test_escopo_de_varias_unidades_nao_depende_da_ordem() -> None:
+    varias = chave_periodo((EMPRESA, EMPRESA_2))
+    assert varias == chave_periodo((EMPRESA_2, EMPRESA))
+    assert varias.startswith("preferencia.provisao.u")
+    assert varias.endswith(".periodo")
+    assert varias not in {chave_periodo(None), chave_periodo((EMPRESA,))}
 
 
 # ---------- gravação ----------
@@ -142,7 +151,7 @@ def test_desligar_sem_mudar_o_valor_mantem_o_autor() -> None:
         conn,  # type: ignore[arg-type]
         CLIENTE,
         USUARIO,
-        EMPRESA,
+        (EMPRESA,),
         "folha",
         False,
         Decimal(800000),
@@ -197,7 +206,10 @@ class ConexaoFalsa:
                 "ativo": True,
                 "vinculos": [{"cliente_id": str(CLIENTE), "papel": self.estado["papel"]}],
                 "perfis_tela": self.estado["perfis"],
-                "empresas": [{"cliente_id": str(CLIENTE), "empresa_id": str(EMPRESA)}],
+                "empresas": [
+                    {"cliente_id": str(CLIENTE), "empresa_id": str(EMPRESA)},
+                    {"cliente_id": str(CLIENTE), "empresa_id": str(EMPRESA_2)},
+                ],
                 "perfil": "cliente_principal",
                 "cliente_id": CLIENTE,
             }
@@ -214,22 +226,27 @@ def estado(monkeypatch: pytest.MonkeyPatch) -> Iterator[dict[str, Any]]:
     }
 
     def gravar_periodo(
-        conn: Any, cliente: UUID, usuario: UUID, empresa: UUID | None, periodo: str, hoje: date
+        conn: Any,
+        cliente: UUID,
+        usuario: UUID,
+        unidades: tuple[UUID, ...] | None,
+        periodo: str,
+        hoje: date,
     ) -> None:
-        e["eventos"].append(("periodo", cliente, usuario, empresa, periodo))
+        e["eventos"].append(("periodo", cliente, usuario, unidades, periodo))
 
     def gravar_grupo(
         conn: Any,
         cliente: UUID,
         usuario: UUID,
-        empresa: UUID | None,
+        unidades: tuple[UUID, ...] | None,
         grupo: str,
         ligado: bool,
         valor: Decimal | None,
         anterior: EscolhaGrupo,
         hoje: date,
     ) -> None:
-        e["eventos"].append(("grupo", cliente, empresa, grupo, ligado, valor, anterior))
+        e["eventos"].append(("grupo", cliente, unidades, grupo, ligado, valor, anterior))
 
     def confirmar(sessao: Sessao) -> None:
         e["eventos"].append(("confirmar",))
@@ -282,10 +299,21 @@ def test_periodo_grava_confirma_e_apaga_o_cache_do_cliente(
     assert router._respostas.obter(do_outro) is not None
 
 
-def test_periodo_da_empresa(client: TestClient, estado: dict[str, Any]) -> None:
-    r = client.put(f"{ROTA}/periodo", params={"empresa": str(EMPRESA)}, json={"periodo": "3-meses"})
+def test_periodo_da_unidade(client: TestClient, estado: dict[str, Any]) -> None:
+    r = client.put(
+        f"{ROTA}/periodo", params={"unidades": str(EMPRESA)}, json={"periodo": "3-meses"}
+    )
     assert r.status_code == 204
-    assert estado["eventos"][0] == ("periodo", CLIENTE, USUARIO, EMPRESA, "3-meses")
+    assert estado["eventos"][0] == ("periodo", CLIENTE, USUARIO, (EMPRESA,), "3-meses")
+
+
+def test_periodo_com_todas_as_unidades_marcadas_e_o_de_todas(
+    client: TestClient, estado: dict[str, Any]
+) -> None:
+    todas = f"{EMPRESA_2},{EMPRESA}"
+    r = client.put(f"{ROTA}/periodo", params={"unidades": todas}, json={"periodo": "3-meses"})
+    assert r.status_code == 204
+    assert estado["eventos"][0] == ("periodo", CLIENTE, USUARIO, None, "3-meses")
 
 
 def test_periodo_invalido_422(client: TestClient, estado: dict[str, Any]) -> None:

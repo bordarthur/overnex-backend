@@ -2,6 +2,8 @@
 --
 -- Cliente A: Padrão LANN Alfa (2 empresas) — usuária Ana
 -- Cliente B: Padrão LANN Beta (1 empresa)  — usuário Bruno
+-- Unidades (migration 35): as duas da Alfa são do setor Distribuidora, em grupos diferentes
+-- (a bandeja "Negócios" aparece para ela); a da Beta não tem setor nem grupo.
 -- Dora (Admin BORD) vê os dois; Caio (Consultor por carteira) tem vínculo com os dois.
 --
 -- IDs fixos para os testes (api/tests e supabase/tests) se referirem a eles:
@@ -27,10 +29,14 @@ insert into cfg.cliente (id, nome, slug, logo_url, cor_destaque) values
     ('c1000000-0000-4000-8000-00000000000a', 'Padrão LANN Alfa', 'padrao-lann-alfa', null, '#1F6FEB'),
     ('c1000000-0000-4000-8000-00000000000b', 'Padrão LANN Beta', 'padrao-lann-beta', null, '#D97706');
 
-insert into cfg.empresa (id, cliente_id, nome) values
-    ('e1000000-0000-4000-8000-0000000000a1', 'c1000000-0000-4000-8000-00000000000a', 'Alfa Indústria'),
-    ('e1000000-0000-4000-8000-0000000000a2', 'c1000000-0000-4000-8000-00000000000a', 'Alfa Comércio'),
-    ('e1000000-0000-4000-8000-0000000000b1', 'c1000000-0000-4000-8000-00000000000b', 'Beta Serviços');
+-- unidades (migration 35): setor, segmento, grupo e endereço
+insert into cfg.empresa (id, cliente_id, nome, setor, segmento, grupo, uf, cidade) values
+    ('e1000000-0000-4000-8000-0000000000a1', 'c1000000-0000-4000-8000-00000000000a', 'Alfa Indústria',
+     'distribuidora', 'Alimentos', 'Fábrica', 'CE', 'Fortaleza'),
+    ('e1000000-0000-4000-8000-0000000000a2', 'c1000000-0000-4000-8000-00000000000a', 'Alfa Comércio',
+     'distribuidora', 'Alimentos', 'Atacado', 'CE', 'Fortaleza'),
+    ('e1000000-0000-4000-8000-0000000000b1', 'c1000000-0000-4000-8000-00000000000b', 'Beta Serviços',
+     null, null, null, null, null);
 
 insert into cfg.painel (cliente_id, versao, status, config_json) values
     ('c1000000-0000-4000-8000-00000000000a', 1, 'publicado',

@@ -1,5 +1,5 @@
 """Contrato dos painéis por cartões (Vendas, Equipe comercial, Clientes e atendimentos,
-Resultado, Receber e pagar, Fluxo de caixa e Pessoas), espelho de src/contracts/painel.ts
+Resultado, Receber e pagar, Fluxo de caixa, Pessoas e Estoque), espelho de src/contracts/painel.ts
 do overnex-frontend.
 
 Como na Visão geral, o front só desenha: todo número, status, texto, rótulo, média,
@@ -29,6 +29,7 @@ TelaPainel = Literal[
     "receber-pagar",
     "fluxo-caixa",
     "pessoas",
+    "estoque",
 ]
 
 # número a formatar pela unidade, ou texto já pronto ("2 de 6")
@@ -325,7 +326,40 @@ MarcaLegenda = Literal[
     # os tons das barras `serie-azul` e `serie-laranja` (ou `atencao`)
     "quadrado-azul",
     "quadrado-laranja",
+    # o farol das barras (estoque real contra ideal) e o traço do ideal
+    "quadrado-saudavel",
+    "quadrado-atencao",
+    "quadrado-critico",
+    "traco",
 ]
+
+# tons das faixas de saúde do estoque, que também pintam a barra pequena das listas: o
+# vermelho cheio e o claro (zerado e abaixo do mínimo), o azul (ideal) e o laranja e o escuro
+# (excesso e parado)
+EstiloFaixa = Literal["critico", "critico-claro", "saudavel", "atencao", "atencao-escura"]
+
+# a Classe BCG de um produto (Matriz BCG e as listas do Estoque)
+IdQuadranteBcg = Literal["estrela", "vaca-leiteira", "interrogacao", "abacaxi"]
+
+
+class QuadranteBcg(ModeloCamel):
+    # o id é também o id da opção do filtro `classe`; a cor fica no front, pelo id
+    id: IdQuadranteBcg
+    rotulo: str
+
+
+class BarraCelula(ModeloCamel):
+    proporcao: float
+    estilo: EstiloFaixa
+
+
+class LinkTela(ModeloCamel):
+    """Atalho para outra tela do app, pelo trecho da rota ("compras"). O front só mostra se a
+    tela existe nele e está em `telas` da sessão."""
+
+    rotulo: str
+    tela: str
+
 
 # ---------- cartões ----------
 
@@ -458,12 +492,22 @@ class Celula(ModeloCamel):
     tom_etiqueta: Literal["azul", "vermelho"] | None = None
     # pílula escura antes do texto (o mês, na semana a semana)
     marca: str | None = None
+    # a Classe BCG do produto: a bolinha na cor do quadrante e o nome (listas do Estoque)
+    quadrante: QuadranteBcg | None = None
+    # barra pequena embaixo do número ("dinheiro preso"): proporção (0 a 1) contra o maior
+    barra: BarraCelula | None = None
+    # atalho depois do conteúdo ("Comprar →")
+    link: LinkTela | None = None
+    # valor cru para ordenar a coluna (só nas colunas `ordenavel`): número ou texto
+    ordem: float | str | None = None
 
 
 class ColunaTabela(ModeloCamel):
     rotulo: str
     alinhar: Literal["esquerda", "direita", "centro"] | None = None
     ocultar_no_celular: bool = False
+    # o cabeçalho ordena a tabela pelo `ordem` das células desta coluna
+    ordenavel: bool | None = None
 
 
 class LinhaTabela(ModeloCamel):
@@ -490,6 +534,88 @@ class CartaoTabela(CartaoBase):
     # chave "Mostrar nomes": só para quem vê dado nominal na tela; ligada, o front pede
     # GET /api/telas/{tela}/cartoes/{id}/nomes
     nomes: NomesCartao | None = None
+    # mostra só as primeiras N linhas, com "Ver todas as M" (as listas do Estoque: 10)
+    limite: int | None = None
+    # texto embaixo da tabela ("Mais 23 produtos abaixo do mínimo fora dos principais.")
+    rodape: list[Trecho] | None = None
+    # atalho no cabeçalho do cartão ("Ver sugestão de compra em Compras →")
+    link: LinkTela | None = None
+
+
+class ItemRealIdeal(ModeloCamel):
+    """Uma linha do "Estoque real contra ideal": seção, família ou produto."""
+
+    # seção: o id da opção do filtro `secao`; família e produto: livres
+    id: str
+    nome: str
+    # "ideal de 12 dias", "4 produtos", "cobertura 2,0 dias · ideal 12"
+    sub: str
+    # em reais, a custo
+    real: Numero
+    ideal: Numero
+    # "+R$ 117 mil · 1,7×", "−R$ 17 mil · 0,9×", "abaixo do mínimo", "zerado"
+    diferenca: str
+    status: Status
+    # a linha "Outros produtos da seção": apagada e sem abrir
+    outros: bool | None = None
+    # o nível de baixo; null no produto e no "Outros"
+    itens: list["ItemRealIdeal"] | None
+    # o subtítulo do cartão com este item aberto
+    subtitulo_aberto: str | None = None
+
+
+class CartaoRealIdeal(CartaoBase):
+    """Estoque real contra o ideal, com o traço do ideal e a abertura por nível."""
+
+    tipo: Literal["real-ideal"]
+    escala: Escala
+    # as seções, do maior desvio para o menor
+    itens: list[ItemRealIdeal]
+    # o primeiro passo da trilha ("Todas as seções")
+    rotulo_raiz: str
+    # ids do caminho aberto de início (com o filtro Seção, a seção dele); null: fechado
+    aberto: list[str] | None = None
+
+
+class FaixaSaude(ModeloCamel):
+    # zerado, abaixo, ideal, excesso ou parado
+    id: str
+    rotulo: str
+    # "sem saldo", "cobertura abaixo de metade do ideal"
+    sub: str
+    estilo: EstiloFaixa
+    # "38 produtos"
+    produtos: Exibicao
+    # null: "—" (o zerado não tem valor)
+    valor: Valor | None
+
+
+class ParteSaude(ModeloCamel):
+    # id da faixa
+    faixa: str
+    valor: Numero
+
+
+class BarraSaude(ModeloCamel):
+    # "Em valor", "Em produtos"
+    rotulo: str
+    total: Exibicao
+    # a largura de cada parte é `valor` sobre a soma das partes
+    partes: list[ParteSaude]
+
+
+class GrupoSaude(ModeloCamel):
+    # "Falta", "No ponto", "Sobra"
+    rotulo: str
+    faixas: list[FaixaSaude]
+
+
+class CartaoSaudeEstoque(CartaoBase):
+    """Onde está cada real e cada produto: duas barras empilhadas e as faixas por grupo."""
+
+    tipo: Literal["saude-estoque"]
+    barras: list[BarraSaude]
+    grupos: list[GrupoSaude]
 
 
 class TabelaNomes(ModeloCamel):
@@ -996,6 +1122,78 @@ class MudancaGrupoProvisao(ModeloCamel):
     valor: object = Field(default=None, json_schema_extra={"type": ["number", "null"]})
 
 
+# ---------- Matriz BCG (Estoque; IdQuadranteBcg e QuadranteBcg ficam lá em cima) ----------
+
+
+class CorteBcg(ModeloCamel):
+    valor: Numero
+    # "mediana 4,2×", "mediana 33%"
+    rotulo: str
+
+
+class PontoBcg(ModeloCamel):
+    """Uma bolha: família (primeiro nível) ou produto (dentro da família aberta)."""
+
+    id: str
+    nome: str
+    quadrante: IdQuadranteBcg
+    # giro de venda, vezes por mês (o produto sem estoque fica na borda direita)
+    x: Numero
+    # margem bruta, %
+    y: Numero
+    # faturamento de 12 meses, em reais (área da bolha)
+    tamanho: Numero
+    # fora dos filtros Seção ou Classe BCG: bolha esmaecida (não sai da matriz)
+    apagado: bool
+    # escreve o nome ao lado (os maiores do nível)
+    rotular: bool
+    # linhas da dica, prontas
+    dica: list[ItemValor]
+    # só nas famílias: os produtos dela, para abrir com o clique; null nos produtos
+    produtos: list["PontoBcg"] | None
+    # só nas famílias: a trilha e o subtítulo quando aberta; null nos produtos
+    trilha: str | None
+    subtitulo_aberto: str | None
+
+
+class CartaoBcg(CartaoBase):
+    """Dispersão de bolhas, giro contra margem, com os cortes nas medianas dos produtos."""
+
+    tipo: Literal["bcg"]
+    eixo_x: EixoDispersao
+    eixo_y: EixoDispersao
+    corte_x: CorteBcg
+    corte_y: CorteBcg
+    # na ordem: Estrela, Vaca leiteira, Interrogação, Abacaxi
+    quadrantes: list[QuadranteBcg]
+    # primeiro nível: as famílias
+    pontos: list[PontoBcg]
+    # "15 famílias · 38 principais produtos · clique numa bolha para abrir"
+    trilha: str
+    # "Todas as famílias"
+    rotulo_voltar: str
+
+
+class ItemAcaoBcg(ModeloCamel):
+    quadrante: IdQuadranteBcg
+    rotulo: str
+    # "2 abaixo do mínimo", "31% do estoque", "48% do faturamento"
+    nota: str
+    acao: str
+    # produtos, faturado 12m e em estoque (este com status crítico no alerta)
+    numeros: list[ItemValor]
+    # é o valor do filtro `classe` agora
+    selecionado: bool
+
+
+class CartaoAcoesBcg(CartaoBase):
+    """O que fazer em cada quadrante. Clicar num item troca o filtro `classe` para o
+    `quadrante` dele; clicar de novo volta a `todas`."""
+
+    tipo: Literal["acoes-bcg"]
+    itens: list[ItemAcaoBcg]
+
+
 Cartao = Annotated[
     CartaoAndamentoMes
     | CartaoFatores
@@ -1017,9 +1215,24 @@ Cartao = Annotated[
     | CartaoListaDetalhe
     | CartaoCicloCaixa
     | CartaoOrigemProjecao
-    | CartaoProvisoes,
+    | CartaoProvisoes
+    | CartaoBcg
+    | CartaoAcoesBcg
+    | CartaoRealIdeal
+    | CartaoSaudeEstoque,
     Field(discriminator="tipo"),
 ]
+
+
+class EscopoSetor(ModeloCamel):
+    """O painel só vale em alguns setores e soma só as unidades deles (o Estoque: só a
+    Distribuidora). Na bandeja "Negócios", o front trava os outros setores e mostra o
+    `rotulo` no rodapé."""
+
+    # ids de cfg.setor
+    setores: list[str]
+    # "Este painel soma só a Distribuidora"
+    rotulo: str
 
 
 class PainelPayload(ModeloCamel):
@@ -1030,6 +1243,9 @@ class PainelPayload(ModeloCamel):
     dados_ate: date | None
     # quando essa carga terminou, com fuso
     atualizado_em: datetime | None
+    # texto de frescor pronto, nas telas que são o retrato do dia (Estoque: "Estoque de hoje,
+    # 12/10, atualizado às 9h"); sem ele, o front monta o de sempre com dadosAte
+    frescor: str | None = None
     filtros: list[FiltroPainel]
     aviso: Aviso | None = None
     # números grandes do topo (até 3)
@@ -1038,3 +1254,6 @@ class PainelPayload(ModeloCamel):
     kpis: list[Kpi]
     apoios: list[ItemValor]
     cartoes: list[Cartao]
+    # painel de um setor; ausente nos painéis de todos os setores. Sem nenhuma unidade pedida
+    # do setor, o painel vem só com o `aviso` (cartões e KPIs vazios)
+    escopo: EscopoSetor | None = None

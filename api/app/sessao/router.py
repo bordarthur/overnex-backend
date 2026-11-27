@@ -1,9 +1,12 @@
 """GET /api/sessao: o que a moldura do front precisa antes de abrir uma tela.
 
 Usuário (nome e e-mail do cadastro em seg.usuario, não do token), perfil, os clientes que a
-pessoa pode abrir (o seletor de empresa do front) e, do cliente escolhido: empresas (filtro
-"Empresa"), telas liberadas (menu) e períodos com dados (filtro "Período": os meses com
-faturado no resumo mensal e o mês do último snapshot, do mais recente para o mais antigo).
+pessoa pode abrir (o seletor de empresa do front) e, do cliente escolhido: as unidades
+liberadas (`empresas`, na ordem da árvore), a árvore da bandeja "Negócios" (`negocios`:
+setor › grupo › unidade, app/negocios/arvore.py; null com um negócio só, e aí o front mostra
+o chip "Unidade"), telas liberadas (menu) e períodos com dados (filtro "Período": os meses
+com faturado no resumo mensal e o mês do último snapshot, do mais recente para o mais
+antigo).
 
 Cliente escolhido: o de `?cliente=<slug>`, que só vale entre os clientes da pessoa (os
 vínculos; para o Admin BORD, todos os ativos); slug de fora responde 403. Sem o slug, quem
@@ -11,8 +14,9 @@ tem um cliente só já recebe esse; o admin, quem tem mais de um e quem não tem
 `cliente: null` e as listas vazias, e o front mostra a Gestão, a escolha de empresa ou o
 `aviso`. O `slug` volta aqui para o front montar a URL certa.
 
-Telas liberadas = ligadas no cliente (cfg.cliente_tela) e em algum perfil da pessoa; para o
-admin, as ligadas.
+Telas liberadas = ligadas no cliente (cfg.cliente_tela), que valem nos setores das
+unidades liberadas à pessoa (app/seguranca/setores.py) e em algum perfil dela; para o
+admin, as ligadas que valem nos setores das unidades do cliente.
 
 Desempenho: as consultas vão todas numa ida ao banco (pipeline), e a sessão agenda a
 pré-montagem, em segundo plano, das telas liberadas (app/telas/preparo.py): quando o front
@@ -28,8 +32,11 @@ from fastapi import APIRouter, Depends
 from app.core.cache import existe
 from app.core.config import Settings, get_settings
 from app.core.db import Pool, em_uma_ida, get_pool
+from app.negocios.arvore import SQL_SETORES, SQL_UNIDADES, negocios, ordenar, unidade_da_linha
+from app.negocios.contrato import NegociosSessao
 from app.seguranca import perfis
 from app.seguranca.acesso import ContextoSessao, exigir_sessao
+from app.seguranca.setores import tela_vale
 from app.telas import preparo
 from app.telas.moldura import (
     SQL_MESES,
@@ -78,15 +85,22 @@ class PeriodoDisponivel(ModeloCamel):
 class SessaoPayload(ModeloCamel):
     usuario: Usuario
     perfil: PerfilSessao
-    # a pessoa abre a Gestão (/api/admin/*): só o Admin BORD
+    # a pessoa abre a Gestão: o Admin BORD (inteira) e o Consultor por carteira (só leitura,
+    # com as empresas dele; o que ele pode fazer vem em GET /api/admin/gestao, `permissoes`)
     gestao: bool
     # clientes que a pessoa pode abrir, por nome (o seletor de empresa)
     clientes: list[ClienteSessao]
-    # o cliente escolhido; null = nenhum (as três listas abaixo vêm vazias)
+    # o cliente escolhido; null = nenhum (as listas abaixo vêm vazias e `negocios` null)
     cliente: ClienteSessao | None
     papel: str | None
+    # as unidades liberadas no cliente escolhido (cfg.empresa), na ordem da árvore: setor
+    # (cfg.setor), grupo e nome, com ordem natural
     empresas: list[Empresa]
-    # códigos das telas ligadas no cliente e liberadas à pessoa (ex.: "VG-01")
+    # a árvore da bandeja "Negócios"; null quando as unidades formam um negócio só (um par
+    # setor + grupo) ou não há cliente escolhido
+    negocios: NegociosSessao | None
+    # códigos das telas ligadas no cliente, que valem nos setores das unidades liberadas e
+    # liberadas à pessoa (ex.: "VG-01")
     telas: list[str]
     periodos: list[PeriodoDisponivel]
     # texto pronto para quem não tem cliente nenhum; null nos outros casos
@@ -96,13 +110,6 @@ class SessaoPayload(ModeloCamel):
 SQL_USUARIO = "select nome, email from seg.usuario where id = %s"
 # o RLS só mostra os clientes que a pessoa pode abrir (seg.clientes_vinculados)
 SQL_CLIENTES = "select id, nome, logo_url, slug from cfg.cliente where ativo order by nome, id"
-# o RLS só mostra as empresas liberadas à pessoa no cliente escolhido (para o admin, todas)
-SQL_EMPRESAS = """
-    select e.id, e.nome
-      from cfg.empresa e
-     where e.cliente_id = %s
-     order by e.nome, e.id
-"""
 SQL_TELAS = """
     select distinct pt.codigo_tela
       from seg.usuario_perfil up
@@ -150,7 +157,9 @@ def sessao(
     }
     if ctx.cliente_id is not None:
         c = (ctx.cliente_id,)
-        consultas["empresas"] = (SQL_EMPRESAS, c)
+        # o RLS só mostra as unidades liberadas à pessoa (para o admin, todas)
+        consultas["empresas"] = (SQL_UNIDADES, c)
+        consultas["setores"] = (SQL_SETORES, ())
         consultas["telas"] = (
             (SQL_TELAS_ADMIN, c) if admin else (SQL_TELAS, (ctx.usuario_id, ctx.cliente_id))
         )
@@ -167,13 +176,19 @@ def sessao(
     escolhido: ClienteSessao | None = None
     telas: list[str] = []
     periodos: list[PeriodoDisponivel] = []
+    ordem = {r["id"]: i for i, r in enumerate(linhas.get("setores", []))}
+    unidades = ordenar((unidade_da_linha(r) for r in linhas.get("empresas", [])), ordem)
+    arvore: NegociosSessao | None = None
     if ctx.cliente_id is not None:
         do_cliente = [r for r in linhas["clientes"] if r["id"] == ctx.cliente_id]
         if not do_cliente:  # a checagem já garantiu o cliente
             raise LookupError("cliente escolhido não encontrado")
         escolhido = _cliente(do_cliente[0])
         carga = carga_da_linha(linhas["carga"][0] if linhas["carga"] else None)
-        telas = [r["codigo_tela"] for r in linhas["telas"]]
+        # painel de outro setor fica fora do menu (e da pré-montagem), mesmo ligado
+        telas = [
+            r["codigo_tela"] for r in linhas["telas"] if tela_vale(r["codigo_tela"], ctx.setores)
+        ]
         # do mais recente para o mais antigo; o primeiro é o padrão da Visão geral
         periodos = [
             PeriodoDisponivel(
@@ -184,17 +199,20 @@ def sessao(
                 carga.data_snapshot if carga else None,
             )
         ]
+        rotulos = {r["id"]: r["rotulo"] for r in linhas["setores"]}
+        arvore = negocios(unidades, rotulos, telas)
         # as telas ficam prontas em segundo plano enquanto o front abre a primeira
         preparo.agendar(pool, ctx.sessao.usuario, telas, settings, escolhido.slug)
 
     return SessaoPayload(
         usuario=Usuario(nome=usuario["nome"], email=usuario["email"]),
         perfil=PerfilSessao(id=ctx.perfil, rotulo=perfis.rotulo(ctx.perfil)),
-        gestao=admin,
+        gestao=admin or ctx.perfil == perfis.CONSULTOR,
         clientes=clientes,
         cliente=escolhido,
         papel=ctx.papel,
-        empresas=[Empresa(id=r["id"], nome=r["nome"]) for r in linhas.get("empresas", [])],
+        empresas=[Empresa(id=u.id, nome=u.nome) for u in unidades],
+        negocios=arvore,
         telas=telas,
         periodos=periodos,
         aviso=MSG_SEM_CLIENTE if not clientes and not admin else None,

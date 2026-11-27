@@ -4,16 +4,26 @@
 2. cliente escolhido: o do `?cliente=<slug>`, se o usuário pode abri-lo (vínculo; para o
    Admin BORD, qualquer cliente ativo); sem o slug, o único vínculo de quem tem um só
 3. papel (do vínculo; o admin tem o papel `admin` em todo cliente)
-4. a tela está ligada no cliente (cfg.cliente_tela) e algum perfil do usuário a libera
-   (cfg.perfil_tela); para o admin, basta estar ligada. Tabela: precisa estar registrada
-   para o cliente em cfg.fonte_carga e liberada a um perfil (cfg.perfil_tabela)
-5. empresa pedida pertence ao vínculo (nas telas consolidadas, sem empresa pedida: o
-   vínculo precisa ter ao menos uma); o admin vê todas as empresas do cliente
+4. a tela está ligada no cliente (cfg.cliente_tela), vale nos setores das unidades
+   liberadas à pessoa (app/seguranca/setores.py) e algum perfil do usuário a libera
+   (cfg.perfil_tela); para o admin, basta estar ligada e valer no setor. Tabela: precisa
+   estar registrada para o cliente em cfg.fonte_carga e liberada a um perfil
+   (cfg.perfil_tabela)
+5. unidades pedidas pertencem ao vínculo (nas telas consolidadas, `?unidades=`; sem ele, o
+   vínculo precisa ter ao menos uma); o admin vê todas as unidades do cliente
 6. dado nominal permitido (o admin vê)
+
+Unidade é o cfg.empresa (Lupo 1); "empresa" no front é o cliente. Nas telas consolidadas, a
+tela soma as unidades pedidas em `?unidades=<id>,<id>` (sem o parâmetro, todas as
+liberadas); id que não é UUID ou lista vazia: 422 "Filtro inválido.". Num painel de um setor
+(SETORES_DA_TELA), a tela soma só as pedidas que são do setor dele (`escopo`), e pode ficar
+sem nenhuma: o painel responde só com o aviso.
 
 `/api/sessao` roda só as etapas 1 a 3 e aceita quem ainda não tem cliente escolhido (o
 admin, quem tem mais de um vínculo e quem não tem nenhum): a moldura do front lista os
-clientes para a pessoa escolher. `/api/admin/*` exige o perfil admin.
+clientes para a pessoa escolher. `/api/admin/*` exige o perfil admin, menos as duas leituras
+da Gestão que o consultor também faz (a barra lateral e as abas de uma empresa da carteira
+dele, em versão reduzida): `exigir_gestao` e `exigir_gestao_no_cliente`.
 
 O cliente e a empresa da requisição são só uma escolha entre o que o banco libera ao
 usuário: o slug e a empresa da query só valem se estiverem no alcance dele. Os fatos vêm de
@@ -28,8 +38,9 @@ o RLS do cliente escolhido; as linhas ficam em `Sessao.adiantadas`. Com o acesso
 ninguém as usa.
 """
 
+import re
 from collections.abc import Callable, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Annotated
 from uuid import UUID
 
@@ -37,18 +48,30 @@ from fastapi import Depends, HTTPException, Path, Query, status
 
 from app.core.db import Consulta, Sessao, em_uma_ida, get_sessao, sem_transacao
 from app.core.erros import AcessoNegado
+from app.seguranca.setores import setores_da_tela, tela_vale
 
 TODOS_OS_PAPEIS: frozenset[str] = frozenset({"leitor", "gestor", "admin"})
 PADRAO_TABELA = r"^[a-z][a-z0-9_]{0,62}$"
 # o mesmo de cfg.cliente.slug
 PADRAO_SLUG = r"^[a-z0-9]+(-[a-z0-9]+)*$"
 PERFIL_ADMIN = "admin"
+PERFIL_CONSULTOR = "consultor"
 PAPEL_ADMIN = "admin"
 MSG_CLIENTE_INEXISTENTE = "Empresa não encontrada."
+MSG_FILTRO_INVALIDO = "Filtro inválido."
+# mais que isso numa lista de unidades é erro do pedido, não um cliente de verdade
+MAX_UNIDADES = 500
+_UUID = re.compile(r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")
 
-EmpresaDaQuery = Annotated[
-    UUID | None,
-    Query(description="Opcional: só esta empresa. Sem valor: todas as do vínculo."),
+UnidadesDaQuery = Annotated[
+    str | None,
+    Query(
+        description=(
+            "Opcional: ids das unidades marcadas (os de `empresas` em /api/sessao), separados "
+            "por vírgula. Sem valor: todas as liberadas. Unidade fora do alcance: 403; id que "
+            'não é UUID ou lista vazia: 422 "Filtro inválido.".'
+        ),
+    ),
 ]
 ClienteDaQuery = Annotated[
     str | None,
@@ -77,18 +100,23 @@ class ContextoAcesso:
 
 @dataclass(frozen=True)
 class ContextoConsolidado:
-    """Contexto de uma tela que aceita a visão de todas as empresas ("Todas" no front)."""
+    """Contexto de uma tela que soma unidades (cfg.empresa): as pedidas em `?unidades=` ou
+    todas as liberadas."""
 
     sessao: Sessao
     usuario_id: UUID
     cliente_id: UUID
-    # None = todas as empresas do vínculo
-    empresa_id: UUID | None
-    # empresas que a tela soma: a pedida, ou todas as do vínculo
+    # as unidades que a tela soma, quando são só parte das liberadas (na ordem nome, id);
+    # None = todas as liberadas, e aí as linhas sem unidade dos dados também entram
+    unidades: tuple[UUID, ...] | None
+    # unidades que a tela soma (as de `unidades`, ou todas as liberadas); vazio só num painel
+    # de setor sem nenhuma unidade pedida do setor
     empresas: tuple[UUID, ...]
     papel: str
     codigo_tela: str
     ve_dado_nominal: bool
+    # painel de um setor (SETORES_DA_TELA): os setores dele; None = painel de todos
+    escopo: frozenset[str] | None = None
 
 
 @dataclass(frozen=True)
@@ -102,6 +130,9 @@ class ContextoSessao:
     # None = sem cliente escolhido (admin, mais de um vínculo ou nenhum)
     cliente_id: UUID | None
     papel: str | None
+    # setores das unidades liberadas no cliente escolhido; vazio = nenhuma com setor, ou sem
+    # cliente
+    setores: frozenset[str] = frozenset()
 
 
 @dataclass(frozen=True)
@@ -118,11 +149,13 @@ class ContextoTabela:
 
 @dataclass(frozen=True)
 class ContextoAdmin:
-    """Admin BORD numa rota da Gestão; com o cliente da rota, se ela tem um."""
+    """Admin BORD numa rota da Gestão; com o cliente da rota, se ela tem um. `consultor`:
+    o Consultor por carteira numa leitura da Gestão (versão reduzida, só a carteira dele)."""
 
     sessao: Sessao
     usuario_id: UUID
     cliente_id: UUID | None
+    consultor: bool = False
 
 
 @dataclass(frozen=True)
@@ -143,12 +176,16 @@ class FatosAcesso:
     vinculos: tuple[tuple[UUID, str], ...]
     # cliente escolhido → vê dado nominal, só se a tela está ligada nele e liberada
     perfis_tela: dict[UUID, bool]
-    # (cliente_id, empresa_id) liberadas no cliente escolhido, na ordem nome, id da empresa
+    # (cliente_id, empresa_id) das unidades liberadas no cliente escolhido, na ordem nome, id
     empresas: tuple[tuple[UUID, UUID], ...]
     # seg.usuario.perfil; None se o usuário não existe ou está inativo
     perfil: str | None = None
     # cliente escolhido (ver seg.contexto_acesso); None = nenhum
     cliente_id: UUID | None = None
+    # setores das unidades liberadas (migration 35); vazio = nenhuma com setor, ou sem cliente
+    setores: frozenset[str] = frozenset()
+    # unidade liberada → setor dela (None = sem setor)
+    setor_da_unidade: Mapping[UUID, str | None] = field(default_factory=dict)
 
 
 SQL_FATOS = "select * from seg.contexto_acesso(%s, %s, %s)"
@@ -186,6 +223,10 @@ def ler_fatos(
         empresas=tuple((UUID(e["cliente_id"]), UUID(e["empresa_id"])) for e in linha["empresas"]),
         perfil=linha["perfil"],
         cliente_id=linha["cliente_id"],
+        # sem a migration 34 a coluna não existe: nenhum setor (painel de setor fica negado)
+        setores=frozenset(linha.get("setores") or ()),
+        # sem a migration 35 o item não traz o setor: unidade sem setor
+        setor_da_unidade={UUID(e["empresa_id"]): e.get("setor") for e in linha["empresas"]},
     )
 
 
@@ -208,6 +249,7 @@ class _Checagem:
     ) -> None:
         self.sessao = sessao
         self.recurso = recurso
+        self.codigo_tela = codigo_tela
         self.empresa_id = empresa_id
         # vai no motivo do log, permitido ou negado (ex.: os filtros de um pedido de nomes)
         self.detalhe = detalhe
@@ -300,6 +342,24 @@ class _Checagem:
             raise self.negar(5, "nenhuma empresa no vínculo do usuário")
         return empresas
 
+    def unidades_pedidas(
+        self, vinculo: _Vinculo, pedidas: tuple[UUID, ...] | None
+    ) -> tuple[tuple[UUID, ...] | None, tuple[UUID, ...]]:
+        """Etapa 5 das telas consolidadas: (as unidades pedidas, as que a tela soma). Toda
+        pedida precisa estar no vínculo. Pedir todas as liberadas é o mesmo que não pedir
+        nenhuma (None): as linhas sem unidade também entram."""
+        liberadas = self.empresas_do_vinculo(vinculo)
+        if pedidas is None:
+            return None, liberadas
+        escolhidas = set(pedidas)
+        if not escolhidas <= set(liberadas):
+            raise self.negar(5, "unidade fora do vínculo do usuário")
+        if len(escolhidas) == len(liberadas):
+            return None, liberadas
+        # na ordem das liberadas: a mesma lista em outra ordem dá a mesma chave de cache
+        somadas = tuple(e for e in liberadas if e in escolhidas)
+        return somadas, somadas
+
 
 def _perfil_libera_tela(checagem: _Checagem, vinculo: _Vinculo) -> bool:
     """Etapa 4; devolve se algum perfil que libera a tela vê dado nominal (o admin vê)."""
@@ -308,6 +368,11 @@ def _perfil_libera_tela(checagem: _Checagem, vinculo: _Vinculo) -> bool:
         if vinculo.admin:
             raise checagem.negar(4, "tela desligada no cliente")
         raise checagem.negar(4, "tela desligada no cliente ou fora dos perfis do usuário")
+    # ligada e liberada, mas de outro setor (ex.: o setor da empresa mudou depois)
+    if checagem.codigo_tela is not None and not tela_vale(
+        checagem.codigo_tela, checagem.fatos.setores
+    ):
+        raise checagem.negar(4, "tela fora do setor do cliente")
     return ve_dado_nominal
 
 
@@ -326,6 +391,7 @@ def verificar_sessao(sessao: Sessao, cliente: str | None = None) -> ContextoSess
         perfil=checagem.fatos.perfil or "",
         cliente_id=cliente_id,
         papel=papel,
+        setores=checagem.fatos.setores if cliente_id is not None else frozenset(),
     )
 
 
@@ -345,10 +411,59 @@ def verificar_admin(sessao: Sessao, recurso: str, cliente: str | None = None) ->
     return ContextoAdmin(sessao=sessao, usuario_id=usuario_id, cliente_id=checagem.cliente_id)
 
 
+def verificar_gestao(sessao: Sessao, recurso: str, cliente: str | None = None) -> ContextoAdmin:
+    """Leitura da Gestão: o admin (como em verificar_admin) ou o Consultor por carteira.
+
+    O consultor só alcança os clientes dos vínculos dele: com `cliente`, o slug precisa ser
+    de um deles (senão 403, sem dizer se a empresa existe); sem `cliente`, a barra lateral,
+    que o RLS restringe à carteira (migration 33). Outros perfis: 403 (etapa 3)."""
+    # o mesmo recurso do log das rotas só do admin (são rotas de /api/admin)
+    checagem = _Checagem(sessao, f"admin:{recurso}", None, cliente=cliente)
+    usuario_id = checagem.usuario_ativo()
+    if checagem.eh_admin():
+        checagem.cliente_id = checagem.fatos.cliente_id
+        if cliente is not None and checagem.fatos.cliente_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail=MSG_CLIENTE_INEXISTENTE
+            )
+        checagem.permitir()
+        return ContextoAdmin(sessao=sessao, usuario_id=usuario_id, cliente_id=checagem.cliente_id)
+    if checagem.fatos.perfil != PERFIL_CONSULTOR:
+        raise checagem.negar(3, "perfil sem acesso à Gestão")
+    cliente_id: UUID | None = None
+    if cliente is not None:
+        # 2. o slug precisa ser de um vínculo (o banco só escolhe cliente do vínculo)
+        escolhido = checagem.cliente_escolhido()
+        if escolhido is None:
+            raise checagem.negar(2, "cliente pedido fora da carteira")
+        cliente_id = escolhido[0]
+    checagem.cliente_id = cliente_id
+    checagem.permitir()
+    return ContextoAdmin(
+        sessao=sessao, usuario_id=usuario_id, cliente_id=cliente_id, consultor=True
+    )
+
+
+def _no_escopo(
+    checagem: _Checagem,
+    unidades: tuple[UUID, ...] | None,
+    empresas: tuple[UUID, ...],
+    escopo: frozenset[str] | None,
+) -> tuple[tuple[UUID, ...] | None, tuple[UUID, ...]]:
+    """Painel de setor: só as unidades dos setores dele (pode não sobrar nenhuma)."""
+    if escopo is None:
+        return unidades, empresas
+    setor = checagem.fatos.setor_da_unidade
+    do_setor = tuple(e for e in empresas if setor.get(e) in escopo)
+    if len(do_setor) == len(empresas):
+        return unidades, empresas
+    return do_setor, do_setor
+
+
 def verificar_acesso_consolidado(
     sessao: Sessao,
     codigo_tela: str,
-    empresa_id: UUID | None,
+    unidades: tuple[UUID, ...] | None,
     *,
     papeis: frozenset[str] = TODOS_OS_PAPEIS,
     exige_dado_nominal: bool = False,
@@ -357,23 +472,27 @@ def verificar_acesso_consolidado(
     cliente: str | None = None,
     junto: Mapping[str, Consulta] | None = None,
 ) -> ContextoConsolidado:
-    """`recurso`: o que vai no log no lugar do código da tela (ex.: "PES-01:<cartão>:nomes");
-    `detalhe`: texto a mais no motivo do log; `cliente`: o slug pedido na requisição;
-    `junto`: consultas de leitura na mesma ida ao banco da checagem (ver ler_fatos)."""
-    checagem = _Checagem(
-        sessao, recurso or codigo_tela, empresa_id, codigo_tela, detalhe, cliente, junto
-    )
+    """`unidades`: as pedidas em `?unidades=` (None = todas as liberadas); `recurso`: o que
+    vai no log no lugar do código da tela (ex.: "PES-01:<cartão>:nomes"); `detalhe`: texto a
+    mais no motivo do log; `cliente`: o slug pedido na requisição; `junto`: consultas de
+    leitura na mesma ida ao banco da checagem (ver ler_fatos)."""
+    pedidas = None if unidades is None else tuple(dict.fromkeys(unidades))
+    # o log tem uma coluna de empresa: vai a unidade, quando é uma só; mais de uma, a
+    # contagem vai no motivo
+    uma = pedidas[0] if pedidas is not None and len(pedidas) == 1 else None
+    if pedidas is not None and len(pedidas) > 1:
+        contagem = f"{len(pedidas)} unidades pedidas"
+        detalhe = f"{detalhe}; {contagem}" if detalhe else contagem
+    checagem = _Checagem(sessao, recurso or codigo_tela, uma, codigo_tela, detalhe, cliente, junto)
     vinculo = checagem.vinculo(papeis)
 
     # 4. tela ligada no cliente e liberada a um perfil
     ve_dado_nominal = _perfil_libera_tela(checagem, vinculo)
 
-    # 5. empresa pedida pertence ao vínculo; sem empresa, todas as do vínculo
-    if empresa_id is not None:
-        checagem.empresa_no_vinculo(vinculo, empresa_id)
-        empresas: tuple[UUID, ...] = (empresa_id,)
-    else:
-        empresas = checagem.empresas_do_vinculo(vinculo)
+    # 5. unidades pedidas no vínculo; sem elas, todas as do vínculo. Painel de setor: só as
+    #    do setor dele
+    escopo = setores_da_tela(codigo_tela)
+    somadas, empresas = _no_escopo(checagem, *checagem.unidades_pedidas(vinculo, pedidas), escopo)
 
     # 6. dado nominal permitido
     if exige_dado_nominal and not ve_dado_nominal:
@@ -384,11 +503,12 @@ def verificar_acesso_consolidado(
         sessao=sessao,
         usuario_id=vinculo.usuario_id,
         cliente_id=vinculo.cliente_id,
-        empresa_id=empresa_id,
+        unidades=somadas,
         empresas=empresas,
         papel=vinculo.papel,
         codigo_tela=codigo_tela,
         ve_dado_nominal=ve_dado_nominal,
+        escopo=escopo,
     )
 
 
@@ -514,23 +634,36 @@ def exigir_tela(
     return dependencia
 
 
+def ler_unidades(texto: str | None) -> tuple[UUID, ...] | None:
+    """`?unidades=<id>,<id>` → os ids, sem repetir, na ordem pedida; None sem o parâmetro.
+    Id que não é UUID (no formato com hífens), lista vazia ou longa demais: 422."""
+    if texto is None:
+        return None
+    partes = [p.strip() for p in texto.split(",")]
+    if len(partes) > MAX_UNIDADES or not all(_UUID.fullmatch(p) for p in partes):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=MSG_FILTRO_INVALIDO
+        )
+    return tuple(dict.fromkeys(UUID(p) for p in partes))
+
+
 def exigir_tela_consolidada(
     codigo_tela: str,
     *,
     papeis: frozenset[str] = TODOS_OS_PAPEIS,
     exige_dado_nominal: bool = False,
 ) -> Callable[..., ContextoConsolidado]:
-    """Dependência de tela com `empresa` opcional: sem ela, todas as empresas do vínculo."""
+    """Dependência de tela com `unidades` opcional: sem ela, todas as unidades do vínculo."""
 
     def dependencia(
         sessao: Annotated[Sessao, Depends(get_sessao)],
-        empresa: EmpresaDaQuery = None,
+        unidades: UnidadesDaQuery = None,
         cliente: ClienteDaQuery = None,
     ) -> ContextoConsolidado:
         return verificar_acesso_consolidado(
             sessao,
             codigo_tela,
-            empresa,
+            ler_unidades(unidades),
             papeis=papeis,
             exige_dado_nominal=exige_dado_nominal,
             cliente=cliente,
@@ -565,6 +698,30 @@ def exigir_admin(recurso: str) -> Callable[..., ContextoAdmin]:
 
     def dependencia(sessao: Annotated[Sessao, Depends(get_sessao)]) -> ContextoAdmin:
         return verificar_admin(sessao, recurso)
+
+    return dependencia
+
+
+def exigir_gestao(recurso: str) -> Callable[..., ContextoAdmin]:
+    """Dependência de leitura da Gestão sem cliente: o admin ou o consultor, ou 403."""
+
+    def dependencia(sessao: Annotated[Sessao, Depends(get_sessao)]) -> ContextoAdmin:
+        return verificar_gestao(sessao, recurso)
+
+    return dependencia
+
+
+def exigir_gestao_no_cliente(recurso: str) -> Callable[..., ContextoAdmin]:
+    """Dependência de leitura da Gestão de um cliente (`{slug}` no caminho): o admin (slug
+    que não existe, 404) ou o consultor com vínculo no cliente; senão, 403."""
+
+    def dependencia(
+        sessao: Annotated[Sessao, Depends(get_sessao)],
+        slug: Annotated[
+            str, Path(pattern=PADRAO_SLUG, max_length=80, description="Slug do cliente.")
+        ],
+    ) -> ContextoAdmin:
+        return verificar_gestao(sessao, recurso, slug)
 
     return dependencia
 

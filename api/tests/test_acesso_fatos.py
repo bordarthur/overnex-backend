@@ -10,6 +10,7 @@ from fastapi import HTTPException
 from app.core.db import Sessao
 from app.core.erros import AcessoNegado
 from app.seguranca.acesso import (
+    ler_unidades,
     verificar_acesso,
     verificar_acesso_consolidado,
     verificar_acesso_tabela,
@@ -51,6 +52,12 @@ def _admin(**mudancas: Any) -> dict[str, Any]:
     nominal e as empresas são todas as do cliente."""
     return _fatos(vinculos=[], perfil="admin", perfis_tela={str(CLIENTE): True}) | mudancas
 
+
+# a Alfa com uma unidade de cada setor (migration 35: o setor vem em cada item)
+COM_SETOR = [
+    {"cliente_id": str(CLIENTE), "empresa_id": str(EMPRESA_2), "setor": "distribuidora"},
+    {"cliente_id": str(CLIENTE), "empresa_id": str(EMPRESA_1), "setor": "industria"},
+]
 
 DOIS_VINCULOS = [
     {"cliente_id": str(CLIENTE), "papel": "gestor"},
@@ -219,6 +226,42 @@ def test_etapa_4_tela_desligada_ou_fora_do_perfil(perfis: dict[str, bool]) -> No
     )
 
 
+@pytest.mark.parametrize(
+    "fatos",
+    [
+        # Indústria, ou sem setor (a coluna vem vazia, ou não existe sem a migration 34)
+        _fatos(setores=["industria"]),
+        _fatos(setores=[]),
+        _fatos(),
+        _admin(setores=["industria"]),
+    ],
+)
+def test_etapa_4_tela_de_outro_setor(fatos: dict[str, Any]) -> None:
+    # o Estoque (EST-01) só vale na Distribuidora, mesmo ligado e liberado ao perfil
+    sessao, _ = _sessao(fatos)
+    erro = _negado(sessao, lambda: verificar_acesso_consolidado(sessao, "EST-01", None))
+    assert (erro.etapa, erro.motivo) == (4, "tela fora do setor do cliente")
+
+
+def test_etapa_4_tela_do_setor_do_cliente() -> None:
+    sessao, _ = _sessao(setores=["distribuidora"], empresas=COM_SETOR)
+    ctx = verificar_acesso_consolidado(sessao, "EST-01", None)
+    assert ctx.codigo_tela == "EST-01"
+
+
+def test_tela_sem_setor_vale_em_qualquer_setor() -> None:
+    sessao, _ = _sessao(setores=["industria"])
+    assert verificar_acesso_consolidado(sessao, "VG-01", None).codigo_tela == "VG-01"
+
+
+def test_sessao_leva_os_setores_do_cliente_escolhido() -> None:
+    sessao, _ = _sessao(setores=["distribuidora"])
+    assert verificar_sessao(sessao).setores == frozenset({"distribuidora"})
+    # sem cliente escolhido, nenhum
+    sessao, _ = _sessao(vinculos=DOIS_VINCULOS, cliente_id=None, setores=["distribuidora"])
+    assert verificar_sessao(sessao).setores == frozenset()
+
+
 def test_etapa_5_empresa_de_outro_cliente() -> None:
     outra = {"cliente_id": str(OUTRO_CLIENTE), "empresa_id": str(EMPRESA_OUTRO)}
     sessao, _ = _sessao(empresas=[*_fatos()["empresas"], outra])
@@ -243,9 +286,9 @@ def test_etapa_6_dado_nominal() -> None:
 
 def test_etapa_6_passa_com_perfil_nominal() -> None:
     sessao, _ = _sessao(perfis_tela={str(CLIENTE): True})
-    ctx = verificar_acesso_consolidado(sessao, "VG-01", EMPRESA_1, exige_dado_nominal=True)
+    ctx = verificar_acesso_consolidado(sessao, "VG-01", (EMPRESA_1,), exige_dado_nominal=True)
     assert ctx.ve_dado_nominal is True
-    assert ctx.empresas == (EMPRESA_1,)
+    assert (ctx.unidades, ctx.empresas) == ((EMPRESA_1,), (EMPRESA_1,))
 
 
 # --- Admin BORD ----------------------------------------------------------------------------
@@ -359,3 +402,86 @@ def test_gestao_de_cliente_que_nao_existe_e_403_para_quem_nao_e_admin() -> None:
     sessao, _ = _sessao(cliente_id=None)
     erro = _negado(sessao, lambda: verificar_admin(sessao, "cliente", "nao-existe"))
     assert erro.etapa == 3
+
+
+# --- unidades pedidas (?unidades=) e painel de setor ---------------------------------------
+
+
+def test_unidades_pedidas_somam_so_elas() -> None:
+    sessao, _ = _sessao()
+    ctx = verificar_acesso_consolidado(sessao, "VG-01", (EMPRESA_1,))
+    assert (ctx.unidades, ctx.empresas) == ((EMPRESA_1,), (EMPRESA_1,))
+    # a unidade vai na coluna de empresa do log
+    assert sessao.logs[0][2:6] == (CLIENTE, EMPRESA_1, "VG-01", "permitido")
+
+
+def test_todas_as_unidades_pedidas_e_o_mesmo_que_nenhuma() -> None:
+    sessao, _ = _sessao()
+    ctx = verificar_acesso_consolidado(sessao, "VG-01", (EMPRESA_1, EMPRESA_2, EMPRESA_1))
+    # None: as linhas sem unidade também entram; na ordem da função
+    assert (ctx.unidades, ctx.empresas) == (None, (EMPRESA_2, EMPRESA_1))
+    # mais de uma: a contagem vai no motivo, sem a coluna de empresa
+    assert sessao.logs[0][3] is None
+    assert sessao.logs[0][7] == "2 unidades pedidas"
+
+
+def test_unidade_fora_do_vinculo_e_negada_na_etapa_5() -> None:
+    sessao, _ = _sessao()
+    erro = _negado(sessao, lambda: verificar_acesso_consolidado(sessao, "VG-01", (EMPRESA_OUTRO,)))
+    assert (erro.etapa, erro.motivo) == (5, "unidade fora do vínculo do usuário")
+    # uma de fora no meio de outras também
+    sessao, _ = _sessao()
+    with pytest.raises(AcessoNegado) as exc:
+        verificar_acesso_consolidado(sessao, "VG-01", (EMPRESA_1, EMPRESA_OUTRO))
+    assert exc.value.etapa == 5
+
+
+def test_painel_de_setor_soma_so_as_unidades_do_setor() -> None:
+    sessao, _ = _sessao(setores=["distribuidora", "industria"], empresas=COM_SETOR)
+    ctx = verificar_acesso_consolidado(sessao, "EST-01", None)
+    assert ctx.escopo == frozenset({"distribuidora"})
+    assert (ctx.unidades, ctx.empresas) == ((EMPRESA_2,), (EMPRESA_2,))
+
+
+def test_painel_de_setor_sem_unidade_pedida_do_setor_fica_vazio_sem_negar() -> None:
+    sessao, _ = _sessao(setores=["distribuidora", "industria"], empresas=COM_SETOR)
+    ctx = verificar_acesso_consolidado(sessao, "EST-01", (EMPRESA_1,))
+    assert (ctx.unidades, ctx.empresas) == ((), ())
+    assert sessao.logs[0][5] == "permitido"
+
+
+def test_painel_de_setor_com_todas_as_unidades_do_setor_e_o_de_todas() -> None:
+    so_dist = [{**e, "setor": "distribuidora"} for e in COM_SETOR]
+    sessao, _ = _sessao(setores=["distribuidora"], empresas=so_dist)
+    ctx = verificar_acesso_consolidado(sessao, "EST-01", None)
+    assert (ctx.unidades, ctx.empresas) == (None, (EMPRESA_2, EMPRESA_1))
+
+
+def test_painel_de_todos_os_setores_nao_tem_escopo() -> None:
+    sessao, _ = _sessao(setores=["distribuidora", "industria"], empresas=COM_SETOR)
+    ctx = verificar_acesso_consolidado(sessao, "VG-01", None)
+    assert ctx.escopo is None
+    assert (ctx.unidades, ctx.empresas) == (None, (EMPRESA_2, EMPRESA_1))
+
+
+@pytest.mark.parametrize(
+    ("texto", "esperado"),
+    [
+        (None, None),
+        (str(EMPRESA_1), (EMPRESA_1,)),
+        (f"{EMPRESA_2},{EMPRESA_1},{EMPRESA_2}", (EMPRESA_2, EMPRESA_1)),
+        (f" {EMPRESA_1} , {EMPRESA_2}", (EMPRESA_1, EMPRESA_2)),
+    ],
+)
+def test_ler_unidades(texto: str | None, esperado: tuple[UUID, ...] | None) -> None:
+    assert ler_unidades(texto) == esperado
+
+
+@pytest.mark.parametrize(
+    "texto",
+    ["", ",", "abc", f"{EMPRESA_1},", f"{EMPRESA_1},x", EMPRESA_1.hex, f"{{{EMPRESA_1}}}"],
+)
+def test_ler_unidades_invalidas_422(texto: str) -> None:
+    with pytest.raises(HTTPException) as exc:
+        ler_unidades(texto)
+    assert (exc.value.status_code, exc.value.detail) == (422, "Filtro inválido.")

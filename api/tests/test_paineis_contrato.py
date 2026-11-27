@@ -19,6 +19,8 @@ from app.telas.paineis.router import DEMO, demo
         "receber-pagar",
         "fluxo-caixa",
         "pessoas",
+        # a do Estoque é do back (tests/estoque_demo.py), para o front copiar
+        "estoque",
     ],
 )
 def test_fixture_do_front_valida_e_volta_igual(tela: str) -> None:

@@ -30,10 +30,11 @@ select is((select vinculos from seg.contexto_acesso('0d000000-0000-4000-8000-000
 select is((select perfis_tela from seg.contexto_acesso('0d000000-0000-4000-8000-00000000000a', 'VG-01')),
           '{"c1000000-0000-4000-8000-00000000000a": false}'::jsonb,
           'perfil do cliente A libera a VG-01, sem dado nominal');
--- ordem por nome: Alfa Comércio (a2) antes de Alfa Indústria (a1)
+-- ordem por nome: Alfa Comércio (a2) antes de Alfa Indústria (a1); com o setor de cada
+-- unidade desde a migration 35
 select is((select empresas from seg.contexto_acesso('0d000000-0000-4000-8000-00000000000a', 'VG-01')),
-          '[{"cliente_id": "c1000000-0000-4000-8000-00000000000a", "empresa_id": "e1000000-0000-4000-8000-0000000000a2"},
-            {"cliente_id": "c1000000-0000-4000-8000-00000000000a", "empresa_id": "e1000000-0000-4000-8000-0000000000a1"}]'::jsonb,
+          '[{"cliente_id": "c1000000-0000-4000-8000-00000000000a", "empresa_id": "e1000000-0000-4000-8000-0000000000a2", "setor": "distribuidora"},
+            {"cliente_id": "c1000000-0000-4000-8000-00000000000a", "empresa_id": "e1000000-0000-4000-8000-0000000000a1", "setor": "distribuidora"}]'::jsonb,
           'as duas empresas do cliente A, por nome');
 
 select is(

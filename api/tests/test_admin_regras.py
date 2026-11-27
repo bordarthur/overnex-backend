@@ -278,16 +278,36 @@ COMERCIAL = frozenset({"VG-01", "COM-01", "COM-02", "COM-03"})
 
 
 def test_catalogo_tem_os_paineis_que_existem_e_a_matriz_padrao() -> None:
-    assert [p.codigo for p in catalogo.PAINEIS] == [
-        "VG-01",
-        "COM-01",
-        "COM-02",
-        "COM-03",
-        "FIN-03",
-        "PES-01",
-        "FIN-02",
-        "FIN-04",
+    # na ordem do menu: seção a seção e, dentro dela, como o menu mostra
+    assert [(p.codigo, p.camada, p.nivel, p.menu) for p in catalogo.PAINEIS] == [
+        ("VG-01", "comercial", "basico", "Visão"),
+        ("COM-01", "comercial", "basico", "Comercial"),
+        ("COM-02", "comercial", "basico", "Comercial"),
+        ("COM-03", "comercial", "basico", "Comercial"),
+        ("FIN-02", "financeiro", "completo", "Financeiro"),
+        ("FIN-03", "financeiro", "basico", "Financeiro"),
+        ("FIN-04", "financeiro", "completo", "Financeiro"),
+        ("PES-01", "pessoas", "basico", "Pessoas"),
+        ("EST-01", "estoque", "distribuidora", "Estoque"),
     ]
+    # as camadas são as seções do menu, na ordem dele
+    assert [(k.id, k.rotulo) for k in catalogo.CAMADAS] == [
+        ("comercial", "Comercial"),
+        ("financeiro", "Financeiro"),
+        ("pessoas", "Pessoas"),
+        ("estoque", "Estoque"),
+    ]
+    # a ordem dos níveis dá a cor da etiqueta no front
+    assert [(n.id, n.rotulo) for n in catalogo.NIVEIS] == [
+        ("basico", "Universal Básico"),
+        ("completo", "Universal Completo"),
+        ("distribuidora", "Módulo Distribuidora"),
+    ]
+    # só o Estoque é de um setor, e a seção dele também
+    assert {p.codigo: p.setores for p in catalogo.PAINEIS if p.setores} == {
+        "EST-01": frozenset({"distribuidora"})
+    }
+    assert {k.id for k in catalogo.CAMADAS if k.setores} == {"estoque"}
     padrao = {p.codigo: p.padrao for p in catalogo.PAINEIS}
     # Cliente usuário não vê Pessoas, Resultado nem Fluxo de caixa; Consultor não vê Pessoas
     assert {c for c, perfis in padrao.items() if "cliente_usuario" not in perfis} == {
@@ -301,7 +321,8 @@ def test_catalogo_tem_os_paineis_que_existem_e_a_matriz_padrao() -> None:
     assert {p.codigo for p in catalogo.PAINEIS if p.nominal} == {"COM-02", "FIN-03"}
     assert catalogo.usada_por("f_folha_pj_cortes") == ["Pessoas"]
     assert "Vendas" in catalogo.usada_por("f_vendas_pj")
-    assert catalogo.usada_por("f_estoque_nilo_maia") == []
+    assert catalogo.usada_por("f_estoque_nilo_maia") == ["Estoque"]
+    assert catalogo.usada_por("f_compras_nilo_maia") == []
 
 
 def test_camadas_ativa_em_implantacao_e_desligada() -> None:
@@ -310,26 +331,90 @@ def test_camadas_ativa_em_implantacao_e_desligada() -> None:
 
     lista = {c.id: c for c in clientes.camadas(ligadas, com_carga)}
 
-    assert [(c.id, c.estado, c.status) for c in lista.values()] == [
-        ("comercial", "ativa", "saudavel"),
+    # sem unidade da Distribuidora: sem a seção Estoque
+    assert [(c.id, c.rotulo, c.estado, c.status) for c in lista.values()] == [
+        ("comercial", "Comercial", "ativa", "saudavel"),
+        # nenhum dos três ligado (o Receber e pagar tem dado)
+        ("financeiro", "Financeiro", "desligada", "neutro"),
         # ligado, mas sem carga da folha
-        ("pessoas", "implantacao", "atencao"),
-        # tem dado, mas ninguém ligou
-        ("receber-pagar", "desligada", "neutro"),
-        ("completo", "desligada", "neutro"),
+        ("pessoas", "Pessoas", "implantacao", "atencao"),
     ]
     assert lista["comercial"].pendencias == []
+    assert lista["financeiro"].pendencias == [
+        "Resultado: sem dado",
+        "Receber e pagar: desligado",
+        "Fluxo de caixa: sem dado",
+    ]
     assert lista["pessoas"].pendencias == ["Pessoas: sem dado"]
-    assert lista["receber-pagar"].pendencias == ["Receber e pagar: desligado"]
-    assert lista["completo"].pendencias == ["Resultado: sem dado", "Fluxo de caixa: sem dado"]
-    assert (lista["comercial"].grupo, lista["completo"].grupo) == (
-        "Universal Básico",
-        "Universal Completo",
+    # os painéis de cada seção, na ordem do menu, com o nível
+    assert [(p.codigo, p.nome, p.nivel) for p in lista["comercial"].paineis] == [
+        ("VG-01", "Visão geral", "basico"),
+        ("COM-01", "Vendas", "basico"),
+        ("COM-02", "Equipe comercial", "basico"),
+        ("COM-03", "Clientes e atendimentos", "basico"),
+    ]
+    assert [(p.codigo, p.nivel) for p in lista["financeiro"].paineis] == [
+        ("FIN-02", "completo"),
+        ("FIN-03", "basico"),
+        ("FIN-04", "completo"),
+    ]
+
+
+def test_financeiro_so_fica_ativo_com_os_tres_paineis_ligados_e_com_dado() -> None:
+    def financeiro(ligadas: frozenset[str], com_carga: frozenset[str]) -> tuple[str, list[str]]:
+        (k,) = [c for c in clientes.camadas(ligadas, com_carga) if c.id == "financeiro"]
+        return k.estado, k.pendencias
+
+    # Receber e pagar ligado e com dado; Resultado ligado sem dado; Fluxo de caixa desligado
+    assert financeiro(
+        frozenset({"FIN-02", "FIN-03"}), frozenset({"f_receitas_pj", "f_fluxo_pj"})
+    ) == ("implantacao", ["Resultado: sem dado", "Fluxo de caixa: desligado"])
+    # só o Receber e pagar ativo
+    assert financeiro(frozenset({"FIN-03"}), frozenset({"f_receitas_pj"})) == (
+        "implantacao",
+        ["Resultado: sem dado", "Fluxo de caixa: sem dado"],
     )
+    # os três ligados e com dado
+    assert financeiro(
+        frozenset({"FIN-02", "FIN-03", "FIN-04"}),
+        frozenset({"f_lancamentos_pj", "f_despesas_pj", "f_fluxo_pj"}),
+    ) == ("ativa", [])
+
+
+def test_secao_estoque_so_na_empresa_com_unidade_da_distribuidora() -> None:
+    def ids(setores_da_empresa: frozenset[str]) -> list[str]:
+        return [c.id for c in clientes.camadas(COMERCIAL, frozenset(), setores_da_empresa)]
+
+    # a PJ hoje: uma unidade da Distribuidora
+    assert ids(frozenset({"distribuidora"})) == ["comercial", "financeiro", "pessoas", "estoque"]
+    (estoque,) = [
+        c
+        for c in clientes.camadas(COMERCIAL, frozenset(), frozenset({"distribuidora"}))
+        if c.id == "estoque"
+    ]
+    assert [(p.codigo, p.nivel) for p in estoque.paineis] == [("EST-01", "distribuidora")]
+    assert estoque.pendencias == ["Estoque: sem dado"]
+    # sem setor ou só de outro setor: sem a seção
+    assert ids(frozenset()) == ["comercial", "financeiro", "pessoas"]
+    assert ids(frozenset({"varejo"})) == ["comercial", "financeiro", "pessoas"]
 
 
 def test_paineis_disponivel_so_com_carga_da_fonte() -> None:
-    lista = {p.codigo: p for p in clientes.paineis(COMERCIAL, frozenset({"f_vendas_pj"}))}
+    todos = clientes.paineis(COMERCIAL, frozenset({"f_vendas_pj"}))
+    lista = {p.codigo: p for p in todos}
+
+    # por seção e na ordem do menu, com a seção e o nível
+    assert [(p.codigo, p.secao, p.nivel) for p in todos] == [
+        ("VG-01", "Comercial", "basico"),
+        ("COM-01", "Comercial", "basico"),
+        ("COM-02", "Comercial", "basico"),
+        ("COM-03", "Comercial", "basico"),
+        ("FIN-02", "Financeiro", "completo"),
+        ("FIN-03", "Financeiro", "basico"),
+        ("FIN-04", "Financeiro", "completo"),
+        ("PES-01", "Pessoas", "basico"),
+        ("EST-01", "Estoque", "distribuidora"),
+    ]
 
     assert (lista["COM-01"].ligado, lista["COM-01"].pode_ligar, lista["COM-01"].nota) == (
         True,

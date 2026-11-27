@@ -5,6 +5,7 @@ seg.contexto_acesso; as leituras (uma ida ao banco) são trocadas por linhas, e 
 da gravação por um registro.
 """
 
+import json
 from collections.abc import Iterator
 from datetime import UTC, date, datetime, timedelta
 from typing import Any
@@ -12,6 +13,7 @@ from uuid import UUID
 
 import pytest
 from fastapi.testclient import TestClient
+from psycopg import errors
 
 from app.admin import clientes, convites, textos, usuarios
 from app.admin import router as admin_router
@@ -19,6 +21,7 @@ from app.admin.usuarios import NaoEncontrado, RegraInvalida
 from app.core.config import get_settings
 from app.core.db import Sessao, get_sessao
 from app.main import create_app
+from app.seguranca import setores
 from app.seguranca.auth import UsuarioToken
 from app.telas.paineis import router as paineis_router
 from app.telas.visao_geral import preferencias
@@ -28,9 +31,17 @@ ADMIN = UUID("d1000000-0000-4000-8000-0000000000ad")
 ANA = UUID("d1000000-0000-4000-8000-00000000000a")
 BRUNO = UUID("d1000000-0000-4000-8000-00000000000b")
 CLIENTE_A = UUID("c1000000-0000-4000-8000-00000000000a")
+EMPRESA_A1 = UUID("e1000000-0000-4000-8000-0000000000a1")
+EMPRESA_A2 = UUID("e1000000-0000-4000-8000-0000000000a2")
 CLIENTE_B = UUID("c1000000-0000-4000-8000-00000000000b")
 AGORA = datetime(2026, 11, 10, 14, 30, tzinfo=textos.FORTALEZA)
 SLUG = "padrao-lann-alfa"
+# os níveis do catálogo, na ordem (o front dá a cor da etiqueta pela posição)
+NIVEIS = [
+    {"id": "basico", "rotulo": "Universal Básico"},
+    {"id": "completo", "rotulo": "Universal Completo"},
+    {"id": "distribuidora", "rotulo": "Módulo Distribuidora"},
+]
 
 
 class Resultado:
@@ -51,6 +62,10 @@ class ConexaoFalsa:
         if "seg.contexto_acesso" in consulta:
             self.estado["slug_pedido"] = params[2]
             return Resultado(self.estado["fatos"])
+        # o banco recusa a gravação (ex.: chave estrangeira): nada é gravado
+        erro = self.estado.pop("erro", None)
+        if erro is not None:
+            raise erro
         self.estado["gravacoes"].append((consulta, params))
         return Resultado(self.estado.get("devolve"))
 
@@ -95,14 +110,18 @@ def _linhas() -> dict[str, list[dict[str, Any]]]:
     return {
         # barra lateral
         "clientes": [
-            {"id": CLIENTE_A, "nome": "Padrão LANN Alfa", "slug": SLUG, "segmento": "Atacado"},
-            {
-                "id": CLIENTE_B,
-                "nome": "Padrão LANN Beta",
-                "slug": "padrao-lann-beta",
-                "segmento": None,
-            },
+            {"id": CLIENTE_A, "nome": "Padrão LANN Alfa", "slug": SLUG},
+            {"id": CLIENTE_B, "nome": "Padrão LANN Beta", "slug": "padrao-lann-beta"},
         ],
+        # setores das unidades: a Alfa tem unidades da Distribuidora; a Beta, nenhuma com setor
+        "setores_dos_clientes": [{"cliente_id": CLIENTE_A, "setor": "distribuidora"}],
+        "setores": [
+            {"id": "distribuidora", "rotulo": "Distribuidora"},
+            {"id": "industria", "rotulo": "Indústria"},
+            {"id": "varejo", "rotulo": "Varejo"},
+            {"id": "servicos", "rotulo": "Serviços"},
+        ],
+        "setores_do_cliente": [{"setor": "distribuidora"}],
         "ligadas": [
             {"cliente_id": CLIENTE_A, "codigo_tela": c}
             for c in ("VG-01", "COM-01", "COM-02", "COM-03", "FIN-03")
@@ -118,14 +137,31 @@ def _linhas() -> dict[str, list[dict[str, Any]]]:
             {"perfil": "cliente_usuario", "minutos": 240, "pessoas": 1},
         ],
         # abas de uma empresa
-        "cliente": [
+        "cliente": [{"id": CLIENTE_A, "nome": "Padrão LANN Alfa", "slug": SLUG, "logo_url": None}],
+        # as unidades da empresa, fora de ordem
+        "unidades": [
             {
-                "id": CLIENTE_A,
-                "nome": "Padrão LANN Alfa",
-                "slug": SLUG,
-                "logo_url": None,
-                "segmento": "Atacado",
-            }
+                "id": EMPRESA_A1,
+                "nome": "Alfa Indústria",
+                "setor": "distribuidora",
+                "segmento": "Alimentos",
+                "grupo": "Fábrica",
+                "uf": "CE",
+                "cidade": "Fortaleza",
+                "bairro": None,
+                "endereco": None,
+            },
+            {
+                "id": EMPRESA_A2,
+                "nome": "Alfa Comércio",
+                "setor": "distribuidora",
+                "segmento": "Alimentos",
+                "grupo": "Atacado",
+                "uf": None,
+                "cidade": None,
+                "bairro": None,
+                "endereco": None,
+            },
         ],
         "telas": [
             {"codigo_tela": "VG-01", "ligada": True},
@@ -238,7 +274,21 @@ ROTAS = [
     ("GET", "/api/admin/gestao", None),
     ("POST", "/api/admin/clientes", {"nome": "Nova Empresa"}),
     ("GET", f"/api/admin/clientes/{SLUG}", None),
-    ("PUT", f"/api/admin/clientes/{SLUG}", {"nome": "Alfa", "segmento": "Atacado"}),
+    ("PUT", f"/api/admin/clientes/{SLUG}", {"nome": "Alfa"}),
+    (
+        "PUT",
+        f"/api/admin/clientes/{SLUG}/unidades/{EMPRESA_A1}",
+        {
+            "nome": "Alfa 1",
+            "setor": None,
+            "segmento": None,
+            "grupo": None,
+            "uf": None,
+            "cidade": None,
+            "bairro": None,
+            "endereco": None,
+        },
+    ),
     ("PUT", f"/api/admin/clientes/{SLUG}/paineis/VG-01", {"ligado": False}),
     ("PUT", f"/api/admin/clientes/{SLUG}/perfis/consultor/paineis/VG-01", {"ve": True}),
     ("PUT", f"/api/admin/clientes/{SLUG}/preferencias/linhas-custo", {"valor": "3"}),
@@ -280,9 +330,111 @@ def test_quem_nao_e_admin_recebe_403_generico(
     assert r.json() == {"detail": "Acesso negado."}
     (log,) = estado["sessoes"][0].logs
     assert log[4].startswith("admin:")
-    assert log[5:8] == ("negado", 3, "perfil não é admin")
+    motivo = "perfil sem acesso à Gestão" if (metodo, rota) in LEITURAS else "perfil não é admin"
+    assert log[5:8] == ("negado", 3, motivo)
     assert estado["gravacoes"] == []
     assert estado["confirmadas"] == 0
+
+
+# ---------- consultor: só as duas leituras, da carteira dele ----------
+
+# as rotas que o Consultor por carteira também lê
+LEITURAS = {("GET", "/api/admin/gestao"), ("GET", f"/api/admin/clientes/{SLUG}")}
+CAIO = UUID("d1000000-0000-4000-8000-0000000000c0")
+
+
+def _consultor(**mudancas: Any) -> dict[str, Any]:
+    """Caio, consultor com A e B na carteira."""
+    return _fatos(
+        usuario_id=CAIO,
+        perfil="consultor",
+        vinculos=[
+            {"cliente_id": str(CLIENTE_A), "papel": "gestor"},
+            {"cliente_id": str(CLIENTE_B), "papel": "gestor"},
+        ],
+        **mudancas,
+    )
+
+
+@pytest.mark.parametrize(
+    ("metodo", "rota", "corpo"), [r for r in ROTAS if (r[0], r[1]) not in LEITURAS]
+)
+def test_consultor_nao_grava_nem_ve_pessoas(
+    client: TestClient, estado: dict[str, Any], metodo: str, rota: str, corpo: Any
+) -> None:
+    estado["fatos"] = _consultor(cliente_id=CLIENTE_A)
+
+    r = client.request(metodo, rota, json=corpo)
+
+    assert r.status_code == 403
+    (log,) = estado["sessoes"][0].logs
+    assert log[5:8] == ("negado", 3, "perfil não é admin")
+    assert estado["gravacoes"] == []
+
+
+def test_consultor_ve_a_barra_so_de_leitura(client: TestClient, estado: dict[str, Any]) -> None:
+    estado["fatos"] = _consultor()
+
+    r = client.get("/api/admin/gestao")
+
+    assert r.status_code == 200
+    corpo = r.json()
+    # as empresas são as que o RLS devolve (a carteira, migration 33)
+    assert [c["slug"] for c in corpo["clientes"]] == [SLUG, "padrao-lann-beta"]
+    assert corpo["perfis"] == []
+    assert corpo["sessoes"] == []
+    assert corpo["permissoes"] == {"criarEmpresa": False, "usuarios": False}
+    (log,) = estado["sessoes"][0].logs
+    assert log[5] == "permitido"
+
+
+def test_consultor_ve_so_implantacao_unidades_e_prontidao(
+    client: TestClient, estado: dict[str, Any]
+) -> None:
+    estado["fatos"] = _consultor(cliente_id=CLIENTE_A)
+
+    r = client.get(f"/api/admin/clientes/{SLUG}")
+
+    assert r.status_code == 200
+    corpo = r.json()
+    assert [a["id"] for a in corpo["abas"]] == ["implantacao", "unidades", "dados"]
+    assert [a["rotulo"] for a in corpo["abas"]] == [
+        "Implantação",
+        "Unidades",
+        "Prontidão dos dados",
+    ]
+    # as unidades da carteira dele (o RLS recorta), na ordem da árvore
+    assert [u["nome"] for u in corpo["unidades"]] == ["Alfa Comércio", "Alfa Indústria"]
+    assert corpo["cliente"]["setores"] == [{"id": "distribuidora", "rotulo": "Distribuidora"}]
+    assert corpo["permissoes"] == {"editar": False, "convidar": False, "unidades": False}
+    assert corpo["opcoesSetor"] == []
+    # a aba Implantação: as seções com os painéis; os níveis iguais aos do admin
+    assert [k["id"] for k in corpo["camadas"]] == ["comercial", "financeiro", "pessoas", "estoque"]
+    assert all(k["paineis"] for k in corpo["camadas"])
+    assert corpo["niveis"] == NIVEIS
+    assert [f["tabela"] for f in corpo["fontes"]] == ["f_folha_alfa", "f_vendas_alfa"]
+    # nada das outras abas, nem a contagem de usuários
+    for campo in ("paineis", "usuarios", "preferencias", "feriados", "cargas", "menu"):
+        assert corpo[campo] == [], campo
+    assert corpo["acesso"] == {"perfis": [], "linhas": []}
+    rotulos = [c["rotulo"] for c in corpo["resumo"]]
+    assert len(rotulos) == 2
+    assert rotulos[1].startswith("Última carga")
+    assert estado["slug_pedido"] == SLUG
+
+
+def test_consultor_nao_abre_empresa_fora_da_carteira(
+    client: TestClient, estado: dict[str, Any]
+) -> None:
+    # o banco não escolhe cliente fora do vínculo: o slug pedido fica sem cliente
+    estado["fatos"] = _consultor()
+
+    r = client.get("/api/admin/clientes/gama-fora")
+
+    assert r.status_code == 403
+    assert r.json() == {"detail": "Acesso negado."}
+    (log,) = estado["sessoes"][0].logs
+    assert log[5:7] == ("negado", 2)
 
 
 def test_cliente_que_nao_existe_404(client: TestClient, estado: dict[str, Any]) -> None:
@@ -306,15 +458,25 @@ def test_gestao_lista_as_empresas_com_as_camadas_os_perfis_e_as_sessoes(
     assert estado["slug_pedido"] is None
     alfa, beta = corpo["clientes"]
     assert (alfa["slug"], alfa["nome"]) == (SLUG, "Padrão LANN Alfa")
-    assert (alfa["segmento"], beta["segmento"]) == ("Atacado", None)
+    # sem o "Ramo" (migration 37): setor e segmento são das unidades
+    assert "segmento" not in alfa
+    assert "segmento" not in beta
     assert [(c["id"], c["estado"], c["estadoRotulo"], c["status"]) for c in alfa["camadas"]] == [
         ("comercial", "ativa", "Ativa", "saudavel"),
+        # o Receber e pagar ligado (sem carga de títulos); Resultado e Fluxo de caixa não
+        ("financeiro", "implantacao", "Em implantação", "atencao"),
         ("pessoas", "desligada", "Desligada", "neutro"),
-        # ligado sem carga de títulos
-        ("receber-pagar", "implantacao", "Em implantação", "atencao"),
-        ("completo", "desligada", "Desligada", "neutro"),
+        # a Alfa tem unidade da Distribuidora: tem a seção Estoque
+        ("estoque", "desligada", "Desligada", "neutro"),
     ]
     assert {c["estado"] for c in beta["camadas"]} == {"desligada"}
+    # a Beta, sem unidade com setor, não
+    assert [c["id"] for c in beta["camadas"]] == ["comercial", "financeiro", "pessoas"]
+    # os setores das unidades de cada empresa
+    assert alfa["setores"] == [{"id": "distribuidora", "rotulo": "Distribuidora"}]
+    assert beta["setores"] == []
+    # sem as opções de setor: o setor é da unidade, cadastrado por SQL
+    assert "setores" not in corpo
     assert corpo["perfis"][0] == {
         "id": "admin",
         "rotulo": "Admin BORD",
@@ -335,6 +497,28 @@ def test_gestao_lista_as_empresas_com_as_camadas_os_perfis_e_as_sessoes(
         {"minutos": 720, "rotulo": "12 h", "soAdmin": False},
         {"minutos": 1440, "rotulo": "24 h", "soAdmin": True},
     ]
+    assert corpo["permissoes"] == {"criarEmpresa": True, "usuarios": True}
+
+
+def test_admin_ve_as_sete_abas_e_grava(client: TestClient, estado: dict[str, Any]) -> None:
+    _no_cliente(estado)
+    corpo = client.get(f"/api/admin/clientes/{SLUG}").json()
+    assert [a["id"] for a in corpo["abas"]] == [
+        "implantacao",
+        "unidades",
+        "dados",
+        "paineis",
+        "preferencias",
+        "acesso",
+        "cargas",
+    ]
+    assert corpo["permissoes"] == {"editar": True, "convidar": True, "unidades": True}
+    assert [o["id"] for o in corpo["opcoesSetor"]] == [
+        "distribuidora",
+        "industria",
+        "varejo",
+        "servicos",
+    ]
 
 
 def test_cliente_devolve_todas_as_abas(client: TestClient, estado: dict[str, Any]) -> None:
@@ -349,9 +533,34 @@ def test_cliente_devolve_todas_as_abas(client: TestClient, estado: dict[str, Any
     assert corpo["cliente"] == {
         "slug": SLUG,
         "nome": "Padrão LANN Alfa",
-        "segmento": "Atacado",
+        "setores": [{"id": "distribuidora", "rotulo": "Distribuidora"}],
         "logoUrl": None,
     }
+    # aba Unidades: na ordem da árvore (setor, grupo, nome)
+    assert corpo["unidades"] == [
+        {
+            "id": str(EMPRESA_A2),
+            "nome": "Alfa Comércio",
+            "setor": {"id": "distribuidora", "rotulo": "Distribuidora"},
+            "segmento": "Alimentos",
+            "grupo": "Atacado",
+            "uf": None,
+            "cidade": None,
+            "bairro": None,
+            "endereco": None,
+        },
+        {
+            "id": str(EMPRESA_A1),
+            "nome": "Alfa Indústria",
+            "setor": {"id": "distribuidora", "rotulo": "Distribuidora"},
+            "segmento": "Alimentos",
+            "grupo": "Fábrica",
+            "uf": "CE",
+            "cidade": "Fortaleza",
+            "bairro": None,
+            "endereco": None,
+        },
+    ]
     assert corpo["resumo"] == [
         {"rotulo": "0 de 4 camadas ativas", "status": "atencao"},
         {"rotulo": "2 usuários", "status": "neutro"},
@@ -376,13 +585,53 @@ def test_cliente_devolve_todas_as_abas(client: TestClient, estado: dict[str, Any
     )
 
     # painéis: Pessoas está ligado, mas sem dado; Receber e pagar, desligado e sem dado
+    # implantação: as seções do menu, cada uma com os painéis e o nível
+    assert [
+        (k["id"], k["rotulo"], k["estado"], [(p["codigo"], p["nivel"]) for p in k["paineis"]])
+        for k in corpo["camadas"]
+    ] == [
+        (
+            "comercial",
+            "Comercial",
+            "implantacao",
+            [("VG-01", "basico"), ("COM-01", "basico"), ("COM-02", "basico"), ("COM-03", "basico")],
+        ),
+        (
+            "financeiro",
+            "Financeiro",
+            "desligada",
+            [("FIN-02", "completo"), ("FIN-03", "basico"), ("FIN-04", "completo")],
+        ),
+        ("pessoas", "Pessoas", "implantacao", [("PES-01", "basico")]),
+        ("estoque", "Estoque", "desligada", [("EST-01", "distribuidora")]),
+    ]
+    assert corpo["camadas"][2]["paineis"] == [
+        {"codigo": "PES-01", "nome": "Pessoas", "nivel": "basico"}
+    ]
+    assert "grupo" not in corpo["camadas"][0]
+    # os níveis do catálogo, inteiros e na ordem (a cor da etiqueta vai pela posição)
+    assert corpo["niveis"] == NIVEIS
+
+    # painéis: por seção e na ordem do menu
+    assert [(p["codigo"], p["secao"], p["nivel"]) for p in corpo["paineis"]] == [
+        ("VG-01", "Comercial", "basico"),
+        ("COM-01", "Comercial", "basico"),
+        ("COM-02", "Comercial", "basico"),
+        ("COM-03", "Comercial", "basico"),
+        ("FIN-02", "Financeiro", "completo"),
+        ("FIN-03", "Financeiro", "basico"),
+        ("FIN-04", "Financeiro", "completo"),
+        ("PES-01", "Pessoas", "basico"),
+        ("EST-01", "Estoque", "distribuidora"),
+    ]
     paineis = {p["codigo"]: p for p in corpo["paineis"]}
-    assert len(paineis) == 8
+    assert "grupo" not in paineis["VG-01"]
+    # o Estoque (a Alfa é Distribuidora) liga quando houver carga de estoque
+    assert paineis["EST-01"]["nota"] == "Sem carga de f_estoque_* nesta empresa."
     assert (paineis["VG-01"]["ligado"], paineis["VG-01"]["podeLigar"]) == (True, True)
     assert (paineis["PES-01"]["ligado"], paineis["PES-01"]["podeLigar"]) == (True, False)
     assert paineis["PES-01"]["nota"] == "Sem carga de f_folha_* nesta empresa."
     assert paineis["FIN-03"]["ligado"] is False
-    assert paineis["FIN-02"]["grupo"] == "Universal Completo"
 
     # matriz: só os painéis ligados; o admin vê todos e não muda
     assert corpo["acesso"]["perfis"] == [
@@ -459,9 +708,11 @@ def test_cliente_devolve_todas_as_abas(client: TestClient, estado: dict[str, Any
             "observacao": "1 fonte com erro: arquivo não encontrado",
         }
     ]
-    # menu do Cliente principal: Pessoas está na matriz, mas sem dado não aparece
+    # menu do Cliente principal, nos grupos do menu do app: Pessoas está na matriz, mas sem
+    # dado não aparece
     assert corpo["menu"] == [
-        {"grupo": "Universal Básico", "itens": [{"nome": "Visão geral"}, {"nome": "Vendas"}]}
+        {"grupo": "Visão", "itens": [{"nome": "Visão geral"}]},
+        {"grupo": "Comercial", "itens": [{"nome": "Vendas"}]},
     ]
 
 
@@ -807,10 +1058,7 @@ def test_sessao_e_acesso_do_usuario(
 def test_criar_empresa_monta_o_slug_grava_e_confirma(
     client: TestClient, estado: dict[str, Any]
 ) -> None:
-    r = client.post(
-        "/api/admin/clientes",
-        json={"nome": "  Nilo  Maia Distribuição ", "segmento": " Distribuição de alimentos "},
-    )
+    r = client.post("/api/admin/clientes", json={"nome": "  Nilo  Maia Distribuição "})
 
     assert r.status_code == 201
     assert r.json() == {
@@ -822,21 +1070,45 @@ def test_criar_empresa_monta_o_slug_grava_e_confirma(
     assert estado["gravacoes"][0][1] == {
         "nome": "Nilo Maia Distribuição",
         "slug": "nilo-maia-distribuicao",
-        "segmento": "Distribuição de alimentos",
     }
-    assert estado["gravacoes"][1][1]["autor"] == ADMIN
+    log = estado["gravacoes"][1][1]
+    assert log["autor"] == ADMIN
+    assert json.loads(log["depois"]) == {
+        "nome": "Nilo Maia Distribuição",
+        "slug": "nilo-maia-distribuicao",
+    }
     assert estado["confirmadas"] == 1
 
 
-def test_criar_empresa_com_o_slug_escolhido_e_sem_setor(
-    client: TestClient, estado: dict[str, Any]
-) -> None:
-    r = client.post(
-        "/api/admin/clientes", json={"nome": "PJ Cortes", "slug": "pj", "segmento": "  "}
-    )
+def test_criar_empresa_com_o_slug_escolhido(client: TestClient, estado: dict[str, Any]) -> None:
+    r = client.post("/api/admin/clientes", json={"nome": "PJ Cortes", "slug": "pj"})
 
     assert (r.status_code, r.json()["slug"]) == (201, "pj")
-    assert estado["gravacoes"][0][1] == {"nome": "PJ Cortes", "slug": "pj", "segmento": None}
+    assert estado["gravacoes"][0][1] == {"nome": "PJ Cortes", "slug": "pj"}
+
+
+@pytest.mark.parametrize("metodo", ["post", "put"])
+@pytest.mark.parametrize(
+    "extra",
+    [
+        # o setor é da unidade (migration 35)
+        {"setor": "varejo"},
+        # o "Ramo" saiu (migration 37): o segmento também é só da unidade
+        {"segmento": "Frigorífico"},
+        {"segmento": None},
+    ],
+)
+def test_empresa_nao_tem_setor_nem_segmento(
+    client: TestClient, estado: dict[str, Any], metodo: str, extra: dict[str, Any]
+) -> None:
+    # o corpo com o campo é recusado no formato, antes de chegar ao banco
+    _no_cliente(estado)
+    url = "/api/admin/clientes" if metodo == "post" else f"/api/admin/clientes/{SLUG}"
+    r = getattr(client, metodo)(url, json={"nome": "Alfa", **extra})
+    assert r.status_code == 422
+    assert [e["loc"] for e in r.json()["detail"]] == [["body", *extra]]
+    assert estado["gravacoes"] == []
+    assert estado["confirmadas"] == 0
 
 
 @pytest.mark.parametrize(
@@ -859,45 +1131,33 @@ def test_criar_empresa_recusada_nao_grava(
     assert estado["confirmadas"] == 0
 
 
-def test_mudar_empresa_troca_nome_e_setor_e_apaga_as_respostas_prontas(
+def test_mudar_empresa_troca_o_nome_e_apaga_as_respostas_prontas(
     client: TestClient, estado: dict[str, Any]
 ) -> None:
     _no_cliente(estado)
-    estado["devolve"] = {"nome_antes": "Padrão LANN Alfa", "segmento_antes": None}
+    estado["devolve"] = {"nome_antes": "Padrão LANN Alfa"}
 
-    r = client.put(
-        f"/api/admin/clientes/{SLUG}", json={"nome": " PJ  Cortes ", "segmento": " Atacado "}
-    )
+    r = client.put(f"/api/admin/clientes/{SLUG}", json={"nome": " PJ  Cortes "})
 
     assert r.status_code == 204
     assert [g[0] for g in estado["gravacoes"]] == [clientes.SQL_MUDAR_EMPRESA, usuarios.SQL_LOG]
-    assert estado["gravacoes"][0][1] == {
-        "cliente": CLIENTE_A,
-        "nome": "PJ Cortes",
-        "segmento": "Atacado",
-    }
+    assert estado["gravacoes"][0][1] == {"cliente": CLIENTE_A, "nome": "PJ Cortes"}
     log = estado["gravacoes"][1][1]
     assert (log["autor"], log["operacao"]) == (ADMIN, "update")
-    assert '"segmento": null' in log["antes"]
+    # a auditoria guarda só o nome, antes e depois
+    assert json.loads(log["antes"]) == {"nome": "Padrão LANN Alfa"}
+    assert json.loads(log["depois"]) == {"nome": "PJ Cortes"}
     assert estado["confirmadas"] == 1
     # o nome aparece nas telas
     assert estado["apagadas"] == [("VG", CLIENTE_A), ("paineis", CLIENTE_A)]
 
 
-def test_mudar_empresa_sem_setor_e_nome_em_branco(
-    client: TestClient, estado: dict[str, Any]
-) -> None:
+def test_mudar_empresa_com_nome_em_branco(client: TestClient, estado: dict[str, Any]) -> None:
     _no_cliente(estado)
-    estado["devolve"] = {"nome_antes": "Padrão LANN Alfa", "segmento_antes": "Atacado"}
-
-    assert client.put(f"/api/admin/clientes/{SLUG}", json={"nome": "Alfa"}).status_code == 204
-    assert estado["gravacoes"][0][1]["segmento"] is None
-
-    estado["gravacoes"].clear()
     r = client.put(f"/api/admin/clientes/{SLUG}", json={"nome": "   "})
     assert (r.status_code, r.json()) == (422, {"detail": "Informe o nome da empresa."})
     assert estado["gravacoes"] == []
-    assert estado["confirmadas"] == 1
+    assert estado["confirmadas"] == 0
 
 
 def test_mudar_empresa_barrado_pelo_banco_e_erro_de_servidor(
@@ -919,6 +1179,120 @@ def test_mudar_empresa_barrado_pelo_banco_e_erro_de_servidor(
     assert estado["confirmadas"] == 0
     # só o update tentado: nada no log de alterações
     assert [g[0] for g in estado["gravacoes"]] == [clientes.SQL_MUDAR_EMPRESA]
+
+
+# ---------- setores das unidades (migrations 34 e 35) ----------
+
+
+def test_gestao_traz_os_setores_das_unidades_de_cada_empresa_na_ordem(
+    client: TestClient, estado: dict[str, Any]
+) -> None:
+    estado["linhas"]["setores_dos_clientes"] = [
+        {"cliente_id": CLIENTE_A, "setor": "varejo"},
+        {"cliente_id": CLIENTE_A, "setor": "distribuidora"},
+    ]
+    corpo = client.get("/api/admin/gestao").json()
+    alfa, beta = corpo["clientes"]
+    # na ordem de cfg.setor
+    assert alfa["setores"] == [
+        {"id": "distribuidora", "rotulo": "Distribuidora"},
+        {"id": "varejo", "rotulo": "Varejo"},
+    ]
+    assert beta["setores"] == []
+
+
+def test_consultor_ve_os_setores_das_empresas_da_carteira(
+    client: TestClient, estado: dict[str, Any]
+) -> None:
+    estado["fatos"] = _fatos(perfil="consultor")
+    corpo = client.get("/api/admin/gestao").json()
+    assert corpo["clientes"][0]["setores"] == [{"id": "distribuidora", "rotulo": "Distribuidora"}]
+
+
+def test_painel_de_outro_setor_fica_travado_e_sai_da_matriz_do_menu_e_das_camadas(
+    client: TestClient, estado: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # Pessoas como se fosse só do Varejo; a Alfa é Distribuidora (e o painel está ligado)
+    monkeypatch.setattr(setores, "SETORES_DA_TELA", {"PES-01": frozenset({"varejo"})})
+    estado["linhas"]["fontes"][0]["data_snapshot"] = date(2026, 11, 9)  # a folha tem dado
+    _no_cliente(estado)
+
+    corpo = client.get(f"/api/admin/clientes/{SLUG}").json()
+
+    pessoas = {p["codigo"]: p for p in corpo["paineis"]}["PES-01"]
+    assert pessoas == {
+        "codigo": "PES-01",
+        "nome": "Pessoas",
+        "secao": "Pessoas",
+        "nivel": "basico",
+        "ligado": True,
+        "podeLigar": False,
+        "status": "neutro",
+        "statusRotulo": "indisponível",
+        "nota": "Só para empresas com unidade do setor Varejo.",
+    }
+    assert "PES-01" not in [linha["codigo"] for linha in corpo["acesso"]["linhas"]]
+    assert all(i["nome"] != "Pessoas" for g in corpo["menu"] for i in g["itens"])
+    # a seção Pessoas só tem esse painel: some, e o resumo conta 3 seções (com a Estoque)
+    assert [k["id"] for k in corpo["camadas"]] == ["comercial", "financeiro", "estoque"]
+    assert corpo["resumo"][0]["rotulo"] == "0 de 3 camadas ativas"
+    # a Ana via 3 painéis no ar; sem Pessoas, 2
+    assert corpo["usuarios"][0]["paineisQueVe"] == "2 de 2"
+
+    # na barra lateral, a Alfa também perde a seção; a Beta (sem unidade com setor) também,
+    # e não tem a Estoque
+    lista = client.get("/api/admin/gestao").json()["clientes"]
+    assert [[k["id"] for k in c["camadas"]] for c in lista] == [
+        ["comercial", "financeiro", "estoque"],
+        ["comercial", "financeiro"],
+    ]
+
+
+def test_painel_do_setor_da_empresa_segue_normal(
+    client: TestClient, estado: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(setores, "SETORES_DA_TELA", {"PES-01": frozenset({"distribuidora"})})
+    _no_cliente(estado)
+
+    corpo = client.get(f"/api/admin/clientes/{SLUG}").json()
+
+    pessoas = {p["codigo"]: p for p in corpo["paineis"]}["PES-01"]
+    # sem dado de folha: a nota é a de sempre
+    assert pessoas["nota"] == "Sem carga de f_folha_* nesta empresa."
+    assert "PES-01" in [linha["codigo"] for linha in corpo["acesso"]["linhas"]]
+    assert "pessoas" in [k["id"] for k in corpo["camadas"]]
+
+
+def test_ligar_painel_de_outro_setor_e_422_e_desligar_pode(
+    client: TestClient, estado: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(setores, "SETORES_DA_TELA", {"COM-01": frozenset({"varejo", "industria"})})
+    _no_cliente(estado)
+
+    r = client.put(f"/api/admin/clientes/{SLUG}/paineis/COM-01", json={"ligado": True})
+    assert (r.status_code, r.json()) == (
+        422,
+        {"detail": "Este painel é só para empresas com unidade dos setores Indústria e Varejo."},
+    )
+    assert estado["gravacoes"] == []
+
+    # desligar não confere o setor (o COM-01 está ligado nas linhas do teste)
+    r = client.put(f"/api/admin/clientes/{SLUG}/paineis/COM-01", json={"ligado": False})
+    assert r.status_code == 204
+
+
+def test_ligar_painel_numa_empresa_sem_unidade_com_setor_e_422(
+    client: TestClient, estado: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(setores, "SETORES_DA_TELA", {"FIN-03": frozenset({"distribuidora"})})
+    estado["linhas"]["setores_do_cliente"] = []
+    _no_cliente(estado)
+
+    r = client.put(f"/api/admin/clientes/{SLUG}/paineis/FIN-03", json={"ligado": True})
+    assert (r.status_code, r.json()) == (
+        422,
+        {"detail": "Este painel é só para empresas com unidade do setor Distribuidora."},
+    )
 
 
 def test_slug_do_nome() -> None:
@@ -1123,6 +1497,7 @@ def test_openapi_tem_as_rotas_da_gestao(client: TestClient) -> None:
         ("POST", "/api/admin/clientes"),
         ("GET", "/api/admin/clientes/{slug}"),
         ("PUT", "/api/admin/clientes/{slug}"),
+        ("PUT", "/api/admin/clientes/{slug}/unidades/{id}"),
         ("PUT", "/api/admin/clientes/{slug}/paineis/{codigo}"),
         ("PUT", "/api/admin/clientes/{slug}/perfis/{perfil}/paineis/{codigo}"),
         ("PUT", "/api/admin/clientes/{slug}/perfis/{perfil}/paineis/{codigo}/nomes"),
@@ -1139,3 +1514,143 @@ def test_openapi_tem_as_rotas_da_gestao(client: TestClient) -> None:
     }
     for nome in ("GestaoPayload", "ClientePayload", "UsuariosPayload", "ConvitePedido"):
         assert nome in esquema["components"]["schemas"]
+
+
+# ---------- editar a unidade (migration 36) ----------
+
+UNIDADE = f"/api/admin/clientes/{SLUG}/unidades/{EMPRESA_A1}"
+CORPO_UNIDADE: dict[str, Any] = {
+    "nome": "  Alfa   Indústria 2 ",
+    "setor": "industria",
+    "segmento": " Alimentos ",
+    "grupo": "  ",
+    "uf": "ce",
+    "cidade": "Fortaleza",
+    "bairro": None,
+    "endereco": "Av. Central, 100",
+}
+
+
+def _antes() -> dict[str, Any]:
+    return {
+        "antes": {
+            "nome": "Alfa Indústria",
+            "setor": "distribuidora",
+            "segmento": "Alimentos",
+            "grupo": "Fábrica",
+            "uf": "CE",
+            "cidade": "Fortaleza",
+            "bairro": None,
+            "endereco": None,
+        },
+        "conflito": False,
+        "mudou": True,
+    }
+
+
+def test_editar_unidade_grava_limpa_registra_e_apaga_as_respostas(
+    client: TestClient, estado: dict[str, Any]
+) -> None:
+    _no_cliente(estado)
+    estado["devolve"] = _antes()
+
+    r = client.put(UNIDADE, json=CORPO_UNIDADE)
+
+    assert (r.status_code, r.content) == (204, b"")
+    assert [g[0] for g in estado["gravacoes"]] == [clientes.SQL_MUDAR_UNIDADE, usuarios.SQL_LOG]
+    assert estado["gravacoes"][0][1] == {
+        "nome": "Alfa Indústria 2",
+        "setor": "industria",
+        "segmento": "Alimentos",
+        "grupo": None,
+        "uf": "CE",
+        "cidade": "Fortaleza",
+        "bairro": None,
+        "endereco": "Av. Central, 100",
+        "id": EMPRESA_A1,
+        "cliente": CLIENTE_A,
+    }
+    log = estado["gravacoes"][1][1]
+    assert (log["tabela"], log["registro"], log["operacao"]) == (
+        "cfg.empresa",
+        str(EMPRESA_A1),
+        "update",
+    )
+    assert (json.loads(log["antes"])["grupo"], json.loads(log["depois"])["grupo"]) == (
+        "Fábrica",
+        None,
+    )
+    assert estado["confirmadas"] == 1
+    # setor e grupo mudam o escopo das telas do cliente
+    assert estado["apagadas"] == [("VG", CLIENTE_A), ("paineis", CLIENTE_A)]
+
+
+@pytest.mark.parametrize(
+    ("mudanca", "detalhe"),
+    [
+        ({"nome": "   "}, "Informe o nome da unidade."),
+        ({"uf": "XX"}, "UF inválida."),
+    ],
+)
+def test_editar_unidade_recusada_antes_do_banco(
+    client: TestClient, estado: dict[str, Any], mudanca: dict[str, Any], detalhe: str
+) -> None:
+    _no_cliente(estado)
+    r = client.put(UNIDADE, json=CORPO_UNIDADE | mudanca)
+    assert (r.status_code, r.json()) == (422, {"detail": detalhe})
+    assert estado["gravacoes"] == []
+    assert estado["confirmadas"] == 0
+
+
+def test_editar_unidade_nome_repetido_e_setor_invalido(
+    client: TestClient, estado: dict[str, Any]
+) -> None:
+    _no_cliente(estado)
+    estado["devolve"] = {**_antes(), "conflito": True, "mudou": False}
+    r = client.put(UNIDADE, json=CORPO_UNIDADE)
+    assert (r.status_code, r.json()) == (
+        422,
+        {"detail": "Já existe uma unidade com esse nome nesta empresa."},
+    )
+
+    # quem confere o setor é a chave estrangeira de cfg.empresa.setor
+    estado["erro"] = errors.ForeignKeyViolation("setor")
+    r = client.put(UNIDADE, json=CORPO_UNIDADE | {"setor": "padaria"})
+    assert (r.status_code, r.json()) == (422, {"detail": "Setor inválido."})
+    assert estado["confirmadas"] == 0
+
+
+def test_editar_unidade_de_outra_empresa_404(client: TestClient, estado: dict[str, Any]) -> None:
+    _no_cliente(estado)
+    estado["devolve"] = {"antes": None, "conflito": False, "mudou": False}
+    r = client.put(UNIDADE, json=CORPO_UNIDADE)
+    assert (r.status_code, r.json()) == (404, {"detail": "Unidade não encontrada."})
+    assert estado["confirmadas"] == 0
+
+
+def test_editar_unidade_campo_a_mais_ou_faltando_422(
+    client: TestClient, estado: dict[str, Any]
+) -> None:
+    _no_cliente(estado)
+    assert client.put(UNIDADE, json=CORPO_UNIDADE | {"cliente": "outro"}).status_code == 422
+    sem_bairro = {k: v for k, v in CORPO_UNIDADE.items() if k != "bairro"}
+    assert client.put(UNIDADE, json=sem_bairro).status_code == 422
+    assert client.put(UNIDADE, json=CORPO_UNIDADE | {"nome": "x" * 121}).status_code == 422
+    assert estado["gravacoes"] == []
+
+
+def test_editar_unidade_barrada_pelo_banco_e_erro_de_servidor(
+    estado: dict[str, Any], caplog: pytest.LogCaptureFixture
+) -> None:
+    # sem a migration 36, o RLS não deixa o update achar a linha
+    _no_cliente(estado)
+    estado["devolve"] = {**_antes(), "mudou": False}
+    app = create_app()
+    app.dependency_overrides[get_sessao] = lambda: Sessao(
+        conn=ConexaoFalsa(estado),  # type: ignore[arg-type]
+        usuario=UsuarioToken(id_autenticacao=UUID(int=1)),
+    )
+    r = TestClient(app, raise_server_exceptions=False).put(UNIDADE, json=CORPO_UNIDADE)
+    assert (r.status_code, r.json()) == (500, {"detail": "Erro interno."})
+    assert "migration 36" in caplog.text
+    assert estado["confirmadas"] == 0

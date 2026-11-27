@@ -365,6 +365,82 @@
         }
       }
     },
+    "/api/negocios": {
+      "get": {
+        "tags": [
+          "negocios"
+        ],
+        "summary": "Valores",
+        "operationId": "valores_api_negocios_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "mes",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Mês (AAAA-MM), um dos de /api/sessao.",
+              "title": "Mes"
+            },
+            "description": "Mês (AAAA-MM), um dos de /api/sessao."
+          },
+          {
+            "name": "cliente",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 80,
+                  "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Opcional: slug do cliente (a empresa escolhida no front). Só vale entre os clientes que o usuário pode abrir. Sem valor: o único cliente de quem tem um só.",
+              "title": "Cliente"
+            },
+            "description": "Opcional: slug do cliente (a empresa escolhida no front). Só vale entre os clientes que o usuário pode abrir. Sem valor: o único cliente de quem tem um só."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NegociosValores"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autenticado."
+          },
+          "403": {
+            "description": "Acesso negado (inclusive `cliente` que a pessoa não pode abrir)."
+          },
+          "422": {
+            "description": "`mes` fora do formato AAAA-MM, ou mês sem dados."
+          }
+        }
+      }
+    },
     "/api/telas/visao-geral": {
       "get": {
         "tags": [
@@ -398,23 +474,22 @@
             "description": "Mês da tela (AAAA-MM), um dos de /api/sessao."
           },
           {
-            "name": "empresa",
+            "name": "unidades",
             "in": "query",
             "required": false,
             "schema": {
               "anyOf": [
                 {
-                  "type": "string",
-                  "format": "uuid"
+                  "type": "string"
                 },
                 {
                   "type": "null"
                 }
               ],
-              "description": "Opcional: só esta empresa. Sem valor: todas as do vínculo.",
-              "title": "Empresa"
+              "description": "Opcional: ids das unidades marcadas (os de `empresas` em /api/sessao), separados por vírgula. Sem valor: todas as liberadas. Unidade fora do alcance: 403; id que não é UUID ou lista vazia: 422 \"Filtro inválido.\".",
+              "title": "Unidades"
             },
-            "description": "Opcional: só esta empresa. Sem valor: todas as do vínculo."
+            "description": "Opcional: ids das unidades marcadas (os de `empresas` em /api/sessao), separados por vírgula. Sem valor: todas as liberadas. Unidade fora do alcance: 403; id que não é UUID ou lista vazia: 422 \"Filtro inválido.\"."
           },
           {
             "name": "cliente",
@@ -486,23 +561,22 @@
             "description": "Id do seletor (ex.: linhas-custo)."
           },
           {
-            "name": "empresa",
+            "name": "unidades",
             "in": "query",
             "required": false,
             "schema": {
               "anyOf": [
                 {
-                  "type": "string",
-                  "format": "uuid"
+                  "type": "string"
                 },
                 {
                   "type": "null"
                 }
               ],
-              "description": "Opcional: só esta empresa. Sem valor: todas as do vínculo.",
-              "title": "Empresa"
+              "description": "Opcional: ids das unidades marcadas (os de `empresas` em /api/sessao), separados por vírgula. Sem valor: todas as liberadas. Unidade fora do alcance: 403; id que não é UUID ou lista vazia: 422 \"Filtro inválido.\".",
+              "title": "Unidades"
             },
-            "description": "Opcional: só esta empresa. Sem valor: todas as do vínculo."
+            "description": "Opcional: ids das unidades marcadas (os de `empresas` em /api/sessao), separados por vírgula. Sem valor: todas as liberadas. Unidade fora do alcance: 403; id que não é UUID ou lista vazia: 422 \"Filtro inválido.\"."
           },
           {
             "name": "cliente",
@@ -625,23 +699,22 @@
             "description": "Linha de produto: um `id` das opções do filtro na resposta. Sem ele, todos."
           },
           {
-            "name": "empresa",
+            "name": "unidades",
             "in": "query",
             "required": false,
             "schema": {
               "anyOf": [
                 {
-                  "type": "string",
-                  "format": "uuid"
+                  "type": "string"
                 },
                 {
                   "type": "null"
                 }
               ],
-              "description": "Opcional: só esta empresa. Sem valor: todas as do vínculo.",
-              "title": "Empresa"
+              "description": "Opcional: ids das unidades marcadas (os de `empresas` em /api/sessao), separados por vírgula. Sem valor: todas as liberadas. Unidade fora do alcance: 403; id que não é UUID ou lista vazia: 422 \"Filtro inválido.\".",
+              "title": "Unidades"
             },
-            "description": "Opcional: só esta empresa. Sem valor: todas as do vínculo."
+            "description": "Opcional: ids das unidades marcadas (os de `empresas` em /api/sessao), separados por vírgula. Sem valor: todas as liberadas. Unidade fora do alcance: 403; id que não é UUID ou lista vazia: 422 \"Filtro inválido.\"."
           },
           {
             "name": "cliente",
@@ -758,23 +831,22 @@
             "description": "Supervisor: um `id` das opções do filtro na resposta. Sem ele, todos."
           },
           {
-            "name": "empresa",
+            "name": "unidades",
             "in": "query",
             "required": false,
             "schema": {
               "anyOf": [
                 {
-                  "type": "string",
-                  "format": "uuid"
+                  "type": "string"
                 },
                 {
                   "type": "null"
                 }
               ],
-              "description": "Opcional: só esta empresa. Sem valor: todas as do vínculo.",
-              "title": "Empresa"
+              "description": "Opcional: ids das unidades marcadas (os de `empresas` em /api/sessao), separados por vírgula. Sem valor: todas as liberadas. Unidade fora do alcance: 403; id que não é UUID ou lista vazia: 422 \"Filtro inválido.\".",
+              "title": "Unidades"
             },
-            "description": "Opcional: só esta empresa. Sem valor: todas as do vínculo."
+            "description": "Opcional: ids das unidades marcadas (os de `empresas` em /api/sessao), separados por vírgula. Sem valor: todas as liberadas. Unidade fora do alcance: 403; id que não é UUID ou lista vazia: 422 \"Filtro inválido.\"."
           },
           {
             "name": "cliente",
@@ -853,23 +925,22 @@
             "description": "Mês da tela (AAAA-MM), um dos de /api/sessao."
           },
           {
-            "name": "empresa",
+            "name": "unidades",
             "in": "query",
             "required": false,
             "schema": {
               "anyOf": [
                 {
-                  "type": "string",
-                  "format": "uuid"
+                  "type": "string"
                 },
                 {
                   "type": "null"
                 }
               ],
-              "description": "Opcional: só esta empresa. Sem valor: todas as do vínculo.",
-              "title": "Empresa"
+              "description": "Opcional: ids das unidades marcadas (os de `empresas` em /api/sessao), separados por vírgula. Sem valor: todas as liberadas. Unidade fora do alcance: 403; id que não é UUID ou lista vazia: 422 \"Filtro inválido.\".",
+              "title": "Unidades"
             },
-            "description": "Opcional: só esta empresa. Sem valor: todas as do vínculo."
+            "description": "Opcional: ids das unidades marcadas (os de `empresas` em /api/sessao), separados por vírgula. Sem valor: todas as liberadas. Unidade fora do alcance: 403; id que não é UUID ou lista vazia: 422 \"Filtro inválido.\"."
           },
           {
             "name": "cliente",
@@ -1005,23 +1076,22 @@
             "description": "Comparar com: `orcado` (padrão) ou `mes-anterior` (chip global)."
           },
           {
-            "name": "empresa",
+            "name": "unidades",
             "in": "query",
             "required": false,
             "schema": {
               "anyOf": [
                 {
-                  "type": "string",
-                  "format": "uuid"
+                  "type": "string"
                 },
                 {
                   "type": "null"
                 }
               ],
-              "description": "Opcional: só esta empresa. Sem valor: todas as do vínculo.",
-              "title": "Empresa"
+              "description": "Opcional: ids das unidades marcadas (os de `empresas` em /api/sessao), separados por vírgula. Sem valor: todas as liberadas. Unidade fora do alcance: 403; id que não é UUID ou lista vazia: 422 \"Filtro inválido.\".",
+              "title": "Unidades"
             },
-            "description": "Opcional: só esta empresa. Sem valor: todas as do vínculo."
+            "description": "Opcional: ids das unidades marcadas (os de `empresas` em /api/sessao), separados por vírgula. Sem valor: todas as liberadas. Unidade fora do alcance: 403; id que não é UUID ou lista vazia: 422 \"Filtro inválido.\"."
           },
           {
             "name": "cliente",
@@ -1138,23 +1208,22 @@
             "description": "Atraso dos vencidos (Quem cobrar): um `id` das opções do filtro na resposta. Sem ele, todos."
           },
           {
-            "name": "empresa",
+            "name": "unidades",
             "in": "query",
             "required": false,
             "schema": {
               "anyOf": [
                 {
-                  "type": "string",
-                  "format": "uuid"
+                  "type": "string"
                 },
                 {
                   "type": "null"
                 }
               ],
-              "description": "Opcional: só esta empresa. Sem valor: todas as do vínculo.",
-              "title": "Empresa"
+              "description": "Opcional: ids das unidades marcadas (os de `empresas` em /api/sessao), separados por vírgula. Sem valor: todas as liberadas. Unidade fora do alcance: 403; id que não é UUID ou lista vazia: 422 \"Filtro inválido.\".",
+              "title": "Unidades"
             },
-            "description": "Opcional: só esta empresa. Sem valor: todas as do vínculo."
+            "description": "Opcional: ids das unidades marcadas (os de `empresas` em /api/sessao), separados por vírgula. Sem valor: todas as liberadas. Unidade fora do alcance: 403; id que não é UUID ou lista vazia: 422 \"Filtro inválido.\"."
           },
           {
             "name": "cliente",
@@ -1271,23 +1340,22 @@
             "description": "Projeção de 60 dias (lancados ou provisoes): um `id` das opções do filtro na resposta. Sem ele, lancados."
           },
           {
-            "name": "empresa",
+            "name": "unidades",
             "in": "query",
             "required": false,
             "schema": {
               "anyOf": [
                 {
-                  "type": "string",
-                  "format": "uuid"
+                  "type": "string"
                 },
                 {
                   "type": "null"
                 }
               ],
-              "description": "Opcional: só esta empresa. Sem valor: todas as do vínculo.",
-              "title": "Empresa"
+              "description": "Opcional: ids das unidades marcadas (os de `empresas` em /api/sessao), separados por vírgula. Sem valor: todas as liberadas. Unidade fora do alcance: 403; id que não é UUID ou lista vazia: 422 \"Filtro inválido.\".",
+              "title": "Unidades"
             },
-            "description": "Opcional: só esta empresa. Sem valor: todas as do vínculo."
+            "description": "Opcional: ids das unidades marcadas (os de `empresas` em /api/sessao), separados por vírgula. Sem valor: todas as liberadas. Unidade fora do alcance: 403; id que não é UUID ou lista vazia: 422 \"Filtro inválido.\"."
           },
           {
             "name": "cliente",
@@ -1366,23 +1434,155 @@
             "description": "Mês da tela (AAAA-MM), um dos de /api/sessao."
           },
           {
-            "name": "empresa",
+            "name": "unidades",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Opcional: ids das unidades marcadas (os de `empresas` em /api/sessao), separados por vírgula. Sem valor: todas as liberadas. Unidade fora do alcance: 403; id que não é UUID ou lista vazia: 422 \"Filtro inválido.\".",
+              "title": "Unidades"
+            },
+            "description": "Opcional: ids das unidades marcadas (os de `empresas` em /api/sessao), separados por vírgula. Sem valor: todas as liberadas. Unidade fora do alcance: 403; id que não é UUID ou lista vazia: 422 \"Filtro inválido.\"."
+          },
+          {
+            "name": "cliente",
             "in": "query",
             "required": false,
             "schema": {
               "anyOf": [
                 {
                   "type": "string",
-                  "format": "uuid"
+                  "maxLength": 80,
+                  "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
                 },
                 {
                   "type": "null"
                 }
               ],
-              "description": "Opcional: só esta empresa. Sem valor: todas as do vínculo.",
-              "title": "Empresa"
+              "description": "Opcional: slug do cliente (a empresa escolhida no front). Só vale entre os clientes que o usuário pode abrir. Sem valor: o único cliente de quem tem um só.",
+              "title": "Cliente"
             },
-            "description": "Opcional: só esta empresa. Sem valor: todas as do vínculo."
+            "description": "Opcional: slug do cliente (a empresa escolhida no front). Só vale entre os clientes que o usuário pode abrir. Sem valor: o único cliente de quem tem um só."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PainelPayload"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autenticado."
+          },
+          "403": {
+            "description": "Acesso negado."
+          },
+          "422": {
+            "description": "`mes` fora do formato AAAA-MM, mês sem dados ou filtro inválido."
+          }
+        }
+      }
+    },
+    "/api/telas/estoque": {
+      "get": {
+        "tags": [
+          "telas"
+        ],
+        "summary": "Tela Estoque",
+        "description": "O retrato do dia da carga: sem `mes` (o texto de frescor vem pronto em `frescor`).",
+        "operationId": "tela_estoque_api_telas_estoque_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "secao",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 100
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Seção: um `id` das opções do filtro na resposta. Sem ele, todas.",
+              "title": "Secao"
+            },
+            "description": "Seção: um `id` das opções do filtro na resposta. Sem ele, todas."
+          },
+          {
+            "name": "classe",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 100
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Classe BCG (estrela, vaca-leiteira, interrogacao ou abacaxi): um `id` das opções do filtro na resposta. Sem ele, todas.",
+              "title": "Classe"
+            },
+            "description": "Classe BCG (estrela, vaca-leiteira, interrogacao ou abacaxi): um `id` das opções do filtro na resposta. Sem ele, todas."
+          },
+          {
+            "name": "lista",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 100
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "O que mostrar no dinheiro preso (tudo, excesso ou parados): um `id` das opções do filtro na resposta. Sem ele, tudo.",
+              "title": "Lista"
+            },
+            "description": "O que mostrar no dinheiro preso (tudo, excesso ou parados): um `id` das opções do filtro na resposta. Sem ele, tudo."
+          },
+          {
+            "name": "unidades",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Opcional: ids das unidades marcadas (os de `empresas` em /api/sessao), separados por vírgula. Sem valor: todas as liberadas. Unidade fora do alcance: 403; id que não é UUID ou lista vazia: 422 \"Filtro inválido.\".",
+              "title": "Unidades"
+            },
+            "description": "Opcional: ids das unidades marcadas (os de `empresas` em /api/sessao), separados por vírgula. Sem valor: todas as liberadas. Unidade fora do alcance: 403; id que não é UUID ou lista vazia: 422 \"Filtro inválido.\"."
           },
           {
             "name": "cliente",
@@ -1486,23 +1686,22 @@
             "description": "Mês da tela (AAAA-MM), um dos de /api/sessao."
           },
           {
-            "name": "empresa",
+            "name": "unidades",
             "in": "query",
             "required": false,
             "schema": {
               "anyOf": [
                 {
-                  "type": "string",
-                  "format": "uuid"
+                  "type": "string"
                 },
                 {
                   "type": "null"
                 }
               ],
-              "description": "Opcional: só esta empresa. Sem valor: todas as do vínculo.",
-              "title": "Empresa"
+              "description": "Opcional: ids das unidades marcadas (os de `empresas` em /api/sessao), separados por vírgula. Sem valor: todas as liberadas. Unidade fora do alcance: 403; id que não é UUID ou lista vazia: 422 \"Filtro inválido.\".",
+              "title": "Unidades"
             },
-            "description": "Opcional: só esta empresa. Sem valor: todas as do vínculo."
+            "description": "Opcional: ids das unidades marcadas (os de `empresas` em /api/sessao), separados por vírgula. Sem valor: todas as liberadas. Unidade fora do alcance: 403; id que não é UUID ou lista vazia: 422 \"Filtro inválido.\"."
           },
           {
             "name": "cliente",
@@ -1557,7 +1756,7 @@
           "telas"
         ],
         "summary": "Gravar Periodo Provisoes",
-        "description": "Grava o período da média das provisões para o cliente (e a empresa do filtro).",
+        "description": "Grava o período da média das provisões para o cliente (e as unidades do filtro).",
         "operationId": "gravar_periodo_provisoes_api_telas__tela__cartoes__cartao__periodo_put",
         "security": [
           {
@@ -1590,23 +1789,22 @@
             "description": "`id` do cartão (ex.: cargos-salarios)."
           },
           {
-            "name": "empresa",
+            "name": "unidades",
             "in": "query",
             "required": false,
             "schema": {
               "anyOf": [
                 {
-                  "type": "string",
-                  "format": "uuid"
+                  "type": "string"
                 },
                 {
                   "type": "null"
                 }
               ],
-              "description": "Opcional: grava para esta empresa. Sem valor: para todas.",
-              "title": "Empresa"
+              "description": "Opcional: ids das unidades marcadas (os de `empresas` em /api/sessao), separados por vírgula. Sem valor: todas as liberadas. Unidade fora do alcance: 403; id que não é UUID ou lista vazia: 422 \"Filtro inválido.\".",
+              "title": "Unidades"
             },
-            "description": "Opcional: grava para esta empresa. Sem valor: para todas."
+            "description": "Opcional: ids das unidades marcadas (os de `empresas` em /api/sessao), separados por vírgula. Sem valor: todas as liberadas. Unidade fora do alcance: 403; id que não é UUID ou lista vazia: 422 \"Filtro inválido.\"."
           },
           {
             "name": "cliente",
@@ -1664,7 +1862,7 @@
           "telas"
         ],
         "summary": "Gravar Grupo Provisao",
-        "description": "Liga ou desliga um grupo de provisão e grava o valor dos próximos 30 dias (`null`\nvolta ao sugerido), para o cliente (e a empresa do filtro).",
+        "description": "Liga ou desliga um grupo de provisão e grava o valor dos próximos 30 dias (`null`\nvolta ao sugerido), para o cliente (e as unidades do filtro).",
         "operationId": "gravar_grupo_provisao_api_telas__tela__cartoes__cartao__grupos__grupo__put",
         "security": [
           {
@@ -1709,23 +1907,22 @@
             "description": "Id do grupo (ex.: folha)."
           },
           {
-            "name": "empresa",
+            "name": "unidades",
             "in": "query",
             "required": false,
             "schema": {
               "anyOf": [
                 {
-                  "type": "string",
-                  "format": "uuid"
+                  "type": "string"
                 },
                 {
                   "type": "null"
                 }
               ],
-              "description": "Opcional: grava para esta empresa. Sem valor: para todas.",
-              "title": "Empresa"
+              "description": "Opcional: ids das unidades marcadas (os de `empresas` em /api/sessao), separados por vírgula. Sem valor: todas as liberadas. Unidade fora do alcance: 403; id que não é UUID ou lista vazia: 422 \"Filtro inválido.\".",
+              "title": "Unidades"
             },
-            "description": "Opcional: grava para esta empresa. Sem valor: para todas."
+            "description": "Opcional: ids das unidades marcadas (os de `empresas` em /api/sessao), separados por vírgula. Sem valor: todas as liberadas. Unidade fora do alcance: 403; id que não é UUID ou lista vazia: 422 \"Filtro inválido.\"."
           },
           {
             "name": "cliente",
@@ -2001,7 +2198,7 @@
           "admin"
         ],
         "summary": "Gestao",
-        "description": "Moldura da Gestão: empresas com o estado das camadas, os 4 perfis e as opções de\nsessão.",
+        "description": "Moldura da Gestão: empresas com o estado das camadas, os 4 perfis, as opções de\nsessão e o que a pessoa pode fazer. Consultor: só as empresas da carteira, sem perfis\nnem sessões, e só leitura.",
         "operationId": "gestao_api_admin_gestao_get",
         "responses": {
           "200": {
@@ -2018,7 +2215,7 @@
             "description": "Não autenticado."
           },
           "403": {
-            "description": "Acesso negado (só o Admin BORD)."
+            "description": "Acesso negado (só o Admin BORD e o Consultor por carteira)."
           }
         },
         "security": [
@@ -2083,7 +2280,7 @@
           "admin"
         ],
         "summary": "Cliente",
-        "description": "Tudo das abas de uma empresa: camadas, fontes, painéis, matriz de acesso, pessoas,\npreferências, feriados e últimas cargas.",
+        "description": "Tudo das abas de uma empresa: camadas, fontes, painéis, matriz de acesso, pessoas,\npreferências, feriados e últimas cargas. Consultor (só empresa da carteira): só\nImplantação e Prontidão dos dados; os campos das outras abas vêm vazios.",
         "operationId": "cliente_api_admin_clientes__slug__get",
         "security": [
           {
@@ -2120,7 +2317,7 @@
             "description": "Não autenticado."
           },
           "403": {
-            "description": "Acesso negado (só o Admin BORD)."
+            "description": "Acesso negado (só o Admin BORD e o consultor com a empresa na carteira)."
           },
           "404": {
             "description": "\"Empresa não encontrada.\" ou item da rota não encontrado."
@@ -2142,7 +2339,7 @@
           "admin"
         ],
         "summary": "Mudar Cliente",
-        "description": "Troca o nome e o setor da empresa. O slug não muda.",
+        "description": "Troca o nome da empresa. O slug não muda; setor e segmento são de cada unidade.",
         "operationId": "mudar_cliente_api_admin_clientes__slug__put",
         "security": [
           {
@@ -2189,6 +2386,75 @@
           },
           "422": {
             "description": "Regra da Gestão quebrada; o texto vem pronto em `detail`."
+          }
+        }
+      }
+    },
+    "/api/admin/clientes/{slug}/unidades/{id}": {
+      "put": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Mudar Unidade",
+        "description": "Troca nome, setor, segmento, grupo e endereço de uma unidade da empresa (só o Admin\nBORD). Unidade nova, apagar unidade e trocar o cliente da unidade continuam por SQL.\nSetor e grupo mudam a árvore Negócios, as telas de setor e os setores da empresa: o front\npede tudo de novo depois do 204.",
+        "operationId": "mudar_unidade_api_admin_clientes__slug__unidades__id__put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Id da unidade (cfg.empresa).",
+              "title": "Id"
+            },
+            "description": "Id da unidade (cfg.empresa)."
+          },
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 80,
+              "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+              "description": "Slug do cliente.",
+              "title": "Slug"
+            },
+            "description": "Slug do cliente."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MudancaUnidade"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Não autenticado."
+          },
+          "403": {
+            "description": "Acesso negado (só o Admin BORD)."
+          },
+          "404": {
+            "description": "\"Empresa não encontrada.\" ou \"Unidade não encontrada.\""
+          },
+          "422": {
+            "description": "\"Informe o nome da unidade.\", \"Já existe uma unidade com esse nome nesta empresa.\", \"Setor inválido.\", \"UF inválida.\" ou o corpo fora do formato."
           }
         }
       }
@@ -2974,6 +3240,34 @@
   },
   "components": {
     "schemas": {
+      "AbaDaEmpresa": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "enum": [
+              "implantacao",
+              "unidades",
+              "dados",
+              "paineis",
+              "preferencias",
+              "acesso",
+              "cargas"
+            ],
+            "title": "Id"
+          },
+          "rotulo": {
+            "type": "string",
+            "title": "Rotulo"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "rotulo"
+        ],
+        "title": "AbaDaEmpresa"
+      },
       "AcaoConvite": {
         "properties": {
           "rotulo": {
@@ -3202,6 +3496,32 @@
         ],
         "title": "Barra"
       },
+      "BarraCelula": {
+        "properties": {
+          "proporcao": {
+            "type": "number",
+            "title": "Proporcao"
+          },
+          "estilo": {
+            "type": "string",
+            "enum": [
+              "critico",
+              "critico-claro",
+              "saudavel",
+              "atencao",
+              "atencao-escura"
+            ],
+            "title": "Estilo"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "proporcao",
+          "estilo"
+        ],
+        "title": "BarraCelula"
+      },
       "BarraHorizontal": {
         "properties": {
           "rotulo": {
@@ -3248,6 +3568,40 @@
         ],
         "title": "BarraHorizontal"
       },
+      "BarraSaude": {
+        "properties": {
+          "rotulo": {
+            "type": "string",
+            "title": "Rotulo"
+          },
+          "total": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Valor"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Total"
+          },
+          "partes": {
+            "items": {
+              "$ref": "#/components/schemas/ParteSaude"
+            },
+            "type": "array",
+            "title": "Partes"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rotulo",
+          "total",
+          "partes"
+        ],
+        "title": "BarraSaude"
+      },
       "CamadaDoCliente": {
         "properties": {
           "id": {
@@ -3276,9 +3630,12 @@
             ],
             "title": "Status"
           },
-          "grupo": {
-            "type": "string",
-            "title": "Grupo"
+          "paineis": {
+            "items": {
+              "$ref": "#/components/schemas/PainelDaCamada"
+            },
+            "type": "array",
+            "title": "Paineis"
           },
           "pendencias": {
             "items": {
@@ -3296,10 +3653,11 @@
           "estado",
           "estadoRotulo",
           "status",
-          "grupo",
+          "paineis",
           "pendencias"
         ],
-        "title": "CamadaDoCliente"
+        "title": "CamadaDoCliente",
+        "description": "Uma seção de painéis do menu (Comercial, Financeiro, Pessoas, Estoque)."
       },
       "CamadaResumo": {
         "properties": {
@@ -3404,6 +3762,126 @@
           "observacao"
         ],
         "title": "CargaDoCliente"
+      },
+      "CartaoAcoesBcg": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "largura": {
+            "type": "integer",
+            "enum": [
+              4,
+              5,
+              6,
+              7,
+              8,
+              12
+            ],
+            "title": "Largura"
+          },
+          "titulo": {
+            "type": "string",
+            "title": "Titulo"
+          },
+          "subtitulo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subtitulo"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "saudavel",
+                  "atencao",
+                  "critico"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "legenda": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ItemLegenda"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Legenda"
+          },
+          "chamada": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Chamada"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "nota": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nota"
+          },
+          "explicacao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Explicacao"
+          },
+          "tipo": {
+            "type": "string",
+            "const": "acoes-bcg",
+            "title": "Tipo"
+          },
+          "itens": {
+            "items": {
+              "$ref": "#/components/schemas/ItemAcaoBcg"
+            },
+            "type": "array",
+            "title": "Itens"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "largura",
+          "titulo",
+          "tipo",
+          "itens"
+        ],
+        "title": "CartaoAcoesBcg",
+        "description": "O que fazer em cada quadrante. Clicar num item troca o filtro `classe` para o\n`quadrante` dele; clicar de novo volta a `todas`."
       },
       "CartaoAndamentoMes": {
         "properties": {
@@ -3974,6 +4452,160 @@
         ],
         "title": "CartaoBarrasHorizontais",
         "description": "Lista de barras horizontais (a pagar por semana); a maior ocupa a largura toda."
+      },
+      "CartaoBcg": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "largura": {
+            "type": "integer",
+            "enum": [
+              4,
+              5,
+              6,
+              7,
+              8,
+              12
+            ],
+            "title": "Largura"
+          },
+          "titulo": {
+            "type": "string",
+            "title": "Titulo"
+          },
+          "subtitulo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subtitulo"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "saudavel",
+                  "atencao",
+                  "critico"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "legenda": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ItemLegenda"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Legenda"
+          },
+          "chamada": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Chamada"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "nota": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nota"
+          },
+          "explicacao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Explicacao"
+          },
+          "tipo": {
+            "type": "string",
+            "const": "bcg",
+            "title": "Tipo"
+          },
+          "eixoX": {
+            "$ref": "#/components/schemas/EixoDispersao"
+          },
+          "eixoY": {
+            "$ref": "#/components/schemas/EixoDispersao"
+          },
+          "corteX": {
+            "$ref": "#/components/schemas/CorteBcg"
+          },
+          "corteY": {
+            "$ref": "#/components/schemas/CorteBcg"
+          },
+          "quadrantes": {
+            "items": {
+              "$ref": "#/components/schemas/QuadranteBcg"
+            },
+            "type": "array",
+            "title": "Quadrantes"
+          },
+          "pontos": {
+            "items": {
+              "$ref": "#/components/schemas/PontoBcg"
+            },
+            "type": "array",
+            "title": "Pontos"
+          },
+          "trilha": {
+            "type": "string",
+            "title": "Trilha"
+          },
+          "rotuloVoltar": {
+            "type": "string",
+            "title": "Rotulovoltar"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "largura",
+          "titulo",
+          "tipo",
+          "eixoX",
+          "eixoY",
+          "corteX",
+          "corteY",
+          "quadrantes",
+          "pontos",
+          "trilha",
+          "rotuloVoltar"
+        ],
+        "title": "CartaoBcg",
+        "description": "Dispersão de bolhas, giro contra margem, com os cortes nas medianas dos produtos."
       },
       "CartaoCicloCaixa": {
         "properties": {
@@ -6548,6 +7180,277 @@
         "title": "CartaoProximosDias",
         "description": "Próximos 7, 15 e 30 dias: saldo de hoje (quando houver), mais o que vence a receber,\nmenos o que vence a pagar."
       },
+      "CartaoRealIdeal": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "largura": {
+            "type": "integer",
+            "enum": [
+              4,
+              5,
+              6,
+              7,
+              8,
+              12
+            ],
+            "title": "Largura"
+          },
+          "titulo": {
+            "type": "string",
+            "title": "Titulo"
+          },
+          "subtitulo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subtitulo"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "saudavel",
+                  "atencao",
+                  "critico"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "legenda": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ItemLegenda"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Legenda"
+          },
+          "chamada": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Chamada"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "nota": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nota"
+          },
+          "explicacao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Explicacao"
+          },
+          "tipo": {
+            "type": "string",
+            "const": "real-ideal",
+            "title": "Tipo"
+          },
+          "escala": {
+            "$ref": "#/components/schemas/Escala"
+          },
+          "itens": {
+            "items": {
+              "$ref": "#/components/schemas/ItemRealIdeal"
+            },
+            "type": "array",
+            "title": "Itens"
+          },
+          "rotuloRaiz": {
+            "type": "string",
+            "title": "Rotuloraiz"
+          },
+          "aberto": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aberto"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "largura",
+          "titulo",
+          "tipo",
+          "escala",
+          "itens",
+          "rotuloRaiz"
+        ],
+        "title": "CartaoRealIdeal",
+        "description": "Estoque real contra o ideal, com o traço do ideal e a abertura por nível."
+      },
+      "CartaoSaudeEstoque": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "largura": {
+            "type": "integer",
+            "enum": [
+              4,
+              5,
+              6,
+              7,
+              8,
+              12
+            ],
+            "title": "Largura"
+          },
+          "titulo": {
+            "type": "string",
+            "title": "Titulo"
+          },
+          "subtitulo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subtitulo"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "saudavel",
+                  "atencao",
+                  "critico"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "legenda": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ItemLegenda"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Legenda"
+          },
+          "chamada": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Chamada"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "nota": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nota"
+          },
+          "explicacao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Explicacao"
+          },
+          "tipo": {
+            "type": "string",
+            "const": "saude-estoque",
+            "title": "Tipo"
+          },
+          "barras": {
+            "items": {
+              "$ref": "#/components/schemas/BarraSaude"
+            },
+            "type": "array",
+            "title": "Barras"
+          },
+          "grupos": {
+            "items": {
+              "$ref": "#/components/schemas/GrupoSaude"
+            },
+            "type": "array",
+            "title": "Grupos"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "largura",
+          "titulo",
+          "tipo",
+          "barras",
+          "grupos"
+        ],
+        "title": "CartaoSaudeEstoque",
+        "description": "Onde está cada real e cada produto: duas barras empilhadas e as faixas por grupo."
+      },
       "CartaoTabela": {
         "properties": {
           "id": {
@@ -6700,6 +7603,41 @@
                 "type": "null"
               }
             ]
+          },
+          "limite": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Limite"
+          },
+          "rodape": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Trecho"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rodape"
+          },
+          "link": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LinkTela"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "additionalProperties": false,
@@ -6847,6 +7785,50 @@
               }
             ],
             "title": "Marca"
+          },
+          "quadrante": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/QuadranteBcg"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "barra": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BarraCelula"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "link": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LinkTela"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "ordem": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ordem"
           }
         },
         "additionalProperties": false,
@@ -7034,16 +8016,12 @@
             "type": "string",
             "title": "Nome"
           },
-          "segmento": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Segmento"
+          "setores": {
+            "items": {
+              "$ref": "#/components/schemas/Rotulado"
+            },
+            "type": "array",
+            "title": "Setores"
           },
           "logoUrl": {
             "anyOf": [
@@ -7062,6 +8040,7 @@
         "required": [
           "slug",
           "nome",
+          "setores",
           "logoUrl"
         ],
         "title": "ClienteDaGestao"
@@ -7076,16 +8055,12 @@
             "type": "string",
             "title": "Nome"
           },
-          "segmento": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Segmento"
+          "setores": {
+            "items": {
+              "$ref": "#/components/schemas/Rotulado"
+            },
+            "type": "array",
+            "title": "Setores"
           },
           "camadas": {
             "items": {
@@ -7100,6 +8075,7 @@
         "required": [
           "slug",
           "nome",
+          "setores",
           "camadas"
         ],
         "title": "ClienteDaLista"
@@ -7108,6 +8084,16 @@
         "properties": {
           "cliente": {
             "$ref": "#/components/schemas/ClienteDaGestao"
+          },
+          "abas": {
+            "items": {
+              "$ref": "#/components/schemas/AbaDaEmpresa"
+            },
+            "type": "array",
+            "title": "Abas"
+          },
+          "permissoes": {
+            "$ref": "#/components/schemas/PermissoesEmpresa"
           },
           "resumo": {
             "items": {
@@ -7122,6 +8108,27 @@
             },
             "type": "array",
             "title": "Camadas"
+          },
+          "niveis": {
+            "items": {
+              "$ref": "#/components/schemas/Rotulado"
+            },
+            "type": "array",
+            "title": "Niveis"
+          },
+          "unidades": {
+            "items": {
+              "$ref": "#/components/schemas/UnidadeDaGestao"
+            },
+            "type": "array",
+            "title": "Unidades"
+          },
+          "opcoesSetor": {
+            "items": {
+              "$ref": "#/components/schemas/Rotulado"
+            },
+            "type": "array",
+            "title": "Opcoessetor"
           },
           "fontes": {
             "items": {
@@ -7180,8 +8187,13 @@
         "type": "object",
         "required": [
           "cliente",
+          "abas",
+          "permissoes",
           "resumo",
           "camadas",
+          "niveis",
+          "unidades",
+          "opcoesSetor",
           "fontes",
           "paineis",
           "acesso",
@@ -7304,6 +8316,17 @@
             "type": "boolean",
             "title": "Ocultarnocelular",
             "default": false
+          },
+          "ordenavel": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ordenavel"
           }
         },
         "additionalProperties": false,
@@ -7371,6 +8394,25 @@
           "mensagem"
         ],
         "title": "ConvitePedido"
+      },
+      "CorteBcg": {
+        "properties": {
+          "valor": {
+            "type": "number",
+            "title": "Valor"
+          },
+          "rotulo": {
+            "type": "string",
+            "title": "Rotulo"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "valor",
+          "rotulo"
+        ],
+        "title": "CorteBcg"
       },
       "DadosPayload": {
         "properties": {
@@ -7703,6 +8745,29 @@
         ],
         "title": "EscolhaPreferencia"
       },
+      "EscopoSetor": {
+        "properties": {
+          "setores": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Setores"
+          },
+          "rotulo": {
+            "type": "string",
+            "title": "Rotulo"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "setores",
+          "rotulo"
+        ],
+        "title": "EscopoSetor",
+        "description": "O painel só vale em alguns setores e soma só as unidades deles (o Estoque: só a\nDistribuidora). Na bandeja \"Negócios\", o front trava os outros setores e mostra o\n`rotulo` no rodapé."
+      },
       "EtiquetaOrigem": {
         "properties": {
           "rotulo": {
@@ -7805,6 +8870,65 @@
           "participacao"
         ],
         "title": "FaixaIdade"
+      },
+      "FaixaSaude": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "rotulo": {
+            "type": "string",
+            "title": "Rotulo"
+          },
+          "sub": {
+            "type": "string",
+            "title": "Sub"
+          },
+          "estilo": {
+            "type": "string",
+            "enum": [
+              "critico",
+              "critico-claro",
+              "saudavel",
+              "atencao",
+              "atencao-escura"
+            ],
+            "title": "Estilo"
+          },
+          "produtos": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Valor"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Produtos"
+          },
+          "valor": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Valor"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "rotulo",
+          "sub",
+          "estilo",
+          "produtos",
+          "valor"
+        ],
+        "title": "FaixaSaude"
       },
       "Falta": {
         "properties": {
@@ -8132,6 +9256,9 @@
             },
             "type": "array",
             "title": "Sessoes"
+          },
+          "permissoes": {
+            "$ref": "#/components/schemas/PermissoesGestao"
           }
         },
         "additionalProperties": false,
@@ -8139,7 +9266,8 @@
         "required": [
           "clientes",
           "perfis",
-          "sessoes"
+          "sessoes",
+          "permissoes"
         ],
         "title": "GestaoPayload"
       },
@@ -8978,6 +10106,33 @@
         ],
         "title": "GrupoDoMenu"
       },
+      "GrupoNegocio": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "rotulo": {
+            "type": "string",
+            "title": "Rotulo"
+          },
+          "unidades": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Unidades"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "rotulo",
+          "unidades"
+        ],
+        "title": "GrupoNegocio"
+      },
       "GrupoOrigem": {
         "properties": {
           "titulo": {
@@ -9068,6 +10223,28 @@
         ],
         "title": "GrupoPagar",
         "description": "Um grupo de pagamento: o que foi pago por mês e o que está lançado para os próximos\ndias."
+      },
+      "GrupoSaude": {
+        "properties": {
+          "rotulo": {
+            "type": "string",
+            "title": "Rotulo"
+          },
+          "faixas": {
+            "items": {
+              "$ref": "#/components/schemas/FaixaSaude"
+            },
+            "type": "array",
+            "title": "Faixas"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rotulo",
+          "faixas"
+        ],
+        "title": "GrupoSaude"
       },
       "HTTPValidationError": {
         "properties": {
@@ -9256,6 +10433,54 @@
           "referencia"
         ],
         "title": "IndicadorPeriodo"
+      },
+      "ItemAcaoBcg": {
+        "properties": {
+          "quadrante": {
+            "type": "string",
+            "enum": [
+              "estrela",
+              "vaca-leiteira",
+              "interrogacao",
+              "abacaxi"
+            ],
+            "title": "Quadrante"
+          },
+          "rotulo": {
+            "type": "string",
+            "title": "Rotulo"
+          },
+          "nota": {
+            "type": "string",
+            "title": "Nota"
+          },
+          "acao": {
+            "type": "string",
+            "title": "Acao"
+          },
+          "numeros": {
+            "items": {
+              "$ref": "#/components/schemas/ItemValor"
+            },
+            "type": "array",
+            "title": "Numeros"
+          },
+          "selecionado": {
+            "type": "boolean",
+            "title": "Selecionado"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "quadrante",
+          "rotulo",
+          "nota",
+          "acao",
+          "numeros",
+          "selecionado"
+        ],
+        "title": "ItemAcaoBcg"
       },
       "ItemCarteira": {
         "properties": {
@@ -9498,7 +10723,11 @@
               "quadrado-medio",
               "quadrado-claro",
               "quadrado-azul",
-              "quadrado-laranja"
+              "quadrado-laranja",
+              "quadrado-saudavel",
+              "quadrado-atencao",
+              "quadrado-critico",
+              "traco"
             ],
             "title": "Marca"
           }
@@ -9607,6 +10836,93 @@
           "etiqueta"
         ],
         "title": "ItemOrigem"
+      },
+      "ItemRealIdeal": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "sub": {
+            "type": "string",
+            "title": "Sub"
+          },
+          "real": {
+            "type": "number",
+            "title": "Real"
+          },
+          "ideal": {
+            "type": "number",
+            "title": "Ideal"
+          },
+          "diferenca": {
+            "type": "string",
+            "title": "Diferenca"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "saudavel",
+              "atencao",
+              "critico"
+            ],
+            "title": "Status"
+          },
+          "outros": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outros"
+          },
+          "itens": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ItemRealIdeal"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Itens"
+          },
+          "subtituloAberto": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subtituloaberto"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "nome",
+          "sub",
+          "real",
+          "ideal",
+          "diferenca",
+          "status",
+          "itens"
+        ],
+        "title": "ItemRealIdeal",
+        "description": "Uma linha do \"Estoque real contra ideal\": seção, família ou produto."
       },
       "ItemValor": {
         "properties": {
@@ -10437,6 +11753,26 @@
         ],
         "title": "LinhaTabela"
       },
+      "LinkTela": {
+        "properties": {
+          "rotulo": {
+            "type": "string",
+            "title": "Rotulo"
+          },
+          "tela": {
+            "type": "string",
+            "title": "Tela"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rotulo",
+          "tela"
+        ],
+        "title": "LinkTela",
+        "description": "Atalho para outra tela do app, pelo trecho da rota (\"compras\"). O front só mostra se a\ntela existe nele e está em `telas` da sessão."
+      },
       "MarcaRegua": {
         "properties": {
           "rotulo": {
@@ -10637,18 +11973,6 @@
             "maxLength": 120,
             "minLength": 1,
             "title": "Nome"
-          },
-          "segmento": {
-            "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 80
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Segmento"
           }
         },
         "additionalProperties": false,
@@ -10656,7 +11980,8 @@
         "required": [
           "nome"
         ],
-        "title": "MudancaEmpresa"
+        "title": "MudancaEmpresa",
+        "description": "Só o nome muda; corpo com `setor` ou `segmento` dá 422."
       },
       "MudancaFeriado": {
         "properties": {
@@ -10768,6 +12093,113 @@
         ],
         "title": "MudancaSessao"
       },
+      "MudancaUnidade": {
+        "properties": {
+          "nome": {
+            "type": "string",
+            "maxLength": 120,
+            "title": "Nome"
+          },
+          "setor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 40
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Setor"
+          },
+          "segmento": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 80
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Segmento"
+          },
+          "grupo": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 80
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grupo"
+          },
+          "uf": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 10
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Uf"
+          },
+          "cidade": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 80
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cidade"
+          },
+          "bairro": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 80
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bairro"
+          },
+          "endereco": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 160
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Endereco"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "nome",
+          "setor",
+          "segmento",
+          "grupo",
+          "uf",
+          "cidade",
+          "bairro",
+          "endereco"
+        ],
+        "title": "MudancaUnidade",
+        "description": "PUT /api/admin/clientes/{slug}/unidades/{id}: todos os campos vêm sempre. Espaços nas\npontas e repetidos saem; texto em branco vira null."
+      },
       "MudancaUsuario": {
         "properties": {
           "nome": {
@@ -10809,6 +12241,72 @@
           "clientes"
         ],
         "title": "MudancaUsuario"
+      },
+      "NegociosSessao": {
+        "properties": {
+          "setores": {
+            "items": {
+              "$ref": "#/components/schemas/SetorNegocio"
+            },
+            "type": "array",
+            "title": "Setores"
+          },
+          "telasPorSetor": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Telasporsetor"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "setores",
+          "telasPorSetor"
+        ],
+        "title": "NegociosSessao"
+      },
+      "NegociosValores": {
+        "properties": {
+          "rotulo": {
+            "type": "string",
+            "title": "Rotulo"
+          },
+          "setores": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Valor"
+            },
+            "type": "object",
+            "title": "Setores"
+          },
+          "grupos": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Valor"
+            },
+            "type": "object",
+            "title": "Grupos"
+          },
+          "unidades": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Valor"
+            },
+            "type": "object",
+            "title": "Unidades"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rotulo",
+          "setores",
+          "grupos",
+          "unidades"
+        ],
+        "title": "NegociosValores"
       },
       "NomesCartao": {
         "properties": {
@@ -10868,18 +12366,6 @@
             "minLength": 1,
             "title": "Nome"
           },
-          "segmento": {
-            "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 80
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Segmento"
-          },
           "slug": {
             "anyOf": [
               {
@@ -10898,7 +12384,8 @@
         "required": [
           "nome"
         ],
-        "title": "NovaEmpresa"
+        "title": "NovaEmpresa",
+        "description": "Setor e segmento são de cada unidade: corpo com `setor` ou `segmento` dá 422."
       },
       "NovoUsuario": {
         "properties": {
@@ -11089,6 +12576,30 @@
         ],
         "title": "PagoNoMes"
       },
+      "PainelDaCamada": {
+        "properties": {
+          "codigo": {
+            "type": "string",
+            "title": "Codigo"
+          },
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "nivel": {
+            "type": "string",
+            "title": "Nivel"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "codigo",
+          "nome",
+          "nivel"
+        ],
+        "title": "PainelDaCamada"
+      },
       "PainelDoCliente": {
         "properties": {
           "codigo": {
@@ -11099,9 +12610,13 @@
             "type": "string",
             "title": "Nome"
           },
-          "grupo": {
+          "secao": {
             "type": "string",
-            "title": "Grupo"
+            "title": "Secao"
+          },
+          "nivel": {
+            "type": "string",
+            "title": "Nivel"
           },
           "ligado": {
             "type": "boolean",
@@ -11142,14 +12657,16 @@
         "required": [
           "codigo",
           "nome",
-          "grupo",
+          "secao",
+          "nivel",
           "ligado",
           "podeLigar",
           "status",
           "statusRotulo",
           "nota"
         ],
-        "title": "PainelDoCliente"
+        "title": "PainelDoCliente",
+        "description": "A lista vem ordenada por seção e, dentro dela, na ordem do menu."
       },
       "PainelPayload": {
         "properties": {
@@ -11162,7 +12679,8 @@
               "resultado",
               "receber-pagar",
               "fluxo-caixa",
-              "pessoas"
+              "pessoas",
+              "estoque"
             ],
             "title": "Tela"
           },
@@ -11197,6 +12715,17 @@
               }
             ],
             "title": "Atualizadoem"
+          },
+          "frescor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Frescor"
           },
           "filtros": {
             "items": {
@@ -11301,15 +12830,29 @@
                 },
                 {
                   "$ref": "#/components/schemas/CartaoProvisoes"
+                },
+                {
+                  "$ref": "#/components/schemas/CartaoBcg"
+                },
+                {
+                  "$ref": "#/components/schemas/CartaoAcoesBcg"
+                },
+                {
+                  "$ref": "#/components/schemas/CartaoRealIdeal"
+                },
+                {
+                  "$ref": "#/components/schemas/CartaoSaudeEstoque"
                 }
               ],
               "discriminator": {
                 "propertyName": "tipo",
                 "mapping": {
+                  "acoes-bcg": "#/components/schemas/CartaoAcoesBcg",
                   "andamento-mes": "#/components/schemas/CartaoAndamentoMes",
                   "arvore-mensal": "#/components/schemas/CartaoArvoreMensal",
                   "barra-partes": "#/components/schemas/CartaoBarraPartes",
                   "barras-horizontais": "#/components/schemas/CartaoBarrasHorizontais",
+                  "bcg": "#/components/schemas/CartaoBcg",
                   "ciclo-caixa": "#/components/schemas/CartaoCicloCaixa",
                   "contra-meta": "#/components/schemas/CartaoContraMeta",
                   "curva-abc": "#/components/schemas/CartaoCurvaAbc",
@@ -11326,12 +12869,24 @@
                   "numero-grafico": "#/components/schemas/CartaoNumeroGrafico",
                   "origem-projecao": "#/components/schemas/CartaoOrigemProjecao",
                   "provisoes": "#/components/schemas/CartaoProvisoes",
+                  "real-ideal": "#/components/schemas/CartaoRealIdeal",
+                  "saude-estoque": "#/components/schemas/CartaoSaudeEstoque",
                   "tabela": "#/components/schemas/CartaoTabela"
                 }
               }
             },
             "type": "array",
             "title": "Cartoes"
+          },
+          "escopo": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EscopoSetor"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "additionalProperties": false,
@@ -11407,6 +12962,25 @@
           "estilo"
         ],
         "title": "ParteOrigem"
+      },
+      "ParteSaude": {
+        "properties": {
+          "faixa": {
+            "type": "string",
+            "title": "Faixa"
+          },
+          "valor": {
+            "type": "number",
+            "title": "Valor"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "faixa",
+          "valor"
+        ],
+        "title": "ParteSaude"
       },
       "PassoCascata": {
         "properties": {
@@ -11676,6 +13250,50 @@
         ],
         "title": "PeriodosIndicador"
       },
+      "PermissoesEmpresa": {
+        "properties": {
+          "editar": {
+            "type": "boolean",
+            "title": "Editar"
+          },
+          "convidar": {
+            "type": "boolean",
+            "title": "Convidar"
+          },
+          "unidades": {
+            "type": "boolean",
+            "title": "Unidades"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "editar",
+          "convidar",
+          "unidades"
+        ],
+        "title": "PermissoesEmpresa"
+      },
+      "PermissoesGestao": {
+        "properties": {
+          "criarEmpresa": {
+            "type": "boolean",
+            "title": "Criarempresa"
+          },
+          "usuarios": {
+            "type": "boolean",
+            "title": "Usuarios"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "criarEmpresa",
+          "usuarios"
+        ],
+        "title": "PermissoesGestao",
+        "description": "O que a pessoa faz na Gestão: tudo (Admin BORD) ou só ler (Consultor por carteira)."
+      },
       "PillComRotulo": {
         "properties": {
           "status": {
@@ -11725,6 +13343,109 @@
           "valor"
         ],
         "title": "Ponto"
+      },
+      "PontoBcg": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "quadrante": {
+            "type": "string",
+            "enum": [
+              "estrela",
+              "vaca-leiteira",
+              "interrogacao",
+              "abacaxi"
+            ],
+            "title": "Quadrante"
+          },
+          "x": {
+            "type": "number",
+            "title": "X"
+          },
+          "y": {
+            "type": "number",
+            "title": "Y"
+          },
+          "tamanho": {
+            "type": "number",
+            "title": "Tamanho"
+          },
+          "apagado": {
+            "type": "boolean",
+            "title": "Apagado"
+          },
+          "rotular": {
+            "type": "boolean",
+            "title": "Rotular"
+          },
+          "dica": {
+            "items": {
+              "$ref": "#/components/schemas/ItemValor"
+            },
+            "type": "array",
+            "title": "Dica"
+          },
+          "produtos": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/PontoBcg"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Produtos"
+          },
+          "trilha": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trilha"
+          },
+          "subtituloAberto": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subtituloaberto"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "nome",
+          "quadrante",
+          "x",
+          "y",
+          "tamanho",
+          "apagado",
+          "rotular",
+          "dica",
+          "produtos",
+          "trilha",
+          "subtituloAberto"
+        ],
+        "title": "PontoBcg",
+        "description": "Uma bolha: família (primeiro nível) ou produto (dentro da família aberta)."
       },
       "PontoCombo": {
         "properties": {
@@ -11940,6 +13661,31 @@
           "rotulo"
         ],
         "title": "Quadrante"
+      },
+      "QuadranteBcg": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "enum": [
+              "estrela",
+              "vaca-leiteira",
+              "interrogacao",
+              "abacaxi"
+            ],
+            "title": "Id"
+          },
+          "rotulo": {
+            "type": "string",
+            "title": "Rotulo"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "rotulo"
+        ],
+        "title": "QuadranteBcg"
       },
       "QuadroCartao": {
         "properties": {
@@ -12318,6 +14064,17 @@
             },
             "type": "array",
             "title": "Indicadores"
+          },
+          "escopo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Escopo"
           }
         },
         "additionalProperties": false,
@@ -12621,6 +14378,16 @@
             "type": "array",
             "title": "Empresas"
           },
+          "negocios": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NegociosSessao"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "telas": {
             "items": {
               "type": "string"
@@ -12657,11 +14424,39 @@
           "cliente",
           "papel",
           "empresas",
+          "negocios",
           "telas",
           "periodos",
           "aviso"
         ],
         "title": "SessaoPayload"
+      },
+      "SetorNegocio": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "rotulo": {
+            "type": "string",
+            "title": "Rotulo"
+          },
+          "grupos": {
+            "items": {
+              "$ref": "#/components/schemas/GrupoNegocio"
+            },
+            "type": "array",
+            "title": "Grupos"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "rotulo",
+          "grupos"
+        ],
+        "title": "SetorNegocio"
       },
       "Situacao": {
         "properties": {
@@ -12997,6 +14792,110 @@
           "valor"
         ],
         "title": "TrechoRegua"
+      },
+      "UnidadeDaGestao": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "setor": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Rotulado"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "segmento": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Segmento"
+          },
+          "grupo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grupo"
+          },
+          "uf": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Uf"
+          },
+          "cidade": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cidade"
+          },
+          "bairro": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bairro"
+          },
+          "endereco": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Endereco"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "nome",
+          "setor",
+          "segmento",
+          "grupo",
+          "uf",
+          "cidade",
+          "bairro",
+          "endereco"
+        ],
+        "title": "UnidadeDaGestao",
+        "description": "Uma unidade da empresa (cfg.empresa), na aba Unidades. Só leitura: o cadastro é por\nSQL (supabase/producao/modelo_unidades.sql)."
       },
       "UsuarioAuth": {
         "properties": {

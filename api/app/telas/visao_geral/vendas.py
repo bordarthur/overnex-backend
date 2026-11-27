@@ -265,8 +265,9 @@ def de_todas(
 
 
 def filtro_empresa(ctx: ContextoConsolidado, coluna: str = "_empresa_id") -> sql.Composable:
+    """Só as unidades da tela; com todas as liberadas, também as linhas sem unidade."""
     c = sql.Identifier(coluna)
-    if ctx.empresa_id is not None:
+    if ctx.unidades is not None:
         return sql.SQL("{c} = any(%(empresas)s)").format(c=c)
     return sql.SQL("({c} is null or {c} = any(%(empresas)s))").format(c=c)
 

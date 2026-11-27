@@ -15,6 +15,9 @@ from fastapi.testclient import TestClient
 from tests.conftest import (
     CLIENTE_A,
     CLIENTE_B,
+    EMPRESA_A1,
+    EMPRESA_A2,
+    EMPRESA_B1,
     OID_A,
     OID_ADMIN,
     OID_B,
@@ -78,7 +81,8 @@ def test_admin_so_abre_tela_com_o_cliente_escolhido(client: TestClient) -> None:
 
 def test_consultor_escolhe_entre_os_clientes_da_carteira(client: TestClient) -> None:
     sem_slug = _sessao(client, OID_CONSULTOR).json()
-    assert (sem_slug["gestao"], sem_slug["cliente"]) == (False, None)
+    # a Gestão só de leitura (desde 25/11/2026)
+    assert (sem_slug["gestao"], sem_slug["cliente"]) == (True, None)
     assert [c["slug"] for c in sem_slug["clientes"]] == [SLUG_A, SLUG_B]
 
     em_b = _sessao(client, OID_CONSULTOR, SLUG_B).json()
@@ -127,11 +131,71 @@ def test_log_de_acesso_leva_o_cliente_escolhido(
 
 def test_gestao_so_para_o_admin(client: TestClient) -> None:
     for rota in ("/api/admin/gestao", "/api/admin/usuarios", f"/api/admin/clientes/{SLUG_A}"):
-        for oid in (OID_A, OID_CONSULTOR):
-            assert client.get(rota, headers=auth(oid)).status_code == 403
+        assert client.get(rota, headers=auth(OID_A)).status_code == 403
         assert client.get(rota, headers=auth(OID_ADMIN)).status_code == 200
+    # o consultor só lê a barra e as empresas da carteira (abaixo); pessoas, não
+    assert client.get("/api/admin/usuarios", headers=auth(OID_CONSULTOR)).status_code == 403
     r = client.get("/api/admin/clientes/nao-existe", headers=auth(OID_ADMIN))
     assert (r.status_code, r.json()) == (404, {"detail": "Empresa não encontrada."})
+
+
+SLUG_FORA = "gama-fora"
+
+
+@pytest.fixture
+def cliente_fora_da_carteira(
+    admin_conn: psycopg.Connection[tuple[object, ...]],
+) -> Iterator[None]:
+    """Um terceiro cliente, com painel ligado e fonte, sem vínculo com o Caio."""
+    admin_conn.execute(
+        "insert into cfg.cliente (nome, slug) values ('Gama Fora', %s)", (SLUG_FORA,)
+    )
+    admin_conn.execute(
+        "insert into cfg.cliente_tela (cliente_id, codigo_tela, ligada)"
+        " select id, 'VG-01', true from cfg.cliente where slug = %s",
+        (SLUG_FORA,),
+    )
+    yield
+    for tabela in ("cfg.cliente_tela", "cfg.perfil_acesso"):
+        admin_conn.execute(
+            f"delete from {tabela} where cliente_id in"  # noqa: S608
+            " (select id from cfg.cliente where slug = %s)",
+            (SLUG_FORA,),
+        )
+    admin_conn.execute("delete from cfg.cliente where slug = %s", (SLUG_FORA,))
+
+
+@pytest.mark.usefixtures("cliente_fora_da_carteira")
+def test_consultor_le_a_gestao_so_da_carteira(client: TestClient) -> None:
+    cabecalho = auth(OID_CONSULTOR)
+
+    gestao = client.get("/api/admin/gestao", headers=cabecalho).json()
+    # o admin vê os três; o consultor, só os dois da carteira, com as camadas lidas pelo RLS
+    todos = client.get("/api/admin/gestao", headers=auth(OID_ADMIN)).json()
+    assert {c["slug"] for c in todos["clientes"]} == {SLUG_A, SLUG_B, SLUG_FORA}
+    assert [c["slug"] for c in gestao["clientes"]] == [SLUG_A, SLUG_B]
+    assert [c["camadas"] for c in gestao["clientes"]] == [
+        c["camadas"] for c in todos["clientes"] if c["slug"] != SLUG_FORA
+    ]
+    assert (gestao["perfis"], gestao["sessoes"]) == ([], [])
+    assert gestao["permissoes"] == {"criarEmpresa": False, "usuarios": False}
+
+    empresa = client.get(f"/api/admin/clientes/{SLUG_B}", headers=cabecalho).json()
+    do_admin = client.get(f"/api/admin/clientes/{SLUG_B}", headers=auth(OID_ADMIN)).json()
+    assert [a["id"] for a in empresa["abas"]] == ["implantacao", "unidades", "dados"]
+    assert empresa["permissoes"] == {"editar": False, "convidar": False, "unidades": False}
+    assert (empresa["camadas"], empresa["fontes"]) == (do_admin["camadas"], do_admin["fontes"])
+    assert (empresa["usuarios"], empresa["cargas"], empresa["preferencias"]) == ([], [], [])
+
+    # fora da carteira: 403, sem dizer se a empresa existe
+    for slug in (SLUG_FORA, "nao-existe"):
+        r = client.get(f"/api/admin/clientes/{slug}", headers=cabecalho)
+        assert (r.status_code, r.json()) == (403, {"detail": "Acesso negado."})
+    # e nada de gravar
+    r = client.put(
+        f"/api/admin/clientes/{SLUG_A}/paineis/VG-01", json={"ligado": False}, headers=cabecalho
+    )
+    assert r.status_code == 403
 
 
 def test_gestao_le_o_cadastro_de_todos_os_clientes(client: TestClient) -> None:
@@ -550,7 +614,7 @@ def test_convite_recusa_o_que_a_edicao_recusa(client: TestClient) -> None:
 def beta_de_volta(admin_conn: psycopg.Connection[tuple[object, ...]]) -> Iterator[None]:
     yield
     admin_conn.execute(
-        "update cfg.cliente set nome = 'Padrão LANN Beta', segmento = null where id = %s",
+        "update cfg.cliente set nome = 'Padrão LANN Beta' where id = %s",
         (CLIENTE_B,),
     )
     admin_conn.execute(
@@ -560,36 +624,30 @@ def beta_de_volta(admin_conn: psycopg.Connection[tuple[object, ...]]) -> Iterato
 
 
 @pytest.mark.usefixtures("beta_de_volta")
-def test_admin_troca_nome_e_setor_de_uma_empresa_que_ja_existe(
+def test_admin_troca_o_nome_de_uma_empresa_que_ja_existe(
     client: TestClient, admin_conn: psycopg.Connection[tuple[object, ...]]
 ) -> None:
     rota = f"/api/admin/clientes/{SLUG_B}"
     cabecalho = auth(OID_ADMIN)
 
-    r = client.put(
-        rota, json={"nome": " Beta  Distribuidora ", "segmento": "Distribuidora"}, headers=cabecalho
-    )
+    r = client.put(rota, json={"nome": " Beta  Distribuidora "}, headers=cabecalho)
     assert (r.status_code, r.content) == (204, b"")
 
     assert admin_conn.execute(
-        "select nome, segmento, slug from cfg.cliente where id = %s", (CLIENTE_B,)
-    ).fetchone() == ("Beta Distribuidora", "Distribuidora", SLUG_B)
+        "select nome, slug from cfg.cliente where id = %s", (CLIENTE_B,)
+    ).fetchone() == ("Beta Distribuidora", SLUG_B)
+    # a auditoria guarda só o nome (o "Ramo" saiu na migration 37)
     assert admin_conn.execute(
-        "select antes ->> 'nome', depois ->> 'segmento' from seg.log_alteracao"
+        "select antes, depois from seg.log_alteracao"
         " where tabela = 'cfg.cliente' and registro_id = %s",
         (CLIENTE_B,),
-    ).fetchall() == [("Padrão LANN Beta", "Distribuidora")]
+    ).fetchall() == [({"nome": "Padrão LANN Beta"}, {"nome": "Beta Distribuidora"})]
     # o nome novo aparece para quem é do cliente
     assert _sessao(client, OID_B).json()["cliente"]["nome"] == "Beta Distribuidora"
 
-    # setor em branco volta a "não informado"; nome em branco não passa
-    assert (
-        client.put(rota, json={"nome": "Beta", "segmento": " "}, headers=cabecalho).status_code
-        == 204
-    )
-    assert admin_conn.execute(
-        "select nome, segmento from cfg.cliente where id = %s", (CLIENTE_B,)
-    ).fetchone() == ("Beta", None)
+    # o segmento é só da unidade: o corpo com ele é recusado; nome em branco não passa
+    com_segmento = client.put(rota, json={"nome": "Beta", "segmento": "Atacado"}, headers=cabecalho)
+    assert com_segmento.status_code == 422
     vazio = client.put(rota, json={"nome": "  "}, headers=cabecalho)
     assert (vazio.status_code, vazio.json()) == (422, {"detail": "Informe o nome da empresa."})
 
@@ -597,6 +655,116 @@ def test_admin_troca_nome_e_setor_de_uma_empresa_que_ja_existe(
     fora = client.put("/api/admin/clientes/nao-existe", json={"nome": "X"}, headers=cabecalho)
     assert (fora.status_code, fora.json()) == (404, {"detail": "Empresa não encontrada."})
     assert client.put(rota, json={"nome": "X"}, headers=auth(OID_B)).status_code == 403
+
+
+# ---------- unidades e os setores delas (migrations 34 e 35) ----------
+
+
+def test_gestao_mostra_as_unidades_e_os_setores_delas(client: TestClient) -> None:
+    cabecalho = auth(OID_ADMIN)
+
+    # no seed, as duas unidades da Alfa são Distribuidora; a da Beta não tem setor
+    gestao = client.get("/api/admin/gestao", headers=cabecalho).json()
+    por_slug = {c["slug"]: c["setores"] for c in gestao["clientes"]}
+    assert por_slug == {
+        SLUG_A: [{"id": "distribuidora", "rotulo": "Distribuidora"}],
+        SLUG_B: [],
+    }
+    assert "setores" not in gestao
+
+    alfa = client.get(f"/api/admin/clientes/{SLUG_A}", headers=cabecalho).json()
+    assert alfa["abas"][1] == {"id": "unidades", "rotulo": "Unidades"}
+    # na ordem da árvore: setor, grupo (Atacado antes de Fábrica) e nome
+    assert [(u["nome"], u["grupo"], u["segmento"]) for u in alfa["unidades"]] == [
+        ("Alfa Comércio", "Atacado", "Alimentos"),
+        ("Alfa Indústria", "Fábrica", "Alimentos"),
+    ]
+    assert alfa["unidades"][0]["setor"] == {"id": "distribuidora", "rotulo": "Distribuidora"}
+    assert (alfa["unidades"][0]["uf"], alfa["unidades"][0]["cidade"]) == ("CE", "Fortaleza")
+    beta = client.get(f"/api/admin/clientes/{SLUG_B}", headers=cabecalho).json()
+    assert [(u["nome"], u["setor"], u["grupo"]) for u in beta["unidades"]] == [
+        ("Beta Serviços", None, None)
+    ]
+
+    # o setor não se muda mais pela empresa
+    r = client.put(
+        f"/api/admin/clientes/{SLUG_B}", json={"nome": "Beta", "setor": "varejo"}, headers=cabecalho
+    )
+    assert r.status_code == 422
+
+
+def test_consultor_ve_as_unidades_da_carteira(client: TestClient) -> None:
+    cabecalho = auth(OID_CONSULTOR)
+    gestao = client.get("/api/admin/gestao", headers=cabecalho).json()
+    # sem escolher um cliente, o setor das unidades de cada empresa da carteira (migration 35)
+    assert {c["slug"]: c["setores"] for c in gestao["clientes"]}[SLUG_A] == [
+        {"id": "distribuidora", "rotulo": "Distribuidora"}
+    ]
+    alfa = client.get(f"/api/admin/clientes/{SLUG_A}", headers=cabecalho).json()
+    assert [a["id"] for a in alfa["abas"]] == ["implantacao", "unidades", "dados"]
+    assert len(alfa["unidades"]) == 2
+
+
+@pytest.fixture
+def estoque_ligado(admin_conn: psycopg.Connection[tuple[object, ...]]) -> Iterator[None]:
+    """EST-01 ligado nos dois clientes do seed (a API ainda não tem a tela: só o código)."""
+    admin_conn.execute(
+        "insert into cfg.cliente_tela (cliente_id, codigo_tela, ligada)"
+        " values (%s, 'EST-01', true), (%s, 'EST-01', true)",
+        (CLIENTE_A, CLIENTE_B),
+    )
+    yield
+    admin_conn.execute("delete from cfg.cliente_tela where codigo_tela = 'EST-01'")
+    admin_conn.execute(
+        "update cfg.empresa set setor = 'distribuidora' where cliente_id = %s", (CLIENTE_A,)
+    )
+
+
+@pytest.mark.usefixtures("estoque_ligado")
+def test_sessao_so_traz_o_painel_do_setor_da_empresa(
+    client: TestClient, admin_conn: psycopg.Connection[tuple[object, ...]]
+) -> None:
+    # a Alfa tem unidades da Distribuidora: o Estoque entra no menu; a Beta, sem setor, não
+    alfa = _sessao(client, OID_ADMIN, SLUG_A).json()
+    assert "EST-01" in alfa["telas"]
+    assert "EST-01" not in _sessao(client, OID_ADMIN, SLUG_B).json()["telas"]
+    # a árvore da bandeja: a Alfa tem dois grupos; a Beta, um negócio só
+    assert alfa["negocios"] == {
+        "setores": [
+            {
+                "id": "distribuidora",
+                "rotulo": "Distribuidora",
+                "grupos": [
+                    {
+                        "id": "distribuidora/Atacado",
+                        "rotulo": "Atacado",
+                        "unidades": [EMPRESA_A2],
+                    },
+                    {
+                        "id": "distribuidora/Fábrica",
+                        "rotulo": "Fábrica",
+                        "unidades": [EMPRESA_A1],
+                    },
+                ],
+            }
+        ],
+        "telasPorSetor": {"EST-01": ["distribuidora"]},
+    }
+    assert [e["id"] for e in alfa["empresas"]] == [EMPRESA_A2, EMPRESA_A1]
+    assert _sessao(client, OID_ADMIN, SLUG_B).json()["negocios"] is None
+
+    # uma unidade muda de setor: o painel fica (a outra ainda é Distribuidora)
+    admin_conn.execute("update cfg.empresa set setor = 'industria' where id = %s", (EMPRESA_A1,))
+    assert "EST-01" in _sessao(client, OID_ADMIN, SLUG_A).json()["telas"]
+    # nenhuma unidade da Distribuidora: o painel some, sem apagar o que estava ligado
+    admin_conn.execute(
+        "update cfg.empresa set setor = 'industria' where cliente_id = %s", (CLIENTE_A,)
+    )
+    assert "EST-01" not in _sessao(client, OID_ADMIN, SLUG_A).json()["telas"]
+    assert admin_conn.execute(
+        "select ligada from cfg.cliente_tela where cliente_id = %s and codigo_tela = 'EST-01'",
+        (CLIENTE_A,),
+    ).fetchone() == (True,)
 
 
 SLUG_NOVO = "nova-gama"
@@ -624,7 +792,7 @@ def test_empresa_nova_pela_gestao_do_cadastro_ao_primeiro_cnpj(
     client: TestClient, admin_conn: psycopg.Connection[tuple[object, ...]]
 ) -> None:
     cabecalho = auth(OID_ADMIN)
-    nova = {"nome": "Nova Gama", "segmento": "Distribuição de alimentos"}
+    nova = {"nome": "Nova Gama"}
 
     # só o admin cria empresa
     assert client.post("/api/admin/clientes", json=nova, headers=auth(OID_A)).status_code == 403
@@ -633,28 +801,29 @@ def test_empresa_nova_pela_gestao_do_cadastro_ao_primeiro_cnpj(
     assert r.status_code == 201
     assert (r.json()["slug"], r.json()["nome"]) == (SLUG_NOVO, "Nova Gama")
 
-    # aparece na barra lateral, com o setor e tudo desligado, e abre
+    # aparece na barra lateral, sem setor nem unidade e com tudo desligado, e abre
     gestao = client.get("/api/admin/gestao", headers=cabecalho).json()
     gama = next(c for c in gestao["clientes"] if c["slug"] == SLUG_NOVO)
-    assert gama["segmento"] == "Distribuição de alimentos"
+    assert (gama["nome"], gama["setores"]) == ("Nova Gama", [])
+    assert "segmento" not in gama
     assert {c["estado"] for c in gama["camadas"]} == {"desligada"}
     aberta = client.get(f"/api/admin/clientes/{SLUG_NOVO}", headers=cabecalho).json()
-    assert aberta["cliente"]["segmento"] == "Distribuição de alimentos"
-    assert (aberta["usuarios"], aberta["fontes"]) == ([], [])
+    assert (aberta["usuarios"], aberta["fontes"], aberta["unidades"]) == ([], [], [])
     assert len(aberta["acesso"]["perfis"]) == 4
+    # a sessão dela vem sem unidade e sem a bandeja até o cadastro das unidades
+    sessao_nova = _sessao(client, OID_ADMIN, SLUG_NOVO).json()
+    assert (sessao_nova["empresas"], sessao_nova["negocios"]) == ([], None)
 
-    # nome e setor mudam pela tela; o slug fica
+    # o nome muda pela tela; o slug fica
     mudou = client.put(
-        f"/api/admin/clientes/{SLUG_NOVO}",
-        json={"nome": "Nova Gama Ltda", "segmento": "Atacado"},
-        headers=cabecalho,
+        f"/api/admin/clientes/{SLUG_NOVO}", json={"nome": "Nova Gama Ltda"}, headers=cabecalho
     )
     assert mudou.status_code == 204
     aberta = client.get(f"/api/admin/clientes/{SLUG_NOVO}", headers=cabecalho).json()
     assert aberta["cliente"] == {
         "slug": SLUG_NOVO,
         "nome": "Nova Gama Ltda",
-        "segmento": "Atacado",
+        "setores": [],
         "logoUrl": None,
     }
     assert (
@@ -790,3 +959,98 @@ def test_quem_tem_registro_que_depende_dele_nao_se_apaga(client: TestClient) -> 
     )
     pessoas = client.get("/api/admin/usuarios", headers=cabecalho).json()["usuarios"]
     assert "bruno@beta.example" in {p["email"] for p in pessoas}
+
+
+# ---------- editar a unidade (migration 36) ----------
+
+
+@pytest.fixture
+def alfa_industria_de_volta(admin_conn: psycopg.Connection[tuple[object, ...]]) -> Iterator[None]:
+    yield
+    admin_conn.execute(
+        "update cfg.empresa set nome = 'Alfa Indústria', setor = 'distribuidora',"
+        " segmento = 'Alimentos', grupo = 'Fábrica', uf = 'CE', cidade = 'Fortaleza',"
+        " bairro = null, endereco = null where id = %s",
+        (EMPRESA_A1,),
+    )
+    admin_conn.execute(
+        "delete from seg.log_alteracao where tabela = 'cfg.empresa' and registro_id = %s",
+        (EMPRESA_A1,),
+    )
+
+
+def _corpo(**mudancas: object) -> dict[str, object]:
+    base: dict[str, object] = {
+        "nome": "Alfa Indústria",
+        "setor": "distribuidora",
+        "segmento": "Alimentos",
+        "grupo": "Fábrica",
+        "uf": "CE",
+        "cidade": "Fortaleza",
+        "bairro": None,
+        "endereco": None,
+    }
+    return base | mudancas
+
+
+@pytest.mark.usefixtures("alfa_industria_de_volta")
+def test_admin_edita_a_unidade_e_a_sessao_muda(
+    client: TestClient, admin_conn: psycopg.Connection[tuple[object, ...]]
+) -> None:
+    rota = f"/api/admin/clientes/{SLUG_A}/unidades/{EMPRESA_A1}"
+    cabecalho = auth(OID_ADMIN)
+
+    r = client.put(
+        rota,
+        json=_corpo(nome=" Alfa  Fábrica ", setor="industria", grupo=" ", endereco="Rua 1"),
+        headers=cabecalho,
+    )
+    assert (r.status_code, r.content) == (204, b"")
+    assert admin_conn.execute(
+        "select nome, setor, grupo, endereco from cfg.empresa where id = %s", (EMPRESA_A1,)
+    ).fetchone() == ("Alfa Fábrica", "industria", None, "Rua 1")
+    assert admin_conn.execute(
+        "select antes ->> 'setor', depois ->> 'setor' from seg.log_alteracao"
+        " where tabela = 'cfg.empresa' and registro_id = %s",
+        (str(EMPRESA_A1),),
+    ).fetchall() == [("distribuidora", "industria")]
+    # a sessão da Ana passa a ter dois setores na bandeja
+    negocios = _sessao(client, OID_A).json()["negocios"]
+    assert [s["id"] for s in negocios["setores"]] == ["distribuidora", "industria"]
+    # e a Gestão, os dois setores da empresa
+    aberta = client.get(f"/api/admin/clientes/{SLUG_A}", headers=cabecalho).json()
+    assert [s["id"] for s in aberta["cliente"]["setores"]] == ["distribuidora", "industria"]
+    assert aberta["permissoes"]["unidades"] is True
+    assert len(aberta["opcoesSetor"]) == 4
+
+    # nome de outra unidade da empresa, em outra caixa: 422, e nada muda
+    repetido = client.put(rota, json=_corpo(nome="ALFA COMÉRCIO"), headers=cabecalho)
+    assert (repetido.status_code, repetido.json()) == (
+        422,
+        {"detail": "Já existe uma unidade com esse nome nesta empresa."},
+    )
+    # o mesmo nome de uma unidade de outra empresa pode
+    assert client.put(rota, json=_corpo(nome="Beta Serviços"), headers=cabecalho).status_code == 204
+    invalido = client.put(rota, json=_corpo(setor="padaria"), headers=cabecalho)
+    assert (invalido.status_code, invalido.json()) == (422, {"detail": "Setor inválido."})
+    assert admin_conn.execute(
+        "select nome, setor from cfg.empresa where id = %s", (EMPRESA_A1,)
+    ).fetchone() == ("Beta Serviços", "distribuidora")
+
+
+def test_editar_unidade_so_do_admin_e_da_empresa(client: TestClient) -> None:
+    # unidade de outra empresa: 404
+    outra = client.put(
+        f"/api/admin/clientes/{SLUG_A}/unidades/{EMPRESA_B1}",
+        json=_corpo(nome="Beta"),
+        headers=auth(OID_ADMIN),
+    )
+    assert (outra.status_code, outra.json()) == (404, {"detail": "Unidade não encontrada."})
+    # consultor e cliente: 403
+    rota = f"/api/admin/clientes/{SLUG_A}/unidades/{EMPRESA_A1}"
+    for oid in (OID_CONSULTOR, OID_A):
+        r = client.put(rota, json=_corpo(nome="X"), headers=auth(oid))
+        assert (r.status_code, r.json()) == (403, {"detail": "Acesso negado."})
+    # a Gestão do consultor não traz o "Editar"
+    leitura = client.get(f"/api/admin/clientes/{SLUG_A}", headers=auth(OID_CONSULTOR)).json()
+    assert (leitura["permissoes"]["unidades"], leitura["opcoesSetor"]) == (False, [])
