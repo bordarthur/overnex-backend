@@ -37,6 +37,33 @@ LINHA_B = {
 }
 ALFA = {"nome": "Padrão LANN Alfa", "sigla": "PA", "logoUrl": None, "slug": "padrao-lann-alfa"}
 BETA = {"nome": "Padrão LANN Beta", "sigla": "PB", "logoUrl": None, "slug": "padrao-lann-beta"}
+# as linhas de cfg.setor (migration 34)
+SETORES = [
+    {"id": "distribuidora", "rotulo": "Distribuidora", "ordem": 1},
+    {"id": "industria", "rotulo": "Indústria", "ordem": 2},
+    {"id": "varejo", "rotulo": "Varejo", "ordem": 3},
+    {"id": "servicos", "rotulo": "Serviços", "ordem": 4},
+]
+
+
+def _unidade(n: int, nome: str, setor: str | None, grupo: str | None) -> dict[str, Any]:
+    return {
+        "id": UUID(f"0e000000-0000-4000-8000-00000000a{n:03d}"),
+        "nome": nome,
+        "setor": setor,
+        "grupo": grupo,
+    }
+
+
+# a tabela do Leão de Ouro (pedido do front), fora de ordem
+LEAO_DE_OURO = [
+    _unidade(6, "Usaflex 2", "varejo", "Usaflex"),
+    _unidade(3, "Lupo 1", "varejo", "Lupo"),
+    _unidade(1, "Leao 1", "varejo", "Leao"),
+    _unidade(5, "Usaflex 1", "varejo", "Usaflex"),
+    _unidade(2, "Leao 2", "varejo", "Leao"),
+    _unidade(4, "Lupo 2", "varejo", "Lupo"),
+]
 
 
 class Resultado:
@@ -80,6 +107,7 @@ def estado(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
         "telas": ["COM-01", "VG-01"],
         "agendadas": [],
         "consultas": {},
+        "empresas": [{"id": EMPRESA_A1, "nome": "Alfa Indústria", "setor": None, "grupo": None}],
     }
 
     def em_uma_ida(conn: Any, consultas: dict[str, Any]) -> dict[str, list[dict[str, Any]]]:
@@ -87,7 +115,8 @@ def estado(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
         linhas: dict[str, list[dict[str, Any]]] = {
             "usuario": [{"nome": "Ana Alfa", "email": "ana@alfa.example"}],
             "clientes": e["clientes"],
-            "empresas": [{"id": EMPRESA_A1, "nome": "Alfa Indústria"}],
+            "empresas": e["empresas"],
+            "setores": SETORES,
             "telas": [{"codigo_tela": t} for t in e["telas"]],
             "carga": [
                 {"data_snapshot": date(2026, 10, 12), "fim": datetime(2026, 10, 12, 12, tzinfo=UTC)}
@@ -136,6 +165,7 @@ def test_cliente_de_um_vinculo_recebe_o_cliente_sem_pedir(
         "cliente": ALFA,
         "papel": "gestor",
         "empresas": [{"id": str(EMPRESA_A1), "nome": "Alfa Indústria"}],
+        "negocios": None,
         "telas": ["COM-01", "VG-01"],
         "periodos": [
             {"id": "2026-10", "rotulo": "Outubro de 2026", "dadosAte": "2026-10-12"},
@@ -169,6 +199,7 @@ def test_admin_sem_cliente_recebe_a_lista_e_a_gestao(
         "cliente": None,
         "papel": None,
         "empresas": [],
+        "negocios": None,
         "telas": [],
         "periodos": [],
         "aviso": None,
@@ -194,6 +225,38 @@ def test_admin_escolhe_o_cliente_pelo_slug(client: TestClient, estado: dict[str,
     # as telas do admin são as ligadas no cliente, sem passar por perfil
     assert estado["consultas"]["telas"] == (sessao_router.SQL_TELAS_ADMIN, (CLIENTE_B,))
     assert estado["agendadas"] == [(["PES-01", "VG-01"], "padrao-lann-beta")]
+
+
+@pytest.mark.parametrize(
+    ("setores", "telas"),
+    [
+        (["distribuidora"], ["COM-01", "EST-01", "VG-01"]),
+        (["distribuidora", "varejo"], ["COM-01", "EST-01", "VG-01"]),
+        (["industria"], ["COM-01", "VG-01"]),
+        # nenhuma unidade liberada com setor
+        ([], ["COM-01", "VG-01"]),
+    ],
+)
+def test_painel_de_outro_setor_fica_fora_do_menu_e_da_pre_montagem(
+    client: TestClient, estado: dict[str, Any], setores: list[str], telas: list[str]
+) -> None:
+    # o Estoque (EST-01) ligado e liberado, mas só vale na Distribuidora
+    estado["fatos"] = _fatos(setores=setores)
+    estado["telas"] = ["COM-01", "EST-01", "VG-01"]
+
+    corpo = client.get("/api/sessao").json()
+
+    assert corpo["telas"] == telas
+    assert estado["agendadas"] == [(telas, "padrao-lann-alfa")]
+
+
+def test_admin_tambem_nao_ve_painel_de_outro_setor(
+    client: TestClient, estado: dict[str, Any]
+) -> None:
+    estado["fatos"] = _fatos(vinculos=[], perfil="admin", cliente_id=CLIENTE_A, setores=[])
+    estado["telas"] = ["EST-01", "VG-01"]
+
+    assert client.get("/api/sessao").json()["telas"] == ["VG-01"]
 
 
 def test_consultor_com_dois_clientes_e_sem_slug_escolhe_depois(
@@ -246,3 +309,108 @@ def test_slug_fora_do_alcance_403(client: TestClient, estado: dict[str, Any]) ->
 @pytest.mark.parametrize("slug", ["Com Espaço", "MAIUSCULO", "a--b", "x" * 81])
 def test_slug_fora_do_formato_422(client: TestClient, slug: str) -> None:
     assert client.get("/api/sessao", params={"cliente": slug}).status_code == 422
+
+
+# --- unidades e a árvore da bandeja "Negócios" (migration 35) ------------------------------
+
+
+def _ids(*n: int) -> list[str]:
+    return [f"0e000000-0000-4000-8000-00000000a{i:03d}" for i in n]
+
+
+def test_leao_de_ouro_tem_a_arvore_por_setor_e_grupo(
+    client: TestClient, estado: dict[str, Any]
+) -> None:
+    estado["empresas"] = LEAO_DE_OURO
+    estado["telas"] = ["COM-01", "VG-01"]
+
+    corpo = client.get("/api/sessao").json()
+
+    # na ordem da árvore: setor, grupo e nome
+    assert [e["nome"] for e in corpo["empresas"]] == [
+        "Leao 1",
+        "Leao 2",
+        "Lupo 1",
+        "Lupo 2",
+        "Usaflex 1",
+        "Usaflex 2",
+    ]
+    assert corpo["negocios"] == {
+        "setores": [
+            {
+                "id": "varejo",
+                "rotulo": "Varejo",
+                "grupos": [
+                    {"id": "varejo/Leao", "rotulo": "Leao", "unidades": _ids(1, 2)},
+                    {"id": "varejo/Lupo", "rotulo": "Lupo", "unidades": _ids(3, 4)},
+                    {"id": "varejo/Usaflex", "rotulo": "Usaflex", "unidades": _ids(5, 6)},
+                ],
+            }
+        ],
+        # nenhuma tela liberada é de um setor só
+        "telasPorSetor": {},
+    }
+
+
+def test_arvore_com_setor_sem_setor_e_sem_grupo_na_ordem(
+    client: TestClient, estado: dict[str, Any]
+) -> None:
+    estado["empresas"] = [
+        _unidade(1, "Loja 10", "varejo", None),
+        _unidade(2, "Loja 2", "varejo", None),
+        _unidade(3, "Depósito", None, None),
+        _unidade(4, "CD Norte", "distribuidora", "Atacado"),
+        _unidade(5, "Lupo 1", "varejo", "Lupo"),
+    ]
+    estado["fatos"] = _fatos(setores=["distribuidora", "varejo"])
+    estado["telas"] = ["EST-01", "VG-01"]
+
+    corpo = client.get("/api/sessao").json()
+
+    # setor pela ordem de cfg.setor, sem setor no fim; grupo, sem grupo no fim do setor;
+    # nome com ordem natural ("Loja 2" antes de "Loja 10")
+    assert [e["nome"] for e in corpo["empresas"]] == [
+        "CD Norte",
+        "Lupo 1",
+        "Loja 2",
+        "Loja 10",
+        "Depósito",
+    ]
+    arvore = corpo["negocios"]
+    assert [(s["id"], s["rotulo"]) for s in arvore["setores"]] == [
+        ("distribuidora", "Distribuidora"),
+        ("varejo", "Varejo"),
+        ("sem-setor", "Sem setor"),
+    ]
+    assert [(g["id"], g["rotulo"]) for g in arvore["setores"][1]["grupos"]] == [
+        ("varejo/Lupo", "Lupo"),
+        ("varejo/sem-grupo", "Sem grupo"),
+    ]
+    assert arvore["setores"][1]["grupos"][1]["unidades"] == _ids(2, 1)
+    assert arvore["setores"][2]["grupos"] == [
+        {"id": "sem-setor/sem-grupo", "rotulo": "Sem grupo", "unidades": _ids(3)}
+    ]
+    # toda unidade em exatamente um grupo
+    todas = [u for s in arvore["setores"] for g in s["grupos"] for u in g["unidades"]]
+    assert sorted(todas) == sorted(e["id"] for e in corpo["empresas"])
+    # só as telas liberadas que são de um setor
+    assert arvore["telasPorSetor"] == {"EST-01": ["distribuidora"]}
+
+
+@pytest.mark.parametrize(
+    "unidades",
+    [
+        # um par setor + grupo só, com várias unidades: o chip "Unidade"
+        [_unidade(1, "Leao 1", "varejo", "Leao"), _unidade(2, "Leao 2", "varejo", "Leao")],
+        # sem setor e sem grupo também é um negócio só
+        [_unidade(1, "A", None, None), _unidade(2, "B", None, None)],
+        [],
+    ],
+)
+def test_um_negocio_so_vem_null(
+    client: TestClient, estado: dict[str, Any], unidades: list[dict[str, Any]]
+) -> None:
+    estado["empresas"] = unidades
+    corpo = client.get("/api/sessao").json()
+    assert corpo["negocios"] is None
+    assert len(corpo["empresas"]) == len(unidades)

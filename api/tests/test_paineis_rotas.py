@@ -153,7 +153,7 @@ def test_painel_200_com_a_moldura(client: TestClient, estado: dict[str, Any], te
 def test_filtros_e_mes_chegam_na_tela(client: TestClient, estado: dict[str, Any]) -> None:
     r = client.get(
         "/api/telas/vendas",
-        params={"mes": "2026-10", "empresa": str(EMPRESA), "canal": "varejo", "linha": "aves"},
+        params={"mes": "2026-10", "unidades": str(EMPRESA), "canal": "varejo", "linha": "aves"},
     )
     assert r.status_code == 200
     _, _, mes, filtros = estado["chamadas"][0]
@@ -202,9 +202,20 @@ def test_equipe_exige_dado_nominal(client: TestClient, estado: dict[str, Any]) -
 
 
 @pytest.mark.parametrize("tela", ["vendas", "resultado", "receber-pagar", "fluxo-caixa", "pessoas"])
-def test_empresa_fora_do_vinculo_403(client: TestClient, tela: str) -> None:
-    r = client.get(f"/api/telas/{tela}", params={"empresa": str(UUID(int=9))})
+def test_unidade_fora_do_vinculo_403(client: TestClient, tela: str) -> None:
+    r = client.get(f"/api/telas/{tela}", params={"unidades": f"{EMPRESA},{UUID(int=9)}"})
     assert r.status_code == 403
+    assert r.json() == {"detail": "Acesso negado."}
+
+
+@pytest.mark.parametrize("unidades", ["", "x", f"{EMPRESA},"])
+def test_unidades_em_formato_invalido_422(
+    client: TestClient, estado: dict[str, Any], unidades: str
+) -> None:
+    r = client.get("/api/telas/vendas", params={"unidades": unidades})
+    assert r.status_code == 422
+    assert r.json() == {"detail": "Filtro inválido."}
+    assert estado["chamadas"] == []
 
 
 def test_filtros_do_resultado_e_do_receber_pagar(
@@ -363,14 +374,14 @@ def test_cadastro_mudado_troca_a_chave_do_cache(client: TestClient, estado: dict
 def test_openapi_tem_as_rotas_e_os_filtros(client: TestClient) -> None:
     esquema = client.app.openapi()  # type: ignore[attr-defined]
     for caminho, filtros in (
-        ("/api/telas/vendas", {"mes", "empresa", "canal", "linha"}),
-        ("/api/telas/equipe-comercial", {"mes", "empresa", "canal", "supervisor"}),
-        ("/api/telas/clientes", {"mes", "empresa"}),
-        ("/api/telas/resultado", {"mes", "empresa", "visao", "cenario", "comparar"}),
-        ("/api/telas/receber-pagar", {"mes", "empresa", "vendedor", "atraso"}),
+        ("/api/telas/vendas", {"mes", "unidades", "canal", "linha"}),
+        ("/api/telas/equipe-comercial", {"mes", "unidades", "canal", "supervisor"}),
+        ("/api/telas/clientes", {"mes", "unidades"}),
+        ("/api/telas/resultado", {"mes", "unidades", "visao", "cenario", "comparar"}),
+        ("/api/telas/receber-pagar", {"mes", "unidades", "vendedor", "atraso"}),
         # o setor se escolhe dentro do cartão; `comparar` não vale aqui
-        ("/api/telas/fluxo-caixa", {"mes", "empresa", "visao", "projecao"}),
-        ("/api/telas/pessoas", {"mes", "empresa"}),
+        ("/api/telas/fluxo-caixa", {"mes", "unidades", "visao", "projecao"}),
+        ("/api/telas/pessoas", {"mes", "unidades"}),
     ):
         parametros = esquema["paths"][caminho]["get"]["parameters"]
         # `cliente` (slug do cliente escolhido) vale em toda tela
@@ -518,7 +529,7 @@ def test_nomes_do_cartao(
         return TabelaNomes(colunas=COLUNAS_NOMES, linhas=[], vazio="Nenhuma pessoa.")
 
     monkeypatch.setitem(paineis.NOMES, ("pessoas", "cargos-salarios"), montador)
-    r = client.get(NOMES, params={"mes": "2026-10", "empresa": str(EMPRESA)})
+    r = client.get(NOMES, params={"mes": "2026-10", "unidades": str(EMPRESA)})
 
     assert r.status_code == 200
     assert r.headers["cache-control"] == "no-store"

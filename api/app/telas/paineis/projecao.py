@@ -1127,7 +1127,7 @@ def ler(
     conn: Conexao = ctx.sessao.conn
     hoje = date.today()
     parametros_cliente = parametros_do_cliente(conn, ctx.cliente_id)
-    escolhas = ler_escolhas(parametros_cliente, ctx.empresa_id, hoje)
+    escolhas = ler_escolhas(parametros_cliente, ctx.unidades, hoje)
     inicio = d0 + timedelta(days=1)
     fim = d0 + timedelta(days=DIAS)
     mes_aberto = inicio.replace(day=1)

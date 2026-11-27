@@ -185,7 +185,7 @@ def responder(
         # O cliente vem primeiro: gravar uma escolha apaga as respostas dele (_apagar_cliente).
         chave = (
             ctx.cliente_id,
-            ctx.empresa_id,
+            ctx.unidades,
             ctx.empresas,
             mes,
             inicio.carga,

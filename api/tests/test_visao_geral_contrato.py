@@ -100,16 +100,21 @@ def test_visao_geral_demo_so_em_dev() -> None:
 def test_openapi_tem_as_rotas_do_front_em_camel_case() -> None:
     esquema = create_app(_settings()).openapi()
 
-    assert "/api/sessao" in esquema["paths"]
+    assert {"/api/sessao", "/api/negocios"} <= set(esquema["paths"])
     rota = esquema["paths"]["/api/telas/visao-geral"]["get"]
-    empresa = next(p for p in rota["parameters"] if p["name"] == "empresa")
-    assert empresa["required"] is False
+    nomes = {p["name"] for p in rota["parameters"]}
+    # `?empresa=` saiu: as unidades marcadas na bandeja Negócios
+    assert "empresa" not in nomes
+    unidades = next(p for p in rota["parameters"] if p["name"] == "unidades")
+    assert unidades["required"] is False
 
     componentes = esquema["components"]["schemas"]
     assert {"versaoContrato", "dadosAte", "atualizadoEm"} <= set(
         componentes["VisaoGeralPayload"]["properties"]
     )
     assert "deltaRuim" in componentes["IndicadorPeriodo"]["properties"]
+    assert "escopo" in componentes["Secao"]["properties"]
+    assert "telasPorSetor" in componentes["NegociosSessao"]["properties"]
 
 
 @pytest.mark.parametrize(

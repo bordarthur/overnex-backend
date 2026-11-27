@@ -1,21 +1,27 @@
 """Painéis por cartões: GET /api/telas/vendas (COM-01), /equipe-comercial (COM-02),
-/clientes (COM-03), /resultado (FIN-02), /receber-pagar (FIN-03), /fluxo-caixa (FIN-04) e
-/pessoas (PES-01).
+/clientes (COM-03), /resultado (FIN-02), /receber-pagar (FIN-03), /fluxo-caixa (FIN-04),
+/pessoas (PES-01) e /estoque (EST-01, só Distribuidora; sem `mes`: é o retrato do dia).
 
 Mesmo padrão da Visão geral (app/telas/visao_geral/router.py): acesso pela tela, `cliente`
-(slug do cliente escolhido; opcional para quem tem um só), `empresa` opcional (sem ela,
-todas as do vínculo), `mes` (AAAA-MM, um dos de /api/sessao) e a
-resposta pronta em memória por VISAO_GERAL_CACHE_SEGUNDOS, com chave no cliente, nas
-empresas, no mês, nos filtros, na última carga e na versão do cadastro do cliente.
+(slug do cliente escolhido; opcional para quem tem um só), `unidades` opcional (ids
+separados por vírgula; sem ele, todas as do vínculo), `mes` (AAAA-MM, um dos de
+/api/sessao) e a resposta pronta em memória por VISAO_GERAL_CACHE_SEGUNDOS, com chave no
+cliente, nas unidades, no mês, nos filtros, na última carga e na versão do cadastro do
+cliente.
+
+Painel de um setor (app/seguranca/setores.py; hoje o Estoque, só Distribuidora): soma só as
+unidades pedidas que são do setor e manda `escopo` (os setores e o texto do rodapé da
+bandeja "Negócios"). Sem nenhuma unidade pedida do setor: 200 só com o `aviso`, sem cartões
+nem KPIs (acontece por link: o menu esconde o painel).
 
 Filtros próprios de cada tela, pelo `id` que a resposta manda em `filtros`: Vendas, canal e
 linha; Equipe, canal e supervisor; Clientes, nenhum; Resultado, visao e cenario; Receber e
 pagar, vendedor e atraso; Fluxo de caixa, visao e projecao; Pessoas, nenhum (o setor se
-escolhe dentro do cartão). As opções saem dos dados; opção fora da lista → 422 "Filtro
-inválido.". O
-Resultado aceita também `comparar` (orcado ou mes-anterior), que vem do chip global
-"Comparar com" do front e não vai em `filtros`. A Equipe e o Receber e pagar mostram nomes
-de pessoas (vendedores, clientes): exigem um perfil que veja dado nominal (etapa 6).
+escolhe dentro do cartão); Estoque, secao, classe e lista (a chave do dinheiro preso). As
+opções saem dos dados; opção fora da lista → 422 "Filtro inválido.". O Resultado aceita
+também `comparar` (orcado ou mes-anterior), que vem do chip global "Comparar com" do front
+e não vai em `filtros`. A Equipe e o Receber e pagar mostram nomes de pessoas (vendedores,
+clientes): exigem um perfil que veja dado nominal (etapa 6).
 Pessoas tem dado de folha, mas sem nomes: abre para os perfis marcados na matriz da Gestão.
 
 Cartões "a decidir" (A_DECIDIR): só saem com PAINEIS_A_DECIDIR (dev).
@@ -23,18 +29,18 @@ Cartões "a decidir" (A_DECIDIR): só saem com PAINEIS_A_DECIDIR (dev).
 Nomes por cartão (NOMES; hoje só Pessoas, "Cargos e salários"): o cartão traz a chave
 "Mostrar nomes" (`nomes`) só para quem vê dado nominal na tela (na PES-01, a chave "vê
 nomes" da matriz); por isso o `ve_dado_nominal` entra na chave do cache. Ligada, o front pede
-GET /api/telas/{tela}/cartoes/{id}/nomes, com os mesmos `mes` e `empresa` do painel. A rota
+GET /api/telas/{tela}/cartoes/{id}/nomes, com os mesmos `mes` e `unidades` do painel. A rota
 confere de novo (a chave não vale como permissão: qualquer um pode chamar a URL) e:
 - 404 "Este cartão não tem nomes." para tela ou cartão fora de NOMES;
 - 403 "Você não pode ver os nomes deste cartão." para quem tem a tela, mas não vê dado
   nominal; as outras negações são o 403 genérico;
 - sem cache no back e com Cache-Control: no-store;
 - o pedido vai para seg.log_acesso com o recurso "<código da tela>:<cartão>:nomes" e os
-  filtros no motivo (quem, de qual cliente e empresa, com quais filtros).
+  filtros no motivo (quem, de qual cliente e unidades, com quais filtros).
 
 Provisões por cartão (PROVISOES; hoje só "provisoes" do Fluxo de caixa): quem tem a tela
 grava o período da média e cada grupo (PUT /api/telas/{tela}/cartoes/{id}/periodo e
-.../grupos/{grupo}), para o cliente e a empresa do filtro (app/telas/paineis/provisoes.py).
+.../grupos/{grupo}), para o cliente e as unidades do filtro (app/telas/paineis/provisoes.py).
 Sem a tela no perfil, 403 com resposta própria; tela ou cartão sem provisões, 404. A rota
 confirma antes de responder e apaga as respostas prontas do cliente.
 
@@ -62,12 +68,16 @@ from app.farol.parametro import parametros_do_cliente
 from app.seguranca.acesso import (
     ClienteDaQuery,
     ContextoConsolidado,
+    UnidadesDaQuery,
+    ler_unidades,
     verificar_acesso_consolidado,
 )
+from app.seguranca.setores import aviso_fora_do_escopo, rotulo_escopo
 from app.telas.moldura import UltimaCarga
 from app.telas.paineis import (
     clientes,
     equipe,
+    estoque,
     fluxo_caixa,
     pessoas,
     provisoes,
@@ -77,8 +87,10 @@ from app.telas.paineis import (
 )
 from app.telas.paineis.base import MSG_FILTRO_INVALIDO, Conteudo, Opcoes, escolher
 from app.telas.paineis.contrato import (
+    Aviso,
     Cartao,
     CartaoTabela,
+    EscopoSetor,
     MudancaGrupoProvisao,
     MudancaPeriodoProvisoes,
     NomesCartao,
@@ -88,6 +100,7 @@ from app.telas.paineis.contrato import (
 )
 from app.telas.paineis.explicacoes import com_explicacao
 from app.telas.preleitura import Inicio, consultas_adiantadas, exigir_tela_com_inicio, preler
+from app.telas.visao_geral.contrato import Trecho
 from app.telas.visao_geral.router import FORMATO_MES, mes_escolhido
 
 CODIGOS: Mapping[TelaPainel, str] = {
@@ -98,7 +111,11 @@ CODIGOS: Mapping[TelaPainel, str] = {
     "receber-pagar": "FIN-03",
     "fluxo-caixa": "FIN-04",
     "pessoas": "PES-01",
+    # só para empresas do setor Distribuidora (app/seguranca/setores.py)
+    "estoque": "EST-01",
 }
+# nome do painel no aviso de quando nenhuma unidade pedida é do setor dele
+NOME_DO_PAINEL: Mapping[TelaPainel, str] = {"estoque": "Estoque"}
 # telas que mostram nomes de pessoas: só para perfil que vê dado nominal (etapa 6)
 NOMINAL: frozenset[TelaPainel] = frozenset({"equipe-comercial", "receber-pagar"})
 # cartões marcados "A decidir" no mockup: só com PAINEIS_A_DECIDIR
@@ -125,6 +142,7 @@ MONTADORES: dict[TelaPainel, Montador] = {
     "receber-pagar": receber_pagar.montar,
     "fluxo-caixa": fluxo_caixa.montar,
     "pessoas": pessoas.montar,
+    "estoque": estoque.montar,
 }
 
 # (contexto, mês escolhido ou None, a última carga ou None) → a tabela de nomes
@@ -281,6 +299,23 @@ def tela_pessoas(
     return responder(ctx, settings, "pessoas", mes, {})
 
 
+@router.get("/estoque", response_model_exclude_defaults=True, responses=RESPOSTAS)
+def tela_estoque(
+    ctx: Annotated[ContextoConsolidado, Depends(exigir_tela_com_inicio(CODIGOS["estoque"]))],
+    settings: Annotated[Settings, Depends(get_settings)],
+    secao: Annotated[str | None, _filtro("Seção", "todas")] = None,
+    classe: Annotated[
+        str | None, _filtro("Classe BCG (estrela, vaca-leiteira, interrogacao ou abacaxi)", "todas")
+    ] = None,
+    lista: Annotated[
+        str | None, _filtro("O que mostrar no dinheiro preso (tudo, excesso ou parados)", "tudo")
+    ] = None,
+) -> PainelPayload:
+    """O retrato do dia da carga: sem `mes` (o texto de frescor vem pronto em `frescor`)."""
+    filtros = {"secao": secao, "classe": classe, "lista": lista}
+    return responder(ctx, settings, "estoque", None, filtros)
+
+
 def _comparar(valor: str | None) -> str | None:
     """`comparar` conferido antes de tudo (vale até sem carga); o padrão vira None, para a
     chave do cache ser a da pré-montagem."""
@@ -308,7 +343,7 @@ def responder(
         chave = (
             tela,
             ctx.cliente_id,
-            ctx.empresa_id,
+            ctx.unidades,
             ctx.empresas,
             # a chave "Mostrar nomes" só sai para quem vê dado nominal
             ctx.ve_dado_nominal,
@@ -341,7 +376,15 @@ def montar(
         # mês da lista de /api/sessao (do demo também), antes de qualquer conta
         escolhido = mes_escolhido(mes, inicio.meses or [])
 
-    if settings.visao_geral_demo:
+    escopo = None
+    if ctx.escopo is not None:
+        escopo = EscopoSetor(setores=sorted(ctx.escopo), rotulo=rotulo_escopo(ctx.escopo))
+
+    if ctx.escopo is not None and not ctx.empresas:
+        # nenhuma unidade pedida é do setor do painel: só o aviso
+        texto = aviso_fora_do_escopo(NOME_DO_PAINEL.get(tela, tela), ctx.escopo)
+        conteudo = Conteudo(aviso=Aviso(tom="info", texto=[Trecho(texto=texto)]))
+    elif settings.visao_geral_demo:
         conteudo = conteudo_demo(tela, filtros)
         if not settings.paineis_a_decidir:
             conteudo.cartoes = sem_a_decidir(tela, conteudo.cartoes)
@@ -362,12 +405,14 @@ def montar(
         cliente=inicio.cliente,
         dados_ate=carga.data_snapshot if carga else None,
         atualizado_em=carga.fim if carga else None,
+        frescor=conteudo.frescor,
         filtros=conteudo.filtros,
         aviso=conteudo.aviso,
         destaques=conteudo.destaques,
         kpis=conteudo.kpis,
         apoios=conteudo.apoios,
         cartoes=conteudo.cartoes,
+        escopo=escopo,
     )
 
 
@@ -389,6 +434,7 @@ def conteudo_demo(tela: TelaPainel, filtros: Mapping[str, str | None]) -> Conteu
         kpis=list(p.kpis),
         apoios=list(p.apoios),
         cartoes=list(p.cartoes),
+        frescor=p.frescor,
     )
 
 
@@ -431,10 +477,7 @@ def exigir_nomes(
     sessao: Annotated[Sessao, Depends(get_sessao)],
     tela: TelaUrl,
     cartao: CartaoUrl,
-    empresa: Annotated[
-        UUID | None,
-        Query(description="Opcional: só esta empresa. Sem valor: todas as do vínculo."),
-    ] = None,
+    unidades: UnidadesDaQuery = None,
     mes: Mes = None,
     cliente: ClienteDaQuery = None,
 ) -> ContextoConsolidado:
@@ -442,11 +485,12 @@ def exigir_nomes(
     etapa 6 tem resposta própria. O log leva o cartão e os filtros."""
     tela_painel, id_cartao = _cartao_com_nomes(tela, cartao)
     codigo = CODIGOS[tela_painel]
+    pedidas = ler_unidades(unidades)
     try:
         return verificar_acesso_consolidado(
             sessao,
             codigo,
-            empresa,
+            pedidas,
             exige_dado_nominal=True,
             recurso=f"{codigo}:{id_cartao}:nomes",
             detalhe=f"filtros: mes={mes or 'padrão'}",
@@ -478,12 +522,12 @@ def nomes_do_cartao(
     response.headers["Cache-Control"] = "no-store"
     tela_painel, id_cartao = _cartao_com_nomes(tela, cartao)
     logger.info(
-        "Nomes do cartão %s/%s pedidos: usuário %s, cliente %s, empresa %s, mês %s",
+        "Nomes do cartão %s/%s pedidos: usuário %s, cliente %s, unidades %s, mês %s",
         tela_painel,
         id_cartao,
         ctx.usuario_id,
         ctx.cliente_id,
-        ctx.empresa_id or "todas",
+        ",".join(str(u) for u in ctx.unidades) if ctx.unidades is not None else "todas",
         mes or "padrão",
     )
     inicio = preler(ctx.sessao, ctx.cliente_id, com_meses=mes is not None)
@@ -521,19 +565,17 @@ def exigir_provisoes(
     sessao: Annotated[Sessao, Depends(get_sessao)],
     tela: TelaUrl,
     cartao: CartaoUrl,
-    empresa: Annotated[
-        UUID | None,
-        Query(description="Opcional: grava para esta empresa. Sem valor: para todas."),
-    ] = None,
+    unidades: UnidadesDaQuery = None,
     cliente: ClienteDaQuery = None,
 ) -> ContextoConsolidado:
     """Cartão com provisões (senão 404) e as 6 etapas na tela dele: quem vê o painel muda
     (sem restrição de papel). Sem a tela no perfil (etapa 4), a resposta é a própria."""
     tela_painel, id_cartao = _cartao_com_provisoes(tela, cartao)
     codigo = CODIGOS[tela_painel]
+    pedidas = ler_unidades(unidades)
     try:
         return verificar_acesso_consolidado(
-            sessao, codigo, empresa, recurso=f"{codigo}:{id_cartao}:provisoes", cliente=cliente
+            sessao, codigo, pedidas, recurso=f"{codigo}:{id_cartao}:provisoes", cliente=cliente
         )
     except AcessoNegado as negado:
         if negado.etapa == 4:
@@ -582,13 +624,13 @@ def gravar_periodo_provisoes(
     cartao: CartaoUrl,
     corpo: MudancaPeriodoProvisoes,
 ) -> Response:
-    """Grava o período da média das provisões para o cliente (e a empresa do filtro)."""
+    """Grava o período da média das provisões para o cliente (e as unidades do filtro)."""
     if corpo.periodo not in provisoes.PERIODOS:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=MSG_PERIODO_INVALIDO
         )
     provisoes.gravar_periodo(
-        ctx.sessao.conn, ctx.cliente_id, ctx.usuario_id, ctx.empresa_id, corpo.periodo, date.today()
+        ctx.sessao.conn, ctx.cliente_id, ctx.usuario_id, ctx.unidades, corpo.periodo, date.today()
     )
     return _depois_de_gravar(ctx)
 
@@ -607,20 +649,20 @@ def gravar_grupo_provisao(
     corpo: MudancaGrupoProvisao,
 ) -> Response:
     """Liga ou desliga um grupo de provisão e grava o valor dos próximos 30 dias (`null`
-    volta ao sugerido), para o cliente (e a empresa do filtro)."""
+    volta ao sugerido), para o cliente (e as unidades do filtro)."""
     if grupo not in provisoes.POR_ID:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSG_GRUPO_INEXISTENTE)
     valor = _valor_provisao(corpo.valor)
     hoje = date.today()
     conn = ctx.sessao.conn
     anterior = provisoes.ler_escolhas(
-        parametros_do_cliente(conn, ctx.cliente_id), ctx.empresa_id, hoje
+        parametros_do_cliente(conn, ctx.cliente_id), ctx.unidades, hoje
     ).do_grupo(grupo)
     provisoes.gravar_grupo(
         conn,
         ctx.cliente_id,
         ctx.usuario_id,
-        ctx.empresa_id,
+        ctx.unidades,
         grupo,
         corpo.ligado,
         valor,

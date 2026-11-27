@@ -1,7 +1,8 @@
-"""Gera as 12 tabelas da demonstração para uma data de carga (`hoje`).
+"""Gera as 13 tabelas da demonstração para uma data de carga (`hoje`).
 
 Tudo até a véspera de `hoje`: vendas dos dias úteis, títulos emitidos e pagos, folha dos
-meses fechados, fluxo de caixa, DRE e orçamento. O passado é sempre o mesmo (ver sorteio.py).
+meses fechados, fluxo de caixa, DRE e orçamento, e o estoque de hoje. O passado é sempre o
+mesmo (ver sorteio.py); o estoque é só o do dia, como no DW.
 """
 
 from collections.abc import Mapping
@@ -13,6 +14,7 @@ import pyarrow as pa
 
 from demo.cadastros import Cadastro, cadastro
 from demo.calendario import inicio_mes, meses, somar_meses
+from demo.estoque import LinhaEstoque, gerar_estoque
 from demo.fluxo import Fluxo, LinhaFluxo, agrupar, gerar_fluxo
 from demo.folha import LANCAMENTOS, LinhaFolha, folha_do_mes
 from demo.modelo import CONTA, FORTALEZA, HORIZONTE, INICIO, inflacao, margem
@@ -36,6 +38,7 @@ class Dados:
     fluxo: Fluxo
     dre: list[LinhaDre]
     orcamento: list[LinhaOrcamento]
+    estoque: list[LinhaEstoque]
 
 
 def gerar_dados(hoje: date) -> Dados:
@@ -53,7 +56,8 @@ def gerar_dados(hoje: date) -> Dados:
     ]
     dre = gerar_dre(cad, vendas, receber, pagar, fluxo.movimentos, hoje)
     orcamento = gerar_orcamento(cad, hoje)
-    return Dados(hoje, cad, vendas, metas, receber, pagar, folha, fluxo, dre, orcamento)
+    estoque = gerar_estoque(vendas, hoje)
+    return Dados(hoje, cad, vendas, metas, receber, pagar, folha, fluxo, dre, orcamento, estoque)
 
 
 def _data_br(d: date | None) -> str:
@@ -149,6 +153,16 @@ def linhas(dados: Dados) -> dict[str, list[Linha]]:
                 }
             )
     saida["d_vendedor_pj"] = vendedores
+
+    saida["f_estoque_pj"] = [
+        {
+            "en_filial": str(e.empresa.numero),
+            "en_codigoproduto": e.produto,
+            "en_saldoestoque": e.saldo,
+            "EMPRESA": e.empresa.origem,
+        }
+        for e in dados.estoque
+    ]
 
     saida["f_vendas_pj"] = [
         {

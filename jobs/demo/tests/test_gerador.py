@@ -29,6 +29,18 @@ def test_vendas_em_dias_uteis_ate_a_vespera() -> None:
     assert max(v.data for v in d.vendas) == HOJE - timedelta(days=1)
 
 
+def test_estoque_de_hoje_tem_de_tudo() -> None:
+    d = dados(HOJE)
+    assert d.estoque == gerar_dados(HOJE).estoque  # o mesmo sorteio no mesmo dia
+    assert {e.empresa for e in d.estoque} == set(EMPRESAS)
+    assert all(e.saldo >= 0 for e in d.estoque)
+    zerados = sum(1 for e in d.estoque if e.saldo == 0)
+    # ruptura de ~5% dos produtos vendidos nos 90 dias
+    assert 0 < zerados < 0.15 * len(d.estoque)
+    # um produto por filial
+    assert len({(e.empresa, e.produto) for e in d.estoque}) == len(d.estoque)
+
+
 def test_passado_nao_muda_no_dia_seguinte() -> None:
     antes, depois = dados(HOJE), dados(DEPOIS)
     assert [v for v in depois.vendas if v.data < HOJE] == antes.vendas

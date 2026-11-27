@@ -86,7 +86,7 @@ select is((select cliente_id
 select is((select count(*)::int from mart.lancamento), 48, 'admin em B: só os lançamentos de B');
 select is((select empresas
              from seg.contexto_acesso('0d000000-0000-4000-8000-0000000000ad', 'VG-01', 'padrao-lann-beta')),
-          '[{"cliente_id": "c1000000-0000-4000-8000-00000000000b", "empresa_id": "e1000000-0000-4000-8000-0000000000b1"}]'::jsonb,
+          '[{"cliente_id": "c1000000-0000-4000-8000-00000000000b", "empresa_id": "e1000000-0000-4000-8000-0000000000b1", "setor": null}]'::jsonb,
           'admin em B: todas as empresas de B');
 select is((select perfis_tela
              from seg.contexto_acesso('0d000000-0000-4000-8000-0000000000ad', 'VG-01', 'padrao-lann-beta')),

@@ -131,6 +131,45 @@ EXPLICACOES: Mapping[TelaPainel, Mapping[str, str]] = {
     },
     # a fixture ainda não tem texto para nenhum cartão
     "pessoas": {},
+    "estoque": {
+        "matriz-bcg": (
+            "Cada bolha é uma família dos principais produtos (os que fazem 80% do faturamento "
+            "de 12 meses); clique para ver os produtos dela. Para a direita, mais giro: o custo "
+            "vendido por mês dividido pelo estoque de hoje a custo. Para cima, mais margem "
+            "bruta. O tamanho é o faturamento de 12 meses. As linhas tracejadas são as medianas "
+            "dos produtos e não mudam com os filtros. Produto sem estoque hoje fica na borda "
+            "direita."
+        ),
+        "acoes-bcg": (
+            "Quantos dos principais produtos caem em cada quadrante, quanto faturaram em 12 "
+            "meses e quanto têm em estoque hoje, a custo. Respeita o filtro de seção. O estoque "
+            "fica vermelho quando os Abacaxis passam de 20% do estoque ou quando alguma Estrela "
+            "está abaixo do mínimo (menos da metade dos dias ideais de cobertura)."
+        ),
+        "real-ideal": (
+            "A barra é o estoque de hoje, a custo. O traço preto é o ideal: a venda média por "
+            "dia (custo vendido em 12 meses ÷ 365) vezes os dias de estoque ideais da empresa. "
+            "Azul até o ideal; laranja até 1,5 vez o ideal; vermelho acima disso ou abaixo do "
+            "mínimo (metade do ideal)."
+        ),
+        "saude-estoque": (
+            "Zerado: sem saldo. Abaixo do mínimo: cobertura abaixo de metade dos dias ideais. "
+            "Ideal: entre o mínimo e 1,5 vez o ideal. Excesso: acima de 1,5 vez o ideal. "
+            "Parado: 90 dias ou mais sem venda. Conta todos os produtos com estoque ou venda, "
+            "não só os principais."
+        ),
+        "criticos": (
+            "Os principais produtos (curva A do faturamento) com cobertura abaixo de metade dos "
+            "dias ideais. O em trânsito são os pedidos de compra ainda sem recebimento; a "
+            "segunda linha diz para quantos dias de cobertura o produto vai quando eles "
+            "chegarem."
+        ),
+        "excesso-parados": (
+            "Excesso: principal produto com mais de 1,5 vez o ideal; o dinheiro preso é o que "
+            "passa do ideal, em reais a custo. Parado: produto com estoque e sem venda há 90 "
+            "dias ou mais (vale o estoque inteiro). A ação sai da Classe BCG do produto."
+        ),
+    },
 }
 
 

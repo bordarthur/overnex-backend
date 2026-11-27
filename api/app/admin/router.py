@@ -3,9 +3,11 @@ carteira também faz as duas primeiras leituras (GET /gestao e GET /clientes/{sl
 versão reduzida e só das empresas da carteira dele; o resto continua só do admin.
 
 - GET  /api/admin/gestao                       empresas (com as camadas), perfis e sessões
-- POST /api/admin/clientes                     cria uma empresa (nome, setor e slug)
+- POST /api/admin/clientes                     cria uma empresa (nome e slug)
 - GET  /api/admin/clientes/{slug}              tudo das abas de uma empresa, numa resposta
-- PUT  /api/admin/clientes/{slug}              nome e setor da empresa
+- PUT  /api/admin/clientes/{slug}              nome da empresa
+- PUT  /api/admin/clientes/{slug}/unidades/{id}  nome, setor, segmento, grupo e endereço da
+                                                unidade
 - PUT  /api/admin/clientes/{slug}/paineis/{codigo}                  liga ou desliga o painel
 - PUT  /api/admin/clientes/{slug}/perfis/{perfil}/paineis/{codigo}  matriz perfil × painel
 - PUT  /api/admin/clientes/{slug}/perfis/{perfil}/paineis/{codigo}/nomes  chave "vê nomes"
@@ -48,6 +50,7 @@ from app.admin.contrato import (
     MudancaPainel,
     MudancaPreferencia,
     MudancaSessao,
+    MudancaUnidade,
     MudancaUsuario,
     NovaEmpresa,
     NovoUsuario,
@@ -144,13 +147,7 @@ def criar_cliente(
     """Cria uma empresa, com tudo desligado: já aparece na Gestão e no convite. Sem `slug`,
     a API monta um a partir do nome."""
     try:
-        slug = clientes.criar(
-            ctx.sessao.conn,
-            ctx.usuario_id,
-            nome=corpo.nome,
-            segmento=corpo.segmento,
-            slug=corpo.slug,
-        )
+        slug = clientes.criar(ctx.sessao.conn, ctx.usuario_id, nome=corpo.nome, slug=corpo.slug)
     except (NaoEncontrado, RegraInvalida) as exc:
         raise _erro(exc) from exc
     confirmar_agora(ctx.sessao)
@@ -180,18 +177,50 @@ def mudar_cliente(
     ctx: Annotated[ContextoAdmin, Depends(exigir_admin_no_cliente("cliente-dados"))],
     corpo: MudancaEmpresa,
 ) -> Response:
-    """Troca o nome e o setor da empresa. O slug não muda."""
+    """Troca o nome da empresa. O slug não muda; setor e segmento são de cada unidade."""
     try:
-        clientes.mudar(
-            ctx.sessao.conn,
-            ctx.usuario_id,
-            _cliente(ctx),
-            nome=corpo.nome,
-            segmento=corpo.segmento,
-        )
+        clientes.mudar(ctx.sessao.conn, ctx.usuario_id, _cliente(ctx), nome=corpo.nome)
     except (NaoEncontrado, RegraInvalida) as exc:
         raise _erro(exc) from exc
     # o nome aparece nas telas do cliente
+    return _gravado(ctx, telas_do_cliente=True)
+
+
+RESPOSTAS_UNIDADE: dict[int | str, dict[str, str]] = {
+    **RESPOSTAS_GRAVAR,
+    404: {"description": f'"{MSG_CLIENTE_INEXISTENTE}" ou "{clientes.MSG_UNIDADE}"'},
+    422: {
+        "description": (
+            f'"{clientes.MSG_NOME_UNIDADE}", "{clientes.MSG_UNIDADE_REPETIDA}", '
+            f'"{clientes.MSG_SETOR_INVALIDO}", "{clientes.MSG_UF_INVALIDA}" ou o corpo fora do '
+            "formato."
+        )
+    },
+}
+
+
+@router.put(
+    "/clientes/{slug}/unidades/{id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    response_class=Response,
+    responses=RESPOSTAS_UNIDADE,
+)
+def mudar_unidade(
+    ctx: Annotated[ContextoAdmin, Depends(exigir_admin_no_cliente("unidade"))],
+    unidade_id: Annotated[UUID, Path(alias="id", description="Id da unidade (cfg.empresa).")],
+    corpo: MudancaUnidade,
+) -> Response:
+    """Troca nome, setor, segmento, grupo e endereço de uma unidade da empresa (só o Admin
+    BORD). Unidade nova, apagar unidade e trocar o cliente da unidade continuam por SQL.
+    Setor e grupo mudam a árvore Negócios, as telas de setor e os setores da empresa: o front
+    pede tudo de novo depois do 204."""
+    try:
+        clientes.mudar_unidade(
+            ctx.sessao.conn, ctx.usuario_id, _cliente(ctx), unidade_id, corpo.model_dump()
+        )
+    except (NaoEncontrado, RegraInvalida) as exc:
+        raise _erro(exc) from exc
+    # a unidade muda o escopo e os setores das telas do cliente
     return _gravado(ctx, telas_do_cliente=True)
 
 

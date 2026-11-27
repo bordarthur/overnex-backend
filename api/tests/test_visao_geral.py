@@ -81,14 +81,14 @@ def test_visao_geral_demo_traz_as_secoes_do_mockup(client: TestClient) -> None:
 
 @pytest.mark.parametrize("empresa", [EMPRESA_A1, EMPRESA_A2])
 def test_visao_geral_uma_empresa(client: TestClient, empresa: str) -> None:
-    r = client.get(VISAO_GERAL, params={"empresa": empresa}, headers=auth(OID_A))
+    r = client.get(VISAO_GERAL, params={"unidades": empresa}, headers=auth(OID_A))
     assert r.status_code == 200
 
 
 def test_visao_geral_empresa_de_outro_cliente_403(
     client: TestClient, admin_conn: psycopg.Connection[tuple[Any, ...]]
 ) -> None:
-    r = client.get(VISAO_GERAL, params={"empresa": EMPRESA_B1}, headers=auth(OID_A))
+    r = client.get(VISAO_GERAL, params={"unidades": EMPRESA_B1}, headers=auth(OID_A))
 
     assert r.status_code == 403
     assert r.json() == {"detail": "Acesso negado."}
@@ -195,6 +195,28 @@ def test_sessao_da_ana(client: TestClient) -> None:
             {"id": EMPRESA_A2, "nome": "Alfa Comércio"},
             {"id": EMPRESA_A1, "nome": "Alfa Indústria"},
         ],
+        # as duas unidades da Alfa são da Distribuidora, em grupos diferentes (seed)
+        "negocios": {
+            "setores": [
+                {
+                    "id": "distribuidora",
+                    "rotulo": "Distribuidora",
+                    "grupos": [
+                        {
+                            "id": "distribuidora/Atacado",
+                            "rotulo": "Atacado",
+                            "unidades": [EMPRESA_A2],
+                        },
+                        {
+                            "id": "distribuidora/Fábrica",
+                            "rotulo": "Fábrica",
+                            "unidades": [EMPRESA_A1],
+                        },
+                    ],
+                }
+            ],
+            "telasPorSetor": {},
+        },
         "telas": ["COM-01", "COM-02", "COM-03", "FIN-01", "FIN-02", "FIN-03", "VG-01"],
         "periodos": [{"id": "2026-10", "rotulo": "Outubro de 2026", "dadosAte": "2026-10-12"}],
         "aviso": None,
@@ -475,10 +497,13 @@ def test_faixas_do_farol_vem_de_cfg_parametro_cliente(
 
 
 @pytest.mark.usefixtures("vendas_do_bruno")
-def test_secao_vendas_some_com_empresa_escolhida(client: TestClient) -> None:
-    # a tabela não tem empresa: só entra na visão de todas as empresas
-    r = client.get(VISAO_GERAL, params={"empresa": EMPRESA_B1}, headers=auth(OID_B))
-    assert r.json()["secoes"] == []
+def test_secao_vendas_com_a_unica_unidade_marcada_e_a_de_todas(client: TestClient) -> None:
+    # a tabela não tem unidade: entra na visão de todas, e marcar a única unidade da Beta é o
+    # mesmo que marcar todas
+    todas = client.get(VISAO_GERAL, headers=auth(OID_B)).json()["secoes"]
+    r = client.get(VISAO_GERAL, params={"unidades": EMPRESA_B1}, headers=auth(OID_B))
+    assert todas
+    assert r.json()["secoes"] == todas
 
 
 @pytest.mark.usefixtures("vendas_do_bruno")

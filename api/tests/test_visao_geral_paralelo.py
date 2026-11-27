@@ -70,7 +70,7 @@ def _ctx(pool: PoolFalso | None) -> ContextoConsolidado:
         sessao=sessao,
         usuario_id=USUARIO,
         cliente_id=UUID(int=2),
-        empresa_id=None,
+        unidades=None,
         empresas=(UUID(int=3),),
         papel="gestor",
         codigo_tela="VG-01",

@@ -1,7 +1,8 @@
 -- Distribuidora Overnex — a empresa de demonstração, com dados fictícios (produção).
 --
 -- NÃO é migration: rode no SQL Editor do Supabase. Pode rodar mais de uma vez (troca o que
--- já existe pelo que está aqui). Não depende de migration nova.
+-- já existe pelo que está aqui). Depende da migration 35 (setor, segmento, grupo e endereço
+-- das unidades): aplique antes com `supabase db push`.
 --
 -- ORDEM:
 -- 1. o cliente criado pela Gestão, com o slug 'distribuidora-overnex' (este script não o
@@ -16,10 +17,17 @@
 -- Os dados vêm do gerador jobs/demo (todo dia, junto com o snapshot), não de um banco do
 -- cliente. Usam as mesmas tabelas do mart da PJ Cortes: a carga troca só as linhas deste
 -- cliente, e o RLS separa os dois. O que está aqui precisa bater com jobs/demo/demo/modelo.py
--- (valores de EMPRESA, contas do ERP e saldo inicial) e com jobs/demo/demo/tabelas.py (as 12
+-- (valores de EMPRESA, contas do ERP e saldo inicial) e com jobs/demo/demo/tabelas.py (as 13
 -- tabelas): o teste jobs/demo/tests/test_cadastro_sql.py confere.
 --
--- Empresas: Overnex Fortaleza (matriz) e Overnex Recife (filial). O fluxo de caixa não tem
+-- Desde 25/11/2026: a 13ª fonte, f_estoque_pj (o estoque de hoje, para o painel Estoque), e o
+-- parâmetro estoque.dias_ideais. Quem já rodou antes roda de novo (o resto não muda).
+--
+-- Desde 27/11/2026 (migration 35): o setor, o segmento, o grupo e a cidade de cada unidade.
+-- As duas são do setor Distribuidora (o painel Estoque aparece) e do mesmo grupo, "Overnex":
+-- um negócio só, então o front mostra o chip "Unidade" no lugar da bandeja "Negócios".
+--
+-- Unidades: Overnex Fortaleza (matriz) e Overnex Recife (filial). O fluxo de caixa não tem
 -- coluna de empresa (como na PJ): o saldo inicial é do cliente inteiro.
 
 begin;
@@ -32,13 +40,17 @@ begin
 end
 $$;
 
--- 1. empresas (o trigger da migration 30 as põe nos vínculos que o cliente já tem)
-insert into cfg.empresa (cliente_id, nome)
-select c.id, v.nome
+-- 1. unidades (o trigger da migration 30 as põe nos vínculos que o cliente já tem), com
+--    setor, segmento, grupo e cidade (migration 35)
+insert into cfg.empresa (cliente_id, nome, setor, segmento, grupo, uf, cidade)
+select c.id, v.nome, 'distribuidora', 'Atacado de alimentos', 'Overnex', v.uf, v.cidade
   from cfg.cliente c
- cross join (values ('Overnex Fortaleza'), ('Overnex Recife')) v (nome)
+ cross join (values ('Overnex Fortaleza', 'CE', 'Fortaleza'),
+                    ('Overnex Recife',    'PE', 'Recife')) v (nome, uf, cidade)
  where c.slug = 'distribuidora-overnex'
-on conflict do nothing;
+on conflict (cliente_id, nome) do update
+   set setor = excluded.setor, segmento = excluded.segmento, grupo = excluded.grupo,
+       uf = excluded.uf, cidade = excluded.cidade;
 
 -- 2. mapa: valor da coluna EMPRESA nos arquivos → empresa
 insert into cfg.mapa_empresa (cliente_id, empresa_origem, empresa_id)
@@ -76,6 +88,7 @@ select c.id,
         ('d_fornecedor_pj',             null,           true,    '{}',      null,             null),
         ('d_vendedor_pj',               'EMPRESA',      true,    '{}',      null,             null),
         ('f_despesas_pj',               'EMPRESA',      true,    '{}',      null,             null),
+        ('f_estoque_pj',                'EMPRESA',      false,   '{}',      null,             null),
         ('f_folha_pj_cortes',           'EMPRESA',      true,    '{}',      null,             null),
         ('f_fluxo_pj',                  null,           true,    '{}',      null,             null),
         ('f_lancamentos_agrupados_pj',  'Empresa',      false,   '{}',      null,             null),
@@ -100,14 +113,16 @@ on conflict (cliente_id, tipo, caminho_bucket) do update
        meses_retidos       = excluded.meses_retidos,
        ativo               = true;
 
--- 4. parâmetros: nome da abertura do CMV na seção Custos e caixa mínimo da projeção
+-- 4. parâmetros: nome da abertura do CMV na seção Custos, caixa mínimo da projeção e dias
+-- ideais de estoque (o mínimo do painel Estoque é a metade: 6 dias)
 insert into cfg.parametro_cliente (cliente_id, chave, valor, vigente_de)
 select c.id, v.chave, v.valor::jsonb, date '2024-01-01'
   from cfg.cliente c
  cross join (values
         ('custos.abertura',
          '{"nome": "linha", "descricao": "linha de produto", "plural": "linhas"}'),
-        ('financeiro.caixa_minimo', '{"valor": 1500000}')
+        ('financeiro.caixa_minimo', '{"valor": 1500000}'),
+        ('estoque.dias_ideais', '{"padrao": 12}')
        ) v (chave, valor)
  where c.slug = 'distribuidora-overnex'
 on conflict (cliente_id, chave, vigente_de) do update set valor = excluded.valor;
@@ -175,15 +190,16 @@ do $$
 declare
     cliente uuid := (select id from cfg.cliente where slug = 'distribuidora-overnex');
 begin
-    if (select count(*) from cfg.empresa where cliente_id = cliente) <> 2 then
-        raise exception 'esperava 2 empresas na Distribuidora Overnex';
+    if (select count(*) from cfg.empresa
+         where cliente_id = cliente and setor = 'distribuidora') <> 2 then
+        raise exception 'esperava 2 unidades da Distribuidora na Distribuidora Overnex';
     end if;
     if (select count(*) from cfg.mapa_empresa where cliente_id = cliente) <> 2 then
         raise exception 'esperava 2 valores no mapa de empresas';
     end if;
     if (select count(*) from cfg.fonte_carga
-         where cliente_id = cliente and tipo = 'tabela' and ativo) <> 12 then
-        raise exception 'esperava 12 fontes ativas';
+         where cliente_id = cliente and tipo = 'tabela' and ativo) <> 13 then
+        raise exception 'esperava 13 fontes ativas';
     end if;
     if (select count(*) from cfg.conta_dre where cliente_id = cliente) <> 36 then
         raise exception 'esperava 36 contas no de-para';
@@ -203,6 +219,6 @@ commit;
 --
 -- Para parar de atualizar a demonstração (a carga deixa de ler os arquivos; as linhas que já
 -- estão no mart ficam, e para tirá-las é preciso apagar as linhas do cliente, `_cliente_id`,
--- em cada uma das 12 tabelas):
+-- em cada uma das 13 tabelas):
 --   update cfg.fonte_carga f set ativo = false
 --     from cfg.cliente c where c.id = f.cliente_id and c.slug = 'distribuidora-overnex';
