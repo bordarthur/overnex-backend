@@ -312,6 +312,10 @@ class Secao(ModeloCamel):
     seletor: SeletorSecao | None = None
     cartoes: list[CartaoSecao]
     indicadores: list[Indicador]
+    # seção de um módulo de setor (Compras, Estoque, Logística, quando existirem): só vem se
+    # alguma unidade pedida é do setor; com unidades de outros setores também pedidas, o
+    # texto "Conta só a Distribuidora" (setores.rotulo_escopo_secao). Ausente nas outras
+    escopo: str | None = None
 
 
 class Periodo(ModeloCamel):

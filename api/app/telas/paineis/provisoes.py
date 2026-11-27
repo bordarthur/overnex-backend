@@ -17,15 +17,17 @@ classificação".
 Escolhas (quem tem a FIN-04 muda, e vale para todos os usuários do cliente): em
 cfg.parametro_cliente, como as preferências da Visão geral (migration 19: a API só grava
 chaves `preferencia.*` do próprio cliente), com vigente_de = dia da escolha e a mais recente
-valendo. Por cliente e empresa (`todas`, sem filtro de empresa):
-- `preferencia.provisao.<empresa>.periodo`: "6-meses";
-- `preferencia.provisao.<empresa>.grupo.<id>`: {"ligado": true, "valor": 800000 ou null,
+valendo. Por cliente e unidades do filtro (`escopo`: `todas`, sem filtro; o id da unidade,
+com uma só; `u<resumo dos ids>`, com várias):
+- `preferencia.provisao.<escopo>.periodo`: "6-meses";
+- `preferencia.provisao.<escopo>.grupo.<id>`: {"ligado": true, "valor": 800000 ou null,
   "por": "Ana" ou null, "em": "2026-11-05" ou null}. `por` e `em` são de quem digitou o
   valor (o nome vem de seg.usuario na gravação); ligar ou desligar sem mudar o valor não
   troca o autor.
 Cada troca vai também para seg.log_alteracao.
 """
 
+import hashlib
 import json
 import logging
 from collections.abc import Mapping
@@ -157,16 +159,26 @@ class Escolhas:
         return salvo if salvo is not None else EscolhaGrupo(ligado=POR_ID[id_].ligado_padrao)
 
 
-def escopo(empresa_id: UUID | None) -> str:
-    return str(empresa_id) if empresa_id is not None else "todas"
+# as unidades do filtro: None = todas ("todas"); uma = o id dela (o escopo de antes de
+# ?unidades=, quando o filtro era de uma empresa só); várias = "u" e um resumo dos ids
+Unidades = tuple[UUID, ...] | None
 
 
-def chave_periodo(empresa_id: UUID | None) -> str:
-    return f"{PREFIXO}provisao.{escopo(empresa_id)}.periodo"
+def escopo(unidades: Unidades) -> str:
+    if unidades is None:
+        return "todas"
+    if len(unidades) == 1:
+        return str(unidades[0])
+    ids = ",".join(sorted(str(u) for u in unidades))
+    return "u" + hashlib.blake2b(ids.encode(), digest_size=8).hexdigest()
 
 
-def chave_grupo(empresa_id: UUID | None, grupo: str) -> str:
-    return f"{PREFIXO}provisao.{escopo(empresa_id)}.grupo.{grupo}"
+def chave_periodo(unidades: Unidades) -> str:
+    return f"{PREFIXO}provisao.{escopo(unidades)}.periodo"
+
+
+def chave_grupo(unidades: Unidades, grupo: str) -> str:
+    return f"{PREFIXO}provisao.{escopo(unidades)}.grupo.{grupo}"
 
 
 def _decimal(valor: Any) -> Decimal | None:
@@ -193,16 +205,16 @@ def _escolha_grupo(salvo: Any) -> EscolhaGrupo | None:
     return EscolhaGrupo(ligado=salvo["ligado"], valor=valor, por=por, em=em)
 
 
-def ler_escolhas(parametros: list[Parametro], empresa_id: UUID | None, hoje: date) -> Escolhas:
+def ler_escolhas(parametros: list[Parametro], unidades: Unidades, hoje: date) -> Escolhas:
     """As escolhas salvas do cliente para a empresa (ou para todas); salvo inválido vale o
     padrão (e vai para o log)."""
-    periodo = vigente(parametros, chave_periodo(empresa_id), hoje)
+    periodo = vigente(parametros, chave_periodo(unidades), hoje)
     if periodo is not None and periodo not in PERIODOS:
         logger.warning("Período de provisão inválido: %r", periodo)
         periodo = None
     grupos: dict[str, EscolhaGrupo] = {}
     for g in GRUPOS:
-        salvo = vigente(parametros, chave_grupo(empresa_id, g.id), hoje)
+        salvo = vigente(parametros, chave_grupo(unidades, g.id), hoje)
         if salvo is None:
             continue
         escolha = _escolha_grupo(salvo)
@@ -279,12 +291,12 @@ def gravar_periodo(
     conn: Conexao,
     cliente_id: UUID,
     usuario_id: UUID,
-    empresa_id: UUID | None,
+    unidades: Unidades,
     periodo: str,
     hoje: date,
 ) -> None:
     """Grava o período da média (numa ida ao banco, com o log). Não confirma."""
-    _gravar(conn, cliente_id, usuario_id, chave_periodo(empresa_id), periodo, hoje)
+    _gravar(conn, cliente_id, usuario_id, chave_periodo(unidades), periodo, hoje)
 
 
 def _numero_json(valor: Decimal) -> int | float:
@@ -295,7 +307,7 @@ def gravar_grupo(
     conn: Conexao,
     cliente_id: UUID,
     usuario_id: UUID,
-    empresa_id: UUID | None,
+    unidades: Unidades,
     grupo: str,
     ligado: bool,
     valor: Decimal | None,
@@ -315,4 +327,4 @@ def gravar_grupo(
             salvo["em"] = hoje.isoformat()
             del salvo["por"]
             com_nome = True
-    _gravar(conn, cliente_id, usuario_id, chave_grupo(empresa_id, grupo), salvo, hoje, com_nome)
+    _gravar(conn, cliente_id, usuario_id, chave_grupo(unidades, grupo), salvo, hoje, com_nome)

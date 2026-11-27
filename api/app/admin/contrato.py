@@ -41,8 +41,10 @@ class CamadaResumo(ModeloCamel):
 class ClienteDaLista(ModeloCamel):
     slug: str
     nome: str
-    # setor da empresa, ex.: "Distribuição de alimentos"; null = não informado
-    segmento: str | None = None
+    # os setores das unidades da empresa, sem repetir, na ordem de cfg.setor; vazio = nenhuma
+    # unidade com setor
+    setores: list[Rotulado]
+    # sem as camadas de setores que a empresa não tem
     camadas: list[CamadaResumo]
 
 
@@ -167,8 +169,8 @@ class UsuarioDoCliente(Usuario):
 class ClienteDaGestao(ModeloCamel):
     slug: str
     nome: str
-    # setor da empresa; null = não informado
-    segmento: str | None = None
+    # os setores das unidades, sem repetir, na ordem de cfg.setor
+    setores: list[Rotulado]
     # só caminho do próprio domínio (a CSP do front recusa imagem de fora)
     logo_url: str | None
 
@@ -178,9 +180,21 @@ class Chip(ModeloCamel):
     status: Status
 
 
+class PainelDaCamada(ModeloCamel):
+    # "FIN-02"
+    codigo: str
+    # "Resultado"
+    nome: str
+    # id de um item de `niveis` do ClientePayload
+    nivel: str
+
+
 class CamadaDoCliente(CamadaResumo):
-    grupo: str
-    # o que falta para a camada ficar ativa, ex.: "Pessoas: desligado"
+    """Uma seção de painéis do menu (Comercial, Financeiro, Pessoas, Estoque)."""
+
+    # os painéis da seção que valem nos setores da empresa, na ordem do menu
+    paineis: list[PainelDaCamada]
+    # o que falta para a seção ficar ativa, ex.: "Pessoas: desligado"
     pendencias: list[str]
 
 
@@ -199,11 +213,17 @@ class FonteDoCliente(ModeloCamel):
 
 
 class PainelDoCliente(ModeloCamel):
+    """A lista vem ordenada por seção e, dentro dela, na ordem do menu."""
+
     codigo: str
     nome: str
-    grupo: str
+    # rótulo da seção do menu ("Financeiro")
+    secao: str
+    # id de um item de `niveis` do ClientePayload
+    nivel: str
     ligado: bool
-    # false = chave de ligar travada (sem dado no cliente); `nota` diz o porquê
+    # false = chave de ligar travada (sem dado no cliente, ou painel de um setor que nenhuma
+    # unidade da empresa tem); `nota` diz o porquê
     pode_ligar: bool
     status: Status
     # disponível ou indisponível
@@ -277,32 +297,62 @@ class GrupoDoMenu(ModeloCamel):
     itens: list[ItemDoMenu]
 
 
-AbaId = Literal["implantacao", "dados", "paineis", "preferencias", "acesso", "cargas"]
+AbaId = Literal["implantacao", "unidades", "dados", "paineis", "preferencias", "acesso", "cargas"]
 
 
 class AbaDaEmpresa(ModeloCamel):
-    # implantacao, dados (Prontidão dos dados), paineis, preferencias, acesso (Usuários e
-    # acesso) ou cargas
+    # implantacao, unidades, dados (Prontidão dos dados), paineis, preferencias, acesso
+    # (Usuários e acesso) ou cargas
     id: AbaId
     rotulo: str
 
 
 class PermissoesEmpresa(ModeloCamel):
-    # botão "Editar" (nome e setor) e as gravações das abas (painéis, matriz, preferências,
+    # botão "Editar" (o nome) e as gravações das abas (painéis, matriz, preferências,
     # feriados)
     editar: bool
     # botão "Convidar usuário"
     convidar: bool
+    # o "Editar" de cada unidade da aba Unidades (Admin BORD; o consultor só lê)
+    unidades: bool
+
+
+class UnidadeDaGestao(ModeloCamel):
+    """Uma unidade da empresa (cfg.empresa), na aba Unidades. Só leitura: o cadastro é por
+    SQL (supabase/producao/modelo_unidades.sql)."""
+
+    id: UUID
+    # "Lupo 1"
+    nome: str
+    # null = sem setor
+    setor: Rotulado | None
+    # "Vestuário"
+    segmento: str | None
+    # "Lupo"; null = sem grupo
+    grupo: str | None
+    uf: str | None
+    cidade: str | None
+    bairro: str | None
+    endereco: str | None
 
 
 class ClientePayload(ModeloCamel):
     cliente: ClienteDaGestao
-    # as abas que a pessoa vê, na ordem; consultor: só Implantação e Prontidão dos dados (os
-    # campos das outras vêm vazios)
+    # as abas que a pessoa vê, na ordem; consultor: só Implantação, Unidades e Prontidão dos
+    # dados (os campos das outras vêm vazios)
     abas: list[AbaDaEmpresa]
     permissoes: PermissoesEmpresa
     resumo: list[Chip]
+    # as seções de painéis do menu (aba Implantação); consultor também
     camadas: list[CamadaDoCliente]
+    # os níveis do catálogo, na ordem (o front dá a cor da etiqueta pela posição); a lista
+    # inteira, mesmo sem painel de algum nível na empresa, e igual para o consultor
+    niveis: list[Rotulado]
+    # na ordem da árvore da bandeja "Negócios": setor (cfg.setor), grupo e nome
+    unidades: list[UnidadeDaGestao]
+    # as opções do campo Setor da gaveta de editar unidade (cfg.setor, na ordem); vazio para
+    # o consultor
+    opcoes_setor: list[Rotulado]
     fontes: list[FonteDoCliente]
     paineis: list[PainelDoCliente]
     acesso: Matriz
@@ -310,7 +360,8 @@ class ClientePayload(ModeloCamel):
     preferencias: list[PreferenciaDoCliente]
     feriados: list[Feriado]
     cargas: list[CargaDoCliente]
-    # como o Cliente principal vê o menu
+    # como o Cliente principal vê o menu, nos grupos do menu do app: Visão, Comercial,
+    # Financeiro, Pessoas e Estoque
     menu: list[GrupoDoMenu]
 
 
@@ -347,18 +398,35 @@ class MudancaUsuario(ModeloCamel):
 
 
 class NovaEmpresa(ModeloCamel):
+    """Setor e segmento são de cada unidade: corpo com `setor` ou `segmento` dá 422."""
+
     nome: str = Field(min_length=1, max_length=120)
-    # setor, texto livre; null ou vazio = não informado
-    segmento: str | None = Field(default=None, max_length=80)
     # identificador da empresa nas URLs (minúsculas, números e hífen); null = a API monta
     # a partir do nome
     slug: str | None = Field(default=None, max_length=80)
 
 
 class MudancaEmpresa(ModeloCamel):
+    """Só o nome muda; corpo com `setor` ou `segmento` dá 422."""
+
     nome: str = Field(min_length=1, max_length=120)
-    # setor, texto livre; null ou vazio = não informado
-    segmento: str | None = Field(default=None, max_length=80)
+
+
+class MudancaUnidade(ModeloCamel):
+    """PUT /api/admin/clientes/{slug}/unidades/{id}: todos os campos vêm sempre. Espaços nas
+    pontas e repetidos saem; texto em branco vira null."""
+
+    # obrigatório: em branco, 422 "Informe o nome da unidade."
+    nome: str = Field(max_length=120)
+    # id de cfg.setor; null = não definido. Outro valor: 422 "Setor inválido."
+    setor: str | None = Field(max_length=40)
+    segmento: str | None = Field(max_length=80)
+    grupo: str | None = Field(max_length=80)
+    # sigla da UF ("CE"); fora das 27: 422 "UF inválida."
+    uf: str | None = Field(max_length=10)
+    cidade: str | None = Field(max_length=80)
+    bairro: str | None = Field(max_length=80)
+    endereco: str | None = Field(max_length=160)
 
 
 class EmpresaCriada(ModeloCamel):

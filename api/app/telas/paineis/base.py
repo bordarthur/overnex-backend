@@ -34,6 +34,7 @@ from psycopg import sql
 
 from app.core.cache import existe, existe_coluna
 from app.core.db import Conexao, em_uma_ida
+from app.seguranca.acesso import MSG_FILTRO_INVALIDO as MSG_FILTRO_INVALIDO
 from app.seguranca.acesso import ContextoConsolidado
 from app.telas.calendario import dias_uteis, feriados, ultimo_dia_do_mes, util
 from app.telas.paineis.contrato import Aviso, Cartao, FiltroPainel, ItemValor, OpcaoFiltro
@@ -69,8 +70,6 @@ COLUNAS_VENDEDOR: Mapping[str, str] = {
 }
 COLUNAS_PRODUTO: Mapping[str, str] = {"codigo": "en_codigoproduto", "nome": "en_nome"}
 COLUNAS_RECEBER_PAINEL: Mapping[str, str] = {**COLUNAS_RECEBER, "vendedor": "en_codigovendedor"}
-
-MSG_FILTRO_INVALIDO = "Filtro inválido."
 
 Tipo = Literal["data", "numero", "texto"]
 _TIPOS_SQL = {"data": "date", "numero": "numeric", "texto": "text"}
@@ -514,6 +513,8 @@ class Conteudo:
     apoios: list[ItemValor] = field(default_factory=list)
     cartoes: list[Cartao] = field(default_factory=list)
     aviso: Aviso | None = None
+    # texto de frescor pronto (telas do dia, como o Estoque); None = o de sempre do front
+    frescor: str | None = None
 
 
 def em_fileiras(cartoes: list[Cartao]) -> list[Cartao]:

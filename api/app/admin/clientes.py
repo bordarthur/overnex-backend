@@ -1,25 +1,38 @@
 """Empresas na Gestão: a barra lateral (todas, com o estado das camadas) e as abas de uma
-empresa (implantação, prontidão dos dados, painéis, matriz de acesso, pessoas, preferências,
-feriados e cargas), mais as gravações de painel ligado, matriz e feriado.
+empresa (implantação, unidades, prontidão dos dados, painéis, matriz de acesso, pessoas,
+preferências, feriados e cargas), mais as gravações de painel ligado, matriz e feriado.
 
 O Consultor por carteira lê uma versão reduzida (desde 25/11/2026): na barra lateral, só as
-empresas dos vínculos dele; de cada uma, só Implantação e Prontidão dos dados (`abas`), sem
-pessoas, matriz, preferências, feriados nem cargas, e sem gravar nada (`permissoes`).
+empresas dos vínculos dele; de cada uma, só Implantação, Unidades e Prontidão dos dados
+(`abas`), sem pessoas, matriz, preferências, feriados nem cargas, e sem gravar nada
+(`permissoes`).
 
 "Empresa" na tela é o cfg.cliente. As leituras de um cliente rodam com ele escolhido
 (app.cliente_id, pela checagem do admin); a barra lateral lê todos pelas políticas do admin
 (migration 27). Nada aqui lê dado de negócio: só cadastro e controle da carga.
 
-Empresa nova (migration 30): a Gestão cria o cfg.cliente com nome, slug e setor, e já dá
-para convidar pessoas para ela. Nasce com tudo desligado; CNPJs (cfg.empresa), fontes da
-carga e de-para de contas continuam por script. Nome e setor mudam pela tela; o slug não
-(está nas URLs), e a empresa não se desativa nem se apaga por aqui.
+Empresa nova (migration 30): a Gestão cria o cfg.cliente com nome e slug, e já dá para
+convidar pessoas para ela. Nasce sem unidade e com tudo desligado; unidades (cfg.empresa),
+fontes da carga e de-para de contas continuam por script. O nome muda pela tela; o slug não
+(está nas URLs), e a empresa não se desativa nem se apaga por aqui. A empresa não tem setor
+nem segmento: os dois são de cada unidade (o "Ramo" da empresa saiu na migration 37).
+
+Unidades (migrations 35 e 36): a aba Unidades lista as unidades da empresa (cfg.empresa)
+com setor, segmento, grupo e endereço, e o admin edita cada uma (nome, setor, segmento,
+grupo e endereço; `mudar_unidade`). Unidade nova e apagar unidade continuam por SQL
+(supabase/producao/modelo_unidades.sql): a unidade precisa estar ligada aos dados da carga.
+Os setores da empresa são os das unidades, sem repetir, e decidem os painéis por setor
+(app/seguranca/setores.py): painel de um setor que nenhuma unidade tem fica com a chave
+travada e a nota "Só para empresas com unidade do setor …", e sai da matriz, do menu e das
+camadas; ligá-lo dá 422.
 
 Regras:
 - painel disponível = alguma fonte ativa que ele exige já teve carga `ok` (catalogo.py);
   painel sem dado não liga (pode desligar);
-- camada ativa = todos os painéis dela ligados e com dado; em implantação = parte;
-  desligada = nenhum ligado;
+- camada = seção de painéis do menu (Comercial, Financeiro, Pessoas, Estoque), cada painel
+  com o nível (Universal Básico, Universal Completo, Módulo Distribuidora); camada ativa =
+  todos os painéis dela ligados e com dado; em implantação = algum ligado; desligada =
+  nenhum ligado;
 - ao ligar um painel pela primeira vez no cliente, os perfis fixos recebem a matriz padrão;
 - a matriz só mexe nos 3 perfis fixos do cliente; o Admin BORD vê tudo o que está ligado;
 - linha nova na matriz vê dado nominal só nas telas que exigem (Equipe comercial e Receber
@@ -38,7 +51,15 @@ from uuid import UUID
 from psycopg import errors
 
 from app.admin import textos, usuarios
-from app.admin.catalogo import CAMADAS, PAINEIS, POR_CODIGO, Painel, tem_dado, usada_por
+from app.admin.catalogo import (
+    CAMADAS,
+    NIVEIS,
+    PAINEIS,
+    POR_CODIGO,
+    Painel,
+    tem_dado,
+    usada_por,
+)
 from app.admin.contrato import (
     AbaDaEmpresa,
     CamadaDoCliente,
@@ -57,19 +78,23 @@ from app.admin.contrato import (
     Matriz,
     OpcaoPreferencia,
     OpcaoSessao,
+    PainelDaCamada,
     PainelDoCliente,
     PerfilDaGestao,
     PerfilDaMatriz,
     PermissoesEmpresa,
     PermissoesGestao,
     PreferenciaDoCliente,
+    Rotulado,
     Status,
+    UnidadeDaGestao,
     UsuarioDoCliente,
 )
 from app.admin.usuarios import NaoEncontrado, RegraInvalida, registrar
 from app.core.cache import por_requisicao
 from app.core.db import Conexao, Consulta, em_uma_ida
-from app.seguranca import perfis
+from app.negocios.arvore import Unidade, ordenar
+from app.seguranca import perfis, setores
 from app.telas.moldura import cliente_da_linha
 from app.telas.visao_geral import preferencias
 
@@ -110,7 +135,12 @@ OBSERVACAO_MAXIMA = 200
 
 # ---------- consultas ----------
 
-SQL_CLIENTES = "select id, nome, slug, segmento from cfg.cliente where ativo order by nome, id"
+SQL_CLIENTES = "select id, nome, slug from cfg.cliente where ativo order by nome, id"
+SQL_SETORES = "select id, rotulo from cfg.setor order by ordem, rotulo"
+# os setores das unidades de cada cliente (admin: todos; consultor: os da carteira)
+SQL_SETORES_DOS_CLIENTES = """
+    select distinct e.cliente_id, e.setor from cfg.empresa e where e.setor is not null
+"""
 SQL_LIGADAS = "select cliente_id, codigo_tela from cfg.cliente_tela where ligada"
 # tabelas de fontes ativas que já tiveram carga ok
 SQL_COM_CARGA = """
@@ -128,7 +158,16 @@ SQL_PERFIS = """
       from unnest(%s::text[]) as p (perfil)
 """
 
-SQL_CLIENTE = "select id, nome, slug, logo_url, segmento from cfg.cliente where id = %s"
+SQL_CLIENTE = "select id, nome, slug, logo_url from cfg.cliente where id = %s"
+SQL_UNIDADES = """
+    select id, nome, setor, segmento, grupo, uf, cidade, bairro, endereco
+      from cfg.empresa
+     where cliente_id = %s
+"""
+# só os setores das unidades, para a checagem de ligar painel
+SQL_SETORES_DO_CLIENTE = """
+    select distinct setor from cfg.empresa where cliente_id = %s and setor is not null
+"""
 SQL_TELAS = "select codigo_tela, ligada from cfg.cliente_tela where cliente_id = %s"
 SQL_FONTES = """
     select coalesce(f.tabela_destino, 'lançamentos (formato antigo)') as tabela,
@@ -181,16 +220,16 @@ SQL_CARGAS = """
 
 # sem returning: a linha nova ainda não passa pela política de leitura deste comando
 SQL_CRIAR = """
-    insert into cfg.cliente (nome, slug, segmento)
-    values (%(nome)s, %(slug)s, %(segmento)s)
+    insert into cfg.cliente (nome, slug)
+    values (%(nome)s, %(slug)s)
 """
 # uma ida: troca e devolve como estava, para o log
 SQL_MUDAR_EMPRESA = """
     update cfg.cliente c
-       set nome = %(nome)s, segmento = %(segmento)s
-      from (select nome, segmento from cfg.cliente where id = %(cliente)s) antes
+       set nome = %(nome)s
+      from (select nome from cfg.cliente where id = %(cliente)s) antes
      where c.id = %(cliente)s
-    returning antes.nome as nome_antes, antes.segmento as segmento_antes
+    returning antes.nome as nome_antes
 """
 SQL_LIGAR = """
     insert into cfg.cliente_tela (cliente_id, codigo_tela, ligada)
@@ -232,47 +271,42 @@ def slug_do_nome(nome: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", sem_acento.lower()).strip("-")
 
 
-def criar(conn: Conexao, autor: UUID, *, nome: str, segmento: str | None, slug: str | None) -> str:
-    """Cria a empresa (cfg.cliente) e devolve o slug. Não confirma a transação."""
+def criar(
+    conn: Conexao,
+    autor: UUID,
+    *,
+    nome: str,
+    slug: str | None,
+) -> str:
+    """Cria a empresa (cfg.cliente), sem unidade, e devolve o slug. Não confirma a
+    transação."""
     nome = " ".join(nome.split())
     if not nome:
         raise RegraInvalida(MSG_NOME)
-    segmento = " ".join((segmento or "").split()) or None
     slug = (slug or "").strip() or slug_do_nome(nome)
     if not SLUG.fullmatch(slug):
         # nome só com símbolos não dá identificador
         raise RegraInvalida(MSG_SLUG)
     try:
-        conn.execute(SQL_CRIAR, {"nome": nome, "slug": slug, "segmento": segmento})
+        conn.execute(SQL_CRIAR, {"nome": nome, "slug": slug})
     except errors.UniqueViolation as exc:
         raise RegraInvalida(MSG_SLUG_EM_USO.format(slug)) from exc
-    registrar(
-        conn,
-        autor,
-        "cfg.cliente",
-        slug,
-        "insert",
-        None,
-        {"nome": nome, "slug": slug, "segmento": segmento},
-    )
+    registrar(conn, autor, "cfg.cliente", slug, "insert", None, {"nome": nome, "slug": slug})
     return slug
 
 
-def mudar(conn: Conexao, autor: UUID, cliente_id: UUID, *, nome: str, segmento: str | None) -> None:
-    """Troca o nome e o setor da empresa. Não confirma a transação."""
+def mudar(conn: Conexao, autor: UUID, cliente_id: UUID, *, nome: str) -> None:
+    """Troca o nome da empresa. Não confirma a transação."""
     nome = " ".join(nome.split())
     if not nome:
         raise RegraInvalida(MSG_NOME)
-    segmento = " ".join((segmento or "").split()) or None
-    antes = conn.execute(
-        SQL_MUDAR_EMPRESA, {"cliente": cliente_id, "nome": nome, "segmento": segmento}
-    ).fetchone()
+    antes = conn.execute(SQL_MUDAR_EMPRESA, {"cliente": cliente_id, "nome": nome}).fetchone()
     if antes is None:
         # o slug já foi achado na checagem do admin: se o update não devolveu a linha, foi o
         # RLS (ou o grant) que barrou, não a empresa que não existe
         logger.error(
-            "UPDATE em cfg.cliente não alcançou a linha do cliente %s: confira se a migration "
-            "31 (política api_site_admin_update e grant de update em nome e segmento) está "
+            "UPDATE em cfg.cliente não alcançou a linha do cliente %s: confira se a "
+            "migration 31 (política api_site_admin_update e grant de update em nome) está "
             "aplicada neste banco",
             cliente_id,
         )
@@ -283,9 +317,102 @@ def mudar(conn: Conexao, autor: UUID, cliente_id: UUID, *, nome: str, segmento: 
         "cfg.cliente",
         str(cliente_id),
         "update",
-        {"nome": antes["nome_antes"], "segmento": antes["segmento_antes"]},
-        {"nome": nome, "segmento": segmento},
+        {"nome": antes["nome_antes"]},
+        {"nome": nome},
     )
+
+
+# ---------- unidade ----------
+
+MSG_UNIDADE = "Unidade não encontrada."
+MSG_NOME_UNIDADE = "Informe o nome da unidade."
+MSG_UNIDADE_REPETIDA = "Já existe uma unidade com esse nome nesta empresa."
+MSG_SETOR_INVALIDO = "Setor inválido."
+MSG_UF_INVALIDA = "UF inválida."
+# as 27 siglas
+UFS = frozenset(
+    {
+        *("AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG", "PA"),
+        *("PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO"),
+    }
+)
+CAMPOS_UNIDADE = ("nome", "setor", "segmento", "grupo", "uf", "cidade", "bairro", "endereco")
+
+# uma ida: a unidade como estava (só se for do cliente), se outra do cliente já tem o nome
+# (sem diferenciar maiúsculas) e a troca, que só acontece sem conflito
+SQL_MUDAR_UNIDADE = """
+    with antes as (
+        select id, nome, setor, segmento, grupo, uf, cidade, bairro, endereco
+          from cfg.empresa
+         where id = %(id)s and cliente_id = %(cliente)s
+    ),
+    conflito as (
+        select 1
+          from cfg.empresa e
+         where e.cliente_id = %(cliente)s
+           and e.id <> %(id)s
+           and lower(e.nome) = lower(%(nome)s)
+    ),
+    mudou as (
+        update cfg.empresa e
+           set nome = %(nome)s, setor = %(setor)s, segmento = %(segmento)s,
+               grupo = %(grupo)s, uf = %(uf)s, cidade = %(cidade)s, bairro = %(bairro)s,
+               endereco = %(endereco)s
+          from antes
+         where e.id = antes.id
+           and not exists (select 1 from conflito)
+        returning e.id
+    )
+    select (select to_jsonb(antes) - 'id' from antes) as antes,
+           exists (select 1 from conflito) as conflito,
+           exists (select 1 from mudou) as mudou
+"""
+
+
+def _texto(valor: str | None) -> str | None:
+    """Sem espaços nas pontas e repetidos; em branco = None."""
+    return " ".join((valor or "").split()) or None
+
+
+def mudar_unidade(
+    conn: Conexao,
+    autor: UUID,
+    cliente_id: UUID,
+    unidade_id: UUID,
+    campos: Mapping[str, str | None],
+) -> None:
+    """Troca nome, setor, segmento, grupo e endereço da unidade do cliente (`campos`, os de
+    CAMPOS_UNIDADE). 404 se a unidade não é do cliente; 422 para nome em branco, nome
+    repetido no cliente, setor fora de cfg.setor e UF fora das 27. Não confirma a transação."""
+    novo = {c: _texto(campos.get(c)) for c in CAMPOS_UNIDADE}
+    if novo["nome"] is None:
+        raise RegraInvalida(MSG_NOME_UNIDADE)
+    if novo["uf"] is not None:
+        novo["uf"] = novo["uf"].upper()
+        if novo["uf"] not in UFS:
+            raise RegraInvalida(MSG_UF_INVALIDA)
+    try:
+        linha = conn.execute(
+            SQL_MUDAR_UNIDADE, {**novo, "id": unidade_id, "cliente": cliente_id}
+        ).fetchone()
+    except errors.ForeignKeyViolation as exc:  # o único FK que a troca toca é o do setor
+        raise RegraInvalida(MSG_SETOR_INVALIDO) from exc
+    except errors.UniqueViolation as exc:  # outra gravação levou o nome antes
+        raise RegraInvalida(MSG_UNIDADE_REPETIDA) from exc
+    if linha is None or linha["antes"] is None:
+        raise NaoEncontrado(MSG_UNIDADE)
+    if linha["conflito"]:
+        raise RegraInvalida(MSG_UNIDADE_REPETIDA)
+    if not linha["mudou"]:
+        # a unidade foi achada: se o update não a trocou, foi o RLS (ou o grant) que barrou
+        logger.error(
+            "UPDATE em cfg.empresa não alcançou a unidade %s: confira se a migration 36 "
+            "(política api_site_admin_update e grant de update nas colunas) está aplicada "
+            "neste banco",
+            unidade_id,
+        )
+        raise GravacaoBarrada("update em cfg.empresa barrado pelo banco")
+    registrar(conn, autor, "cfg.empresa", str(unidade_id), "update", linha["antes"], novo)
 
 
 # ---------- camadas e painéis ----------
@@ -305,12 +432,74 @@ def _estado_da_camada(
     return ("ativa" if not pendencias else "implantacao"), pendencias
 
 
-def camadas(ligadas: frozenset[str], com_carga: frozenset[str]) -> list[CamadaDoCliente]:
+def _rotulado(setor: str | None, rotulos: Mapping[str, str]) -> Rotulado | None:
+    if not setor:
+        return None
+    return Rotulado(id=setor, rotulo=rotulos.get(setor, setor))
+
+
+def _rotulados(
+    setores_da_empresa: frozenset[str], lista: Sequence[Mapping[str, Any]]
+) -> list[Rotulado]:
+    """Os setores da empresa na ordem de cfg.setor (`lista`, as linhas de SQL_SETORES)."""
+    return [
+        Rotulado(id=r["id"], rotulo=r["rotulo"]) for r in lista if r["id"] in setores_da_empresa
+    ]
+
+
+def _unidades(
+    linhas: Sequence[Mapping[str, Any]], lista: Sequence[Mapping[str, Any]]
+) -> list[UnidadeDaGestao]:
+    """As unidades da empresa na ordem da árvore da bandeja "Negócios"."""
+    rotulos = {r["id"]: r["rotulo"] for r in lista}
+    ordem = {r["id"]: i for i, r in enumerate(lista)}
+    por_id = {r["id"]: r for r in linhas}
+    ordenadas = ordenar(
+        (Unidade(id=r["id"], nome=r["nome"], setor=r["setor"], grupo=r["grupo"]) for r in linhas),
+        ordem,
+    )
+    return [
+        UnidadeDaGestao(
+            id=u.id,
+            nome=u.nome,
+            setor=_rotulado(u.setor, rotulos),
+            segmento=por_id[u.id]["segmento"],
+            grupo=u.grupo,
+            uf=por_id[u.id]["uf"],
+            cidade=por_id[u.id]["cidade"],
+            bairro=por_id[u.id]["bairro"],
+            endereco=por_id[u.id]["endereco"],
+        )
+        for u in ordenadas
+    ]
+
+
+def _niveis() -> list[Rotulado]:
+    """Os níveis do catálogo, na ordem, inteiros (o front ignora o que a empresa não tem)."""
+    return [Rotulado(id=n.id, rotulo=n.rotulo) for n in NIVEIS]
+
+
+def no_setor(setores_da_empresa: frozenset[str]) -> list[Painel]:
+    """Painéis do catálogo que valem nos setores das unidades da empresa, na ordem do
+    catálogo."""
+    return [p for p in PAINEIS if setores.vale_no_setor(p.setores, setores_da_empresa)]
+
+
+def camadas(
+    ligadas: frozenset[str],
+    com_carga: frozenset[str],
+    setores_da_empresa: frozenset[str] = frozenset(),
+) -> list[CamadaDoCliente]:
+    """Seções que existem nos setores da empresa, cada uma só com os painéis deles, na ordem
+    do menu. Seção sem nenhum painel desses setores também sai (não teria como ficar
+    ativa)."""
+    validos = no_setor(setores_da_empresa)
     saida = []
     for camada in CAMADAS:
-        estado, pendencias = _estado_da_camada(
-            [p for p in PAINEIS if p.camada == camada.id], ligadas, com_carga
-        )
+        da_camada = [p for p in validos if p.camada == camada.id]
+        if not da_camada or not setores.vale_no_setor(camada.setores, setores_da_empresa):
+            continue
+        estado, pendencias = _estado_da_camada(da_camada, ligadas, com_carga)
         rotulo, status = ESTADOS[estado]
         saida.append(
             CamadaDoCliente(
@@ -319,28 +508,44 @@ def camadas(ligadas: frozenset[str], com_carga: frozenset[str]) -> list[CamadaDo
                 estado=estado,
                 estado_rotulo=rotulo,
                 status=status,
-                grupo=camada.grupo,
+                paineis=[
+                    PainelDaCamada(codigo=p.codigo, nome=p.nome, nivel=p.nivel) for p in da_camada
+                ],
                 pendencias=pendencias,
             )
         )
     return saida
 
 
-def paineis(ligadas: frozenset[str], com_carga: frozenset[str]) -> list[PainelDoCliente]:
+def paineis(
+    ligadas: frozenset[str],
+    com_carga: frozenset[str],
+    setores_da_empresa: frozenset[str] = frozenset(),
+    rotulos_dos_setores: Mapping[str, str] | None = None,
+) -> list[PainelDoCliente]:
+    """Todos os painéis do catálogo, por seção e na ordem do menu; o de um setor que nenhuma
+    unidade tem vem travado, com a nota do setor."""
     saida = []
     for p in PAINEIS:
-        disponivel = tem_dado(p, com_carga)
-        faltam = " ou ".join(f"{prefixo}*" for prefixo in p.exige)
+        nota: str | None
+        if p.setores is not None and not setores.vale_no_setor(p.setores, setores_da_empresa):
+            disponivel = False
+            nota = setores.nota_fora_do_setor(p.setores, rotulos_dos_setores or {})
+        else:
+            disponivel = tem_dado(p, com_carga)
+            faltam = " ou ".join(f"{prefixo}*" for prefixo in p.exige)
+            nota = None if disponivel else f"Sem carga de {faltam} nesta empresa."
         saida.append(
             PainelDoCliente(
                 codigo=p.codigo,
                 nome=p.nome,
-                grupo=p.grupo,
+                secao=p.secao,
+                nivel=p.nivel,
                 ligado=p.codigo in ligadas,
                 pode_ligar=disponivel,
                 status="saudavel" if disponivel else "neutro",
                 status_rotulo="disponível" if disponivel else "indisponível",
-                nota=None if disponivel else f"Sem carga de {faltam} nesta empresa.",
+                nota=nota,
             )
         )
     return saida
@@ -358,6 +563,8 @@ def gestao(conn: Conexao, *, consultor: bool = False) -> GestaoPayload:
         "clientes": (SQL_CLIENTES, ()),
         "ligadas": (SQL_LIGADAS, ()),
         "com_carga": (SQL_COM_CARGA, ()),
+        "setores": (SQL_SETORES, ()),
+        "setores_dos_clientes": (SQL_SETORES_DOS_CLIENTES, ()),
     }
     if not consultor:
         consultas["perfis"] = (SQL_PERFIS, ([p.id for p in perfis.PERFIS],))
@@ -369,13 +576,16 @@ def gestao(conn: Conexao, *, consultor: bool = False) -> GestaoPayload:
     for r in linhas["com_carga"]:
         com_carga.setdefault(r["cliente_id"], set()).add(r["tabela_destino"])
     do_perfil = {r["perfil"]: r for r in linhas.get("perfis", [])}
+    setores_de: dict[UUID, set[str]] = {}
+    for r in linhas["setores_dos_clientes"]:
+        setores_de.setdefault(r["cliente_id"], set()).add(r["setor"])
 
     return GestaoPayload(
         clientes=[
             ClienteDaLista(
                 slug=c["slug"],
                 nome=c["nome"],
-                segmento=c["segmento"],
+                setores=_rotulados(frozenset(setores_de.get(c["id"], ())), linhas["setores"]),
                 camadas=[
                     CamadaResumo(
                         id=k.id,
@@ -385,7 +595,9 @@ def gestao(conn: Conexao, *, consultor: bool = False) -> GestaoPayload:
                         status=k.status,
                     )
                     for k in camadas(
-                        frozenset(ligadas.get(c["id"], ())), frozenset(com_carga.get(c["id"], ()))
+                        frozenset(ligadas.get(c["id"], ())),
+                        frozenset(com_carga.get(c["id"], ())),
+                        frozenset(setores_de.get(c["id"], ())),
                     )
                 ],
             )
@@ -484,14 +696,15 @@ def _preferencias(conn: Conexao, cliente_id: UUID) -> list[PreferenciaDoCliente]
 
 ABAS: tuple[AbaDaEmpresa, ...] = (
     AbaDaEmpresa(id="implantacao", rotulo="Implantação"),
+    AbaDaEmpresa(id="unidades", rotulo="Unidades"),
     AbaDaEmpresa(id="dados", rotulo="Prontidão dos dados"),
     AbaDaEmpresa(id="paineis", rotulo="Painéis"),
     AbaDaEmpresa(id="preferencias", rotulo="Preferências da empresa"),
     AbaDaEmpresa(id="acesso", rotulo="Usuários e acesso"),
     AbaDaEmpresa(id="cargas", rotulo="Cargas"),
 )
-# o consultor só lê: o andamento da implantação e a prontidão dos dados
-ABAS_CONSULTOR = frozenset({"implantacao", "dados"})
+# o consultor só lê: o andamento da implantação, as unidades e a prontidão dos dados
+ABAS_CONSULTOR = frozenset({"implantacao", "unidades", "dados"})
 
 
 def _resumo(
@@ -523,8 +736,9 @@ def _resumo(
 
 
 def _cliente_consultor(conn: Conexao, cliente_id: UUID) -> ClientePayload:
-    """A empresa para o Consultor por carteira: só Implantação e Prontidão dos dados, sem
-    pessoas, matriz, preferências, feriados nem a lista de cargas, e sem gravar nada."""
+    """A empresa para o Consultor por carteira: só Implantação, Unidades e Prontidão dos
+    dados, sem pessoas, matriz, preferências, feriados nem a lista de cargas, e sem gravar
+    nada. As unidades são as dos vínculos dele (o RLS recorta)."""
     agora = textos.agora()
     c = (cliente_id,)
     linhas = em_uma_ida(
@@ -534,29 +748,38 @@ def _cliente_consultor(conn: Conexao, cliente_id: UUID) -> ClientePayload:
             "telas": (SQL_TELAS, c),
             "fontes": (SQL_FONTES, c),
             "cargas": (SQL_CARGAS, (cliente_id, 1)),
+            "setores": (SQL_SETORES, ()),
+            "unidades": (SQL_UNIDADES, c),
         },
     )
     if not linhas["cliente"]:  # a checagem já garantiu o vínculo
         raise LookupError("cliente da Gestão não encontrado")
     dados = linhas["cliente"][0]
     base = cliente_da_linha(dados)
+    setores_da_empresa = frozenset(r["setor"] for r in linhas["unidades"] if r["setor"])
     ligadas = frozenset(r["codigo_tela"] for r in linhas["telas"] if r["ligada"])
     com_carga = frozenset(
         r["tabela"]
         for r in linhas["fontes"]
         if r["tipo"] == "tabela" and r["ativo"] and r["data_snapshot"] is not None
     )
-    lista_camadas = camadas(ligadas, com_carga)
+    lista_camadas = camadas(ligadas, com_carga, setores_da_empresa)
     return ClientePayload(
         cliente=ClienteDaGestao(
-            slug=dados["slug"], nome=base.nome, segmento=dados["segmento"], logo_url=base.logo_url
+            slug=dados["slug"],
+            nome=base.nome,
+            setores=_rotulados(setores_da_empresa, linhas["setores"]),
+            logo_url=base.logo_url,
         ),
         abas=[a for a in ABAS if a.id in ABAS_CONSULTOR],
-        permissoes=PermissoesEmpresa(editar=False, convidar=False),
+        permissoes=PermissoesEmpresa(editar=False, convidar=False, unidades=False),
         resumo=_resumo(
             lista_camadas, linhas["cargas"][0] if linhas["cargas"] else None, agora, None
         ),
         camadas=lista_camadas,
+        niveis=_niveis(),
+        unidades=_unidades(linhas["unidades"], linhas["setores"]),
+        opcoes_setor=[],
         fontes=[_fonte(r) for r in linhas["fontes"]],
         paineis=[],
         acesso=Matriz(perfis=[], linhas=[]),
@@ -590,12 +813,16 @@ def cliente(
             "usuarios": (usuarios.SQL_USUARIOS, ()),
             "admins": (usuarios.SQL_ADMINS_ATIVOS, ()),
             "total_clientes": (usuarios.SQL_TOTAL_CLIENTES, ()),
+            "setores": (SQL_SETORES, ()),
+            "unidades": (SQL_UNIDADES, c),
         },
     )
     if not linhas["cliente"]:  # a checagem do admin já garantiu o cliente
         raise LookupError("cliente da Gestão não encontrado")
     dados = linhas["cliente"][0]
     base = cliente_da_linha(dados)
+    rotulos = {r["id"]: r["rotulo"] for r in linhas["setores"]}
+    setores_da_empresa = frozenset(r["setor"] for r in linhas["unidades"] if r["setor"])
 
     ligadas = frozenset(r["codigo_tela"] for r in linhas["telas"] if r["ligada"])
     com_carga = frozenset(
@@ -603,9 +830,10 @@ def cliente(
         for r in linhas["fontes"]
         if r["tipo"] == "tabela" and r["ativo"] and r["data_snapshot"] is not None
     )
-    lista_camadas = camadas(ligadas, com_carga)
-    lista_paineis = paineis(ligadas, com_carga)
-    no_ar = [p for p in PAINEIS if p.codigo in ligadas]
+    lista_camadas = camadas(ligadas, com_carga, setores_da_empresa)
+    lista_paineis = paineis(ligadas, com_carga, setores_da_empresa, rotulos)
+    # ligados e dos setores da empresa: os da matriz, do menu e do "x de y" de cada pessoa
+    no_ar = [p for p in no_setor(setores_da_empresa) if p.codigo in ligadas]
 
     ve: dict[str, set[str]] = {p.id: set() for p in perfis.DO_CLIENTE}
     ve_nomes: dict[str, set[str]] = {p.id: set() for p in perfis.DO_CLIENTE}
@@ -638,7 +866,8 @@ def cliente(
     menu: dict[str, list[ItemDoMenu]] = {}
     for painel in no_ar:
         if painel.codigo in ve[perfis.CLIENTE_PRINCIPAL] and tem_dado(painel, com_carga):
-            menu.setdefault(painel.grupo, []).append(ItemDoMenu(nome=painel.nome))
+            # na ordem do catálogo (a do menu): Visão, Comercial, Financeiro, Pessoas, Estoque
+            menu.setdefault(painel.menu, []).append(ItemDoMenu(nome=painel.nome))
 
     with por_requisicao():
         lista_preferencias = _preferencias(conn, cliente_id)
@@ -647,13 +876,16 @@ def cliente(
         cliente=ClienteDaGestao(
             slug=dados["slug"],
             nome=base.nome,
-            segmento=dados["segmento"],
+            setores=_rotulados(setores_da_empresa, linhas["setores"]),
             logo_url=base.logo_url,
         ),
         abas=list(ABAS),
-        permissoes=PermissoesEmpresa(editar=True, convidar=True),
+        permissoes=PermissoesEmpresa(editar=True, convidar=True, unidades=True),
         resumo=resumo,
         camadas=lista_camadas,
+        niveis=_niveis(),
+        unidades=_unidades(linhas["unidades"], linhas["setores"]),
+        opcoes_setor=[Rotulado(id=r["id"], rotulo=r["rotulo"]) for r in linhas["setores"]],
         fontes=[_fonte(r) for r in linhas["fontes"]],
         paineis=lista_paineis,
         acesso=Matriz(
@@ -699,12 +931,24 @@ def _painel(codigo: str) -> Painel:
 
 def ligar_painel(conn: Conexao, autor: UUID, cliente_id: UUID, codigo: str, ligado: bool) -> None:
     """Liga ou desliga o painel no cliente. Ligado pela primeira vez, os perfis fixos
-    recebem a matriz padrão do painel. Não confirma a transação."""
+    recebem a matriz padrão do painel. Painel de um setor que nenhuma unidade do cliente tem
+    não liga (desliga). Não confirma a transação."""
     painel = _painel(codigo)
-    linhas = em_uma_ida(
-        conn, {"telas": (SQL_TELAS, (cliente_id,)), "fontes": (SQL_FONTES, (cliente_id,))}
-    )
+    consultas: dict[str, Consulta] = {
+        "telas": (SQL_TELAS, (cliente_id,)),
+        "fontes": (SQL_FONTES, (cliente_id,)),
+    }
+    confere_setor = ligado and painel.setores is not None
+    if confere_setor:
+        consultas["setores_do_cliente"] = (SQL_SETORES_DO_CLIENTE, (cliente_id,))
+        consultas["setores"] = (SQL_SETORES, ())
+    linhas = em_uma_ida(conn, consultas)
     antes = {r["codigo_tela"]: bool(r["ligada"]) for r in linhas["telas"]}
+    if confere_setor and painel.setores is not None:
+        do_cliente = frozenset(r["setor"] for r in linhas["setores_do_cliente"])
+        if not setores.vale_no_setor(painel.setores, do_cliente):
+            rotulos = {r["id"]: r["rotulo"] for r in linhas["setores"]}
+            raise RegraInvalida(setores.msg_ligar_fora_do_setor(painel.setores, rotulos))
     if ligado:
         com_carga = frozenset(
             r["tabela"]

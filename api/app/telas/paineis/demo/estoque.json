@@ -1,0 +1,5079 @@
+{
+  "tela": "estoque",
+  "versaoContrato": "1.0",
+  "cliente": {
+    "nome": "Distribuidora Overnex",
+    "sigla": "DO",
+    "logoUrl": null
+  },
+  "dadosAte": "2026-10-12",
+  "atualizadoEm": "2026-10-12T12:00:00Z",
+  "frescor": "Estoque de hoje, 12/10, atualizado às 9h",
+  "filtros": [
+    {
+      "id": "secao",
+      "rotulo": "Seção",
+      "opcoes": [
+        {
+          "id": "todas",
+          "rotulo": "Todas"
+        },
+        {
+          "id": "aves",
+          "rotulo": "Aves"
+        },
+        {
+          "id": "bovinos",
+          "rotulo": "Bovinos"
+        },
+        {
+          "id": "mercearia",
+          "rotulo": "Mercearia"
+        },
+        {
+          "id": "suinos",
+          "rotulo": "Suínos"
+        }
+      ],
+      "padrao": "todas"
+    },
+    {
+      "id": "classe",
+      "rotulo": "Classe BCG",
+      "opcoes": [
+        {
+          "id": "todas",
+          "rotulo": "Todas"
+        },
+        {
+          "id": "estrela",
+          "rotulo": "Estrela"
+        },
+        {
+          "id": "vaca-leiteira",
+          "rotulo": "Vaca leiteira"
+        },
+        {
+          "id": "interrogacao",
+          "rotulo": "Interrogação"
+        },
+        {
+          "id": "abacaxi",
+          "rotulo": "Abacaxi"
+        }
+      ],
+      "padrao": "todas"
+    },
+    {
+      "id": "lista",
+      "rotulo": "O que mostrar",
+      "opcoes": [
+        {
+          "id": "tudo",
+          "rotulo": "Tudo"
+        },
+        {
+          "id": "excesso",
+          "rotulo": "Excesso"
+        },
+        {
+          "id": "parados",
+          "rotulo": "Parados"
+        }
+      ],
+      "padrao": "tudo",
+      "cartao": "excesso-parados"
+    }
+  ],
+  "aviso": {
+    "tom": "info",
+    "texto": [
+      {
+        "texto": "Retrato do estoque de hoje, 12/10, a custo. "
+      },
+      {
+        "texto": "O DW ainda não guarda o estoque dia a dia, então tudo aqui se compara com o ideal da empresa."
+      }
+    ]
+  },
+  "destaques": [],
+  "kpis": [
+    {
+      "rotulo": "Valor em estoque",
+      "valor": {
+        "valor": 2109896.29,
+        "unidade": "brl"
+      },
+      "contexto": "a custo · ideal: R$ 2,54 mi"
+    },
+    {
+      "rotulo": "Acima do ideal",
+      "valor": {
+        "valor": 84476.24,
+        "unidade": "brl"
+      },
+      "contexto": "4% do estoque, em 7 produtos",
+      "status": "saudavel"
+    },
+    {
+      "rotulo": "Abaixo do mínimo",
+      "valor": {
+        "valor": 18.0,
+        "unidade": "qtd",
+        "casas": 0,
+        "sufixo": "produtos"
+      },
+      "contexto": "7 deles zerados",
+      "status": "atencao"
+    },
+    {
+      "rotulo": "Cobertura média",
+      "valor": {
+        "valor": 9.9,
+        "unidade": "dias",
+        "casas": 0
+      },
+      "contexto": "ideal da empresa: 12 dias",
+      "status": "saudavel"
+    }
+  ],
+  "apoios": [],
+  "cartoes": [
+    {
+      "id": "matriz-bcg",
+      "largura": 8,
+      "titulo": "Matriz BCG: giro contra margem",
+      "subtitulo": "Famílias dos principais produtos (curva A do faturamento de 12 meses). Os cortes são as medianas dos produtos.",
+      "nota": "1 produto sem estoque hoje fica na borda direita, como giro alto.",
+      "explicacao": "Cada bolha é uma família dos principais produtos (os que fazem 80% do faturamento de 12 meses); clique para ver os produtos dela. Para a direita, mais giro: o custo vendido por mês dividido pelo estoque de hoje a custo. Para cima, mais margem bruta. O tamanho é o faturamento de 12 meses. As linhas tracejadas são as medianas dos produtos e não mudam com os filtros. Produto sem estoque hoje fica na borda direita.",
+      "tipo": "bcg",
+      "eixoX": {
+        "unidade": "vezes",
+        "casas": 1,
+        "rotulo": "Giro de venda (vezes por mês)"
+      },
+      "eixoY": {
+        "unidade": "pct",
+        "casas": 0,
+        "rotulo": "Margem bruta"
+      },
+      "corteX": {
+        "valor": 4.2,
+        "rotulo": "mediana 4,2×"
+      },
+      "corteY": {
+        "valor": 32.5,
+        "rotulo": "mediana 33%"
+      },
+      "quadrantes": [
+        {
+          "id": "estrela",
+          "rotulo": "Estrela"
+        },
+        {
+          "id": "vaca-leiteira",
+          "rotulo": "Vaca leiteira"
+        },
+        {
+          "id": "interrogacao",
+          "rotulo": "Interrogação"
+        },
+        {
+          "id": "abacaxi",
+          "rotulo": "Abacaxi"
+        }
+      ],
+      "pontos": [
+        {
+          "id": "familia-cortes-nobres",
+          "nome": "Cortes nobres",
+          "quadrante": "estrela",
+          "x": 6.0,
+          "y": 37.0,
+          "tamanho": 22900000.0,
+          "apagado": false,
+          "rotular": true,
+          "dica": [
+            {
+              "rotulo": "Seção",
+              "valor": "Bovinos"
+            },
+            {
+              "rotulo": "Produtos",
+              "valor": {
+                "valor": 5.0,
+                "unidade": "qtd",
+                "casas": 0
+              }
+            },
+            {
+              "rotulo": "Quadrante",
+              "valor": "Estrela"
+            },
+            {
+              "rotulo": "Giro",
+              "valor": "6,0×"
+            },
+            {
+              "rotulo": "Margem",
+              "valor": {
+                "valor": 37.02,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "rotulo": "Faturamento 12m",
+              "valor": {
+                "valor": 22900000.0,
+                "unidade": "brl"
+              }
+            },
+            {
+              "rotulo": "Estoque hoje",
+              "valor": {
+                "valor": 200442.26,
+                "unidade": "brl"
+              }
+            }
+          ],
+          "produtos": [
+            {
+              "id": "1001",
+              "nome": "Picanha",
+              "quadrante": "estrela",
+              "x": 8.58,
+              "y": 38.0,
+              "tamanho": 6800000.0,
+              "apagado": false,
+              "rotular": true,
+              "dica": [
+                {
+                  "rotulo": "Seção",
+                  "valor": "Bovinos"
+                },
+                {
+                  "rotulo": "Família",
+                  "valor": "Cortes nobres"
+                },
+                {
+                  "rotulo": "Quadrante",
+                  "valor": "Estrela"
+                },
+                {
+                  "rotulo": "Giro",
+                  "valor": "sem estoque hoje"
+                },
+                {
+                  "rotulo": "Margem",
+                  "valor": {
+                    "valor": 38.0,
+                    "unidade": "pct",
+                    "casas": 1
+                  }
+                },
+                {
+                  "rotulo": "Faturamento 12m",
+                  "valor": {
+                    "valor": 6800000.0,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "Estoque hoje",
+                  "valor": {
+                    "valor": 0.0,
+                    "unidade": "brl"
+                  }
+                }
+              ],
+              "produtos": null,
+              "trilha": null,
+              "subtituloAberto": null
+            },
+            {
+              "id": "1002",
+              "nome": "Contrafilé",
+              "quadrante": "estrela",
+              "x": 5.6,
+              "y": 36.0,
+              "tamanho": 5200000.0,
+              "apagado": false,
+              "rotular": true,
+              "dica": [
+                {
+                  "rotulo": "Seção",
+                  "valor": "Bovinos"
+                },
+                {
+                  "rotulo": "Família",
+                  "valor": "Cortes nobres"
+                },
+                {
+                  "rotulo": "Quadrante",
+                  "valor": "Estrela"
+                },
+                {
+                  "rotulo": "Giro",
+                  "valor": "5,6×"
+                },
+                {
+                  "rotulo": "Margem",
+                  "valor": {
+                    "valor": 36.0,
+                    "unidade": "pct",
+                    "casas": 1
+                  }
+                },
+                {
+                  "rotulo": "Faturamento 12m",
+                  "valor": {
+                    "valor": 5200000.0,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "Estoque hoje",
+                  "valor": {
+                    "valor": 49523.81,
+                    "unidade": "brl"
+                  }
+                }
+              ],
+              "produtos": null,
+              "trilha": null,
+              "subtituloAberto": null
+            },
+            {
+              "id": "1003",
+              "nome": "Alcatra",
+              "quadrante": "estrela",
+              "x": 4.8,
+              "y": 34.0,
+              "tamanho": 4600000.0,
+              "apagado": false,
+              "rotular": true,
+              "dica": [
+                {
+                  "rotulo": "Seção",
+                  "valor": "Bovinos"
+                },
+                {
+                  "rotulo": "Família",
+                  "valor": "Cortes nobres"
+                },
+                {
+                  "rotulo": "Quadrante",
+                  "valor": "Estrela"
+                },
+                {
+                  "rotulo": "Giro",
+                  "valor": "4,8×"
+                },
+                {
+                  "rotulo": "Margem",
+                  "valor": {
+                    "valor": 34.0,
+                    "unidade": "pct",
+                    "casas": 1
+                  }
+                },
+                {
+                  "rotulo": "Faturamento 12m",
+                  "valor": {
+                    "valor": 4600000.0,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "Estoque hoje",
+                  "valor": {
+                    "valor": 52708.33,
+                    "unidade": "brl"
+                  }
+                }
+              ],
+              "produtos": null,
+              "trilha": null,
+              "subtituloAberto": null
+            },
+            {
+              "id": "1004",
+              "nome": "Filé mignon",
+              "quadrante": "interrogacao",
+              "x": 3.1,
+              "y": 41.0,
+              "tamanho": 4200000.0,
+              "apagado": false,
+              "rotular": true,
+              "dica": [
+                {
+                  "rotulo": "Seção",
+                  "valor": "Bovinos"
+                },
+                {
+                  "rotulo": "Família",
+                  "valor": "Cortes nobres"
+                },
+                {
+                  "rotulo": "Quadrante",
+                  "valor": "Interrogação"
+                },
+                {
+                  "rotulo": "Giro",
+                  "valor": "3,1×"
+                },
+                {
+                  "rotulo": "Margem",
+                  "valor": {
+                    "valor": 41.0,
+                    "unidade": "pct",
+                    "casas": 1
+                  }
+                },
+                {
+                  "rotulo": "Faturamento 12m",
+                  "valor": {
+                    "valor": 4200000.0,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "Estoque hoje",
+                  "valor": {
+                    "valor": 66612.9,
+                    "unidade": "brl"
+                  }
+                }
+              ],
+              "produtos": null,
+              "trilha": null,
+              "subtituloAberto": null
+            },
+            {
+              "id": "1005",
+              "nome": "Maminha",
+              "quadrante": "interrogacao",
+              "x": 3.6,
+              "y": 35.0,
+              "tamanho": 2100000.0,
+              "apagado": false,
+              "rotular": true,
+              "dica": [
+                {
+                  "rotulo": "Seção",
+                  "valor": "Bovinos"
+                },
+                {
+                  "rotulo": "Família",
+                  "valor": "Cortes nobres"
+                },
+                {
+                  "rotulo": "Quadrante",
+                  "valor": "Interrogação"
+                },
+                {
+                  "rotulo": "Giro",
+                  "valor": "3,6×"
+                },
+                {
+                  "rotulo": "Margem",
+                  "valor": {
+                    "valor": 35.0,
+                    "unidade": "pct",
+                    "casas": 1
+                  }
+                },
+                {
+                  "rotulo": "Faturamento 12m",
+                  "valor": {
+                    "valor": 2100000.0,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "Estoque hoje",
+                  "valor": {
+                    "valor": 31597.22,
+                    "unidade": "brl"
+                  }
+                }
+              ],
+              "produtos": null,
+              "trilha": null,
+              "subtituloAberto": null
+            }
+          ],
+          "trilha": "Cortes nobres · 5 produtos",
+          "subtituloAberto": "Produtos da família Cortes nobres, 12 meses. Os cortes continuam nas medianas do recorte."
+        },
+        {
+          "id": "familia-cortes-de-frango",
+          "nome": "Cortes de frango",
+          "quadrante": "vaca-leiteira",
+          "x": 4.63,
+          "y": 27.6,
+          "tamanho": 10100000.0,
+          "apagado": false,
+          "rotular": true,
+          "dica": [
+            {
+              "rotulo": "Seção",
+              "valor": "Aves"
+            },
+            {
+              "rotulo": "Produtos",
+              "valor": {
+                "valor": 4.0,
+                "unidade": "qtd",
+                "casas": 0
+              }
+            },
+            {
+              "rotulo": "Quadrante",
+              "valor": "Vaca leiteira"
+            },
+            {
+              "rotulo": "Giro",
+              "valor": "4,6×"
+            },
+            {
+              "rotulo": "Margem",
+              "valor": {
+                "valor": 27.64,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "rotulo": "Faturamento 12m",
+              "valor": {
+                "valor": 10100000.0,
+                "unidade": "brl"
+              }
+            },
+            {
+              "rotulo": "Estoque hoje",
+              "valor": {
+                "valor": 131429.76,
+                "unidade": "brl"
+              }
+            }
+          ],
+          "produtos": [
+            {
+              "id": "1023",
+              "nome": "Peito de frango",
+              "quadrante": "vaca-leiteira",
+              "x": 5.0,
+              "y": 26.0,
+              "tamanho": 3600000.0,
+              "apagado": false,
+              "rotular": true,
+              "dica": [
+                {
+                  "rotulo": "Seção",
+                  "valor": "Aves"
+                },
+                {
+                  "rotulo": "Família",
+                  "valor": "Cortes de frango"
+                },
+                {
+                  "rotulo": "Quadrante",
+                  "valor": "Vaca leiteira"
+                },
+                {
+                  "rotulo": "Giro",
+                  "valor": "5,0×"
+                },
+                {
+                  "rotulo": "Margem",
+                  "valor": {
+                    "valor": 26.0,
+                    "unidade": "pct",
+                    "casas": 1
+                  }
+                },
+                {
+                  "rotulo": "Faturamento 12m",
+                  "valor": {
+                    "valor": 3600000.0,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "Estoque hoje",
+                  "valor": {
+                    "valor": 44400.0,
+                    "unidade": "brl"
+                  }
+                }
+              ],
+              "produtos": null,
+              "trilha": null,
+              "subtituloAberto": null
+            },
+            {
+              "id": "1024",
+              "nome": "Coxa e sobrecoxa",
+              "quadrante": "vaca-leiteira",
+              "x": 5.5,
+              "y": 24.0,
+              "tamanho": 2900000.0,
+              "apagado": false,
+              "rotular": true,
+              "dica": [
+                {
+                  "rotulo": "Seção",
+                  "valor": "Aves"
+                },
+                {
+                  "rotulo": "Família",
+                  "valor": "Cortes de frango"
+                },
+                {
+                  "rotulo": "Quadrante",
+                  "valor": "Vaca leiteira"
+                },
+                {
+                  "rotulo": "Giro",
+                  "valor": "5,5×"
+                },
+                {
+                  "rotulo": "Margem",
+                  "valor": {
+                    "valor": 24.0,
+                    "unidade": "pct",
+                    "casas": 1
+                  }
+                },
+                {
+                  "rotulo": "Faturamento 12m",
+                  "valor": {
+                    "valor": 2900000.0,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "Estoque hoje",
+                  "valor": {
+                    "valor": 33393.94,
+                    "unidade": "brl"
+                  }
+                }
+              ],
+              "produtos": null,
+              "trilha": null,
+              "subtituloAberto": null
+            },
+            {
+              "id": "1025",
+              "nome": "Filé de peito",
+              "quadrante": "interrogacao",
+              "x": 4.1,
+              "y": 33.0,
+              "tamanho": 2200000.0,
+              "apagado": false,
+              "rotular": true,
+              "dica": [
+                {
+                  "rotulo": "Seção",
+                  "valor": "Aves"
+                },
+                {
+                  "rotulo": "Família",
+                  "valor": "Cortes de frango"
+                },
+                {
+                  "rotulo": "Quadrante",
+                  "valor": "Interrogação"
+                },
+                {
+                  "rotulo": "Giro",
+                  "valor": "4,1×"
+                },
+                {
+                  "rotulo": "Margem",
+                  "valor": {
+                    "valor": 33.0,
+                    "unidade": "pct",
+                    "casas": 1
+                  }
+                },
+                {
+                  "rotulo": "Faturamento 12m",
+                  "valor": {
+                    "valor": 2200000.0,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "Estoque hoje",
+                  "valor": {
+                    "valor": 29959.35,
+                    "unidade": "brl"
+                  }
+                }
+              ],
+              "produtos": null,
+              "trilha": null,
+              "subtituloAberto": null
+            },
+            {
+              "id": "1026",
+              "nome": "Asa de frango",
+              "quadrante": "abacaxi",
+              "x": 3.4,
+              "y": 31.0,
+              "tamanho": 1400000.0,
+              "apagado": false,
+              "rotular": true,
+              "dica": [
+                {
+                  "rotulo": "Seção",
+                  "valor": "Aves"
+                },
+                {
+                  "rotulo": "Família",
+                  "valor": "Cortes de frango"
+                },
+                {
+                  "rotulo": "Quadrante",
+                  "valor": "Abacaxi"
+                },
+                {
+                  "rotulo": "Giro",
+                  "valor": "3,4×"
+                },
+                {
+                  "rotulo": "Margem",
+                  "valor": {
+                    "valor": 31.0,
+                    "unidade": "pct",
+                    "casas": 1
+                  }
+                },
+                {
+                  "rotulo": "Faturamento 12m",
+                  "valor": {
+                    "valor": 1400000.0,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "Estoque hoje",
+                  "valor": {
+                    "valor": 23676.47,
+                    "unidade": "brl"
+                  }
+                }
+              ],
+              "produtos": null,
+              "trilha": null,
+              "subtituloAberto": null
+            }
+          ],
+          "trilha": "Cortes de frango · 4 produtos",
+          "subtituloAberto": "Produtos da família Cortes de frango, 12 meses. Os cortes continuam nas medianas do recorte."
+        },
+        {
+          "id": "familia-cortes-dianteiros",
+          "nome": "Cortes dianteiros",
+          "quadrante": "vaca-leiteira",
+          "x": 5.4,
+          "y": 27.2,
+          "tamanho": 9300000.0,
+          "apagado": false,
+          "rotular": true,
+          "dica": [
+            {
+              "rotulo": "Seção",
+              "valor": "Bovinos"
+            },
+            {
+              "rotulo": "Produtos",
+              "valor": {
+                "valor": 3.0,
+                "unidade": "qtd",
+                "casas": 0
+              }
+            },
+            {
+              "rotulo": "Quadrante",
+              "valor": "Vaca leiteira"
+            },
+            {
+              "rotulo": "Giro",
+              "valor": "5,4×"
+            },
+            {
+              "rotulo": "Margem",
+              "valor": {
+                "valor": 27.16,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "rotulo": "Faturamento 12m",
+              "valor": {
+                "valor": 9300000.0,
+                "unidade": "brl"
+              }
+            },
+            {
+              "rotulo": "Estoque hoje",
+              "valor": {
+                "valor": 104595.39,
+                "unidade": "brl"
+              }
+            }
+          ],
+          "produtos": [
+            {
+              "id": "1006",
+              "nome": "Acém",
+              "quadrante": "vaca-leiteira",
+              "x": 6.2,
+              "y": 27.0,
+              "tamanho": 3900000.0,
+              "apagado": false,
+              "rotular": true,
+              "dica": [
+                {
+                  "rotulo": "Seção",
+                  "valor": "Bovinos"
+                },
+                {
+                  "rotulo": "Família",
+                  "valor": "Cortes dianteiros"
+                },
+                {
+                  "rotulo": "Quadrante",
+                  "valor": "Vaca leiteira"
+                },
+                {
+                  "rotulo": "Giro",
+                  "valor": "6,2×"
+                },
+                {
+                  "rotulo": "Margem",
+                  "valor": {
+                    "valor": 27.0,
+                    "unidade": "pct",
+                    "casas": 1
+                  }
+                },
+                {
+                  "rotulo": "Faturamento 12m",
+                  "valor": {
+                    "valor": 3900000.0,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "Estoque hoje",
+                  "valor": {
+                    "valor": 38266.13,
+                    "unidade": "brl"
+                  }
+                }
+              ],
+              "produtos": null,
+              "trilha": null,
+              "subtituloAberto": null
+            },
+            {
+              "id": "1007",
+              "nome": "Paleta",
+              "quadrante": "vaca-leiteira",
+              "x": 5.4,
+              "y": 26.0,
+              "tamanho": 3100000.0,
+              "apagado": false,
+              "rotular": true,
+              "dica": [
+                {
+                  "rotulo": "Seção",
+                  "valor": "Bovinos"
+                },
+                {
+                  "rotulo": "Família",
+                  "valor": "Cortes dianteiros"
+                },
+                {
+                  "rotulo": "Quadrante",
+                  "valor": "Vaca leiteira"
+                },
+                {
+                  "rotulo": "Giro",
+                  "valor": "5,4×"
+                },
+                {
+                  "rotulo": "Margem",
+                  "valor": {
+                    "valor": 26.0,
+                    "unidade": "pct",
+                    "casas": 1
+                  }
+                },
+                {
+                  "rotulo": "Faturamento 12m",
+                  "valor": {
+                    "valor": 3100000.0,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "Estoque hoje",
+                  "valor": {
+                    "valor": 35401.23,
+                    "unidade": "brl"
+                  }
+                }
+              ],
+              "produtos": null,
+              "trilha": null,
+              "subtituloAberto": null
+            },
+            {
+              "id": "1008",
+              "nome": "Músculo",
+              "quadrante": "vaca-leiteira",
+              "x": 4.4,
+              "y": 29.0,
+              "tamanho": 2300000.0,
+              "apagado": false,
+              "rotular": true,
+              "dica": [
+                {
+                  "rotulo": "Seção",
+                  "valor": "Bovinos"
+                },
+                {
+                  "rotulo": "Família",
+                  "valor": "Cortes dianteiros"
+                },
+                {
+                  "rotulo": "Quadrante",
+                  "valor": "Vaca leiteira"
+                },
+                {
+                  "rotulo": "Giro",
+                  "valor": "4,4×"
+                },
+                {
+                  "rotulo": "Margem",
+                  "valor": {
+                    "valor": 29.0,
+                    "unidade": "pct",
+                    "casas": 1
+                  }
+                },
+                {
+                  "rotulo": "Faturamento 12m",
+                  "valor": {
+                    "valor": 2300000.0,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "Estoque hoje",
+                  "valor": {
+                    "valor": 30928.03,
+                    "unidade": "brl"
+                  }
+                }
+              ],
+              "produtos": null,
+              "trilha": null,
+              "subtituloAberto": null
+            }
+          ],
+          "trilha": "Cortes dianteiros · 3 produtos",
+          "subtituloAberto": "Produtos da família Cortes dianteiros, 12 meses. Os cortes continuam nas medianas do recorte."
+        },
+        {
+          "id": "familia-frango-inteiro",
+          "nome": "Frango inteiro",
+          "quadrante": "vaca-leiteira",
+          "x": 7.3,
+          "y": 18.7,
+          "tamanho": 8600000.0,
+          "apagado": false,
+          "rotular": true,
+          "dica": [
+            {
+              "rotulo": "Seção",
+              "valor": "Aves"
+            },
+            {
+              "rotulo": "Produtos",
+              "valor": {
+                "valor": 2.0,
+                "unidade": "qtd",
+                "casas": 0
+              }
+            },
+            {
+              "rotulo": "Quadrante",
+              "valor": "Vaca leiteira"
+            },
+            {
+              "rotulo": "Giro",
+              "valor": "7,3×"
+            },
+            {
+              "rotulo": "Margem",
+              "valor": {
+                "valor": 18.7,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "rotulo": "Faturamento 12m",
+              "valor": {
+                "valor": 8600000.0,
+                "unidade": "brl"
+              }
+            },
+            {
+              "rotulo": "Estoque hoje",
+              "valor": {
+                "valor": 79829.06,
+                "unidade": "brl"
+              }
+            }
+          ],
+          "produtos": [
+            {
+              "id": "1021",
+              "nome": "Frango congelado",
+              "quadrante": "vaca-leiteira",
+              "x": 7.8,
+              "y": 18.0,
+              "tamanho": 5600000.0,
+              "apagado": false,
+              "rotular": true,
+              "dica": [
+                {
+                  "rotulo": "Seção",
+                  "valor": "Aves"
+                },
+                {
+                  "rotulo": "Família",
+                  "valor": "Frango inteiro"
+                },
+                {
+                  "rotulo": "Quadrante",
+                  "valor": "Vaca leiteira"
+                },
+                {
+                  "rotulo": "Giro",
+                  "valor": "7,8×"
+                },
+                {
+                  "rotulo": "Margem",
+                  "valor": {
+                    "valor": 18.0,
+                    "unidade": "pct",
+                    "casas": 1
+                  }
+                },
+                {
+                  "rotulo": "Faturamento 12m",
+                  "valor": {
+                    "valor": 5600000.0,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "Estoque hoje",
+                  "valor": {
+                    "valor": 49059.83,
+                    "unidade": "brl"
+                  }
+                }
+              ],
+              "produtos": null,
+              "trilha": null,
+              "subtituloAberto": null
+            },
+            {
+              "id": "1022",
+              "nome": "Frango resfriado",
+              "quadrante": "vaca-leiteira",
+              "x": 6.5,
+              "y": 20.0,
+              "tamanho": 3000000.0,
+              "apagado": false,
+              "rotular": true,
+              "dica": [
+                {
+                  "rotulo": "Seção",
+                  "valor": "Aves"
+                },
+                {
+                  "rotulo": "Família",
+                  "valor": "Frango inteiro"
+                },
+                {
+                  "rotulo": "Quadrante",
+                  "valor": "Vaca leiteira"
+                },
+                {
+                  "rotulo": "Giro",
+                  "valor": "6,5×"
+                },
+                {
+                  "rotulo": "Margem",
+                  "valor": {
+                    "valor": 20.0,
+                    "unidade": "pct",
+                    "casas": 1
+                  }
+                },
+                {
+                  "rotulo": "Faturamento 12m",
+                  "valor": {
+                    "valor": 3000000.0,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "Estoque hoje",
+                  "valor": {
+                    "valor": 30769.23,
+                    "unidade": "brl"
+                  }
+                }
+              ],
+              "produtos": null,
+              "trilha": null,
+              "subtituloAberto": null
+            }
+          ],
+          "trilha": "Frango inteiro · 2 produtos",
+          "subtituloAberto": "Produtos da família Frango inteiro, 12 meses. Os cortes continuam nas medianas do recorte."
+        },
+        {
+          "id": "familia-embutidos",
+          "nome": "Embutidos",
+          "quadrante": "estrela",
+          "x": 5.05,
+          "y": 35.3,
+          "tamanho": 7800000.0,
+          "apagado": false,
+          "rotular": true,
+          "dica": [
+            {
+              "rotulo": "Seção",
+              "valor": "Suínos"
+            },
+            {
+              "rotulo": "Produtos",
+              "valor": {
+                "valor": 3.0,
+                "unidade": "qtd",
+                "casas": 0
+              }
+            },
+            {
+              "rotulo": "Quadrante",
+              "valor": "Estrela"
+            },
+            {
+              "rotulo": "Giro",
+              "valor": "5,1×"
+            },
+            {
+              "rotulo": "Margem",
+              "valor": {
+                "valor": 35.33,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "rotulo": "Faturamento 12m",
+              "valor": {
+                "valor": 7800000.0,
+                "unidade": "brl"
+              }
+            },
+            {
+              "rotulo": "Estoque hoje",
+              "valor": {
+                "valor": 83210.55,
+                "unidade": "brl"
+              }
+            }
+          ],
+          "produtos": [
+            {
+              "id": "1016",
+              "nome": "Linguiça toscana",
+              "quadrante": "estrela",
+              "x": 5.2,
+              "y": 37.0,
+              "tamanho": 3300000.0,
+              "apagado": false,
+              "rotular": true,
+              "dica": [
+                {
+                  "rotulo": "Seção",
+                  "valor": "Suínos"
+                },
+                {
+                  "rotulo": "Família",
+                  "valor": "Embutidos"
+                },
+                {
+                  "rotulo": "Quadrante",
+                  "valor": "Estrela"
+                },
+                {
+                  "rotulo": "Giro",
+                  "valor": "5,2×"
+                },
+                {
+                  "rotulo": "Margem",
+                  "valor": {
+                    "valor": 37.0,
+                    "unidade": "pct",
+                    "casas": 1
+                  }
+                },
+                {
+                  "rotulo": "Faturamento 12m",
+                  "valor": {
+                    "valor": 3300000.0,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "Estoque hoje",
+                  "valor": {
+                    "valor": 33317.31,
+                    "unidade": "brl"
+                  }
+                }
+              ],
+              "produtos": null,
+              "trilha": null,
+              "subtituloAberto": null
+            },
+            {
+              "id": "1017",
+              "nome": "Linguiça calabresa",
+              "quadrante": "estrela",
+              "x": 4.3,
+              "y": 39.0,
+              "tamanho": 2500000.0,
+              "apagado": false,
+              "rotular": true,
+              "dica": [
+                {
+                  "rotulo": "Seção",
+                  "valor": "Suínos"
+                },
+                {
+                  "rotulo": "Família",
+                  "valor": "Embutidos"
+                },
+                {
+                  "rotulo": "Quadrante",
+                  "valor": "Estrela"
+                },
+                {
+                  "rotulo": "Giro",
+                  "valor": "4,3×"
+                },
+                {
+                  "rotulo": "Margem",
+                  "valor": {
+                    "valor": 39.0,
+                    "unidade": "pct",
+                    "casas": 1
+                  }
+                },
+                {
+                  "rotulo": "Faturamento 12m",
+                  "valor": {
+                    "valor": 2500000.0,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "Estoque hoje",
+                  "valor": {
+                    "valor": 29554.26,
+                    "unidade": "brl"
+                  }
+                }
+              ],
+              "produtos": null,
+              "trilha": null,
+              "subtituloAberto": null
+            },
+            {
+              "id": "1018",
+              "nome": "Salsicha",
+              "quadrante": "vaca-leiteira",
+              "x": 5.9,
+              "y": 28.0,
+              "tamanho": 2000000.0,
+              "apagado": false,
+              "rotular": true,
+              "dica": [
+                {
+                  "rotulo": "Seção",
+                  "valor": "Suínos"
+                },
+                {
+                  "rotulo": "Família",
+                  "valor": "Embutidos"
+                },
+                {
+                  "rotulo": "Quadrante",
+                  "valor": "Vaca leiteira"
+                },
+                {
+                  "rotulo": "Giro",
+                  "valor": "5,9×"
+                },
+                {
+                  "rotulo": "Margem",
+                  "valor": {
+                    "valor": 28.0,
+                    "unidade": "pct",
+                    "casas": 1
+                  }
+                },
+                {
+                  "rotulo": "Faturamento 12m",
+                  "valor": {
+                    "valor": 2000000.0,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "Estoque hoje",
+                  "valor": {
+                    "valor": 20338.98,
+                    "unidade": "brl"
+                  }
+                }
+              ],
+              "produtos": null,
+              "trilha": null,
+              "subtituloAberto": null
+            }
+          ],
+          "trilha": "Embutidos · 3 produtos",
+          "subtituloAberto": "Produtos da família Embutidos, 12 meses. Os cortes continuam nas medianas do recorte."
+        },
+        {
+          "id": "familia-cortes-suinos",
+          "nome": "Cortes suínos",
+          "quadrante": "abacaxi",
+          "x": 3.93,
+          "y": 32.3,
+          "tamanho": 6900000.0,
+          "apagado": false,
+          "rotular": false,
+          "dica": [
+            {
+              "rotulo": "Seção",
+              "valor": "Suínos"
+            },
+            {
+              "rotulo": "Produtos",
+              "valor": {
+                "valor": 3.0,
+                "unidade": "qtd",
+                "casas": 0
+              }
+            },
+            {
+              "rotulo": "Quadrante",
+              "valor": "Abacaxi"
+            },
+            {
+              "rotulo": "Giro",
+              "valor": "3,9×"
+            },
+            {
+              "rotulo": "Margem",
+              "valor": {
+                "valor": 32.35,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "rotulo": "Faturamento 12m",
+              "valor": {
+                "valor": 6900000.0,
+                "unidade": "brl"
+              }
+            },
+            {
+              "rotulo": "Estoque hoje",
+              "valor": {
+                "valor": 99066.85,
+                "unidade": "brl"
+              }
+            }
+          ],
+          "produtos": [
+            {
+              "id": "1013",
+              "nome": "Pernil",
+              "quadrante": "vaca-leiteira",
+              "x": 4.6,
+              "y": 30.0,
+              "tamanho": 2700000.0,
+              "apagado": false,
+              "rotular": true,
+              "dica": [
+                {
+                  "rotulo": "Seção",
+                  "valor": "Suínos"
+                },
+                {
+                  "rotulo": "Família",
+                  "valor": "Cortes suínos"
+                },
+                {
+                  "rotulo": "Quadrante",
+                  "valor": "Vaca leiteira"
+                },
+                {
+                  "rotulo": "Giro",
+                  "valor": "4,6×"
+                },
+                {
+                  "rotulo": "Margem",
+                  "valor": {
+                    "valor": 30.0,
+                    "unidade": "pct",
+                    "casas": 1
+                  }
+                },
+                {
+                  "rotulo": "Faturamento 12m",
+                  "valor": {
+                    "valor": 2700000.0,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "Estoque hoje",
+                  "valor": {
+                    "valor": 34239.13,
+                    "unidade": "brl"
+                  }
+                }
+              ],
+              "produtos": null,
+              "trilha": null,
+              "subtituloAberto": null
+            },
+            {
+              "id": "1014",
+              "nome": "Lombo",
+              "quadrante": "interrogacao",
+              "x": 3.9,
+              "y": 33.0,
+              "tamanho": 2400000.0,
+              "apagado": false,
+              "rotular": true,
+              "dica": [
+                {
+                  "rotulo": "Seção",
+                  "valor": "Suínos"
+                },
+                {
+                  "rotulo": "Família",
+                  "valor": "Cortes suínos"
+                },
+                {
+                  "rotulo": "Quadrante",
+                  "valor": "Interrogação"
+                },
+                {
+                  "rotulo": "Giro",
+                  "valor": "3,9×"
+                },
+                {
+                  "rotulo": "Margem",
+                  "valor": {
+                    "valor": 33.0,
+                    "unidade": "pct",
+                    "casas": 1
+                  }
+                },
+                {
+                  "rotulo": "Faturamento 12m",
+                  "valor": {
+                    "valor": 2400000.0,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "Estoque hoje",
+                  "valor": {
+                    "valor": 34358.97,
+                    "unidade": "brl"
+                  }
+                }
+              ],
+              "produtos": null,
+              "trilha": null,
+              "subtituloAberto": null
+            },
+            {
+              "id": "1015",
+              "nome": "Costela suína",
+              "quadrante": "interrogacao",
+              "x": 3.2,
+              "y": 35.0,
+              "tamanho": 1800000.0,
+              "apagado": false,
+              "rotular": true,
+              "dica": [
+                {
+                  "rotulo": "Seção",
+                  "valor": "Suínos"
+                },
+                {
+                  "rotulo": "Família",
+                  "valor": "Cortes suínos"
+                },
+                {
+                  "rotulo": "Quadrante",
+                  "valor": "Interrogação"
+                },
+                {
+                  "rotulo": "Giro",
+                  "valor": "3,2×"
+                },
+                {
+                  "rotulo": "Margem",
+                  "valor": {
+                    "valor": 35.0,
+                    "unidade": "pct",
+                    "casas": 1
+                  }
+                },
+                {
+                  "rotulo": "Faturamento 12m",
+                  "valor": {
+                    "valor": 1800000.0,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "Estoque hoje",
+                  "valor": {
+                    "valor": 30468.75,
+                    "unidade": "brl"
+                  }
+                }
+              ],
+              "produtos": null,
+              "trilha": null,
+              "subtituloAberto": null
+            }
+          ],
+          "trilha": "Cortes suínos · 3 produtos",
+          "subtituloAberto": "Produtos da família Cortes suínos, 12 meses. Os cortes continuam nas medianas do recorte."
+        },
+        {
+          "id": "familia-frios-e-laticinios",
+          "nome": "Frios e laticínios",
+          "quadrante": "vaca-leiteira",
+          "x": 4.41,
+          "y": 31.6,
+          "tamanho": 6100000.0,
+          "apagado": false,
+          "rotular": false,
+          "dica": [
+            {
+              "rotulo": "Seção",
+              "valor": "Mercearia"
+            },
+            {
+              "rotulo": "Produtos",
+              "valor": {
+                "valor": 3.0,
+                "unidade": "qtd",
+                "casas": 0
+              }
+            },
+            {
+              "rotulo": "Quadrante",
+              "valor": "Vaca leiteira"
+            },
+            {
+              "rotulo": "Giro",
+              "valor": "4,4×"
+            },
+            {
+              "rotulo": "Margem",
+              "valor": {
+                "valor": 31.64,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "rotulo": "Faturamento 12m",
+              "valor": {
+                "valor": 6100000.0,
+                "unidade": "brl"
+              }
+            },
+            {
+              "rotulo": "Estoque hoje",
+              "valor": {
+                "valor": 78751.75,
+                "unidade": "brl"
+              }
+            }
+          ],
+          "produtos": [
+            {
+              "id": "1029",
+              "nome": "Mussarela",
+              "quadrante": "vaca-leiteira",
+              "x": 4.9,
+              "y": 30.0,
+              "tamanho": 2800000.0,
+              "apagado": false,
+              "rotular": true,
+              "dica": [
+                {
+                  "rotulo": "Seção",
+                  "valor": "Mercearia"
+                },
+                {
+                  "rotulo": "Família",
+                  "valor": "Frios e laticínios"
+                },
+                {
+                  "rotulo": "Quadrante",
+                  "valor": "Vaca leiteira"
+                },
+                {
+                  "rotulo": "Giro",
+                  "valor": "4,9×"
+                },
+                {
+                  "rotulo": "Margem",
+                  "valor": {
+                    "valor": 30.0,
+                    "unidade": "pct",
+                    "casas": 1
+                  }
+                },
+                {
+                  "rotulo": "Faturamento 12m",
+                  "valor": {
+                    "valor": 2800000.0,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "Estoque hoje",
+                  "valor": {
+                    "valor": 33333.33,
+                    "unidade": "brl"
+                  }
+                }
+              ],
+              "produtos": null,
+              "trilha": null,
+              "subtituloAberto": null
+            },
+            {
+              "id": "1030",
+              "nome": "Presunto",
+              "quadrante": "interrogacao",
+              "x": 3.7,
+              "y": 34.0,
+              "tamanho": 1700000.0,
+              "apagado": false,
+              "rotular": true,
+              "dica": [
+                {
+                  "rotulo": "Seção",
+                  "valor": "Mercearia"
+                },
+                {
+                  "rotulo": "Família",
+                  "valor": "Frios e laticínios"
+                },
+                {
+                  "rotulo": "Quadrante",
+                  "valor": "Interrogação"
+                },
+                {
+                  "rotulo": "Giro",
+                  "valor": "3,7×"
+                },
+                {
+                  "rotulo": "Margem",
+                  "valor": {
+                    "valor": 34.0,
+                    "unidade": "pct",
+                    "casas": 1
+                  }
+                },
+                {
+                  "rotulo": "Faturamento 12m",
+                  "valor": {
+                    "valor": 1700000.0,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "Estoque hoje",
+                  "valor": {
+                    "valor": 25270.27,
+                    "unidade": "brl"
+                  }
+                }
+              ],
+              "produtos": null,
+              "trilha": null,
+              "subtituloAberto": null
+            },
+            {
+              "id": "1031",
+              "nome": "Mortadela",
+              "quadrante": "vaca-leiteira",
+              "x": 4.5,
+              "y": 32.0,
+              "tamanho": 1600000.0,
+              "apagado": false,
+              "rotular": true,
+              "dica": [
+                {
+                  "rotulo": "Seção",
+                  "valor": "Mercearia"
+                },
+                {
+                  "rotulo": "Família",
+                  "valor": "Frios e laticínios"
+                },
+                {
+                  "rotulo": "Quadrante",
+                  "valor": "Vaca leiteira"
+                },
+                {
+                  "rotulo": "Giro",
+                  "valor": "4,5×"
+                },
+                {
+                  "rotulo": "Margem",
+                  "valor": {
+                    "valor": 32.0,
+                    "unidade": "pct",
+                    "casas": 1
+                  }
+                },
+                {
+                  "rotulo": "Faturamento 12m",
+                  "valor": {
+                    "valor": 1600000.0,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "Estoque hoje",
+                  "valor": {
+                    "valor": 20148.15,
+                    "unidade": "brl"
+                  }
+                }
+              ],
+              "produtos": null,
+              "trilha": null,
+              "subtituloAberto": null
+            }
+          ],
+          "trilha": "Frios e laticínios · 3 produtos",
+          "subtituloAberto": "Produtos da família Frios e laticínios, 12 meses. Os cortes continuam nas medianas do recorte."
+        },
+        {
+          "id": "familia-moidas",
+          "nome": "Moídas",
+          "quadrante": "vaca-leiteira",
+          "x": 6.95,
+          "y": 27.8,
+          "tamanho": 4800000.0,
+          "apagado": false,
+          "rotular": false,
+          "dica": [
+            {
+              "rotulo": "Seção",
+              "valor": "Bovinos"
+            },
+            {
+              "rotulo": "Produtos",
+              "valor": {
+                "valor": 2.0,
+                "unidade": "qtd",
+                "casas": 0
+              }
+            },
+            {
+              "rotulo": "Quadrante",
+              "valor": "Vaca leiteira"
+            },
+            {
+              "rotulo": "Giro",
+              "valor": "7,0×"
+            },
+            {
+              "rotulo": "Margem",
+              "valor": {
+                "valor": 27.79,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "rotulo": "Faturamento 12m",
+              "valor": {
+                "valor": 4800000.0,
+                "unidade": "brl"
+              }
+            },
+            {
+              "rotulo": "Estoque hoje",
+              "valor": {
+                "valor": 41546.54,
+                "unidade": "brl"
+              }
+            }
+          ],
+          "produtos": [
+            {
+              "id": "1009",
+              "nome": "Patinho moído",
+              "quadrante": "vaca-leiteira",
+              "x": 7.1,
+              "y": 31.0,
+              "tamanho": 2600000.0,
+              "apagado": false,
+              "rotular": true,
+              "dica": [
+                {
+                  "rotulo": "Seção",
+                  "valor": "Bovinos"
+                },
+                {
+                  "rotulo": "Família",
+                  "valor": "Moídas"
+                },
+                {
+                  "rotulo": "Quadrante",
+                  "valor": "Vaca leiteira"
+                },
+                {
+                  "rotulo": "Giro",
+                  "valor": "7,1×"
+                },
+                {
+                  "rotulo": "Margem",
+                  "valor": {
+                    "valor": 31.0,
+                    "unidade": "pct",
+                    "casas": 1
+                  }
+                },
+                {
+                  "rotulo": "Faturamento 12m",
+                  "valor": {
+                    "valor": 2600000.0,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "Estoque hoje",
+                  "valor": {
+                    "valor": 21056.34,
+                    "unidade": "brl"
+                  }
+                }
+              ],
+              "produtos": null,
+              "trilha": null,
+              "subtituloAberto": null
+            },
+            {
+              "id": "1010",
+              "nome": "Carne moída de 2ª",
+              "quadrante": "vaca-leiteira",
+              "x": 6.8,
+              "y": 24.0,
+              "tamanho": 2200000.0,
+              "apagado": false,
+              "rotular": true,
+              "dica": [
+                {
+                  "rotulo": "Seção",
+                  "valor": "Bovinos"
+                },
+                {
+                  "rotulo": "Família",
+                  "valor": "Moídas"
+                },
+                {
+                  "rotulo": "Quadrante",
+                  "valor": "Vaca leiteira"
+                },
+                {
+                  "rotulo": "Giro",
+                  "valor": "6,8×"
+                },
+                {
+                  "rotulo": "Margem",
+                  "valor": {
+                    "valor": 24.0,
+                    "unidade": "pct",
+                    "casas": 1
+                  }
+                },
+                {
+                  "rotulo": "Faturamento 12m",
+                  "valor": {
+                    "valor": 2200000.0,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "Estoque hoje",
+                  "valor": {
+                    "valor": 20490.2,
+                    "unidade": "brl"
+                  }
+                }
+              ],
+              "produtos": null,
+              "trilha": null,
+              "subtituloAberto": null
+            }
+          ],
+          "trilha": "Moídas · 2 produtos",
+          "subtituloAberto": "Produtos da família Moídas, 12 meses. Os cortes continuam nas medianas do recorte."
+        },
+        {
+          "id": "familia-congelados",
+          "nome": "Congelados",
+          "quadrante": "interrogacao",
+          "x": 2.91,
+          "y": 33.3,
+          "tamanho": 3100000.0,
+          "apagado": false,
+          "rotular": false,
+          "dica": [
+            {
+              "rotulo": "Seção",
+              "valor": "Mercearia"
+            },
+            {
+              "rotulo": "Produtos",
+              "valor": {
+                "valor": 2.0,
+                "unidade": "qtd",
+                "casas": 0
+              }
+            },
+            {
+              "rotulo": "Quadrante",
+              "valor": "Interrogação"
+            },
+            {
+              "rotulo": "Giro",
+              "valor": "2,9×"
+            },
+            {
+              "rotulo": "Margem",
+              "valor": {
+                "valor": 33.29,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "rotulo": "Faturamento 12m",
+              "valor": {
+                "valor": 3100000.0,
+                "unidade": "brl"
+              }
+            },
+            {
+              "rotulo": "Estoque hoje",
+              "valor": {
+                "valor": 59134.92,
+                "unidade": "brl"
+              }
+            }
+          ],
+          "produtos": [
+            {
+              "id": "1032",
+              "nome": "Batata palito",
+              "quadrante": "interrogacao",
+              "x": 3.0,
+              "y": 36.0,
+              "tamanho": 1900000.0,
+              "apagado": false,
+              "rotular": true,
+              "dica": [
+                {
+                  "rotulo": "Seção",
+                  "valor": "Mercearia"
+                },
+                {
+                  "rotulo": "Família",
+                  "valor": "Congelados"
+                },
+                {
+                  "rotulo": "Quadrante",
+                  "valor": "Interrogação"
+                },
+                {
+                  "rotulo": "Giro",
+                  "valor": "3,0×"
+                },
+                {
+                  "rotulo": "Margem",
+                  "valor": {
+                    "valor": 36.0,
+                    "unidade": "pct",
+                    "casas": 1
+                  }
+                },
+                {
+                  "rotulo": "Faturamento 12m",
+                  "valor": {
+                    "valor": 1900000.0,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "Estoque hoje",
+                  "valor": {
+                    "valor": 33777.78,
+                    "unidade": "brl"
+                  }
+                }
+              ],
+              "produtos": null,
+              "trilha": null,
+              "subtituloAberto": null
+            },
+            {
+              "id": "1033",
+              "nome": "Hambúrguer",
+              "quadrante": "abacaxi",
+              "x": 2.8,
+              "y": 29.0,
+              "tamanho": 1200000.0,
+              "apagado": false,
+              "rotular": true,
+              "dica": [
+                {
+                  "rotulo": "Seção",
+                  "valor": "Mercearia"
+                },
+                {
+                  "rotulo": "Família",
+                  "valor": "Congelados"
+                },
+                {
+                  "rotulo": "Quadrante",
+                  "valor": "Abacaxi"
+                },
+                {
+                  "rotulo": "Giro",
+                  "valor": "2,8×"
+                },
+                {
+                  "rotulo": "Margem",
+                  "valor": {
+                    "valor": 29.0,
+                    "unidade": "pct",
+                    "casas": 1
+                  }
+                },
+                {
+                  "rotulo": "Faturamento 12m",
+                  "valor": {
+                    "valor": 1200000.0,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "Estoque hoje",
+                  "valor": {
+                    "valor": 25357.14,
+                    "unidade": "brl"
+                  }
+                }
+              ],
+              "produtos": null,
+              "trilha": null,
+              "subtituloAberto": null
+            }
+          ],
+          "trilha": "Congelados · 2 produtos",
+          "subtituloAberto": "Produtos da família Congelados, 12 meses. Os cortes continuam nas medianas do recorte."
+        },
+        {
+          "id": "familia-bacon-e-defumados",
+          "nome": "Bacon e defumados",
+          "quadrante": "interrogacao",
+          "x": 2.42,
+          "y": 43.3,
+          "tamanho": 2600000.0,
+          "apagado": false,
+          "rotular": false,
+          "dica": [
+            {
+              "rotulo": "Seção",
+              "valor": "Suínos"
+            },
+            {
+              "rotulo": "Produtos",
+              "valor": {
+                "valor": 2.0,
+                "unidade": "qtd",
+                "casas": 0
+              }
+            },
+            {
+              "rotulo": "Quadrante",
+              "valor": "Interrogação"
+            },
+            {
+              "rotulo": "Giro",
+              "valor": "2,4×"
+            },
+            {
+              "rotulo": "Margem",
+              "valor": {
+                "valor": 43.27,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "rotulo": "Faturamento 12m",
+              "valor": {
+                "valor": 2600000.0,
+                "unidade": "brl"
+              }
+            },
+            {
+              "rotulo": "Estoque hoje",
+              "valor": {
+                "valor": 50801.29,
+                "unidade": "brl"
+              }
+            }
+          ],
+          "produtos": [
+            {
+              "id": "1019",
+              "nome": "Bacon manta",
+              "quadrante": "interrogacao",
+              "x": 2.6,
+              "y": 42.0,
+              "tamanho": 1500000.0,
+              "apagado": false,
+              "rotular": true,
+              "dica": [
+                {
+                  "rotulo": "Seção",
+                  "valor": "Suínos"
+                },
+                {
+                  "rotulo": "Família",
+                  "valor": "Bacon e defumados"
+                },
+                {
+                  "rotulo": "Quadrante",
+                  "valor": "Interrogação"
+                },
+                {
+                  "rotulo": "Giro",
+                  "valor": "2,6×"
+                },
+                {
+                  "rotulo": "Margem",
+                  "valor": {
+                    "valor": 42.0,
+                    "unidade": "pct",
+                    "casas": 1
+                  }
+                },
+                {
+                  "rotulo": "Faturamento 12m",
+                  "valor": {
+                    "valor": 1500000.0,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "Estoque hoje",
+                  "valor": {
+                    "valor": 27884.62,
+                    "unidade": "brl"
+                  }
+                }
+              ],
+              "produtos": null,
+              "trilha": null,
+              "subtituloAberto": null
+            },
+            {
+              "id": "1020",
+              "nome": "Bacon fatiado",
+              "quadrante": "interrogacao",
+              "x": 2.2,
+              "y": 45.0,
+              "tamanho": 1100000.0,
+              "apagado": false,
+              "rotular": true,
+              "dica": [
+                {
+                  "rotulo": "Seção",
+                  "valor": "Suínos"
+                },
+                {
+                  "rotulo": "Família",
+                  "valor": "Bacon e defumados"
+                },
+                {
+                  "rotulo": "Quadrante",
+                  "valor": "Interrogação"
+                },
+                {
+                  "rotulo": "Giro",
+                  "valor": "2,2×"
+                },
+                {
+                  "rotulo": "Margem",
+                  "valor": {
+                    "valor": 45.0,
+                    "unidade": "pct",
+                    "casas": 1
+                  }
+                },
+                {
+                  "rotulo": "Faturamento 12m",
+                  "valor": {
+                    "valor": 1100000.0,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "Estoque hoje",
+                  "valor": {
+                    "valor": 22916.67,
+                    "unidade": "brl"
+                  }
+                }
+              ],
+              "produtos": null,
+              "trilha": null,
+              "subtituloAberto": null
+            }
+          ],
+          "trilha": "Bacon e defumados · 2 produtos",
+          "subtituloAberto": "Produtos da família Bacon e defumados, 12 meses. Os cortes continuam nas medianas do recorte."
+        },
+        {
+          "id": "familia-empanados",
+          "nome": "Empanados",
+          "quadrante": "interrogacao",
+          "x": 2.22,
+          "y": 39.2,
+          "tamanho": 2200000.0,
+          "apagado": false,
+          "rotular": false,
+          "dica": [
+            {
+              "rotulo": "Seção",
+              "valor": "Aves"
+            },
+            {
+              "rotulo": "Produtos",
+              "valor": {
+                "valor": 2.0,
+                "unidade": "qtd",
+                "casas": 0
+              }
+            },
+            {
+              "rotulo": "Quadrante",
+              "valor": "Interrogação"
+            },
+            {
+              "rotulo": "Giro",
+              "valor": "2,2×"
+            },
+            {
+              "rotulo": "Margem",
+              "valor": {
+                "valor": 39.18,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "rotulo": "Faturamento 12m",
+              "valor": {
+                "valor": 2200000.0,
+                "unidade": "brl"
+              }
+            },
+            {
+              "rotulo": "Estoque hoje",
+              "valor": {
+                "valor": 50333.33,
+                "unidade": "brl"
+              }
+            }
+          ],
+          "produtos": [
+            {
+              "id": "1027",
+              "nome": "Nuggets",
+              "quadrante": "interrogacao",
+              "x": 2.4,
+              "y": 40.0,
+              "tamanho": 1300000.0,
+              "apagado": false,
+              "rotular": true,
+              "dica": [
+                {
+                  "rotulo": "Seção",
+                  "valor": "Aves"
+                },
+                {
+                  "rotulo": "Família",
+                  "valor": "Empanados"
+                },
+                {
+                  "rotulo": "Quadrante",
+                  "valor": "Interrogação"
+                },
+                {
+                  "rotulo": "Giro",
+                  "valor": "2,4×"
+                },
+                {
+                  "rotulo": "Margem",
+                  "valor": {
+                    "valor": 40.0,
+                    "unidade": "pct",
+                    "casas": 1
+                  }
+                },
+                {
+                  "rotulo": "Faturamento 12m",
+                  "valor": {
+                    "valor": 1300000.0,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "Estoque hoje",
+                  "valor": {
+                    "valor": 27083.33,
+                    "unidade": "brl"
+                  }
+                }
+              ],
+              "produtos": null,
+              "trilha": null,
+              "subtituloAberto": null
+            },
+            {
+              "id": "1028",
+              "nome": "Empanado de frango",
+              "quadrante": "interrogacao",
+              "x": 2.0,
+              "y": 38.0,
+              "tamanho": 900000.0,
+              "apagado": false,
+              "rotular": true,
+              "dica": [
+                {
+                  "rotulo": "Seção",
+                  "valor": "Aves"
+                },
+                {
+                  "rotulo": "Família",
+                  "valor": "Empanados"
+                },
+                {
+                  "rotulo": "Quadrante",
+                  "valor": "Interrogação"
+                },
+                {
+                  "rotulo": "Giro",
+                  "valor": "2,0×"
+                },
+                {
+                  "rotulo": "Margem",
+                  "valor": {
+                    "valor": 38.0,
+                    "unidade": "pct",
+                    "casas": 1
+                  }
+                },
+                {
+                  "rotulo": "Faturamento 12m",
+                  "valor": {
+                    "valor": 900000.0,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "Estoque hoje",
+                  "valor": {
+                    "valor": 23250.0,
+                    "unidade": "brl"
+                  }
+                }
+              ],
+              "produtos": null,
+              "trilha": null,
+              "subtituloAberto": null
+            }
+          ],
+          "trilha": "Empanados · 2 produtos",
+          "subtituloAberto": "Produtos da família Empanados, 12 meses. Os cortes continuam nas medianas do recorte."
+        },
+        {
+          "id": "familia-pescados",
+          "nome": "Pescados",
+          "quadrante": "interrogacao",
+          "x": 1.75,
+          "y": 32.8,
+          "tamanho": 1800000.0,
+          "apagado": false,
+          "rotular": false,
+          "dica": [
+            {
+              "rotulo": "Seção",
+              "valor": "Mercearia"
+            },
+            {
+              "rotulo": "Produtos",
+              "valor": {
+                "valor": 2.0,
+                "unidade": "qtd",
+                "casas": 0
+              }
+            },
+            {
+              "rotulo": "Quadrante",
+              "valor": "Interrogação"
+            },
+            {
+              "rotulo": "Giro",
+              "valor": "1,7×"
+            },
+            {
+              "rotulo": "Margem",
+              "valor": {
+                "valor": 32.78,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "rotulo": "Faturamento 12m",
+              "valor": {
+                "valor": 1800000.0,
+                "unidade": "brl"
+              }
+            },
+            {
+              "rotulo": "Estoque hoje",
+              "valor": {
+                "valor": 57675.44,
+                "unidade": "brl"
+              }
+            }
+          ],
+          "produtos": [
+            {
+              "id": "1034",
+              "nome": "Filé de tilápia",
+              "quadrante": "interrogacao",
+              "x": 1.9,
+              "y": 35.0,
+              "tamanho": 1000000.0,
+              "apagado": false,
+              "rotular": true,
+              "dica": [
+                {
+                  "rotulo": "Seção",
+                  "valor": "Mercearia"
+                },
+                {
+                  "rotulo": "Família",
+                  "valor": "Pescados"
+                },
+                {
+                  "rotulo": "Quadrante",
+                  "valor": "Interrogação"
+                },
+                {
+                  "rotulo": "Giro",
+                  "valor": "1,9×"
+                },
+                {
+                  "rotulo": "Margem",
+                  "valor": {
+                    "valor": 35.0,
+                    "unidade": "pct",
+                    "casas": 1
+                  }
+                },
+                {
+                  "rotulo": "Faturamento 12m",
+                  "valor": {
+                    "valor": 1000000.0,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "Estoque hoje",
+                  "valor": {
+                    "valor": 28508.77,
+                    "unidade": "brl"
+                  }
+                }
+              ],
+              "produtos": null,
+              "trilha": null,
+              "subtituloAberto": null
+            },
+            {
+              "id": "1035",
+              "nome": "Merluza",
+              "quadrante": "abacaxi",
+              "x": 1.6,
+              "y": 30.0,
+              "tamanho": 800000.0,
+              "apagado": false,
+              "rotular": true,
+              "dica": [
+                {
+                  "rotulo": "Seção",
+                  "valor": "Mercearia"
+                },
+                {
+                  "rotulo": "Família",
+                  "valor": "Pescados"
+                },
+                {
+                  "rotulo": "Quadrante",
+                  "valor": "Abacaxi"
+                },
+                {
+                  "rotulo": "Giro",
+                  "valor": "1,6×"
+                },
+                {
+                  "rotulo": "Margem",
+                  "valor": {
+                    "valor": 30.0,
+                    "unidade": "pct",
+                    "casas": 1
+                  }
+                },
+                {
+                  "rotulo": "Faturamento 12m",
+                  "valor": {
+                    "valor": 800000.0,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "Estoque hoje",
+                  "valor": {
+                    "valor": 29166.67,
+                    "unidade": "brl"
+                  }
+                }
+              ],
+              "produtos": null,
+              "trilha": null,
+              "subtituloAberto": null
+            }
+          ],
+          "trilha": "Pescados · 2 produtos",
+          "subtituloAberto": "Produtos da família Pescados, 12 meses. Os cortes continuam nas medianas do recorte."
+        },
+        {
+          "id": "familia-temperos-e-carvao",
+          "nome": "Temperos e carvão",
+          "quadrante": "interrogacao",
+          "x": 3.67,
+          "y": 42.3,
+          "tamanho": 1700000.0,
+          "apagado": false,
+          "rotular": false,
+          "dica": [
+            {
+              "rotulo": "Seção",
+              "valor": "Mercearia"
+            },
+            {
+              "rotulo": "Produtos",
+              "valor": {
+                "valor": 2.0,
+                "unidade": "qtd",
+                "casas": 0
+              }
+            },
+            {
+              "rotulo": "Quadrante",
+              "valor": "Interrogação"
+            },
+            {
+              "rotulo": "Giro",
+              "valor": "3,7×"
+            },
+            {
+              "rotulo": "Margem",
+              "valor": {
+                "valor": 42.32,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "rotulo": "Faturamento 12m",
+              "valor": {
+                "valor": 1700000.0,
+                "unidade": "brl"
+              }
+            },
+            {
+              "rotulo": "Estoque hoje",
+              "valor": {
+                "valor": 22283.14,
+                "unidade": "brl"
+              }
+            }
+          ],
+          "produtos": [
+            {
+              "id": "1036",
+              "nome": "Carvão",
+              "quadrante": "interrogacao",
+              "x": 4.0,
+              "y": 41.0,
+              "tamanho": 950000.0,
+              "apagado": false,
+              "rotular": true,
+              "dica": [
+                {
+                  "rotulo": "Seção",
+                  "valor": "Mercearia"
+                },
+                {
+                  "rotulo": "Família",
+                  "valor": "Temperos e carvão"
+                },
+                {
+                  "rotulo": "Quadrante",
+                  "valor": "Interrogação"
+                },
+                {
+                  "rotulo": "Giro",
+                  "valor": "4,0×"
+                },
+                {
+                  "rotulo": "Margem",
+                  "valor": {
+                    "valor": 41.0,
+                    "unidade": "pct",
+                    "casas": 1
+                  }
+                },
+                {
+                  "rotulo": "Faturamento 12m",
+                  "valor": {
+                    "valor": 950000.0,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "Estoque hoje",
+                  "valor": {
+                    "valor": 11677.08,
+                    "unidade": "brl"
+                  }
+                }
+              ],
+              "produtos": null,
+              "trilha": null,
+              "subtituloAberto": null
+            },
+            {
+              "id": "1037",
+              "nome": "Sal grosso",
+              "quadrante": "interrogacao",
+              "x": 3.3,
+              "y": 44.0,
+              "tamanho": 750000.0,
+              "apagado": false,
+              "rotular": true,
+              "dica": [
+                {
+                  "rotulo": "Seção",
+                  "valor": "Mercearia"
+                },
+                {
+                  "rotulo": "Família",
+                  "valor": "Temperos e carvão"
+                },
+                {
+                  "rotulo": "Quadrante",
+                  "valor": "Interrogação"
+                },
+                {
+                  "rotulo": "Giro",
+                  "valor": "3,3×"
+                },
+                {
+                  "rotulo": "Margem",
+                  "valor": {
+                    "valor": 44.0,
+                    "unidade": "pct",
+                    "casas": 1
+                  }
+                },
+                {
+                  "rotulo": "Faturamento 12m",
+                  "valor": {
+                    "valor": 750000.0,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "Estoque hoje",
+                  "valor": {
+                    "valor": 10606.06,
+                    "unidade": "brl"
+                  }
+                }
+              ],
+              "produtos": null,
+              "trilha": null,
+              "subtituloAberto": null
+            }
+          ],
+          "trilha": "Temperos e carvão · 2 produtos",
+          "subtituloAberto": "Produtos da família Temperos e carvão, 12 meses. Os cortes continuam nas medianas do recorte."
+        },
+        {
+          "id": "familia-miudos",
+          "nome": "Miúdos",
+          "quadrante": "abacaxi",
+          "x": 1.96,
+          "y": 23.3,
+          "tamanho": 1600000.0,
+          "apagado": false,
+          "rotular": false,
+          "dica": [
+            {
+              "rotulo": "Seção",
+              "valor": "Bovinos"
+            },
+            {
+              "rotulo": "Produtos",
+              "valor": {
+                "valor": 2.0,
+                "unidade": "qtd",
+                "casas": 0
+              }
+            },
+            {
+              "rotulo": "Quadrante",
+              "valor": "Abacaxi"
+            },
+            {
+              "rotulo": "Giro",
+              "valor": "2,0×"
+            },
+            {
+              "rotulo": "Margem",
+              "valor": {
+                "valor": 23.31,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "rotulo": "Faturamento 12m",
+              "valor": {
+                "valor": 1600000.0,
+                "unidade": "brl"
+              }
+            },
+            {
+              "rotulo": "Estoque hoje",
+              "valor": {
+                "valor": 52162.7,
+                "unidade": "brl"
+              }
+            }
+          ],
+          "produtos": [
+            {
+              "id": "1011",
+              "nome": "Fígado bovino",
+              "quadrante": "abacaxi",
+              "x": 2.1,
+              "y": 22.0,
+              "tamanho": 900000.0,
+              "apagado": false,
+              "rotular": true,
+              "dica": [
+                {
+                  "rotulo": "Seção",
+                  "valor": "Bovinos"
+                },
+                {
+                  "rotulo": "Família",
+                  "valor": "Miúdos"
+                },
+                {
+                  "rotulo": "Quadrante",
+                  "valor": "Abacaxi"
+                },
+                {
+                  "rotulo": "Giro",
+                  "valor": "2,1×"
+                },
+                {
+                  "rotulo": "Margem",
+                  "valor": {
+                    "valor": 22.0,
+                    "unidade": "pct",
+                    "casas": 1
+                  }
+                },
+                {
+                  "rotulo": "Faturamento 12m",
+                  "valor": {
+                    "valor": 900000.0,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "Estoque hoje",
+                  "valor": {
+                    "valor": 27857.14,
+                    "unidade": "brl"
+                  }
+                }
+              ],
+              "produtos": null,
+              "trilha": null,
+              "subtituloAberto": null
+            },
+            {
+              "id": "1012",
+              "nome": "Bucho",
+              "quadrante": "abacaxi",
+              "x": 1.8,
+              "y": 25.0,
+              "tamanho": 700000.0,
+              "apagado": false,
+              "rotular": true,
+              "dica": [
+                {
+                  "rotulo": "Seção",
+                  "valor": "Bovinos"
+                },
+                {
+                  "rotulo": "Família",
+                  "valor": "Miúdos"
+                },
+                {
+                  "rotulo": "Quadrante",
+                  "valor": "Abacaxi"
+                },
+                {
+                  "rotulo": "Giro",
+                  "valor": "1,8×"
+                },
+                {
+                  "rotulo": "Margem",
+                  "valor": {
+                    "valor": 25.0,
+                    "unidade": "pct",
+                    "casas": 1
+                  }
+                },
+                {
+                  "rotulo": "Faturamento 12m",
+                  "valor": {
+                    "valor": 700000.0,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "Estoque hoje",
+                  "valor": {
+                    "valor": 24305.56,
+                    "unidade": "brl"
+                  }
+                }
+              ],
+              "produtos": null,
+              "trilha": null,
+              "subtituloAberto": null
+            }
+          ],
+          "trilha": "Miúdos · 2 produtos",
+          "subtituloAberto": "Produtos da família Miúdos, 12 meses. Os cortes continuam nas medianas do recorte."
+        },
+        {
+          "id": "familia-bebidas",
+          "nome": "Bebidas",
+          "quadrante": "vaca-leiteira",
+          "x": 6.0,
+          "y": 22.0,
+          "tamanho": 1000000.0,
+          "apagado": false,
+          "rotular": false,
+          "dica": [
+            {
+              "rotulo": "Seção",
+              "valor": "Mercearia"
+            },
+            {
+              "rotulo": "Produtos",
+              "valor": {
+                "valor": 1.0,
+                "unidade": "qtd",
+                "casas": 0
+              }
+            },
+            {
+              "rotulo": "Quadrante",
+              "valor": "Vaca leiteira"
+            },
+            {
+              "rotulo": "Giro",
+              "valor": "6,0×"
+            },
+            {
+              "rotulo": "Margem",
+              "valor": {
+                "valor": 22.0,
+                "unidade": "pct",
+                "casas": 1
+              }
+            },
+            {
+              "rotulo": "Faturamento 12m",
+              "valor": {
+                "valor": 1000000.0,
+                "unidade": "brl"
+              }
+            },
+            {
+              "rotulo": "Estoque hoje",
+              "valor": {
+                "valor": 10833.33,
+                "unidade": "brl"
+              }
+            }
+          ],
+          "produtos": [
+            {
+              "id": "1038",
+              "nome": "Refrigerante 2 l",
+              "quadrante": "vaca-leiteira",
+              "x": 6.0,
+              "y": 22.0,
+              "tamanho": 1000000.0,
+              "apagado": false,
+              "rotular": true,
+              "dica": [
+                {
+                  "rotulo": "Seção",
+                  "valor": "Mercearia"
+                },
+                {
+                  "rotulo": "Família",
+                  "valor": "Bebidas"
+                },
+                {
+                  "rotulo": "Quadrante",
+                  "valor": "Vaca leiteira"
+                },
+                {
+                  "rotulo": "Giro",
+                  "valor": "6,0×"
+                },
+                {
+                  "rotulo": "Margem",
+                  "valor": {
+                    "valor": 22.0,
+                    "unidade": "pct",
+                    "casas": 1
+                  }
+                },
+                {
+                  "rotulo": "Faturamento 12m",
+                  "valor": {
+                    "valor": 1000000.0,
+                    "unidade": "brl"
+                  }
+                },
+                {
+                  "rotulo": "Estoque hoje",
+                  "valor": {
+                    "valor": 10833.33,
+                    "unidade": "brl"
+                  }
+                }
+              ],
+              "produtos": null,
+              "trilha": null,
+              "subtituloAberto": null
+            }
+          ],
+          "trilha": "Bebidas · 1 produto",
+          "subtituloAberto": "Produtos da família Bebidas, 12 meses. Os cortes continuam nas medianas do recorte."
+        }
+      ],
+      "trilha": "15 famílias · 38 principais produtos · clique numa bolha para abrir",
+      "rotuloVoltar": "Todas as famílias"
+    },
+    {
+      "id": "acoes-bcg",
+      "largura": 4,
+      "titulo": "O que fazer em cada quadrante",
+      "subtitulo": "Principais produtos, 12 meses. Clique para filtrar a matriz.",
+      "explicacao": "Quantos dos principais produtos caem em cada quadrante, quanto faturaram em 12 meses e quanto têm em estoque hoje, a custo. Respeita o filtro de seção. O estoque fica vermelho quando os Abacaxis passam de 20% do estoque ou quando alguma Estrela está abaixo do mínimo (menos da metade dos dias ideais de cobertura).",
+      "tipo": "acoes-bcg",
+      "itens": [
+        {
+          "quadrante": "estrela",
+          "rotulo": "Estrela",
+          "nota": "3 abaixo do mínimo",
+          "acao": "Repor e não deixar faltar.",
+          "numeros": [
+            {
+              "rotulo": "Produtos",
+              "valor": {
+                "valor": 5.0,
+                "unidade": "qtd",
+                "casas": 0
+              }
+            },
+            {
+              "rotulo": "Faturado 12m",
+              "valor": {
+                "valor": 22400000.0,
+                "unidade": "brl"
+              }
+            },
+            {
+              "rotulo": "Em estoque",
+              "valor": {
+                "valor": 165103.71,
+                "unidade": "brl"
+              },
+              "status": "critico"
+            }
+          ],
+          "selecionado": false
+        },
+        {
+          "quadrante": "vaca-leiteira",
+          "rotulo": "Vaca leiteira",
+          "nota": "43% do faturamento",
+          "acao": "Proteger a margem: negociar custo e segurar preço.",
+          "numeros": [
+            {
+              "rotulo": "Produtos",
+              "valor": {
+                "valor": 14.0,
+                "unidade": "qtd",
+                "casas": 0
+              }
+            },
+            {
+              "rotulo": "Faturado 12m",
+              "valor": {
+                "valor": 39300000.0,
+                "unidade": "brl"
+              }
+            },
+            {
+              "rotulo": "Em estoque",
+              "valor": {
+                "valor": 422657.85,
+                "unidade": "brl"
+              }
+            }
+          ],
+          "selecionado": false
+        },
+        {
+          "quadrante": "interrogacao",
+          "rotulo": "Interrogação",
+          "nota": "26% do faturamento",
+          "acao": "Testar ou decidir: empurrar com o vendedor certo ou sair.",
+          "numeros": [
+            {
+              "rotulo": "Produtos",
+              "valor": {
+                "valor": 14.0,
+                "unidade": "qtd",
+                "casas": 0
+              }
+            },
+            {
+              "rotulo": "Faturado 12m",
+              "valor": {
+                "valor": 23800000.0,
+                "unidade": "brl"
+              }
+            },
+            {
+              "rotulo": "Em estoque",
+              "valor": {
+                "valor": 403971.77,
+                "unidade": "brl"
+              }
+            }
+          ],
+          "selecionado": false
+        },
+        {
+          "quadrante": "abacaxi",
+          "rotulo": "Abacaxi",
+          "nota": "12% do estoque",
+          "acao": "Liquidar o estoque e não recomprar.",
+          "numeros": [
+            {
+              "rotulo": "Produtos",
+              "valor": {
+                "valor": 5.0,
+                "unidade": "qtd",
+                "casas": 0
+              }
+            },
+            {
+              "rotulo": "Faturado 12m",
+              "valor": {
+                "valor": 5000000.0,
+                "unidade": "brl"
+              }
+            },
+            {
+              "rotulo": "Em estoque",
+              "valor": {
+                "valor": 130362.98,
+                "unidade": "brl"
+              }
+            }
+          ],
+          "selecionado": false
+        }
+      ]
+    },
+    {
+      "id": "real-ideal",
+      "largura": 7,
+      "titulo": "Estoque real contra ideal",
+      "subtitulo": "Por seção, do maior desvio para o menor. Clique para abrir as famílias e os produtos.",
+      "legenda": [
+        {
+          "nome": "Até o ideal",
+          "marca": "quadrado-saudavel"
+        },
+        {
+          "nome": "Até 1,5× o ideal",
+          "marca": "quadrado-atencao"
+        },
+        {
+          "nome": "Mais de 1,5× ou abaixo do mínimo",
+          "marca": "quadrado-critico"
+        },
+        {
+          "nome": "Ideal",
+          "marca": "traco"
+        }
+      ],
+      "explicacao": "A barra é o estoque de hoje, a custo. O traço preto é o ideal: a venda média por dia (custo vendido em 12 meses ÷ 365) vezes os dias de estoque ideais da empresa. Azul até o ideal; laranja até 1,5 vez o ideal; vermelho acima disso ou abaixo do mínimo (metade do ideal).",
+      "tipo": "real-ideal",
+      "escala": {
+        "unidade": "brl"
+      },
+      "itens": [
+        {
+          "id": "mercearia",
+          "nome": "Mercearia",
+          "sub": "ideal de 12 dias",
+          "real": 567745.24,
+          "ideal": 413418.08,
+          "diferenca": "+R$ 154 mil · 1,4×",
+          "status": "atencao",
+          "itens": [
+            {
+              "id": "familia-pescados",
+              "nome": "Pescados",
+              "sub": "2 produtos",
+              "real": 57675.44,
+              "ideal": 39780.82,
+              "diferenca": "+R$ 18 mil · 1,4×",
+              "status": "atencao",
+              "itens": [
+                {
+                  "id": "1035",
+                  "nome": "Merluza",
+                  "sub": "cobertura 19,0 dias · ideal 12",
+                  "real": 29166.67,
+                  "ideal": 18410.96,
+                  "diferenca": "+R$ 11 mil · 1,6×",
+                  "status": "critico",
+                  "itens": null
+                },
+                {
+                  "id": "1034",
+                  "nome": "Filé de tilápia",
+                  "sub": "cobertura 16,0 dias · ideal 12",
+                  "real": 28508.77,
+                  "ideal": 21369.86,
+                  "diferenca": "+R$ 7 mil · 1,3×",
+                  "status": "atencao",
+                  "itens": null
+                }
+              ],
+              "subtituloAberto": "Produtos da família Pescados, do maior desvio para o menor."
+            },
+            {
+              "id": "familia-congelados",
+              "nome": "Congelados",
+              "sub": "2 produtos",
+              "real": 59134.92,
+              "ideal": 67989.04,
+              "diferenca": "−R$ 9 mil · 0,9×",
+              "status": "saudavel",
+              "itens": [
+                {
+                  "id": "1033",
+                  "nome": "Hambúrguer",
+                  "sub": "cobertura 10,9 dias · ideal 12",
+                  "real": 25357.14,
+                  "ideal": 28010.96,
+                  "diferenca": "−R$ 3 mil · 0,9×",
+                  "status": "saudavel",
+                  "itens": null
+                },
+                {
+                  "id": "1032",
+                  "nome": "Batata palito",
+                  "sub": "cobertura 10,1 dias · ideal 12",
+                  "real": 33777.78,
+                  "ideal": 39978.08,
+                  "diferenca": "−R$ 6 mil · 0,8×",
+                  "status": "saudavel",
+                  "itens": null
+                }
+              ],
+              "subtituloAberto": "Produtos da família Congelados, do maior desvio para o menor."
+            },
+            {
+              "id": "familia-temperos-e-carvao",
+              "nome": "Temperos e carvão",
+              "sub": "2 produtos",
+              "real": 22283.14,
+              "ideal": 32235.62,
+              "diferenca": "−R$ 10 mil · 0,7×",
+              "status": "saudavel",
+              "itens": [
+                {
+                  "id": "1037",
+                  "nome": "Sal grosso",
+                  "sub": "cobertura 9,2 dias · ideal 12",
+                  "real": 10606.06,
+                  "ideal": 13808.22,
+                  "diferenca": "−R$ 3 mil · 0,8×",
+                  "status": "saudavel",
+                  "itens": null
+                },
+                {
+                  "id": "1036",
+                  "nome": "Carvão",
+                  "sub": "cobertura 7,6 dias · ideal 12",
+                  "real": 11677.08,
+                  "ideal": 18427.4,
+                  "diferenca": "−R$ 7 mil · 0,6×",
+                  "status": "saudavel",
+                  "itens": null
+                }
+              ],
+              "subtituloAberto": "Produtos da família Temperos e carvão, do maior desvio para o menor."
+            },
+            {
+              "id": "familia-bebidas",
+              "nome": "Bebidas",
+              "sub": "1 produto",
+              "real": 10833.33,
+              "ideal": 25643.84,
+              "diferenca": "abaixo do mínimo",
+              "status": "critico",
+              "itens": [
+                {
+                  "id": "1038",
+                  "nome": "Refrigerante 2 l",
+                  "sub": "cobertura 5,1 dias · ideal 12",
+                  "real": 10833.33,
+                  "ideal": 25643.84,
+                  "diferenca": "abaixo do mínimo",
+                  "status": "critico",
+                  "itens": null
+                }
+              ],
+              "subtituloAberto": "Produtos da família Bebidas, do maior desvio para o menor."
+            },
+            {
+              "id": "familia-frios-e-laticinios",
+              "nome": "Frios e laticínios",
+              "sub": "3 produtos",
+              "real": 78751.75,
+              "ideal": 137095.89,
+              "diferenca": "−R$ 58 mil · 0,6×",
+              "status": "saudavel",
+              "itens": [
+                {
+                  "id": "1030",
+                  "nome": "Presunto",
+                  "sub": "cobertura 8,2 dias · ideal 12",
+                  "real": 25270.27,
+                  "ideal": 36887.67,
+                  "diferenca": "−R$ 12 mil · 0,7×",
+                  "status": "saudavel",
+                  "itens": null
+                },
+                {
+                  "id": "1031",
+                  "nome": "Mortadela",
+                  "sub": "cobertura 6,8 dias · ideal 12",
+                  "real": 20148.15,
+                  "ideal": 35769.86,
+                  "diferenca": "−R$ 16 mil · 0,6×",
+                  "status": "saudavel",
+                  "itens": null
+                },
+                {
+                  "id": "1029",
+                  "nome": "Mussarela",
+                  "sub": "cobertura 6,2 dias · ideal 12",
+                  "real": 33333.33,
+                  "ideal": 64438.36,
+                  "diferenca": "−R$ 31 mil · 0,5×",
+                  "status": "saudavel",
+                  "itens": null
+                }
+              ],
+              "subtituloAberto": "Produtos da família Frios e laticínios, do maior desvio para o menor."
+            },
+            {
+              "id": "mercearia-outros",
+              "nome": "Outros produtos da seção",
+              "sub": "fora dos principais",
+              "real": 339066.66,
+              "ideal": 110672.88,
+              "diferenca": "+R$ 228 mil · 3,1×",
+              "status": "critico",
+              "outros": true,
+              "itens": null
+            }
+          ],
+          "subtituloAberto": "Famílias da seção Mercearia, do maior desvio para o menor. Clique para abrir os produtos."
+        },
+        {
+          "id": "suinos",
+          "nome": "Suínos",
+          "sub": "ideal de 12 dias",
+          "real": 364612.02,
+          "ideal": 456371.51,
+          "diferenca": "−R$ 92 mil · 0,8×",
+          "status": "saudavel",
+          "itens": [
+            {
+              "id": "familia-bacon-e-defumados",
+              "nome": "Bacon e defumados",
+              "sub": "2 produtos",
+              "real": 50801.29,
+              "ideal": 48493.15,
+              "diferenca": "+R$ 2 mil · 1,0×",
+              "status": "atencao",
+              "itens": [
+                {
+                  "id": "1020",
+                  "nome": "Bacon fatiado",
+                  "sub": "cobertura 13,8 dias · ideal 12",
+                  "real": 22916.67,
+                  "ideal": 19890.41,
+                  "diferenca": "+R$ 3 mil · 1,2×",
+                  "status": "atencao",
+                  "itens": null
+                },
+                {
+                  "id": "1019",
+                  "nome": "Bacon manta",
+                  "sub": "cobertura 11,7 dias · ideal 12",
+                  "real": 27884.62,
+                  "ideal": 28602.74,
+                  "diferenca": "−R$ 718 · 1,0×",
+                  "status": "saudavel",
+                  "itens": null
+                }
+              ],
+              "subtituloAberto": "Produtos da família Bacon e defumados, do maior desvio para o menor."
+            },
+            {
+              "id": "familia-cortes-suinos",
+              "nome": "Cortes suínos",
+              "sub": "3 produtos",
+              "real": 99066.85,
+              "ideal": 153468.49,
+              "diferenca": "−R$ 54 mil · 0,6×",
+              "status": "saudavel",
+              "itens": [
+                {
+                  "id": "1015",
+                  "nome": "Costela suína",
+                  "sub": "cobertura 9,5 dias · ideal 12",
+                  "real": 30468.75,
+                  "ideal": 38465.75,
+                  "diferenca": "−R$ 8 mil · 0,8×",
+                  "status": "saudavel",
+                  "itens": null
+                },
+                {
+                  "id": "1014",
+                  "nome": "Lombo",
+                  "sub": "cobertura 7,8 dias · ideal 12",
+                  "real": 34358.97,
+                  "ideal": 52865.75,
+                  "diferenca": "−R$ 19 mil · 0,6×",
+                  "status": "saudavel",
+                  "itens": null
+                },
+                {
+                  "id": "1013",
+                  "nome": "Pernil",
+                  "sub": "cobertura 6,6 dias · ideal 12",
+                  "real": 34239.13,
+                  "ideal": 62136.99,
+                  "diferenca": "−R$ 28 mil · 0,6×",
+                  "status": "saudavel",
+                  "itens": null
+                }
+              ],
+              "subtituloAberto": "Produtos da família Cortes suínos, do maior desvio para o menor."
+            },
+            {
+              "id": "familia-embutidos",
+              "nome": "Embutidos",
+              "sub": "3 produtos",
+              "real": 83210.55,
+              "ideal": 165830.14,
+              "diferenca": "−R$ 83 mil · 0,5×",
+              "status": "saudavel",
+              "itens": [
+                {
+                  "id": "1017",
+                  "nome": "Linguiça calabresa",
+                  "sub": "cobertura 7,1 dias · ideal 12",
+                  "real": 29554.26,
+                  "ideal": 50136.99,
+                  "diferenca": "−R$ 21 mil · 0,6×",
+                  "status": "saudavel",
+                  "itens": null
+                },
+                {
+                  "id": "1018",
+                  "nome": "Salsicha",
+                  "sub": "cobertura 5,2 dias · ideal 12",
+                  "real": 20338.98,
+                  "ideal": 47342.47,
+                  "diferenca": "abaixo do mínimo",
+                  "status": "critico",
+                  "itens": null
+                },
+                {
+                  "id": "1016",
+                  "nome": "Linguiça toscana",
+                  "sub": "cobertura 5,8 dias · ideal 12",
+                  "real": 33317.31,
+                  "ideal": 68350.68,
+                  "diferenca": "abaixo do mínimo",
+                  "status": "critico",
+                  "itens": null
+                }
+              ],
+              "subtituloAberto": "Produtos da família Embutidos, do maior desvio para o menor."
+            },
+            {
+              "id": "suinos-outros",
+              "nome": "Outros produtos da seção",
+              "sub": "fora dos principais",
+              "real": 131533.33,
+              "ideal": 88579.73,
+              "diferenca": "+R$ 43 mil · 1,5×",
+              "status": "atencao",
+              "outros": true,
+              "itens": null
+            }
+          ],
+          "subtituloAberto": "Famílias da seção Suínos, do maior desvio para o menor. Clique para abrir os produtos."
+        },
+        {
+          "id": "bovinos",
+          "nome": "Bovinos",
+          "sub": "ideal de 12 dias",
+          "real": 825413.55,
+          "ideal": 1072316.71,
+          "diferenca": "−R$ 247 mil · 0,8×",
+          "status": "saudavel",
+          "itens": [
+            {
+              "id": "familia-miudos",
+              "nome": "Miúdos",
+              "sub": "2 produtos",
+              "real": 52162.7,
+              "ideal": 40339.73,
+              "diferenca": "+R$ 12 mil · 1,3×",
+              "status": "atencao",
+              "itens": [
+                {
+                  "id": "1012",
+                  "nome": "Bucho",
+                  "sub": "cobertura 16,9 dias · ideal 12",
+                  "real": 24305.56,
+                  "ideal": 17260.27,
+                  "diferenca": "+R$ 7 mil · 1,4×",
+                  "status": "atencao",
+                  "itens": null
+                },
+                {
+                  "id": "1011",
+                  "nome": "Fígado bovino",
+                  "sub": "cobertura 14,5 dias · ideal 12",
+                  "real": 27857.14,
+                  "ideal": 23079.45,
+                  "diferenca": "+R$ 5 mil · 1,2×",
+                  "status": "atencao",
+                  "itens": null
+                }
+              ],
+              "subtituloAberto": "Produtos da família Miúdos, do maior desvio para o menor."
+            },
+            {
+              "id": "familia-moidas",
+              "nome": "Moídas",
+              "sub": "2 produtos",
+              "real": 41546.54,
+              "ideal": 113950.68,
+              "diferenca": "abaixo do mínimo",
+              "status": "critico",
+              "itens": [
+                {
+                  "id": "1010",
+                  "nome": "Carne moída de 2ª",
+                  "sub": "cobertura 4,5 dias · ideal 12",
+                  "real": 20490.2,
+                  "ideal": 54969.86,
+                  "diferenca": "abaixo do mínimo",
+                  "status": "critico",
+                  "itens": null
+                },
+                {
+                  "id": "1009",
+                  "nome": "Patinho moído",
+                  "sub": "cobertura 4,3 dias · ideal 12",
+                  "real": 21056.34,
+                  "ideal": 58980.82,
+                  "diferenca": "abaixo do mínimo",
+                  "status": "critico",
+                  "itens": null
+                }
+              ],
+              "subtituloAberto": "Produtos da família Moídas, do maior desvio para o menor."
+            },
+            {
+              "id": "familia-cortes-dianteiros",
+              "nome": "Cortes dianteiros",
+              "sub": "3 produtos",
+              "real": 104595.39,
+              "ideal": 222706.85,
+              "diferenca": "abaixo do mínimo",
+              "status": "critico",
+              "itens": [
+                {
+                  "id": "1008",
+                  "nome": "Músculo",
+                  "sub": "cobertura 6,9 dias · ideal 12",
+                  "real": 30928.03,
+                  "ideal": 53687.67,
+                  "diferenca": "−R$ 23 mil · 0,6×",
+                  "status": "saudavel",
+                  "itens": null
+                },
+                {
+                  "id": "1007",
+                  "nome": "Paleta",
+                  "sub": "cobertura 5,6 dias · ideal 12",
+                  "real": 35401.23,
+                  "ideal": 75419.18,
+                  "diferenca": "abaixo do mínimo",
+                  "status": "critico",
+                  "itens": null
+                },
+                {
+                  "id": "1006",
+                  "nome": "Acém",
+                  "sub": "cobertura 4,9 dias · ideal 12",
+                  "real": 38266.13,
+                  "ideal": 93600.0,
+                  "diferenca": "abaixo do mínimo",
+                  "status": "critico",
+                  "itens": null
+                }
+              ],
+              "subtituloAberto": "Produtos da família Cortes dianteiros, do maior desvio para o menor."
+            },
+            {
+              "id": "familia-cortes-nobres",
+              "nome": "Cortes nobres",
+              "sub": "5 produtos",
+              "real": 200442.26,
+              "ideal": 474180.82,
+              "diferenca": "abaixo do mínimo",
+              "status": "critico",
+              "itens": [
+                {
+                  "id": "1005",
+                  "nome": "Maminha",
+                  "sub": "cobertura 8,4 dias · ideal 12",
+                  "real": 31597.22,
+                  "ideal": 44876.71,
+                  "diferenca": "−R$ 13 mil · 0,7×",
+                  "status": "saudavel",
+                  "itens": null
+                },
+                {
+                  "id": "1004",
+                  "nome": "Filé mignon",
+                  "sub": "cobertura 9,8 dias · ideal 12",
+                  "real": 66612.9,
+                  "ideal": 81468.49,
+                  "diferenca": "−R$ 15 mil · 0,8×",
+                  "status": "saudavel",
+                  "itens": null
+                },
+                {
+                  "id": "1003",
+                  "nome": "Alcatra",
+                  "sub": "cobertura 6,3 dias · ideal 12",
+                  "real": 52708.33,
+                  "ideal": 99813.7,
+                  "diferenca": "−R$ 47 mil · 0,5×",
+                  "status": "saudavel",
+                  "itens": null
+                },
+                {
+                  "id": "1002",
+                  "nome": "Contrafilé",
+                  "sub": "cobertura 5,4 dias · ideal 12",
+                  "real": 49523.81,
+                  "ideal": 109413.7,
+                  "diferenca": "abaixo do mínimo",
+                  "status": "critico",
+                  "itens": null
+                },
+                {
+                  "id": "1001",
+                  "nome": "Picanha",
+                  "sub": "sem estoque · ideal 12 dias",
+                  "real": 0.0,
+                  "ideal": 138608.22,
+                  "diferenca": "zerado",
+                  "status": "critico",
+                  "itens": null
+                }
+              ],
+              "subtituloAberto": "Produtos da família Cortes nobres, do maior desvio para o menor."
+            },
+            {
+              "id": "bovinos-outros",
+              "nome": "Outros produtos da seção",
+              "sub": "fora dos principais",
+              "real": 426666.66,
+              "ideal": 221138.63,
+              "diferenca": "+R$ 206 mil · 1,9×",
+              "status": "critico",
+              "outros": true,
+              "itens": null
+            }
+          ],
+          "subtituloAberto": "Famílias da seção Bovinos, do maior desvio para o menor. Clique para abrir os produtos."
+        },
+        {
+          "id": "aves",
+          "nome": "Aves",
+          "sub": "ideal de 12 dias",
+          "real": 352125.48,
+          "ideal": 602498.63,
+          "diferenca": "−R$ 250 mil · 0,6×",
+          "status": "saudavel",
+          "itens": [
+            {
+              "id": "familia-empanados",
+              "nome": "Empanados",
+              "sub": "2 produtos",
+              "real": 50333.33,
+              "ideal": 43989.04,
+              "diferenca": "+R$ 6 mil · 1,1×",
+              "status": "atencao",
+              "itens": [
+                {
+                  "id": "1028",
+                  "nome": "Empanado de frango",
+                  "sub": "cobertura 15,2 dias · ideal 12",
+                  "real": 23250.0,
+                  "ideal": 18345.21,
+                  "diferenca": "+R$ 5 mil · 1,3×",
+                  "status": "atencao",
+                  "itens": null
+                },
+                {
+                  "id": "1027",
+                  "nome": "Nuggets",
+                  "sub": "cobertura 12,7 dias · ideal 12",
+                  "real": 27083.33,
+                  "ideal": 25643.84,
+                  "diferenca": "+R$ 1 mil · 1,1×",
+                  "status": "atencao",
+                  "itens": null
+                }
+              ],
+              "subtituloAberto": "Produtos da família Empanados, do maior desvio para o menor."
+            },
+            {
+              "id": "familia-cortes-de-frango",
+              "nome": "Cortes de frango",
+              "sub": "4 produtos",
+              "real": 131429.76,
+              "ideal": 240263.01,
+              "diferenca": "−R$ 109 mil · 0,5×",
+              "status": "saudavel",
+              "itens": [
+                {
+                  "id": "1026",
+                  "nome": "Asa de frango",
+                  "sub": "cobertura 8,9 dias · ideal 12",
+                  "real": 23676.47,
+                  "ideal": 31758.9,
+                  "diferenca": "−R$ 8 mil · 0,7×",
+                  "status": "saudavel",
+                  "itens": null
+                },
+                {
+                  "id": "1025",
+                  "nome": "Filé de peito",
+                  "sub": "cobertura 7,4 dias · ideal 12",
+                  "real": 29959.35,
+                  "ideal": 48460.27,
+                  "diferenca": "−R$ 19 mil · 0,6×",
+                  "status": "saudavel",
+                  "itens": null
+                },
+                {
+                  "id": "1024",
+                  "nome": "Coxa e sobrecoxa",
+                  "sub": "cobertura 5,5 dias · ideal 12",
+                  "real": 33393.94,
+                  "ideal": 72460.27,
+                  "diferenca": "abaixo do mínimo",
+                  "status": "critico",
+                  "itens": null
+                },
+                {
+                  "id": "1023",
+                  "nome": "Peito de frango",
+                  "sub": "cobertura 6,1 dias · ideal 12",
+                  "real": 44400.0,
+                  "ideal": 87583.56,
+                  "diferenca": "−R$ 43 mil · 0,5×",
+                  "status": "saudavel",
+                  "itens": null
+                }
+              ],
+              "subtituloAberto": "Produtos da família Cortes de frango, do maior desvio para o menor."
+            },
+            {
+              "id": "familia-frango-inteiro",
+              "nome": "Frango inteiro",
+              "sub": "2 produtos",
+              "real": 79829.06,
+              "ideal": 229873.97,
+              "diferenca": "abaixo do mínimo",
+              "status": "critico",
+              "itens": [
+                {
+                  "id": "1022",
+                  "nome": "Frango resfriado",
+                  "sub": "cobertura 4,7 dias · ideal 12",
+                  "real": 30769.23,
+                  "ideal": 78904.11,
+                  "diferenca": "abaixo do mínimo",
+                  "status": "critico",
+                  "itens": null
+                },
+                {
+                  "id": "1021",
+                  "nome": "Frango congelado",
+                  "sub": "cobertura 3,9 dias · ideal 12",
+                  "real": 49059.83,
+                  "ideal": 150969.86,
+                  "diferenca": "abaixo do mínimo",
+                  "status": "critico",
+                  "itens": null
+                }
+              ],
+              "subtituloAberto": "Produtos da família Frango inteiro, do maior desvio para o menor."
+            },
+            {
+              "id": "aves-outros",
+              "nome": "Outros produtos da seção",
+              "sub": "fora dos principais",
+              "real": 90533.33,
+              "ideal": 88372.6,
+              "diferenca": "+R$ 2 mil · 1,0×",
+              "status": "atencao",
+              "outros": true,
+              "itens": null
+            }
+          ],
+          "subtituloAberto": "Famílias da seção Aves, do maior desvio para o menor. Clique para abrir os produtos."
+        }
+      ],
+      "rotuloRaiz": "Todas as seções"
+    },
+    {
+      "id": "saude-estoque",
+      "largura": 5,
+      "titulo": "Saúde do estoque",
+      "subtitulo": "Onde está cada real e cada produto",
+      "explicacao": "Zerado: sem saldo. Abaixo do mínimo: cobertura abaixo de metade dos dias ideais. Ideal: entre o mínimo e 1,5 vez o ideal. Excesso: acima de 1,5 vez o ideal. Parado: 90 dias ou mais sem venda. Conta todos os produtos com estoque ou venda, não só os principais.",
+      "tipo": "saude-estoque",
+      "barras": [
+        {
+          "rotulo": "Em valor",
+          "total": {
+            "valor": 2109896.29,
+            "unidade": "brl"
+          },
+          "partes": [
+            {
+              "faixa": "abaixo",
+              "valor": 342450.0
+            },
+            {
+              "faixa": "ideal",
+              "valor": 1131279.0
+            },
+            {
+              "faixa": "excesso",
+              "valor": 169167.0
+            },
+            {
+              "faixa": "parado",
+              "valor": 467000.0
+            }
+          ]
+        },
+        {
+          "rotulo": "Em produtos",
+          "total": {
+            "valor": 88.0,
+            "unidade": "qtd",
+            "casas": 0,
+            "sufixo": "produtos"
+          },
+          "partes": [
+            {
+              "faixa": "zerado",
+              "valor": 7.0
+            },
+            {
+              "faixa": "abaixo",
+              "valor": 11.0
+            },
+            {
+              "faixa": "ideal",
+              "valor": 59.0
+            },
+            {
+              "faixa": "excesso",
+              "valor": 7.0
+            },
+            {
+              "faixa": "parado",
+              "valor": 4.0
+            }
+          ]
+        }
+      ],
+      "grupos": [
+        {
+          "rotulo": "Falta",
+          "faixas": [
+            {
+              "id": "zerado",
+              "rotulo": "Zerado",
+              "sub": "sem saldo",
+              "estilo": "critico",
+              "produtos": {
+                "valor": 7.0,
+                "unidade": "qtd",
+                "casas": 0,
+                "sufixo": "produtos"
+              },
+              "valor": null
+            },
+            {
+              "id": "abaixo",
+              "rotulo": "Abaixo do mínimo",
+              "sub": "cobertura abaixo de metade do ideal",
+              "estilo": "critico-claro",
+              "produtos": {
+                "valor": 11.0,
+                "unidade": "qtd",
+                "casas": 0,
+                "sufixo": "produtos"
+              },
+              "valor": {
+                "valor": 342450.33,
+                "unidade": "brl"
+              }
+            }
+          ]
+        },
+        {
+          "rotulo": "No ponto",
+          "faixas": [
+            {
+              "id": "ideal",
+              "rotulo": "Ideal",
+              "sub": "entre o mínimo e 1,5× o ideal",
+              "estilo": "saudavel",
+              "produtos": {
+                "valor": 59.0,
+                "unidade": "qtd",
+                "casas": 0,
+                "sufixo": "produtos"
+              },
+              "valor": {
+                "valor": 1131279.31,
+                "unidade": "brl"
+              }
+            }
+          ]
+        },
+        {
+          "rotulo": "Sobra",
+          "faixas": [
+            {
+              "id": "excesso",
+              "rotulo": "Excesso",
+              "sub": "acima de 1,5× o ideal",
+              "estilo": "atencao",
+              "produtos": {
+                "valor": 7.0,
+                "unidade": "qtd",
+                "casas": 0,
+                "sufixo": "produtos"
+              },
+              "valor": {
+                "valor": 169166.65,
+                "unidade": "brl"
+              }
+            },
+            {
+              "id": "parado",
+              "rotulo": "Parado",
+              "sub": "90 dias ou mais sem venda",
+              "estilo": "atencao-escura",
+              "produtos": {
+                "valor": 4.0,
+                "unidade": "qtd",
+                "casas": 0,
+                "sufixo": "produtos"
+              },
+              "valor": {
+                "valor": 467000.0,
+                "unidade": "brl"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "criticos",
+      "largura": 12,
+      "titulo": "Críticos: comprar já",
+      "subtitulo": "Principais produtos zerados ou abaixo do mínimo, contando o que já está em trânsito",
+      "nota": "Em trânsito: o DW ainda não tem os pedidos de compra sem recebimento.",
+      "explicacao": "Os principais produtos (curva A do faturamento) com cobertura abaixo de metade dos dias ideais. O em trânsito são os pedidos de compra ainda sem recebimento; a segunda linha diz para quantos dias de cobertura o produto vai quando eles chegarem.",
+      "tipo": "tabela",
+      "colunas": [
+        {
+          "rotulo": "Produto",
+          "alinhar": "esquerda",
+          "ordenavel": true
+        },
+        {
+          "rotulo": "Classe BCG",
+          "alinhar": "esquerda",
+          "ocultarNoCelular": true,
+          "ordenavel": true
+        },
+        {
+          "rotulo": "Estoque",
+          "ordenavel": true
+        },
+        {
+          "rotulo": "Mínimo",
+          "ocultarNoCelular": true,
+          "ordenavel": true
+        },
+        {
+          "rotulo": "Cobertura",
+          "ordenavel": true
+        },
+        {
+          "rotulo": "Em trânsito",
+          "ocultarNoCelular": true,
+          "ordenavel": true
+        },
+        {
+          "rotulo": "Situação",
+          "alinhar": "esquerda",
+          "ordenavel": true
+        }
+      ],
+      "linhas": [
+        {
+          "celulas": [
+            {
+              "valor": "Picanha",
+              "sub": "Cortes nobres · Bovinos",
+              "ordem": "Picanha"
+            },
+            {
+              "quadrante": {
+                "id": "estrela",
+                "rotulo": "Estrela"
+              },
+              "ordem": 0.0
+            },
+            {
+              "valor": {
+                "valor": 0.0,
+                "unidade": "brl"
+              },
+              "ordem": 0.0
+            },
+            {
+              "valor": {
+                "valor": 69304.11,
+                "unidade": "brl"
+              },
+              "ordem": 69304.1096
+            },
+            {
+              "valor": {
+                "valor": 0.0,
+                "unidade": "dias",
+                "casas": 1
+              },
+              "sub": "mínimo 6 · ideal 12",
+              "tom": "critico",
+              "negrito": true,
+              "ordem": 0.0
+            },
+            {
+              "valor": "—",
+              "tom": "apagado",
+              "ordem": 0.0
+            },
+            {
+              "pill": {
+                "status": "critico",
+                "rotulo": "Zerado"
+              },
+              "link": {
+                "rotulo": "Comprar →",
+                "tela": "compras"
+              },
+              "ordem": 0.0
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Frango congelado",
+              "sub": "Frango inteiro · Aves",
+              "ordem": "Frango congelado"
+            },
+            {
+              "quadrante": {
+                "id": "vaca-leiteira",
+                "rotulo": "Vaca leiteira"
+              },
+              "ordem": 1.0
+            },
+            {
+              "valor": {
+                "valor": 49059.83,
+                "unidade": "brl"
+              },
+              "ordem": 49059.83
+            },
+            {
+              "valor": {
+                "valor": 75484.93,
+                "unidade": "brl"
+              },
+              "ordem": 75484.9315
+            },
+            {
+              "valor": {
+                "valor": 3.9,
+                "unidade": "dias",
+                "casas": 1
+              },
+              "sub": "mínimo 6 · ideal 12",
+              "tom": "critico",
+              "negrito": true,
+              "ordem": 3.8996
+            },
+            {
+              "valor": "—",
+              "tom": "apagado",
+              "ordem": 0.0
+            },
+            {
+              "pill": {
+                "status": "atencao",
+                "rotulo": "Abaixo do mínimo"
+              },
+              "link": {
+                "rotulo": "Comprar →",
+                "tela": "compras"
+              },
+              "ordem": 1.0
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Patinho moído",
+              "sub": "Moídas · Bovinos",
+              "ordem": "Patinho moído"
+            },
+            {
+              "quadrante": {
+                "id": "vaca-leiteira",
+                "rotulo": "Vaca leiteira"
+              },
+              "ordem": 1.0
+            },
+            {
+              "valor": {
+                "valor": 21056.34,
+                "unidade": "brl"
+              },
+              "ordem": 21056.34
+            },
+            {
+              "valor": {
+                "valor": 29490.41,
+                "unidade": "brl"
+              },
+              "ordem": 29490.411
+            },
+            {
+              "valor": {
+                "valor": 4.3,
+                "unidade": "dias",
+                "casas": 1
+              },
+              "sub": "mínimo 6 · ideal 12",
+              "tom": "critico",
+              "negrito": true,
+              "ordem": 4.284
+            },
+            {
+              "valor": "—",
+              "tom": "apagado",
+              "ordem": 0.0
+            },
+            {
+              "pill": {
+                "status": "atencao",
+                "rotulo": "Abaixo do mínimo"
+              },
+              "link": {
+                "rotulo": "Comprar →",
+                "tela": "compras"
+              },
+              "ordem": 1.0
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Carne moída de 2ª",
+              "sub": "Moídas · Bovinos",
+              "ordem": "Carne moída de 2ª"
+            },
+            {
+              "quadrante": {
+                "id": "vaca-leiteira",
+                "rotulo": "Vaca leiteira"
+              },
+              "ordem": 1.0
+            },
+            {
+              "valor": {
+                "valor": 20490.2,
+                "unidade": "brl"
+              },
+              "ordem": 20490.2
+            },
+            {
+              "valor": {
+                "valor": 27484.93,
+                "unidade": "brl"
+              },
+              "ordem": 27484.9315
+            },
+            {
+              "valor": {
+                "valor": 4.5,
+                "unidade": "dias",
+                "casas": 1
+              },
+              "sub": "mínimo 6 · ideal 12",
+              "tom": "critico",
+              "negrito": true,
+              "ordem": 4.473
+            },
+            {
+              "valor": "—",
+              "tom": "apagado",
+              "ordem": 0.0
+            },
+            {
+              "pill": {
+                "status": "atencao",
+                "rotulo": "Abaixo do mínimo"
+              },
+              "link": {
+                "rotulo": "Comprar →",
+                "tela": "compras"
+              },
+              "ordem": 1.0
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Frango resfriado",
+              "sub": "Frango inteiro · Aves",
+              "ordem": "Frango resfriado"
+            },
+            {
+              "quadrante": {
+                "id": "vaca-leiteira",
+                "rotulo": "Vaca leiteira"
+              },
+              "ordem": 1.0
+            },
+            {
+              "valor": {
+                "valor": 30769.23,
+                "unidade": "brl"
+              },
+              "ordem": 30769.23
+            },
+            {
+              "valor": {
+                "valor": 39452.05,
+                "unidade": "brl"
+              },
+              "ordem": 39452.0548
+            },
+            {
+              "valor": {
+                "valor": 4.7,
+                "unidade": "dias",
+                "casas": 1
+              },
+              "sub": "mínimo 6 · ideal 12",
+              "tom": "critico",
+              "negrito": true,
+              "ordem": 4.6795
+            },
+            {
+              "valor": "—",
+              "tom": "apagado",
+              "ordem": 0.0
+            },
+            {
+              "pill": {
+                "status": "atencao",
+                "rotulo": "Abaixo do mínimo"
+              },
+              "link": {
+                "rotulo": "Comprar →",
+                "tela": "compras"
+              },
+              "ordem": 1.0
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Acém",
+              "sub": "Cortes dianteiros · Bovinos",
+              "ordem": "Acém"
+            },
+            {
+              "quadrante": {
+                "id": "vaca-leiteira",
+                "rotulo": "Vaca leiteira"
+              },
+              "ordem": 1.0
+            },
+            {
+              "valor": {
+                "valor": 38266.13,
+                "unidade": "brl"
+              },
+              "ordem": 38266.13
+            },
+            {
+              "valor": {
+                "valor": 46800.0,
+                "unidade": "brl"
+              },
+              "ordem": 46800.0
+            },
+            {
+              "valor": {
+                "valor": 4.9,
+                "unidade": "dias",
+                "casas": 1
+              },
+              "sub": "mínimo 6 · ideal 12",
+              "tom": "critico",
+              "negrito": true,
+              "ordem": 4.9059
+            },
+            {
+              "valor": "—",
+              "tom": "apagado",
+              "ordem": 0.0
+            },
+            {
+              "pill": {
+                "status": "atencao",
+                "rotulo": "Abaixo do mínimo"
+              },
+              "link": {
+                "rotulo": "Comprar →",
+                "tela": "compras"
+              },
+              "ordem": 1.0
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Refrigerante 2 l",
+              "sub": "Bebidas · Mercearia",
+              "ordem": "Refrigerante 2 l"
+            },
+            {
+              "quadrante": {
+                "id": "vaca-leiteira",
+                "rotulo": "Vaca leiteira"
+              },
+              "ordem": 1.0
+            },
+            {
+              "valor": {
+                "valor": 10833.33,
+                "unidade": "brl"
+              },
+              "ordem": 10833.33
+            },
+            {
+              "valor": {
+                "valor": 12821.92,
+                "unidade": "brl"
+              },
+              "ordem": 12821.9178
+            },
+            {
+              "valor": {
+                "valor": 5.1,
+                "unidade": "dias",
+                "casas": 1
+              },
+              "sub": "mínimo 6 · ideal 12",
+              "tom": "critico",
+              "negrito": true,
+              "ordem": 5.0694
+            },
+            {
+              "valor": "—",
+              "tom": "apagado",
+              "ordem": 0.0
+            },
+            {
+              "pill": {
+                "status": "atencao",
+                "rotulo": "Abaixo do mínimo"
+              },
+              "link": {
+                "rotulo": "Comprar →",
+                "tela": "compras"
+              },
+              "ordem": 1.0
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Salsicha",
+              "sub": "Embutidos · Suínos",
+              "ordem": "Salsicha"
+            },
+            {
+              "quadrante": {
+                "id": "vaca-leiteira",
+                "rotulo": "Vaca leiteira"
+              },
+              "ordem": 1.0
+            },
+            {
+              "valor": {
+                "valor": 20338.98,
+                "unidade": "brl"
+              },
+              "ordem": 20338.98
+            },
+            {
+              "valor": {
+                "valor": 23671.23,
+                "unidade": "brl"
+              },
+              "ordem": 23671.2329
+            },
+            {
+              "valor": {
+                "valor": 5.2,
+                "unidade": "dias",
+                "casas": 1
+              },
+              "sub": "mínimo 6 · ideal 12",
+              "tom": "critico",
+              "negrito": true,
+              "ordem": 5.1554
+            },
+            {
+              "valor": "—",
+              "tom": "apagado",
+              "ordem": 0.0
+            },
+            {
+              "pill": {
+                "status": "atencao",
+                "rotulo": "Abaixo do mínimo"
+              },
+              "link": {
+                "rotulo": "Comprar →",
+                "tela": "compras"
+              },
+              "ordem": 1.0
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Contrafilé",
+              "sub": "Cortes nobres · Bovinos",
+              "ordem": "Contrafilé"
+            },
+            {
+              "quadrante": {
+                "id": "estrela",
+                "rotulo": "Estrela"
+              },
+              "ordem": 0.0
+            },
+            {
+              "valor": {
+                "valor": 49523.81,
+                "unidade": "brl"
+              },
+              "ordem": 49523.81
+            },
+            {
+              "valor": {
+                "valor": 54706.85,
+                "unidade": "brl"
+              },
+              "ordem": 54706.8493
+            },
+            {
+              "valor": {
+                "valor": 5.4,
+                "unidade": "dias",
+                "casas": 1
+              },
+              "sub": "mínimo 6 · ideal 12",
+              "tom": "critico",
+              "negrito": true,
+              "ordem": 5.4315
+            },
+            {
+              "valor": "—",
+              "tom": "apagado",
+              "ordem": 0.0
+            },
+            {
+              "pill": {
+                "status": "atencao",
+                "rotulo": "Abaixo do mínimo"
+              },
+              "link": {
+                "rotulo": "Comprar →",
+                "tela": "compras"
+              },
+              "ordem": 1.0
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Coxa e sobrecoxa",
+              "sub": "Cortes de frango · Aves",
+              "ordem": "Coxa e sobrecoxa"
+            },
+            {
+              "quadrante": {
+                "id": "vaca-leiteira",
+                "rotulo": "Vaca leiteira"
+              },
+              "ordem": 1.0
+            },
+            {
+              "valor": {
+                "valor": 33393.94,
+                "unidade": "brl"
+              },
+              "ordem": 33393.94
+            },
+            {
+              "valor": {
+                "valor": 36230.14,
+                "unidade": "brl"
+              },
+              "ordem": 36230.137
+            },
+            {
+              "valor": {
+                "valor": 5.5,
+                "unidade": "dias",
+                "casas": 1
+              },
+              "sub": "mínimo 6 · ideal 12",
+              "tom": "critico",
+              "negrito": true,
+              "ordem": 5.5303
+            },
+            {
+              "valor": "—",
+              "tom": "apagado",
+              "ordem": 0.0
+            },
+            {
+              "pill": {
+                "status": "atencao",
+                "rotulo": "Abaixo do mínimo"
+              },
+              "link": {
+                "rotulo": "Comprar →",
+                "tela": "compras"
+              },
+              "ordem": 1.0
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Paleta",
+              "sub": "Cortes dianteiros · Bovinos",
+              "ordem": "Paleta"
+            },
+            {
+              "quadrante": {
+                "id": "vaca-leiteira",
+                "rotulo": "Vaca leiteira"
+              },
+              "ordem": 1.0
+            },
+            {
+              "valor": {
+                "valor": 35401.23,
+                "unidade": "brl"
+              },
+              "ordem": 35401.23
+            },
+            {
+              "valor": {
+                "valor": 37709.59,
+                "unidade": "brl"
+              },
+              "ordem": 37709.589
+            },
+            {
+              "valor": {
+                "valor": 5.6,
+                "unidade": "dias",
+                "casas": 1
+              },
+              "sub": "mínimo 6 · ideal 12",
+              "tom": "critico",
+              "negrito": true,
+              "ordem": 5.6327
+            },
+            {
+              "valor": "—",
+              "tom": "apagado",
+              "ordem": 0.0
+            },
+            {
+              "pill": {
+                "status": "atencao",
+                "rotulo": "Abaixo do mínimo"
+              },
+              "link": {
+                "rotulo": "Comprar →",
+                "tela": "compras"
+              },
+              "ordem": 1.0
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Linguiça toscana",
+              "sub": "Embutidos · Suínos",
+              "ordem": "Linguiça toscana"
+            },
+            {
+              "quadrante": {
+                "id": "estrela",
+                "rotulo": "Estrela"
+              },
+              "ordem": 0.0
+            },
+            {
+              "valor": {
+                "valor": 33317.31,
+                "unidade": "brl"
+              },
+              "ordem": 33317.31
+            },
+            {
+              "valor": {
+                "valor": 34175.34,
+                "unidade": "brl"
+              },
+              "ordem": 34175.3425
+            },
+            {
+              "valor": {
+                "valor": 5.8,
+                "unidade": "dias",
+                "casas": 1
+              },
+              "sub": "mínimo 6 · ideal 12",
+              "tom": "critico",
+              "negrito": true,
+              "ordem": 5.8494
+            },
+            {
+              "valor": "—",
+              "tom": "apagado",
+              "ordem": 0.0
+            },
+            {
+              "pill": {
+                "status": "atencao",
+                "rotulo": "Abaixo do mínimo"
+              },
+              "link": {
+                "rotulo": "Comprar →",
+                "tela": "compras"
+              },
+              "ordem": 1.0
+            }
+          ]
+        }
+      ],
+      "vazio": "Nenhum produto crítico neste recorte.",
+      "rodape": [
+        {
+          "texto": "Mais 6 produtos abaixo do mínimo fora dos principais "
+        },
+        {
+          "texto": "(6 zerados)."
+        }
+      ],
+      "link": {
+        "rotulo": "Ver sugestão de compra em Compras →",
+        "tela": "compras"
+      }
+    },
+    {
+      "id": "excesso-parados",
+      "largura": 12,
+      "titulo": "Excesso e parados: o dinheiro preso",
+      "subtitulo": "Valor acima do ideal e produtos sem venda há 90 dias ou mais",
+      "explicacao": "Excesso: principal produto com mais de 1,5 vez o ideal; o dinheiro preso é o que passa do ideal, em reais a custo. Parado: produto com estoque e sem venda há 90 dias ou mais (vale o estoque inteiro). A ação sai da Classe BCG do produto.",
+      "tipo": "tabela",
+      "colunas": [
+        {
+          "rotulo": "Produto",
+          "alinhar": "esquerda",
+          "ordenavel": true
+        },
+        {
+          "rotulo": "Classe BCG",
+          "alinhar": "esquerda",
+          "ocultarNoCelular": true,
+          "ordenavel": true
+        },
+        {
+          "rotulo": "Dinheiro preso",
+          "ordenavel": true
+        },
+        {
+          "rotulo": "Cobertura",
+          "ocultarNoCelular": true,
+          "ordenavel": true
+        },
+        {
+          "rotulo": "Sem venda há",
+          "ordenavel": true
+        },
+        {
+          "rotulo": "Ação sugerida",
+          "alinhar": "esquerda",
+          "ocultarNoCelular": true
+        }
+      ],
+      "linhas": [
+        {
+          "celulas": [
+            {
+              "valor": "Charque ponta de agulha",
+              "sub": "fora dos principais · Bovinos",
+              "ordem": "Charque ponta de agulha"
+            },
+            {
+              "quadrante": {
+                "id": "abacaxi",
+                "rotulo": "Abacaxi"
+              },
+              "ordem": 3.0
+            },
+            {
+              "valor": {
+                "valor": 212000.0,
+                "unidade": "brl"
+              },
+              "negrito": true,
+              "barra": {
+                "proporcao": 1.0,
+                "estilo": "atencao-escura"
+              },
+              "ordem": 212000.0
+            },
+            {
+              "valor": "—",
+              "sub": "ideal 12",
+              "tom": "apagado",
+              "ordem": 9999.0
+            },
+            {
+              "valor": {
+                "valor": 124.0,
+                "unidade": "dias",
+                "casas": 0
+              },
+              "negrito": true,
+              "ordem": 124.0
+            },
+            {
+              "valor": "Liquidar: promoção com os vendedores"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Queijo coalho em barra",
+              "sub": "fora dos principais · Mercearia",
+              "ordem": "Queijo coalho em barra"
+            },
+            {
+              "quadrante": {
+                "id": "abacaxi",
+                "rotulo": "Abacaxi"
+              },
+              "ordem": 3.0
+            },
+            {
+              "valor": {
+                "valor": 118000.0,
+                "unidade": "brl"
+              },
+              "negrito": true,
+              "barra": {
+                "proporcao": 0.557,
+                "estilo": "atencao-escura"
+              },
+              "ordem": 118000.0
+            },
+            {
+              "valor": "—",
+              "sub": "ideal 12",
+              "tom": "apagado",
+              "ordem": 9999.0
+            },
+            {
+              "valor": {
+                "valor": 92.0,
+                "unidade": "dias",
+                "casas": 0
+              },
+              "negrito": true,
+              "ordem": 92.0
+            },
+            {
+              "valor": "Liquidar: promoção com os vendedores"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Kani-kama",
+              "sub": "fora dos principais · Mercearia",
+              "ordem": "Kani-kama"
+            },
+            {
+              "quadrante": {
+                "id": "abacaxi",
+                "rotulo": "Abacaxi"
+              },
+              "ordem": 3.0
+            },
+            {
+              "valor": {
+                "valor": 96000.0,
+                "unidade": "brl"
+              },
+              "negrito": true,
+              "barra": {
+                "proporcao": 0.453,
+                "estilo": "atencao-escura"
+              },
+              "ordem": 96000.0
+            },
+            {
+              "valor": "—",
+              "sub": "ideal 12",
+              "tom": "apagado",
+              "ordem": 9999.0
+            },
+            {
+              "valor": "mais de 1 ano",
+              "negrito": true,
+              "ordem": 9999.0
+            },
+            {
+              "valor": "Liquidar: promoção com os vendedores"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Paio",
+              "sub": "fora dos principais · Suínos",
+              "ordem": "Paio"
+            },
+            {
+              "quadrante": {
+                "id": "abacaxi",
+                "rotulo": "Abacaxi"
+              },
+              "ordem": 3.0
+            },
+            {
+              "valor": {
+                "valor": 41000.0,
+                "unidade": "brl"
+              },
+              "negrito": true,
+              "barra": {
+                "proporcao": 0.193,
+                "estilo": "atencao-escura"
+              },
+              "ordem": 41000.0
+            },
+            {
+              "valor": "—",
+              "sub": "ideal 12",
+              "tom": "apagado",
+              "ordem": 9999.0
+            },
+            {
+              "valor": {
+                "valor": 150.0,
+                "unidade": "dias",
+                "casas": 0
+              },
+              "negrito": true,
+              "ordem": 150.0
+            },
+            {
+              "valor": "Liquidar: promoção com os vendedores"
+            }
+          ]
+        },
+        {
+          "celulas": [
+            {
+              "valor": "Merluza",
+              "sub": "Pescados · Mercearia",
+              "ordem": "Merluza"
+            },
+            {
+              "quadrante": {
+                "id": "abacaxi",
+                "rotulo": "Abacaxi"
+              },
+              "ordem": 3.0
+            },
+            {
+              "valor": {
+                "valor": 10755.71,
+                "unidade": "brl"
+              },
+              "negrito": true,
+              "barra": {
+                "proporcao": 0.051,
+                "estilo": "atencao"
+              },
+              "ordem": 10755.7111
+            },
+            {
+              "valor": {
+                "valor": 19.0,
+                "unidade": "dias",
+                "casas": 0
+              },
+              "sub": "ideal 12",
+              "ordem": 19.0104
+            },
+            {
+              "valor": "vende",
+              "tom": "apagado",
+              "ordem": 0.0
+            },
+            {
+              "valor": "Liquidar e não recomprar"
+            }
+          ]
+        }
+      ],
+      "vazio": "Nada preso neste recorte.",
+      "limite": 10,
+      "rodape": [
+        {
+          "texto": "5 produtos somam "
+        },
+        {
+          "texto": "R$ 478 mil",
+          "destaque": true
+        },
+        {
+          "texto": " presos. Mais 6 produtos com excesso fora dos principais: R$ 74 mil."
+        }
+      ]
+    }
+  ]
+}

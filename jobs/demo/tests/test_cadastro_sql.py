@@ -32,7 +32,7 @@ def test_empresas_do_mapa() -> None:
     texto = cadastro_sql()
     for e in EMPRESAS:
         assert f"('{e.origem}'," in texto
-        assert f"('{e.nome}')" in texto
+        assert f"('{e.nome}', " in texto
 
 
 def test_de_para_igual_ao_do_gerador() -> None:

@@ -62,6 +62,12 @@ ESQUEMAS: Mapping[str, tuple[tuple[str, Tipo], ...]] = {
         ("sp_supervisor", "text"),
         ("EMPRESA", "text"),
     ),
+    "f_estoque_pj": (
+        ("en_filial", "text"),
+        ("en_codigoproduto", "text"),
+        ("en_saldoestoque", "numeric"),
+        ("EMPRESA", "text"),
+    ),
     "f_despesas_pj": (
         ("en_numdoc", "text"),
         ("en_numlancamento", "text"),

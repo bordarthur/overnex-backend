@@ -45,6 +45,7 @@ As mesmas da PJ Cortes (migrations 12, 13, 18 e 23): o gerador escreve as coluna
 | `f_fluxo_pj` | caixa realizado por dia, desde 01/11/2024 (saldo inicial no cadastro) |
 | `f_lancamentos_agrupados_pj` | a DRE por conta do plano, filial e mês |
 | `f_orcamento_pj` | orçado, cenário "Base", até dezembro do ano corrente |
+| `f_estoque_pj` | estoque de hoje por filial e produto, em quantidade ([demo/estoque.py](demo/estoque.py)): a média por dia das vendas de 90 dias vezes uma cobertura sorteada no dia (a maioria de 4 a 14 dias, ~12% em excesso, ~5% zerados e parados sem venda nos 90 dias). Só a posição do dia, como no DW: muda a cada carga |
 
 O cadastro de produção (empresas, mapa, fontes, de-para das contas e saldo inicial) está em [supabase/producao/distribuidora_overnex_cadastro.sql](../../supabase/producao/distribuidora_overnex_cadastro.sql). O que está lá precisa bater com `demo/modelo.py` e `demo/tabelas.py`: `tests/test_cadastro_sql.py` confere, e `tests/test_esquema.py` confere as colunas contra as migrations.
 

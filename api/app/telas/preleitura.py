@@ -35,7 +35,8 @@ from app.farol.parametro import SQL_PARAMETROS, parametros_das_linhas
 from app.seguranca.acesso import (
     ClienteDaQuery,
     ContextoConsolidado,
-    EmpresaDaQuery,
+    UnidadesDaQuery,
+    ler_unidades,
     verificar_acesso_consolidado,
 )
 from app.telas.calendario import SQL_FERIADOS
@@ -147,14 +148,14 @@ def exigir_tela_com_inicio(
     def dependencia(
         request: Request,
         sessao: Annotated[Sessao, Depends(get_sessao)],
-        empresa: EmpresaDaQuery = None,
+        unidades: UnidadesDaQuery = None,
         cliente: ClienteDaQuery = None,
     ) -> ContextoConsolidado:
         com_meses = request.query_params.get("mes") is not None
         return verificar_acesso_consolidado(
             sessao,
             codigo_tela,
-            empresa,
+            ler_unidades(unidades),
             exige_dado_nominal=exige_dado_nominal,
             cliente=cliente,
             junto=consultas_adiantadas(sessao.conn, com_meses=com_meses),

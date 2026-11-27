@@ -213,8 +213,8 @@ def test_equipe_sem_dado_nominal_403(
     assert linha == (6,)
 
 
-def test_empresa_de_outro_cliente_403(client: TestClient) -> None:
-    r = client.get(VENDAS, params={"empresa": EMPRESA_A1}, headers=auth(OID_B))
+def test_unidade_de_outro_cliente_403(client: TestClient) -> None:
+    r = client.get(VENDAS, params={"unidades": EMPRESA_A1}, headers=auth(OID_B))
     assert r.status_code == 403
 
 

@@ -157,7 +157,7 @@ def test_compensando_fica_fora_dos_cartoes_e_dentro_da_carteira() -> None:
 
 
 def test_titulos_leem_coluna_date_sem_converter() -> None:
-    ctx = SimpleNamespace(cliente_id=None, empresas=(), empresa_id=None)
+    ctx = SimpleNamespace(cliente_id=None, empresas=(), unidades=None)
     texto = TabelaDoCliente("f_receitas_pj", COLUNAS_RECEBER)
     ja_date = TabelaDoCliente(
         "f_receitas_pj", COLUNAS_RECEBER, frozenset({"en_dataemissao", "en_datavencimento"})
@@ -706,7 +706,7 @@ def test_pagar_lancado_grupo_sem_pagamento_fica_de_fora_e_sem_nota_do_que_falta_
 
 
 def test_titulos_por_grupo_juntam_o_de_para() -> None:
-    ctx = SimpleNamespace(cliente_id=None, empresas=(), empresa_id=None)
+    ctx = SimpleNamespace(cliente_id=None, empresas=(), unidades=None)
     tabela = TabelaDoCliente("f_despesas_pj", dict(COLUNAS_PAGAR))
 
     sem = _titulos([tabela], ctx).as_string(None)  # type: ignore[arg-type]
@@ -758,7 +758,7 @@ def test_leitura_por_grupo_separa_lancado_e_pago() -> None:
             ]
             return SimpleNamespace(fetchall=lambda: linhas)
 
-    ctx = SimpleNamespace(cliente_id=None, empresas=(), empresa_id=None)
+    ctx = SimpleNamespace(cliente_id=None, empresas=(), unidades=None)
     tabela = TabelaDoCliente("f_despesas_pj", dict(COLUNAS_PAGAR))
     leitura = _ler(Conn(), ctx, [tabela], HOJE, HOJE, {}, date(2026, 1, 1), por_grupo=True)  # type: ignore[arg-type]
 

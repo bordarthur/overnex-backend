@@ -1,12 +1,13 @@
--- Migrations 30 e 31: empresa nova pela Gestão e a edição de nome e setor. Só o admin (Dora) cria o cfg.cliente, que nasce
--- com os 3 perfis fixos, e troca o nome e o setor; ninguém troca o slug, desativa nem apaga
--- cliente pela API; e empresa (CNPJ) nova entra sozinha nos vínculos que o cliente já tem.
+-- Migrations 30 e 31: empresa nova pela Gestão e a edição do nome. Só o admin (Dora) cria o
+-- cfg.cliente, que nasce com os 3 perfis fixos, e troca o nome; ninguém troca o slug,
+-- desativa nem apaga cliente pela API; e empresa (CNPJ) nova entra sozinha nos vínculos que
+-- o cliente já tem. O segmento (o "Ramo") saiu na migration 37 (teste 27).
 begin;
 
 create extension if not exists pgtap with schema extensions;
 grant usage on schema extensions to api_site;
 
-select plan(18);
+select plan(17);
 
 -- ---------------------------------------------------------------------------
 -- Dora (admin) cria a empresa
@@ -15,13 +16,12 @@ set local role api_site;
 set local app.usuario_id = 'd1000000-0000-4000-8000-0000000000ad';
 
 select lives_ok(
-    $$insert into cfg.cliente (nome, slug, segmento)
-      values ('Nova Gama', 'nova-gama', 'Distribuição de alimentos')$$,
+    $$insert into cfg.cliente (nome, slug) values ('Nova Gama', 'nova-gama')$$,
     'admin cria a empresa');
 select results_eq(
-    $$select nome, segmento, ativo from cfg.cliente where slug = 'nova-gama'$$,
-    $$values ('Nova Gama', 'Distribuição de alimentos', true)$$,
-    'a empresa nova aparece para o admin, com o setor');
+    $$select nome, ativo from cfg.cliente where slug = 'nova-gama'$$,
+    $$values ('Nova Gama', true)$$,
+    'a empresa nova aparece para o admin');
 select is((select count(*)::int
              from cfg.perfil_acesso p
              join cfg.cliente c on c.id = p.cliente_id
@@ -33,19 +33,15 @@ select throws_ok(
 select throws_ok(
     $$insert into cfg.cliente (nome, slug) values ('Outra', 'Com Espaço')$$,
     '23514', null, 'slug fora do formato');
-select throws_ok(
-    $$insert into cfg.cliente (nome, slug, segmento) values ('Outra', 'outra', '  ')$$,
-    '23514', null, 'setor em branco não vale: ou tem texto, ou é null');
 
--- nome e setor mudam; slug e ativo não, e a empresa não se apaga
+-- o nome muda; slug e ativo não, e a empresa não se apaga
 select lives_ok(
-    $$update cfg.cliente set nome = 'Nova Gama Ltda', segmento = 'Atacado'
-       where slug = 'nova-gama'$$,
-    'admin troca o nome e o setor');
+    $$update cfg.cliente set nome = 'Nova Gama Ltda' where slug = 'nova-gama'$$,
+    'admin troca o nome');
 select results_eq(
-    $$select nome, segmento from cfg.cliente where slug = 'nova-gama'$$,
-    $$values ('Nova Gama Ltda', 'Atacado')$$,
-    'nome e setor trocados');
+    $$select nome from cfg.cliente where slug = 'nova-gama'$$,
+    $$values ('Nova Gama Ltda')$$,
+    'nome trocado');
 select throws_ok(
     $$update cfg.cliente set slug = 'outro-slug' where slug = 'nova-gama'$$,
     '42501', null, 'o slug não muda pela API');
@@ -78,7 +74,7 @@ select throws_ok(
     $$insert into cfg.cliente (nome, slug) values ('Da Ana', 'da-ana')$$,
     '42501', null, 'Ana não cria empresa');
 -- o update da Ana no próprio cliente não acha a linha (RLS)
-update cfg.cliente set segmento = 'Invadido'
+update cfg.cliente set nome = 'Invadido'
  where id = 'c1000000-0000-4000-8000-00000000000a';
 
 -- ---------------------------------------------------------------------------
@@ -86,9 +82,9 @@ update cfg.cliente set segmento = 'Invadido'
 -- ---------------------------------------------------------------------------
 reset role;
 
-select is((select segmento from cfg.cliente
+select is((select nome from cfg.cliente
             where id = 'c1000000-0000-4000-8000-00000000000a'),
-          null, 'o update da Ana não mexeu no setor do cliente dela');
+          'Padrão LANN Alfa', 'o update da Ana não mexeu no nome do cliente dela');
 
 insert into cfg.empresa (cliente_id, nome)
 select id, 'Nova Gama Matriz' from cfg.cliente where slug = 'nova-gama';

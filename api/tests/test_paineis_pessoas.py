@@ -44,7 +44,7 @@ def _ctx() -> ContextoConsolidado:
         sessao=sessao,
         usuario_id=UUID(int=2),
         cliente_id=UUID(int=3),
-        empresa_id=None,
+        unidades=None,
         empresas=(UUID(int=4),),
         papel="gestor",
         codigo_tela="PES-01",
